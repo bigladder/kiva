@@ -10,7 +10,7 @@
 
 #include "Input.h"
 
-Input inputParser();
+Input inputParser(string inputFile);
 
 
 #endif /* INPUTPARSER_HPP_ */

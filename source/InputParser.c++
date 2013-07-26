@@ -6,8 +6,10 @@
  */
 
 #include "Input.h"
+#include "yaml-cpp/yaml.h"
+#include <fstream>
 
-Input inputParser()
+Input inputParser(string inputFile)
 {
 
 	Input input;
