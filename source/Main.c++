@@ -31,8 +31,8 @@ int main(int argc, char *argv[])
 
 	try {
 
-		po::options_description desc("Options");
-		desc.add_options()
+		po::options_description generic("Options");
+		generic.add_options()
 				("help,h", "Produce this message")
 				("version,v", "Display version information");
 
@@ -40,12 +40,15 @@ int main(int argc, char *argv[])
         hidden.add_options()
             ("input-file", po::value<string>(), "input file");
 
+        po::options_description cmdLine;
+        cmdLine.add(generic).add(hidden);
+
 		po::positional_options_description p;
-		p.add("input-file", 1);
+		p.add("input-file", -1);
 
 		po::variables_map vm;
 		po::store(po::command_line_parser(argc, argv).
-				options(desc).positional(p).run(), vm);
+				options(cmdLine).positional(p).run(), vm);
 		po::notify(vm);
 
 		if (vm.count("help"))
@@ -54,7 +57,7 @@ int main(int argc, char *argv[])
 			cout << copyrightInfo << "\n";
 			cout << "Usage: kiva [Input File]\n"
 					"   Input format: yaml\n";
-			cout << desc;
+			cout << generic;
 			return 0;
 		}
 		if (vm.count("version"))
