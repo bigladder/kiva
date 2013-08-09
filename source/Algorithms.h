@@ -16,4 +16,10 @@ double getDOE2ConvectionCoeff(double tilt,
 
 bool isWindward(double tilt, double azimuth, double windDirection);
 
+double getIRCoeff(double eSurf,
+		          double Tsurf,
+		          double Tamb,
+		          double eSky,
+		          double tilt);
+
 #endif

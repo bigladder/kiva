@@ -153,6 +153,14 @@ public:
 	double indoorAirTemperature; // [K]
 
 	Material soil;
+	double soilAbsorptivity;  // [frac]
+	double soilEmissivity;  // [frac]
+
+	// Local wind speed characteristics
+	double vegetationHeight;  // [m]
+	double deltaLocal;  // [m]
+	double alphaLocal;  // [-]
+
 
 	// Geometry
 	double area;  // [m2] Area of foundation

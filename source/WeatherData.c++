@@ -13,6 +13,7 @@
 #include <boost/tokenizer.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
+#include <cmath>
 
 using namespace std;
 using namespace boost;
@@ -114,11 +115,15 @@ void WeatherData::importEPW(string epwFile)
 
     	if (row > 8)
     	{
-    		dryBulbTemp.push_back(double(lexical_cast<double>(columns[6])) +
-    				              273.15);  // [K]
+    		double Tdb = double(lexical_cast<double>(columns[6])) +
+		              273.15;
 
-    		dewPointTemp.push_back(double(lexical_cast<double>(columns[7])) +
-		              273.15);  // [K]
+    		dryBulbTemp.push_back(Tdb);  // [K]
+
+    		double Tdp = double(lexical_cast<double>(columns[7])) +
+		              273.15;
+
+    		dewPointTemp.push_back(Tdp);  // [K]
 
     		relativeHumidity.push_back(
     				double(lexical_cast<double>(columns[8]))/100.0);  // [frac]
@@ -141,11 +146,21 @@ void WeatherData::importEPW(string epwFile)
     		windSpeed.push_back(
     				double(lexical_cast<double>(columns[21])));  // [m/s]
 
-    		totalSkyCover.push_back(
-    				double(lexical_cast<double>(columns[22])));  // [m/s]
+    		double fc = double(lexical_cast<double>(columns[22]));
+
+    		totalSkyCover.push_back(fc);  // [tenths]
 
     		opaqueSkyCover.push_back(
-    				double(lexical_cast<double>(columns[23])));  // [m/s]
+    				double(lexical_cast<double>(columns[23])));  // [tenths]
+
+    		double eSky = 0.787 + 0.764*log(Tdp/Tdb)*
+    				(1 + 0.0224*fc + 0.0035*pow(fc,2) + 0.00028*pow(fc,3));
+
+    		skyEmissivity.push_back(eSky);  // [frac]
+
+    		double Tsky = pow(eSky,0.25)*Tdb;
+
+    		skyTemp.push_back(Tsky);
 
     	}
     	columns.clear();

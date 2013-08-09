@@ -35,11 +35,7 @@
 									<listOptionValue builtIn="false" srcPrefixMapping="" srcRootPath="" value="openblas"/>
 									<listOptionValue builtIn="false" srcPrefixMapping="" srcRootPath="" value="colamd"/>
 								</option>
-								<option id="macosx.cpp.link.option.paths.2017324705" name="Library search path (-L)" superClass="macosx.cpp.link.option.paths" valueType="libPaths">
-									<listOptionValue builtIn="false" value="/usr/local/UMFPACK/Lib"/>
-									<listOptionValue builtIn="false" value="/usr/local/AMD/Lib"/>
-									<listOptionValue builtIn="false" value="/usr/local/SuiteSparse_config"/>
-								</option>
+								<option id="macosx.cpp.link.option.paths.2017324705" name="Library search path (-L)" superClass="macosx.cpp.link.option.paths" valueType="libPaths"/>
 								<inputType id="cdt.managedbuild.tool.macosx.cpp.linker.input.1675448271" superClass="cdt.managedbuild.tool.macosx.cpp.linker.input">
 									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
 									<additionalInput kind="additionalinput" paths="$(LIBS)"/>
@@ -120,12 +116,11 @@
 									<listOptionValue builtIn="false" srcPrefixMapping="" srcRootPath="" value="suitesparseconfig"/>
 									<listOptionValue builtIn="false" srcPrefixMapping="" srcRootPath="" value="boost_program_options"/>
 									<listOptionValue builtIn="false" srcPrefixMapping="" srcRootPath="" value="yaml-cpp"/>
+									<listOptionValue builtIn="false" srcPrefixMapping="" srcRootPath="" value="cholmod"/>
+									<listOptionValue builtIn="false" srcPrefixMapping="" srcRootPath="" value="openblas"/>
+									<listOptionValue builtIn="false" srcPrefixMapping="" srcRootPath="" value="colamd"/>
 								</option>
-								<option id="macosx.cpp.link.option.paths.2076752738" name="Library search path (-L)" superClass="macosx.cpp.link.option.paths" valueType="libPaths">
-									<listOptionValue builtIn="false" value="/usr/local/UMFPACK/Lib"/>
-									<listOptionValue builtIn="false" value="/usr/local/AMD/Lib"/>
-									<listOptionValue builtIn="false" value="/usr/local/SuiteSparse_config"/>
-								</option>
+								<option id="macosx.cpp.link.option.paths.2076752738" name="Library search path (-L)" superClass="macosx.cpp.link.option.paths" valueType="libPaths"/>
 								<inputType id="cdt.managedbuild.tool.macosx.cpp.linker.input.521111172" superClass="cdt.managedbuild.tool.macosx.cpp.linker.input">
 									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
 									<additionalInput kind="additionalinput" paths="$(LIBS)"/>
@@ -182,16 +177,16 @@
 	<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
 	<storageModule moduleId="scannerConfiguration">
 		<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.macosx.exe.release.1315652371;cdt.managedbuild.config.macosx.exe.release.1315652371.;cdt.managedbuild.tool.gnu.cpp.compiler.macosx.exe.release.1506629565;cdt.managedbuild.tool.gnu.cpp.compiler.input.1423438930">
-			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-		</scannerConfigBuildInfo>
 		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.macosx.exe.release.1315652371;cdt.managedbuild.config.macosx.exe.release.1315652371.;cdt.managedbuild.tool.gnu.c.compiler.macosx.exe.release.1727747205;cdt.managedbuild.tool.gnu.c.compiler.input.772981410">
 			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
 		</scannerConfigBuildInfo>
-		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.macosx.exe.debug.1819893918;cdt.managedbuild.config.gnu.macosx.exe.debug.1819893918.;cdt.managedbuild.tool.gnu.c.compiler.macosx.exe.debug.1326247493;cdt.managedbuild.tool.gnu.c.compiler.input.984073197">
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.macosx.exe.release.1315652371;cdt.managedbuild.config.macosx.exe.release.1315652371.;cdt.managedbuild.tool.gnu.cpp.compiler.macosx.exe.release.1506629565;cdt.managedbuild.tool.gnu.cpp.compiler.input.1423438930">
 			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
 		</scannerConfigBuildInfo>
 		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.macosx.exe.debug.1819893918;cdt.managedbuild.config.gnu.macosx.exe.debug.1819893918.;cdt.managedbuild.tool.gnu.cpp.compiler.macosx.exe.debug.578525507;cdt.managedbuild.tool.gnu.cpp.compiler.input.2003978017">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.macosx.exe.debug.1819893918;cdt.managedbuild.config.gnu.macosx.exe.debug.1819893918.;cdt.managedbuild.tool.gnu.c.compiler.macosx.exe.debug.1326247493;cdt.managedbuild.tool.gnu.c.compiler.input.984073197">
 			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
 		</scannerConfigBuildInfo>
 	</storageModule>

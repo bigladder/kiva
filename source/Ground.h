@@ -12,7 +12,7 @@
 #include "Domain.h"
 #include "WeatherData.h"
 #include "Input.h"
-#include "ConvectionAlgorithms.h"
+#include "Algorithms.h"
 #include <boost/numeric/ublas/matrix.hpp>
 #include <cmath>
 #include <mgl2/mgl.h>
@@ -116,6 +116,7 @@ private:
 							  bool isExterior);
 
 	double getOutdoorTemperature();
+	double getLocalWindSpeed();
 };
 
 

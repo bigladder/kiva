@@ -44,7 +44,17 @@ Input inputParser(string inputFile)
 	}
 
 	// Foundation
+
+	// Soil
 	foundation1.soil = materials[yamlInput["Foundation"]["soil"].as<string>()];
+    foundation1.soilAbsorptivity = yamlInput["Foundation"]["soilAbsorptivity"].as<double>();
+    foundation1.soilEmissivity = yamlInput["Foundation"]["soilEmissivity"].as<double>();
+
+    // Local wind speed characteristics
+    foundation1.vegetationHeight = yamlInput["Foundation"]["vegetationHeight"].as<double>();
+    foundation1.deltaLocal = yamlInput["Foundation"]["deltaLocal"].as<double>();
+    foundation1.alphaLocal = yamlInput["Foundation"]["alphaLocal"].as<double>();
+
 
 	// Slab
 	if  (yamlInput["Foundation"]["slab"].IsDefined())

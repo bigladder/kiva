@@ -1,9 +1,10 @@
 #ifndef ConvectionAlgorithms_CPP
 #define ConvectionAlgorithms_CPP
 
-#include "ConvectionAlgorithms.h"
+#include "Algorithms.h"
 
 static const double PI = 4.0*atan(1.0);
+static const double SIGMA = 5.67*pow(10,-8);  // [W/m2-K4]
 
 double getDOE2ConvectionCoeff(double tilt,
 						  	  double azimuth,
@@ -74,6 +75,17 @@ bool isWindward(double tilt, double azimuth, double windDirection)
 		else return true;
 	}
 	else return true;
+}
+
+double getIRCoeff(double eSurf, double Tsurf, double Tamb, double eSky, double tilt)
+{
+	double Fsky = 0.5*(1.0 + cos(tilt));
+	double beta = cos(tilt/2);
+	double F = Fsky*beta*(eSky - 1.0) + 1.0;
+
+	double h = eSurf*SIGMA*(pow(Tamb,2)*pow(F,0.5)+pow(Tsurf,2))*
+			(Tamb*pow(F,0.25)+Tsurf);
+	return h;
 }
 
 #endif

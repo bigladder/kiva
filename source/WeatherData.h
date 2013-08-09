@@ -52,6 +52,8 @@ public:
 
 	HourlyData totalSkyCover;
 	HourlyData opaqueSkyCover;
+	HourlyData skyEmissivity;
+	HourlyData skyTemp;
 	//HourlyData cloudType;
 	//HourlyData snowFlag;
 	//HourlyData rainFlag;
