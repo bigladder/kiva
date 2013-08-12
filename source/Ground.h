@@ -113,7 +113,8 @@ private:
 							  double Tamb,
 							  double Vair,
 							  double roughness,
-							  bool isExterior);
+							  bool isExterior,
+							  double tilt);
 
 	double getOutdoorTemperature();
 	double getLocalWindSpeed();

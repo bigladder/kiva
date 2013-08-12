@@ -273,6 +273,7 @@ Input inputParser(string inputFile)
 	foundation1.outputAnimation.name = yamlInput["Foundation"]["outputAnimation"]["name"].as<string>();
 	foundation1.outputAnimation.frequency = hours(yamlInput["Foundation"]["outputAnimation"]["frequency"].as<long>());
 	foundation1.outputAnimation.grid = yamlInput["Foundation"]["outputAnimation"]["grid"].as<bool>();
+	foundation1.outputAnimation.size = yamlInput["Foundation"]["outputAnimation"]["size"].as<int>();
 
 	// Full Input
 	input.simulationControl = simulationControl;

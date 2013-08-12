@@ -117,6 +117,7 @@ public:
 	string name;
 	time_duration frequency;
 	bool grid;
+	int size;
 };
 
 class Block
@@ -250,6 +251,10 @@ public:
 	void setMeshData()
 	{
 		radius = 2.0*area/perimeter;
+
+		// points are the coordinate values of the interval boundaries.
+		// Intervals explain how each interval between a set of points is
+		// discretized.
 
 		// Meshing info
 		Interval near;
@@ -508,7 +513,7 @@ public:
 				rRange.push_back(rWallExt);
 
 			// Slab
-			else if (fabs(zSlab) > 0.000001)
+			if (fabs(zSlab) > 0.000001)
 				zRange.push_back(zSlab);
 		}
 

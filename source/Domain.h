@@ -42,7 +42,7 @@ public:
 			INTERIOR_WALL,
 			INTERIOR_INSULATION_EDGE, // The bottom edge of partial wall insulation
 			WALL_TOP,
-			AXIS,
+			AXIS,  // TODO: Change to SYMMETRY
 			FAR_FIELD,
 			DEEP_GROUND,
 			NORMAL,
@@ -67,6 +67,7 @@ public:
 		double getKRM(size_t i,size_t j);
 		double getKZP(size_t i,size_t j);
 		double getKZM(size_t i,size_t j);
+		void printCellTypes();
 
 };
 

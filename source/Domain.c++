@@ -2,6 +2,8 @@
 #define Domain_CPP
 
 #include "Domain.h"
+#include <fstream>
+
 
 Domain::Domain()
 {
@@ -110,8 +112,8 @@ Domain::Domain(Mesher &mesher, Foundation &foundation, double &timestep)  :
 			// Top of Wall
 			if (fabs(mesher.yCenters[j] - zWallTop) < 0.00000001)
 			{
-				if (mesher.xCenters[i] - rIntIns > 0.00000001 &&
-					mesher.xCenters[i] - rExtIns < -0.00000001)
+				if (mesher.xCenters[i] - rIntIns > -0.00000001 &&
+					mesher.xCenters[i] - rExtIns < 0.00000001)
 				{
 					cellType(i, j) = WALL_TOP;
 				}
@@ -129,7 +131,8 @@ Domain::Domain(Mesher &mesher, Foundation &foundation, double &timestep)  :
 			// Exterior Wall
 			if (fabs(mesher.xCenters[i] - rExtIns) < 0.00000001)
 			{
-				if (mesher.yCenters[j] - zGrade > 0.00000001)
+				if (mesher.yCenters[j] - zGrade > 0.00000001 &&
+					mesher.yCenters[j] - zWallTop < -0.00000001)
 				{
 					cellType(i, j) = EXTERIOR_WALL;
 				}
@@ -161,7 +164,8 @@ Domain::Domain(Mesher &mesher, Foundation &foundation, double &timestep)  :
 			// Interior Wall
 			if (fabs(mesher.xCenters[i] - rIntIns) < 0.00000001)
 			{
-				if (mesher.yCenters[j] - zSlab > 0.00000001)
+				if (mesher.yCenters[j] - zSlab > 0.00000001 &&
+					mesher.yCenters[j] - zWallTop < -0.00000001)
 				{
 					cellType(i, j) = INTERIOR_WALL;
 				}
@@ -378,6 +382,38 @@ double Domain::getKZM(size_t i, size_t j)
 		return 1/(mesher.yDeltas[j]/(2*getDZM(j)*k(i,j)) +
 				  mesher.yDeltas[j - 1]/(2*getDZM(j)*k(i,j - 1)));
 	}
+}
+
+void Domain::printCellTypes()
+{
+	ofstream output;
+	output.open("Cells.csv");
+
+	for (size_t i = 0; i < nR; i++)
+	{
+
+		output << ", " << i;
+
+	}
+
+	output << endl;
+
+	for (size_t j = nZ - 1; j >= 0 && j < nZ; j--)
+	{
+
+		output << j;
+
+		for (size_t i = 0; i < nR; i++)
+		{
+
+			output << ", " << cellType(i,j);
+
+		}
+
+		output << endl;
+	}
+	output.close();
+
 }
 
 #endif
