@@ -1,16 +1,20 @@
-// Mesher.cpp
-//
-// A simple mesher on a 1d domain. We divide
-// an interval into J+1 mesh points, J-1 of which
-// are internal mesh points.
-//
-// DD 2005-10-1 Mesh can be in any time interval [t1, T]
-// DD 2005-12-1 hpp and cpp versions
-// DD 2005-12-1 mesh in T direction
-// DD 2010-2-19 Vector<double, long> Mesher::xarr(int J, int start), now start value possible
-//
-// (C) Datasim Education BV 2006-2010
-//
+/* Mesher.c++ is part of Kiva (Written by Neal Kruis)
+ * Copyright (C) 2012-2013 Big Ladder Software <info@bigladdersoftware.com>
+ * All rights reserved.
+ *
+ * Kiva is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Kiva is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Kiva.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #ifndef Mesher_CPP
 #define Mesher_CPP
