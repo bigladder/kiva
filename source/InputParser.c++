@@ -236,6 +236,14 @@ Input inputParser(string inputFile)
 	{
 		if (yamlInput["Foundation"]["initializationMethod"].as<string>() == "KUSUDA")
 			foundation1.initializationMethod = Foundation::IM_KUSUDA;
+		else if (yamlInput["Foundation"]["initializationMethod"].as<string>() == " IMPLICIT-ACCEL")
+		{
+			foundation1.initializationMethod = Foundation::IM_IMPLICIT_ACCELERATION;
+			foundation1.implicitScalingTimestep = yamlInput["Foundation"]["implicitScalingTimestep"].as<long>();
+			foundation1.implicitScalingPeriods = yamlInput["Foundation"]["implicitScalingPeriods"].as<long>();
+		}
+		else if (yamlInput["Foundation"]["initializationMethod"].as<string>() == "STEADY-STATE")
+			foundation1.initializationMethod = Foundation::IM_STEADY_STATE;
 		else if (yamlInput["Foundation"]["initializationMethod"].as<string>() == "CONSTANT")
 		{
 			foundation1.initializationMethod = Foundation::IM_CONSTANT_TEMPERATURE;

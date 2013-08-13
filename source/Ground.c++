@@ -67,7 +67,7 @@ void Ground::buildDomain()
 	nR = domain.mesher.xCenters.size();
 	nZ = domain.mesher.yCenters.size();
 
-	cout << "Number of Cells: " << nR << " x " << nZ << " = " << nR*nZ << endl;
+	//cout << "Number of Cells: " << nR << " x " << nZ << " = " << nR*nZ << endl;
 	domain.printCellTypes();
 }
 
@@ -91,25 +91,60 @@ void Ground::initializeConditions()
 	TOld = blas::matrix<double>(nR, nZ);
 	QSlab = blas::vector<double>(domain.slabImax - domain.slabImin + 1);
 
-	for (size_t j = 0; j < nZ; ++j)
+	if (foundation.initializationMethod == Foundation::IM_STEADY_STATE)
+		calculateSteadyState();
+
+	else if (foundation.initializationMethod == Foundation::IM_IMPLICIT_ACCELERATION)
 	{
-		for (size_t i = 0; i < nR; ++i)
+		Foundation initialFoundation = foundation;
+		initialFoundation.initializationMethod = Foundation::IM_STEADY_STATE;
+		initialFoundation.numericalScheme = Foundation::NS_IMPLICIT;
+		initialFoundation.outputAnimation.name = "";
+		SimulationControl initialSimControl;
+		initialSimControl.timestep = hours(foundation.implicitScalingTimestep);
+		initialSimControl.endDate = simulationControl.startDate;
+		initialSimControl.startDate = initialSimControl.endDate - days(foundation.implicitScalingTimestep*foundation.implicitScalingPeriods/24);
+
+		ptime simEnd(initialSimControl.endDate);
+		ptime simStart(initialSimControl.startDate);
+		time_duration simDuration =  simEnd  - simStart;
+
+		double tstart = -simulationControl.timestep.total_seconds(); // [s] Simulation start time
+		double tend = simDuration.total_seconds(); // [s] Simulation end time
+		double initialTimestep = initialSimControl.timestep.total_seconds();
+
+		Ground initialGround(weatherData,initialFoundation,initialSimControl);
+
+		for (double t = tstart; t < tend; t = t + initialTimestep)
 		{
-			switch (domain.cellType(i, j))
+			initialGround.calculate(t);
+		}
+
+		TOld = initialGround.TNew;
+
+	}
+	else
+	{
+		for (size_t j = 0; j < nZ; ++j)
+		{
+			for (size_t i = 0; i < nR; ++i)
 			{
-			case Domain::INTERIOR_AIR:
-				TOld(i,j) = foundation.indoorAirTemperature;
-				break;
-			case Domain::EXTERIOR_AIR:
-				TOld(i,j) = getOutdoorTemperature();
-				break;
-			case Domain::DEEP_GROUND:
-				TOld(i,j) = getDeepGroundTemperature();
-				break;
-			default:
-				TOld(i,j)= getInitialTemperature(domain.mesher.xCenters[i],
-										        domain.mesher.yCenters[j]);
-				break;
+				switch (domain.cellType(i, j))
+				{
+				case Domain::INTERIOR_AIR:
+					TOld(i,j) = foundation.indoorAirTemperature;
+					break;
+				case Domain::EXTERIOR_AIR:
+					TOld(i,j) = getOutdoorTemperature();
+					break;
+				case Domain::DEEP_GROUND:
+					TOld(i,j) = getDeepGroundTemperature();
+					break;
+				default:
+					TOld(i,j)= getInitialTemperature(domain.mesher.xCenters[i],
+													domain.mesher.yCenters[j]);
+					break;
+				}
 			}
 		}
 	}

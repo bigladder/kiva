@@ -218,10 +218,14 @@ public:
 	GeometryTransform geometryTransform;
 
 	double initialTemperature;
+	long implicitScalingTimestep;
+	long implicitScalingPeriods;
 	enum InitializationMethod
 	{
 		IM_KUSUDA,
-		IM_CONSTANT_TEMPERATURE
+		IM_CONSTANT_TEMPERATURE,
+		IM_IMPLICIT_ACCELERATION,
+		IM_STEADY_STATE
 	};
 
 	InitializationMethod initializationMethod;

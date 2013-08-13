@@ -59,7 +59,6 @@ private:
 	blas::matrix<double> UOld; // ADE upper sweep, n
 	blas::matrix<double> V; // ADE lower sweep, n+1
 	blas::matrix<double> VOld; // ADE lower sweep, n
-	blas::matrix<double> TNew; // solution, n+1
 	blas::matrix<double> TOld; // solution, n
 
 	blas::vector<double> QSlab; // Heat Fluxes through the slab
@@ -77,6 +76,7 @@ private:
 public:
 
 	double QSlabTotal;
+	blas::matrix<double> TNew; // solution, n+1
 
 	// Constructor
 	Ground(WeatherData &weatherData, Foundation &foundation, SimulationControl &simulationControl);
