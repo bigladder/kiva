@@ -89,7 +89,8 @@ int main(int argc, char *argv[])
 			WeatherData weather(input.simulationControl.weatherFile);
 
 			// simulation
-			ptime simStart(input.simulationControl.startDate);
+			input.simulationControl.setStartTime();
+			ptime simStart = input.simulationControl.startTime;
 			ptime simEnd(input.simulationControl.endDate + days(1));
 			time_duration simDuration =  simEnd - simStart;
 

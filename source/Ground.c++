@@ -103,19 +103,22 @@ void Ground::initializeConditions()
 		SimulationControl initialSimControl;
 		initialSimControl.timestep = hours(foundation.implicitScalingTimestep);
 		initialSimControl.endDate = simulationControl.startDate;
-		initialSimControl.startDate = initialSimControl.endDate - days(foundation.implicitScalingTimestep*foundation.implicitScalingPeriods/24);
+		ptime endTime(initialSimControl.endDate);
+		endTime = endTime - simulationControl.timestep;
+		initialSimControl.startTime = endTime - hours(foundation.implicitScalingTimestep*foundation.implicitScalingPeriods);
+		initialSimControl.startDate = initialSimControl.startTime.date();
 
-		ptime simEnd(initialSimControl.endDate);
-		ptime simStart(initialSimControl.startDate);
+		ptime simEnd(endTime);
+		ptime simStart(initialSimControl.startTime);
 		time_duration simDuration =  simEnd  - simStart;
 
-		double tstart = -simulationControl.timestep.total_seconds(); // [s] Simulation start time
+		double tstart = 0.0; // [s] Simulation start time
 		double tend = simDuration.total_seconds(); // [s] Simulation end time
 		double initialTimestep = initialSimControl.timestep.total_seconds();
 
 		Ground initialGround(weatherData,initialFoundation,initialSimControl);
 
-		for (double t = tstart; t < tend; t = t + initialTimestep)
+		for (double t = tstart; t <= tend; t = t + initialTimestep)
 		{
 			initialGround.calculate(t);
 		}
@@ -1026,6 +1029,8 @@ void Ground::calculate(double t)
 {
 	tNow = t;
 
+	cout << getSimTime(tNow) << endl;
+
 	// Calculate Temperatures
 	if (foundation.numericalScheme == Foundation::NS_ADE)
 		calculateADE();
@@ -1196,7 +1201,7 @@ void Ground::plot()
 
 ptime Ground::getSimTime(double t)
 {
-	ptime tp(simulationControl.startDate,seconds(t));
+	ptime tp = simulationControl.startTime + seconds(t);
 
 	return tp;
 }

@@ -236,7 +236,7 @@ Input inputParser(string inputFile)
 	{
 		if (yamlInput["Foundation"]["initializationMethod"].as<string>() == "KUSUDA")
 			foundation1.initializationMethod = Foundation::IM_KUSUDA;
-		else if (yamlInput["Foundation"]["initializationMethod"].as<string>() == " IMPLICIT-ACCEL")
+		else if (yamlInput["Foundation"]["initializationMethod"].as<string>() == "IMPLICIT-ACCEL")
 		{
 			foundation1.initializationMethod = Foundation::IM_IMPLICIT_ACCELERATION;
 			foundation1.implicitScalingTimestep = yamlInput["Foundation"]["implicitScalingTimestep"].as<long>();

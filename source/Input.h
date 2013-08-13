@@ -35,7 +35,13 @@ public:
 	date endDate;
 	time_duration timestep;
 	string weatherFile;
+	ptime startTime;
 
+	void setStartTime()
+	{
+		ptime st(startDate,hours(0));
+		startTime = st;
+	}
 };
 
 class Material
