@@ -1029,8 +1029,6 @@ void Ground::calculate(double t)
 {
 	tNow = t;
 
-	cout << getSimTime(tNow) << endl;
-
 	// Calculate Temperatures
 	if (foundation.numericalScheme == Foundation::NS_ADE)
 		calculateADE();
