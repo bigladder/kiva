@@ -82,6 +82,9 @@ Input inputParser(string inputFile)
 			foundation1.slab.layers.push_back(tempLayer);
 
 		}
+
+		foundation1.slab.emissivity = yamlInput["Foundation"]["slab"]["emissivity"].as<double>();
+
 	}
 	else
 	{
@@ -106,6 +109,9 @@ Input inputParser(string inputFile)
 
 		foundation1.wall.depth = yamlInput["Foundation"]["wall"]["depth"].as<double>();
 		foundation1.wall.height = yamlInput["Foundation"]["wall"]["height"].as<double>();
+		foundation1.wall.interiorEmissivity = yamlInput["Foundation"]["wall"]["interiorEmissivity"].as<double>();
+		foundation1.wall.exteriorEmissivity = yamlInput["Foundation"]["wall"]["exteriorEmissivity"].as<double>();
+		foundation1.wall.exteriorAbsorptivity = yamlInput["Foundation"]["wall"]["exteriorAbsorptivity"].as<double>();
 	}
 	else
 	{
@@ -239,8 +245,8 @@ Input inputParser(string inputFile)
 		else if (yamlInput["Foundation"]["initializationMethod"].as<string>() == "IMPLICIT-ACCEL")
 		{
 			foundation1.initializationMethod = Foundation::IM_IMPLICIT_ACCELERATION;
-			foundation1.implicitScalingTimestep = yamlInput["Foundation"]["implicitScalingTimestep"].as<long>();
-			foundation1.implicitScalingPeriods = yamlInput["Foundation"]["implicitScalingPeriods"].as<long>();
+			foundation1.implicitAccelTimestep = yamlInput["Foundation"]["implicitAccelTimestep"].as<long>();
+			foundation1.implicitAccelPeriods = yamlInput["Foundation"]["implicitAccelPeriods"].as<long>();
 		}
 		else if (yamlInput["Foundation"]["initializationMethod"].as<string>() == "STEADY-STATE")
 			foundation1.initializationMethod = Foundation::IM_STEADY_STATE;
@@ -285,7 +291,6 @@ Input inputParser(string inputFile)
 	{
 		foundation1.outdoorTemperatureMethod = Foundation::OTM_WEATHER_FILE;
 	}
-
 
 	// Output
 

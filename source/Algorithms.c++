@@ -95,14 +95,28 @@ bool isWindward(double tilt, double azimuth, double windDirection)
 	else return true;
 }
 
-double getIRCoeff(double eSurf, double Tsurf, double Tamb, double eSky, double tilt)
+double getExteriorIRCoeff(double eSurf, double Tsurf, double Tamb, double eSky, double tilt)
+{
+
+	double F = getEffectiveExteriorViewFactor(eSky, tilt);
+	double h = eSurf*SIGMA*(pow(Tamb,2)*pow(F,0.5)+pow(Tsurf,2))*
+			(Tamb*pow(F,0.25)+Tsurf);
+	return h;
+}
+
+double getEffectiveExteriorViewFactor(double eSky, double tilt)
 {
 	double Fsky = 0.5*(1.0 + cos(tilt));
 	double beta = cos(tilt/2);
 	double F = Fsky*beta*(eSky - 1.0) + 1.0;
 
-	double h = eSurf*SIGMA*(pow(Tamb,2)*pow(F,0.5)+pow(Tsurf,2))*
-			(Tamb*pow(F,0.25)+Tsurf);
+	return F;
+
+}
+
+double getSimpleInteriorIRCoeff(double eSurf, double Tsurf, double Tamb)
+{
+	double h = eSurf*SIGMA*(pow(Tamb,2)+pow(Tsurf,2))*(Tamb + Tsurf);
 	return h;
 }
 

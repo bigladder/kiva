@@ -85,6 +85,9 @@ class Wall
 {
 public:
 
+	double interiorEmissivity;
+	double exteriorEmissivity;
+	double exteriorAbsorptivity;
 	double depth;  // [m] below grade depth
 	double height;  // [m] total height
 	vector <Layer> layers;
@@ -103,6 +106,7 @@ class Slab
 {
 public:
 
+	double emissivity;
 	vector <Layer> layers;
 
 	double totalWidth()
@@ -224,8 +228,8 @@ public:
 	GeometryTransform geometryTransform;
 
 	double initialTemperature;
-	long implicitScalingTimestep;
-	long implicitScalingPeriods;
+	long implicitAccelTimestep;
+	long implicitAccelPeriods;
 	enum InitializationMethod
 	{
 		IM_KUSUDA,

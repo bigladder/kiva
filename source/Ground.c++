@@ -101,11 +101,11 @@ void Ground::initializeConditions()
 		initialFoundation.numericalScheme = Foundation::NS_IMPLICIT;
 		initialFoundation.outputAnimation.name = "";
 		SimulationControl initialSimControl;
-		initialSimControl.timestep = hours(foundation.implicitScalingTimestep);
+		initialSimControl.timestep = hours(foundation.implicitAccelTimestep);
 		initialSimControl.endDate = simulationControl.startDate;
 		ptime endTime(initialSimControl.endDate);
 		endTime = endTime - simulationControl.timestep;
-		initialSimControl.startTime = endTime - hours(foundation.implicitScalingTimestep*foundation.implicitScalingPeriods);
+		initialSimControl.startTime = endTime - hours(foundation.implicitAccelTimestep*foundation.implicitAccelPeriods);
 		initialSimControl.startDate = initialSimControl.startTime.date();
 
 		ptime simEnd(endTime);
@@ -295,21 +295,25 @@ void Ground::calculateADEUpwardSweep()
 			case Domain::INTERIOR_WALL:
 				{
 				double Tair = foundation.indoorAirTemperature;
-				double h = getConvectionCoeff(TOld(i,j),Tair,0.0,1.0,false,PI/2.0);
+				double hc = getConvectionCoeff(TOld(i,j),Tair,0.0,1.0,false,PI/2.0);
+				double hr = getSimpleInteriorIRCoeff(foundation.wall.interiorEmissivity,
+						                             TOld(i,j),Tair);
 				double q = 0;
 
 				U(i,j) = (domain.getKRP(i,j)*U(i+1,j)/domain.getDRP(i) +
-						  h*Tair + q)/(domain.getKRP(i,j)/domain.getDRP(i) + h);
+						 (hc + hr)*Tair + q)/(domain.getKRP(i,j)/domain.getDRP(i) + (hc + hr));
 				}
 				break;
 			case Domain::INTERIOR_SLAB:
 				{
 				double Tair = foundation.indoorAirTemperature;
-				double h = getConvectionCoeff(TOld(i,j),Tair,0.0,1.0,false,0.0);
+				double hc = getConvectionCoeff(TOld(i,j),Tair,0.0,1.0,false,0.0);
+				double hr = getSimpleInteriorIRCoeff(foundation.wall.interiorEmissivity,
+						                             TOld(i,j),Tair);
 				double q = 0;
 
 				U(i,j) = (domain.getKZM(i,j)*U(i,j-1)/domain.getDZM(j) +
-						  h*Tair + q)/(domain.getKZM(i,j)/domain.getDZM(j) + h);
+						 (hc + hr)*Tair + q)/(domain.getKZM(i,j)/domain.getDZM(j) + (hc + hr));
 				}
 				break;
 			case Domain::EXTERIOR_AIR:
@@ -320,12 +324,13 @@ void Ground::calculateADEUpwardSweep()
 				double Tair = getOutdoorTemperature();
 				double v = getLocalWindSpeed();
 				double eSky = weatherData.skyEmissivity.getValue(getSimTime(tNow));
+				double F = getEffectiveExteriorViewFactor(eSky,0.0);
 				double hc = getConvectionCoeff(TOld(i,j),Tair,v,1.0,true,0.0);
-				double hr = getIRCoeff(foundation.soilEmissivity,TOld(i,j),Tair,eSky,0.0);
+				double hr = getExteriorIRCoeff(foundation.soilEmissivity,TOld(i,j),Tair,eSky,0.0);
 				double q = foundation.soilAbsorptivity*weatherData.globalHorizontalSolar.getValue(getSimTime(tNow));
 
 				U(i,j) = (domain.getKZM(i,j)*U(i,j-1)/domain.getDZM(j) +
-						  (hc + hr*pow(eSky,0.25))*Tair + q)/(domain.getKZM(i,j)/domain.getDZM(j) + (hc + hr));
+						  (hc + hr*pow(F,0.25))*Tair + q)/(domain.getKZM(i,j)/domain.getDZM(j) + (hc + hr));
 				}
 				break;
 			case Domain::EXTERIOR_WALL:
@@ -333,12 +338,13 @@ void Ground::calculateADEUpwardSweep()
 				double Tair = getOutdoorTemperature();
 				double v = getLocalWindSpeed();
 				double eSky = weatherData.skyEmissivity.getValue(getSimTime(tNow));
+				double F = getEffectiveExteriorViewFactor(eSky,PI/2.0);
 				double hc = getConvectionCoeff(TOld(i,j),Tair,v,1.0,true,PI/2.0);
-				double hr = getIRCoeff(foundation.soilEmissivity,TOld(i,j),Tair,eSky,PI/2.0);
-				double q = foundation.soilAbsorptivity*weatherData.globalHorizontalSolar.getValue(getSimTime(tNow));
+				double hr = getExteriorIRCoeff(foundation.wall.exteriorEmissivity,TOld(i,j),Tair,eSky,PI/2.0);
+				double q = foundation.wall.exteriorAbsorptivity*weatherData.globalHorizontalSolar.getValue(getSimTime(tNow));
 
 				U(i,j) = (domain.getKRM(i,j)*U(i-1,j)/domain.getDRM(i) +
-						  (hc + hr*pow(eSky,0.25))*Tair + q)/(domain.getKRM(i,j)/domain.getDRM(i) + (hc + hr));
+						  (hc + hr*pow(F,0.25))*Tair + q)/(domain.getKRM(i,j)/domain.getDRM(i) + (hc + hr));
 				}
 				break;
 			case Domain::DEEP_GROUND:
@@ -398,21 +404,25 @@ void Ground::calculateADEDownwardSweep()
 			case Domain::INTERIOR_WALL:
 				{
 				double Tair = foundation.indoorAirTemperature;
-				double h = getConvectionCoeff(TOld(i,j),Tair,0.0,1.0,false,PI/2.0);
+				double hc = getConvectionCoeff(TOld(i,j),Tair,0.0,1.0,false,PI/2.0);
+				double hr = getSimpleInteriorIRCoeff(foundation.wall.interiorEmissivity,
+						                             TOld(i,j),Tair);
 				double q = 0;
 
 				V(i,j) = (domain.getKRP(i,j)*VOld(i+1,j)/domain.getDRP(i) +
-						  h*Tair + q)/(domain.getKRP(i,j)/domain.getDRP(i) + h);
+						  (hc + hr)*Tair + q)/(domain.getKRP(i,j)/domain.getDRP(i) + (hc + hr));
 				}
 				break;
 			case Domain::INTERIOR_SLAB:
 				{
 				double Tair = foundation.indoorAirTemperature;
-				double h = getConvectionCoeff(TOld(i,j),Tair,0.0,1.0,false,0.0);
+				double hc = getConvectionCoeff(TOld(i,j),Tair,0.0,1.0,false,0.0);
+				double hr = getSimpleInteriorIRCoeff(foundation.wall.interiorEmissivity,
+						                             TOld(i,j),Tair);
 				double q = 0;
 
 				V(i,j) = (domain.getKZM(i,j)*VOld(i,j-1)/domain.getDZM(j) +
-						  h*Tair + q)/(domain.getKZM(i,j)/domain.getDZM(j) + h);
+						  (hc + hr)*Tair + q)/(domain.getKZM(i,j)/domain.getDZM(j) + (hc + hr));
 				}
 				break;
 			case Domain::EXTERIOR_AIR:
@@ -423,12 +433,13 @@ void Ground::calculateADEDownwardSweep()
 				double Tair = getOutdoorTemperature();
 				double v = getLocalWindSpeed();
 				double eSky = weatherData.skyEmissivity.getValue(getSimTime(tNow));
+				double F = getEffectiveExteriorViewFactor(eSky,0.0);
 				double hc = getConvectionCoeff(TOld(i,j),Tair,v,1.0,true,0.0);
-				double hr = getIRCoeff(foundation.soilEmissivity,TOld(i,j),Tair,eSky,0.0);
+				double hr = getExteriorIRCoeff(foundation.soilEmissivity,TOld(i,j),Tair,eSky,0.0);
 				double q = foundation.soilAbsorptivity*weatherData.globalHorizontalSolar.getValue(getSimTime(tNow));
 
 				V(i,j) = (domain.getKZM(i,j)*VOld(i,j-1)/domain.getDZM(j) +
-						(hc + hr*pow(eSky,0.25))*Tair + q)/(domain.getKZM(i,j)/domain.getDZM(j) + (hc + hr));
+						(hc + hr*pow(F,0.25))*Tair + q)/(domain.getKZM(i,j)/domain.getDZM(j) + (hc + hr));
 				}
 				break;
 			case Domain::EXTERIOR_WALL:
@@ -436,12 +447,13 @@ void Ground::calculateADEDownwardSweep()
 				double Tair = getOutdoorTemperature();
 				double v = getLocalWindSpeed();
 				double eSky = weatherData.skyEmissivity.getValue(getSimTime(tNow));
+				double F = getEffectiveExteriorViewFactor(eSky,PI/2.0);
 				double hc = getConvectionCoeff(TOld(i,j),Tair,v,1.0,true,PI/2.0);
-				double hr = getIRCoeff(foundation.soilEmissivity,TOld(i,j),Tair,eSky,PI/2.0);
-				double q = foundation.soilAbsorptivity*weatherData.globalHorizontalSolar.getValue(getSimTime(tNow));
+				double hr = getExteriorIRCoeff(foundation.wall.exteriorEmissivity,TOld(i,j),Tair,eSky,PI/2.0);
+				double q = foundation.wall.exteriorAbsorptivity*weatherData.globalHorizontalSolar.getValue(getSimTime(tNow));
 
 				V(i,j) = (domain.getKRM(i,j)*VOld(i-1,j)/domain.getDRM(i) +
-						(hc + hr*pow(eSky,0.25))*Tair + q)/(domain.getKRM(i,j)/domain.getDRM(i) + (hc + hr));
+						(hc + hr*pow(F,0.25))*Tair + q)/(domain.getKRM(i,j)/domain.getDRM(i) + (hc + hr));
 				}
 				break;
 			case Domain::DEEP_GROUND:
@@ -497,21 +509,25 @@ void Ground::calculateExplicit()
 			case Domain::INTERIOR_SLAB:
 				{
 				double Tair = foundation.indoorAirTemperature;
-				double h = getConvectionCoeff(TOld(i,j),Tair,0.0,1.0,false,0.0);
+				double hc = getConvectionCoeff(TOld(i,j),Tair,0.0,1.0,false,0.0);
+				double hr = getSimpleInteriorIRCoeff(foundation.wall.interiorEmissivity,
+						                             TOld(i,j),Tair);
 				double q = 0;
 
 				TNew(i,j) = (domain.getKZM(i,j)*TOld(i,j-1)/domain.getDZM(j) +
-						  h*Tair + q)/(domain.getKZM(i,j)/domain.getDZM(j) + h);
+						  (hc + hr)*Tair + q)/(domain.getKZM(i,j)/domain.getDZM(j) + (hc + hr));
 				}
 				break;
 			case Domain::INTERIOR_WALL:
 				{
 				double Tair = foundation.indoorAirTemperature;
-				double h = getConvectionCoeff(TOld(i,j),Tair,0.0,1.0,false,PI/2.0);
+				double hc = getConvectionCoeff(TOld(i,j),Tair,0.0,1.0,false,PI/2.0);
+				double hr = getSimpleInteriorIRCoeff(foundation.wall.interiorEmissivity,
+						                             TOld(i,j),Tair);
 				double q = 0;
 
 				TNew(i,j) = (domain.getKRP(i,j)*TOld(i+1,j)/domain.getDRP(i) +
-						  h*Tair + q)/(domain.getKRP(i,j)/domain.getDRP(i) + h);
+						  (hc + hr)*Tair + q)/(domain.getKRP(i,j)/domain.getDRP(i) + (hc + hr));
 				}
 				break;
 			case Domain::EXTERIOR_AIR:
@@ -522,12 +538,13 @@ void Ground::calculateExplicit()
 				double Tair = getOutdoorTemperature();
 				double v = getLocalWindSpeed();
 				double eSky = weatherData.skyEmissivity.getValue(getSimTime(tNow));
+				double F = getEffectiveExteriorViewFactor(eSky,0.0);
 				double hc = getConvectionCoeff(TOld(i,j),Tair,v,1.0,true,0.0);
-				double hr = getIRCoeff(foundation.soilEmissivity,TOld(i,j),Tair,eSky,0.0);
+				double hr = getExteriorIRCoeff(foundation.soilEmissivity,TOld(i,j),Tair,eSky,0.0);
 				double q = foundation.soilAbsorptivity*weatherData.globalHorizontalSolar.getValue(getSimTime(tNow));
 
 				TNew(i,j) = (domain.getKZM(i,j)*TOld(i,j-1)/domain.getDZM(j) +
-						(hc + hr*pow(eSky,0.25))*Tair + q)/(domain.getKZM(i,j)/domain.getDZM(j) + (hc + hr));
+						(hc + hr*pow(F,0.25))*Tair + q)/(domain.getKZM(i,j)/domain.getDZM(j) + (hc + hr));
 				}
 				break;
 			case Domain::EXTERIOR_WALL:
@@ -535,12 +552,13 @@ void Ground::calculateExplicit()
 				double Tair = getOutdoorTemperature();
 				double v = getLocalWindSpeed();
 				double eSky = weatherData.skyEmissivity.getValue(getSimTime(tNow));
+				double F = getEffectiveExteriorViewFactor(eSky,PI/2.0);
 				double hc = getConvectionCoeff(TOld(i,j),Tair,v,1.0,true,PI/2.0);
-				double hr = getIRCoeff(foundation.soilEmissivity,TOld(i,j),Tair,eSky,PI/2.0);
-				double q = foundation.soilAbsorptivity*weatherData.globalHorizontalSolar.getValue(getSimTime(tNow));
+				double hr = getExteriorIRCoeff(foundation.wall.exteriorEmissivity,TOld(i,j),Tair,eSky,PI/2.0);
+				double q = foundation.wall.exteriorAbsorptivity*weatherData.globalHorizontalSolar.getValue(getSimTime(tNow));
 
 				TNew(i,j) = (domain.getKRM(i,j)*TOld(i-1,j)/domain.getDRM(i) +
-						(hc + hr*pow(eSky,0.25))*Tair + q)/(domain.getKRM(i,j)/domain.getDRM(i) + (hc + hr));
+						(hc + hr*pow(F,0.25))*Tair + q)/(domain.getKRM(i,j)/domain.getDRM(i) + (hc + hr));
 				}
 				break;
 			case Domain::DEEP_GROUND:
@@ -622,27 +640,30 @@ void Ground::calculateImplicit()
 				break;
 			case Domain::INTERIOR_SLAB:
 				{
-				// Apply convection
 				double Tair = foundation.indoorAirTemperature;
-				double h = getConvectionCoeff(TOld(i,j),Tair,0.0,1.0,false,0.0);
+				double hc = getConvectionCoeff(TOld(i,j),Tair,0.0,1.0,false,0.0);
+				double hr = getSimpleInteriorIRCoeff(foundation.wall.interiorEmissivity,
+						                             TOld(i,j),Tair);
 				double q = 0;
 
-				Amat(i + nR*j, i + nR*j) = domain.getKZM(i,j)/domain.getDZM(j) + h;
+				Amat(i + nR*j, i + nR*j) = domain.getKZM(i,j)/domain.getDZM(j) + (hc + hr);
 				Amat(i + nR*j, i + nR*(j-1)) = -domain.getKZM(i,j)/domain.getDZM(j);
 
-				b(i + nR*j) = h*Tair + q;
+				b(i + nR*j) = (hc + hr)*Tair + q;
 				}
 				break;
 			case Domain::INTERIOR_WALL:
 				{
 				double Tair = foundation.indoorAirTemperature;
-				double h = getConvectionCoeff(TOld(i,j),Tair,0.0,1.0,false,PI/2.0);
+				double hc = getConvectionCoeff(TOld(i,j),Tair,0.0,1.0,false,PI/2.0);
+				double hr = getSimpleInteriorIRCoeff(foundation.wall.interiorEmissivity,
+						                             TOld(i,j),Tair);
 				double q = 0;
 
-				Amat(i + nR*j, i + nR*j) = domain.getKRP(i,j)/domain.getDRP(i) + h;
+				Amat(i + nR*j, i + nR*j) = domain.getKRP(i,j)/domain.getDRP(i) + (hc + hr);
 				Amat(i + nR*j, (i+1) + nR*j) = -domain.getKRP(i,j)/domain.getDRP(i);
 
-				b(i + nR*j) = h*Tair + q;
+				b(i + nR*j) = (hc + hr)*Tair + q;
 				}
 				break;
 			case Domain::EXTERIOR_AIR:
@@ -656,14 +677,15 @@ void Ground::calculateImplicit()
 				double Tair = getOutdoorTemperature();
 				double v = getLocalWindSpeed();
 				double eSky = weatherData.skyEmissivity.getValue(getSimTime(tNow));
+				double F = getEffectiveExteriorViewFactor(eSky,0.0);
 				double hc = getConvectionCoeff(TOld(i,j),Tair,v,1.0,true,0.0);
-				double hr = getIRCoeff(foundation.soilEmissivity,TOld(i,j),Tair,eSky,0.0);
+				double hr = getExteriorIRCoeff(foundation.soilEmissivity,TOld(i,j),Tair,eSky,0.0);
 				double q = foundation.soilAbsorptivity*weatherData.globalHorizontalSolar.getValue(getSimTime(tNow));
 
 				Amat(i + nR*j, i + nR*j) = domain.getKZM(i,j)/domain.getDZM(j) + (hc + hr);
 				Amat(i + nR*j, i + nR*(j-1)) = -domain.getKZM(i,j)/domain.getDZM(j);
 
-				b(i + nR*j) = (hc + hr*pow(eSky,0.25))*Tair + q;
+				b(i + nR*j) = (hc + hr*pow(F,0.25))*Tair + q;
 				}
 				break;
 			case Domain::EXTERIOR_WALL:
@@ -672,14 +694,15 @@ void Ground::calculateImplicit()
 				double Tair = getOutdoorTemperature();
 				double v = getLocalWindSpeed();
 				double eSky = weatherData.skyEmissivity.getValue(getSimTime(tNow));
+				double F = getEffectiveExteriorViewFactor(eSky,PI/2.0);
 				double hc = getConvectionCoeff(TOld(i,j),Tair,v,1.0,true,PI/2.0);
-				double hr = getIRCoeff(foundation.soilEmissivity,TOld(i,j),Tair,eSky,PI/2.0);
-				double q = foundation.soilAbsorptivity*weatherData.globalHorizontalSolar.getValue(getSimTime(tNow));
+				double hr = getExteriorIRCoeff(foundation.wall.exteriorEmissivity,TOld(i,j),Tair,eSky,PI/2.0);
+				double q = foundation.wall.exteriorAbsorptivity*weatherData.globalHorizontalSolar.getValue(getSimTime(tNow));
 
 				Amat(i + nR*j, i + nR*j) = domain.getKRM(i,j)/domain.getDRM(i) + (hc + hr);
 				Amat(i + nR*j, ((i-1) + nR*j)) = -domain.getKRM(i,j)/domain.getDRM(i);
 
-				b(i + nR*j) = (hc + hr*pow(eSky,0.25))*Tair + q;
+				b(i + nR*j) = (hc + hr*pow(F,0.25))*Tair + q;
 				}
 				break;
 			case Domain::DEEP_GROUND:
@@ -777,26 +800,29 @@ void Ground::calculateCrankNicolson()
 			case Domain::INTERIOR_WALL:
 				{
 				double Tair = foundation.indoorAirTemperature;
-				double h = getConvectionCoeff(TOld(i,j),Tair,0.0,1.0,false,PI/2.0);
+				double hc = getConvectionCoeff(TOld(i,j),Tair,0.0,1.0,false,PI/2.0);
+				double hr = getSimpleInteriorIRCoeff(foundation.wall.interiorEmissivity,
+						                             TOld(i,j),Tair);
 				double q = 0;
 
-				Amat(i + nR*j, i + nR*j) = domain.getKRP(i,j)/domain.getDRP(i) + h;
+				Amat(i + nR*j, i + nR*j) = domain.getKRP(i,j)/domain.getDRP(i) + (hc + hr);
 				Amat(i + nR*j, (i+1) + nR*j) = -domain.getKRP(i,j)/domain.getDRP(i);
 
-				b(i + nR*j) = h*Tair + q;
+				b(i + nR*j) = (hc + hr)*Tair + q;
 				}
 				break;
 			case Domain::INTERIOR_SLAB:
 				{
-				// Apply convection
 				double Tair = foundation.indoorAirTemperature;
-				double h = getConvectionCoeff(TOld(i,j),Tair,0.0,1.0,false,0.0);
+				double hc = getConvectionCoeff(TOld(i,j),Tair,0.0,1.0,false,0.0);
+				double hr = getSimpleInteriorIRCoeff(foundation.wall.interiorEmissivity,
+						                             TOld(i,j),Tair);
 				double q = 0;
 
-				Amat(i + nR*j, i + nR*j) = domain.getKZM(i,j)/domain.getDZM(j) + h;
+				Amat(i + nR*j, i + nR*j) = domain.getKZM(i,j)/domain.getDZM(j) + (hc + hr);
 				Amat(i + nR*j, i + nR*(j-1)) = -domain.getKZM(i,j)/domain.getDZM(j);
 
-				b(i + nR*j) = h*Tair + q;
+				b(i + nR*j) = (hc + hr)*Tair + q;
 				}
 				break;
 			case Domain::EXTERIOR_AIR:
@@ -810,14 +836,15 @@ void Ground::calculateCrankNicolson()
 				double Tair = getOutdoorTemperature();
 				double v = getLocalWindSpeed();
 				double eSky = weatherData.skyEmissivity.getValue(getSimTime(tNow));
+				double F = getEffectiveExteriorViewFactor(eSky,0.0);
 				double hc = getConvectionCoeff(TOld(i,j),Tair,v,1.0,true,0.0);
-				double hr = getIRCoeff(foundation.soilEmissivity,TOld(i,j),Tair,eSky,0.0);
+				double hr = getExteriorIRCoeff(foundation.soilEmissivity,TOld(i,j),Tair,eSky,0.0);
 				double q = foundation.soilAbsorptivity*weatherData.globalHorizontalSolar.getValue(getSimTime(tNow));
 
-				Amat(i + nR*j, i + nR*j) = domain.getKRM(i,j)/domain.getDRM(i) + (hc + hr);
-				Amat(i + nR*j, (i-1) + nR*j) = -domain.getKRM(i,j)/domain.getDRM(i);
+				Amat(i + nR*j, i + nR*j) = domain.getKZM(i,j)/domain.getDZM(j) + (hc + hr);
+				Amat(i + nR*j, i + nR*(j-1)) = -domain.getKZM(i,j)/domain.getDZM(j);
 
-				b(i + nR*j) = (hc + hr*pow(eSky,0.25))*Tair + q;
+				b(i + nR*j) = (hc + hr*pow(F,0.25))*Tair + q;
 				}
 				break;
 			case Domain::DEEP_GROUND:
@@ -831,14 +858,15 @@ void Ground::calculateCrankNicolson()
 				double Tair = getOutdoorTemperature();
 				double v = getLocalWindSpeed();
 				double eSky = weatherData.skyEmissivity.getValue(getSimTime(tNow));
-				double hc = getConvectionCoeff(TOld(i,j),Tair,v,1.0,true,0.0);
-				double hr = getIRCoeff(foundation.soilEmissivity,TOld(i,j),Tair,eSky,0.0);
-				double q = foundation.soilAbsorptivity*weatherData.globalHorizontalSolar.getValue(getSimTime(tNow));
+				double F = getEffectiveExteriorViewFactor(eSky,PI/2.0);
+				double hc = getConvectionCoeff(TOld(i,j),Tair,v,1.0,true,PI/2.0);
+				double hr = getExteriorIRCoeff(foundation.wall.exteriorEmissivity,TOld(i,j),Tair,eSky,PI/2.0);
+				double q = foundation.wall.exteriorAbsorptivity*weatherData.globalHorizontalSolar.getValue(getSimTime(tNow));
 
-				Amat(i + nR*j, i + nR*j) = domain.getKZM(i,j)/domain.getDZM(j) + (hc + hr);
-				Amat(i + nR*j, i + nR*(j-1)) = -domain.getKZM(i,j)/domain.getDZM(j);
+				Amat(i + nR*j, i + nR*j) = domain.getKRM(i,j)/domain.getDRM(i) + (hc + hr);
+				Amat(i + nR*j, ((i-1) + nR*j)) = -domain.getKRM(i,j)/domain.getDRM(i);
 
-				b(i + nR*j) = (hc + hr*pow(eSky,0.25))*Tair + q;
+				b(i + nR*j) = (hc + hr*pow(F,0.25))*Tair + q;
 				}
 				break;
 			default:
@@ -929,27 +957,30 @@ void Ground::calculateSteadyState()
 				break;
 			case Domain::INTERIOR_SLAB:
 				{
-				// Apply convection
 				double Tair = foundation.indoorAirTemperature;
-				double h = getConvectionCoeff(TOld(i,j),Tair,0.0,1.0,false,0.0);
+				double hc = getConvectionCoeff(TOld(i,j),Tair,0.0,1.0,false,0.0);
+				double hr = getSimpleInteriorIRCoeff(foundation.wall.interiorEmissivity,
+						                             TOld(i,j),Tair);
 				double q = 0;
 
-				Amat(i + nR*j, i + nR*j) = domain.getKZM(i,j)/domain.getDZM(j) + h;
+				Amat(i + nR*j, i + nR*j) = domain.getKZM(i,j)/domain.getDZM(j) + (hc + hr);
 				Amat(i + nR*j, i + nR*(j-1)) = -domain.getKZM(i,j)/domain.getDZM(j);
 
-				b(i + nR*j) = h*Tair + q;
+				b(i + nR*j) = (hc + hr)*Tair + q;
 				}
 				break;
 			case Domain::INTERIOR_WALL:
 				{
 				double Tair = foundation.indoorAirTemperature;
-				double h = getConvectionCoeff(TOld(i,j),Tair,0.0,1.0,false,PI/2.0);
+				double hc = getConvectionCoeff(TOld(i,j),Tair,0.0,1.0,false,PI/2.0);
+				double hr = getSimpleInteriorIRCoeff(foundation.wall.interiorEmissivity,
+						                             TOld(i,j),Tair);
 				double q = 0;
 
-				Amat(i + nR*j, i + nR*j) = domain.getKRP(i,j)/domain.getDRP(i) + h;
+				Amat(i + nR*j, i + nR*j) = domain.getKRP(i,j)/domain.getDRP(i) + (hc + hr);
 				Amat(i + nR*j, (i+1) + nR*j) = -domain.getKRP(i,j)/domain.getDRP(i);
 
-				b(i + nR*j) = h*Tair + q;
+				b(i + nR*j) = (hc + hr)*Tair + q;
 				}
 				break;
 			case Domain::EXTERIOR_AIR:
@@ -963,14 +994,15 @@ void Ground::calculateSteadyState()
 				double Tair = getOutdoorTemperature();
 				double v = getLocalWindSpeed();
 				double eSky = weatherData.skyEmissivity.getValue(getSimTime(tNow));
+				double F = getEffectiveExteriorViewFactor(eSky,0.0);
 				double hc = getConvectionCoeff(TOld(i,j),Tair,v,1.0,true,0.0);
-				double hr = getIRCoeff(foundation.soilEmissivity,TOld(i,j),Tair,eSky,0.0);
+				double hr = getExteriorIRCoeff(foundation.soilEmissivity,TOld(i,j),Tair,eSky,0.0);
 				double q = foundation.soilAbsorptivity*weatherData.globalHorizontalSolar.getValue(getSimTime(tNow));
 
 				Amat(i + nR*j, i + nR*j) = domain.getKZM(i,j)/domain.getDZM(j) + (hc + hr);
 				Amat(i + nR*j, i + nR*(j-1)) = -domain.getKZM(i,j)/domain.getDZM(j);
 
-				b(i + nR*j) = (hc + hr*pow(eSky,0.25))*Tair + q;
+				b(i + nR*j) = (hc + hr*pow(F,0.25))*Tair + q;
 				}
 				break;
 			case Domain::EXTERIOR_WALL:
@@ -978,14 +1010,15 @@ void Ground::calculateSteadyState()
 				double Tair = getOutdoorTemperature();
 				double v = getLocalWindSpeed();
 				double eSky = weatherData.skyEmissivity.getValue(getSimTime(tNow));
+				double F = getEffectiveExteriorViewFactor(eSky,PI/2.0);
 				double hc = getConvectionCoeff(TOld(i,j),Tair,v,1.0,true,PI/2.0);
-				double hr = getIRCoeff(foundation.soilEmissivity,TOld(i,j),Tair,eSky,PI/2.0);
-				double q = foundation.soilAbsorptivity*weatherData.globalHorizontalSolar.getValue(getSimTime(tNow));
+				double hr = getExteriorIRCoeff(foundation.wall.exteriorEmissivity,TOld(i,j),Tair,eSky,PI/2.0);
+				double q = foundation.wall.exteriorAbsorptivity*weatherData.globalHorizontalSolar.getValue(getSimTime(tNow));
 
 				Amat(i + nR*j, i + nR*j) = domain.getKRM(i,j)/domain.getDRM(i) + (hc + hr);
-				Amat(i + nR*j, (i-1) + nR*j) = -domain.getKRM(i,j)/domain.getDRM(i);
+				Amat(i + nR*j, ((i-1) + nR*j)) = -domain.getKRM(i,j)/domain.getDRM(i);
 
-				b(i + nR*j) = (hc + hr*pow(eSky,0.25))*Tair + q;
+				b(i + nR*j) = (hc + hr*pow(F,0.25))*Tair + q;
 				}
 				break;
 			case Domain::DEEP_GROUND:
