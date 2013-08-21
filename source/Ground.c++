@@ -185,7 +185,7 @@ void Ground::initializePlot()
 	int width = height*aspect;
 	gr.SetSize(width,height);
 
-	gr.StartGIF((foundation.outputAnimation.name + ".gif").c_str(),1);
+	gr.StartGIF((foundation.outputAnimation.name + ".gif").c_str(),100);
 
 	rGrid.a[0] = domain.mesher.xDividers[0];
 
@@ -1160,7 +1160,10 @@ void Ground::plot()
 		//gr.Puts(mglPoint(12.5,-10), "Temperature \\textdegree C", ":C");
 		gr.Box("k",false);
 		gr.Dens(rDat, zDat, TDat);
-		gr.Cont(cDat, rDat, zDat, TDat,"H");
+		if (foundation.outputAnimation.contours)
+			gr.Cont(cDat, rDat, zDat, TDat,"H");
+		if (foundation.outputAnimation.gradients)
+			gr.Grad(rDat, zDat, TDat);
 		if (foundation.outputAnimation.grid)
 			gr.Grid(rGrid, zGrid, TGrid, "W");
 
@@ -1186,6 +1189,9 @@ void Ground::plot()
 			gr.Line(tl, bl, "k");
 
 		}
+
+		ptime tp(simulationControl.startDate,seconds(tNow));
+		gr.Puts(mglPoint(-0.10,0.40), to_simple_string(tp).c_str(), ":C");
 
 		/*
 		// Text

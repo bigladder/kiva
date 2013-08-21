@@ -138,6 +138,8 @@ public:
 	string name;
 	time_duration frequency;
 	bool grid;
+	bool contours;
+	bool gradients;
 	int size;
 };
 

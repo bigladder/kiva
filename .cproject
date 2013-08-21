@@ -35,7 +35,7 @@
 									<listOptionValue builtIn="false" srcPrefixMapping="" srcRootPath="" value="openblas"/>
 									<listOptionValue builtIn="false" srcPrefixMapping="" srcRootPath="" value="colamd"/>
 								</option>
-								<option id="macosx.cpp.link.option.paths.2017324705" name="Library search path (-L)" superClass="macosx.cpp.link.option.paths" valueType="libPaths"/>
+								<option id="macosx.cpp.link.option.paths.2017324705" name="Library search path (-L)" superClass="macosx.cpp.link.option.paths"/>
 								<inputType id="cdt.managedbuild.tool.macosx.cpp.linker.input.1675448271" superClass="cdt.managedbuild.tool.macosx.cpp.linker.input">
 									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
 									<additionalInput kind="additionalinput" paths="$(LIBS)"/>
@@ -120,7 +120,7 @@
 									<listOptionValue builtIn="false" srcPrefixMapping="" srcRootPath="" value="openblas"/>
 									<listOptionValue builtIn="false" srcPrefixMapping="" srcRootPath="" value="colamd"/>
 								</option>
-								<option id="macosx.cpp.link.option.paths.2076752738" name="Library search path (-L)" superClass="macosx.cpp.link.option.paths" valueType="libPaths"/>
+								<option id="macosx.cpp.link.option.paths.2076752738" name="Library search path (-L)" superClass="macosx.cpp.link.option.paths"/>
 								<inputType id="cdt.managedbuild.tool.macosx.cpp.linker.input.521111172" superClass="cdt.managedbuild.tool.macosx.cpp.linker.input">
 									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
 									<additionalInput kind="additionalinput" paths="$(LIBS)"/>
@@ -130,17 +130,10 @@
 								<inputType id="cdt.managedbuild.tool.gnu.assembler.input.473535920" superClass="cdt.managedbuild.tool.gnu.assembler.input"/>
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.archiver.macosx.base.16537493" name="GCC Archiver" superClass="cdt.managedbuild.tool.gnu.archiver.macosx.base"/>
-							<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.macosx.exe.release.1506629565" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.macosx.exe.release">
+							<tool command="g++" commandLinePattern="${COMMAND} ${FLAGS} ${OUTPUT_FLAG} ${OUTPUT_PREFIX}${OUTPUT} ${INPUTS}" id="cdt.managedbuild.tool.gnu.cpp.compiler.macosx.exe.release.1506629565" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.macosx.exe.release">
 								<option id="gnu.cpp.compiler.macosx.exe.release.option.optimization.level.1131989077" name="Optimization Level" superClass="gnu.cpp.compiler.macosx.exe.release.option.optimization.level" value="gnu.cpp.compiler.optimization.level.most" valueType="enumerated"/>
 								<option id="gnu.cpp.compiler.macosx.exe.release.option.debugging.level.1898020409" name="Debug Level" superClass="gnu.cpp.compiler.macosx.exe.release.option.debugging.level" value="gnu.cpp.compiler.debugging.level.none" valueType="enumerated"/>
 								<option id="gnu.cpp.compiler.option.include.paths.1629610623" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
-									<listOptionValue builtIn="false" value="/usr/local/boost_1_51_0"/>
-									<listOptionValue builtIn="false" value="/Library/Frameworks"/>
-									<listOptionValue builtIn="false" value="/usr/include/c++/4.2.1/backward"/>
-									<listOptionValue builtIn="false" value="/usr/local/boost-numeric-bindings"/>
-									<listOptionValue builtIn="false" value="/usr/local/UMFPACK/Include"/>
-									<listOptionValue builtIn="false" value="/usr/local/AMD/Include"/>
-									<listOptionValue builtIn="false" value="/usr/local/SuiteSparse_config"/>
 									<listOptionValue builtIn="false" value="/usr/local/include/boost-numeric-bindings"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1423438930" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
