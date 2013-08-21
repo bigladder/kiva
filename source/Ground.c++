@@ -144,7 +144,7 @@ void Ground::initializeConditions()
 					TOld(i,j) = getDeepGroundTemperature();
 					break;
 				default:
-					TOld(i,j)= getInitialTemperature(domain.mesher.xCenters[i],
+					TOld(i,j)= getInitialTemperature(tNow,
 													domain.mesher.yCenters[j]);
 					break;
 				}
@@ -1243,22 +1243,30 @@ ptime Ground::getSimTime(double t)
 	return tp;
 }
 
-double Ground::getInitialTemperature(double r, double z)
+double Ground::getInitialTemperature(double t, double z)
 {
 	if (foundation.initializationMethod == Foundation::IM_KUSUDA)
 	{
 		double minDryBulb = weatherData.dryBulbTemp.getMin();
 		double maxDryBulb = weatherData.dryBulbTemp.getMax();
 
-		double t = 0;
-		double tshift = 0;
+		ptime tp = getSimTime(t);
+		greg_year year = tp.date().year();
+		date dayBegin(year,Jan,1);
+		ptime tYearStart(dayBegin);
+		time_duration tSinceYearStart = tp - tYearStart;
+		cout << tp << endl;
+		cout << tYearStart << endl;
+		cout << tSinceYearStart << endl;
+		double trel = tSinceYearStart.total_seconds();
+		double tshift = 0;  // Assume min temperature occurs at the beginning of the year
 		double seconds_in_day = 60.0*60.0*24.0;
 		double Tamp = (maxDryBulb - minDryBulb) / 2.0;
 		double diff = foundation.soil.k/(foundation.soil.rho*foundation.soil.cp);
 
 		return annualAverageDryBulbTemperature
 				- Tamp*exp(z*pow(PI/(365*seconds_in_day*diff),0.5))
-				*cos(2*PI/(365*seconds_in_day)*(t - tshift
+				*cos(2*PI/(365*seconds_in_day)*(trel - tshift
 				- z/2*pow((365*seconds_in_day)/(PI*diff),0.5)));
 	}
 	else //if (foundation.initializationMethod == Foundation::IM_CONSTANT_TEMPERATURE)

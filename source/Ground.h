@@ -116,7 +116,7 @@ private:
 	// Misc. Functions
 	ptime getSimTime(double t);
 
-	double getInitialTemperature(double r, double z);
+	double getInitialTemperature(double t, double z);
 
 	double getDeepGroundTemperature();
 
