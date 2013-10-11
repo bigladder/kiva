@@ -1255,9 +1255,6 @@ double Ground::getInitialTemperature(double t, double z)
 		date dayBegin(year,Jan,1);
 		ptime tYearStart(dayBegin);
 		time_duration tSinceYearStart = tp - tYearStart;
-		cout << tp << endl;
-		cout << tYearStart << endl;
-		cout << tSinceYearStart << endl;
 		double trel = tSinceYearStart.total_seconds();
 		double tshift = 0;  // Assume min temperature occurs at the beginning of the year
 		double seconds_in_day = 60.0*60.0*24.0;
