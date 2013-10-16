@@ -39,7 +39,7 @@ void Domain::setDomain(Foundation &foundation, double &timestep)
 	// multidimensional arrays on pre-existing initialized instances.
 
 	{
-		Mesher mX(foundation.rMeshData);
+		Mesher mX(foundation.xMeshData);
 		meshX = mX;
 
 		Mesher mZ(foundation.zMeshData);
@@ -101,8 +101,8 @@ void Domain::setDomain(Foundation &foundation, double &timestep)
 
 				for (size_t b = 0; b < foundation.blocks.size(); b++)
 				{
-					if (meshX.centers[i] > foundation.blocks[b].rMin &&
-						meshX.centers[i] < foundation.blocks[b].rMax &&
+					if (meshX.centers[i] > foundation.blocks[b].xMin &&
+						meshX.centers[i] < foundation.blocks[b].xMax &&
 						meshZ.centers[k] > foundation.blocks[b].zMin &&
 						meshZ.centers[k] < foundation.blocks[b].zMax)
 					{

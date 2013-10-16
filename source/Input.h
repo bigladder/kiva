@@ -143,7 +143,7 @@ class Block
 {
 public:
 
-	double rMin, rMax, zMin, zMax;
+	double xMin, xMax, zMin, zMax;
 	Material material;
 
 };
@@ -277,7 +277,7 @@ public:
 	double perimeter;  // [m] Perimeter of foundation
 	double effectiveLength;
 
-	MeshData rMeshData;
+	MeshData xMeshData;
 	MeshData zMeshData;
 	std::vector<Block> blocks;
 
@@ -312,10 +312,10 @@ public:
 		exterior.minCellDim = mesh.minCellDim;
 		exterior.growthDir = Interval::FORWARD;
 
-		std::vector<double> rRange;
+		std::vector<double> xRange;
 		std::vector<double> zRange;
 
-		double rPosition;
+		double xPosition;
 		double zPosition;
 
 		Material null;
@@ -324,7 +324,7 @@ public:
 		null.specificHeat = 1;
 
 		// Cylinder Axis
-		rRange.push_back(0.0);
+		xRange.push_back(0.0);
 
 		// Deep ground
 		zRange.push_back(-deepGroundDepth);
@@ -333,8 +333,8 @@ public:
 		zRange.push_back(0.0);
 
 		// Foundation Effective Length (radius or half width)
-		rRange.push_back(effectiveLength);
-		rPosition = effectiveLength;
+		xRange.push_back(effectiveLength);
+		xPosition = effectiveLength;
 
 		// Top of domain
 		double zTop;
@@ -349,13 +349,13 @@ public:
 		if (hasInteriorHorizontalInsulation)
 		{
 			Block block;
-			block.rMin = rPosition - interiorHorizontalInsulation.width;
-			block.rMax = rPosition;
+			block.xMin = xPosition - interiorHorizontalInsulation.width;
+			block.xMax = xPosition;
 			block.zMax = zTop - interiorHorizontalInsulation.depth;
 			block.zMin = block.zMax - interiorHorizontalInsulation.layer.thickness;
 			block.material = interiorHorizontalInsulation.layer.material;
-			rRange.push_back(block.rMin);
-			rRange.push_back(block.rMax);
+			xRange.push_back(block.xMin);
+			xRange.push_back(block.xMax);
 			zRange.push_back(block.zMax);
 			zRange.push_back(block.zMin);
 			blocks.push_back(block);
@@ -371,14 +371,14 @@ public:
 			for (size_t n = 0; n < slab.layers.size(); n++)
 			{
 				Block block;
-				block.rMin = 0.0;
-				block.rMax = rPosition;
+				block.xMin = 0.0;
+				block.xMax = xPosition;
 				block.zMin = zPosition;
 				block.zMax = block.zMin + slab.layers[n].thickness;
 				zPosition = block.zMax;
 				block.material = slab.layers[n].material;
-				rRange.push_back(block.rMin);
-				rRange.push_back(block.rMax);
+				xRange.push_back(block.xMin);
+				xRange.push_back(block.xMax);
 				zRange.push_back(block.zMax);
 				zRange.push_back(block.zMin);
 				blocks.push_back(block);
@@ -397,13 +397,13 @@ public:
 		if (hasInteriorVerticalInsulation)
 		{
 			Block block;
-			block.rMin = rPosition - interiorVerticalInsulation.layer.thickness;
-			block.rMax = rPosition;
+			block.xMin = xPosition - interiorVerticalInsulation.layer.thickness;
+			block.xMax = xPosition;
 			block.zMax = zTop;
 			block.zMin = block.zMax - interiorVerticalInsulation.depth;
 			block.material = interiorVerticalInsulation.layer.material;
-			rRange.push_back(block.rMin);
-			rRange.push_back(block.rMax);
+			xRange.push_back(block.xMin);
+			xRange.push_back(block.xMax);
 			zRange.push_back(block.zMax);
 			zRange.push_back(block.zMin);
 			blocks.push_back(block);
@@ -412,13 +412,13 @@ public:
 		// Indoor Air
 		{
 			Block block;
-			block.rMin = 0.0;
-			block.rMax = effectiveLength;
+			block.xMin = 0.0;
+			block.xMax = effectiveLength;
 			block.zMax = zTop;
 			block.zMin = zSlab;
 			block.material = null;
-			rRange.push_back(block.rMin);
-			rRange.push_back(block.rMax);
+			xRange.push_back(block.xMin);
+			xRange.push_back(block.xMax);
 			zRange.push_back(block.zMax);
 			zRange.push_back(block.zMin);
 			blocks.push_back(block);
@@ -430,33 +430,33 @@ public:
 			for (int n = wall.layers.size() - 1; n >= 0; n--)
 			{
 				Block block;
-				block.rMin = rPosition;
-				block.rMax = block.rMin + wall.layers[n].thickness;
-				rPosition = block.rMax;
+				block.xMin = xPosition;
+				block.xMax = block.xMin + wall.layers[n].thickness;
+				xPosition = block.xMax;
 				block.zMax = zTop;
 				block.zMin = -1*wall.depth;
 				block.material = wall.layers[n].material;
-				rRange.push_back(block.rMin);
-				rRange.push_back(block.rMax);
+				xRange.push_back(block.xMin);
+				xRange.push_back(block.xMax);
 				zRange.push_back(block.zMax);
 				zRange.push_back(block.zMin);
 				blocks.push_back(block);
 			}
 		}
 		else if (excavationDepth > 0.0)
-			rRange.push_back(effectiveLength);
+			xRange.push_back(effectiveLength);
 
 		// Exterior Vertical Insulation
 		if (hasExteriorVerticalInsulation)
 		{
 			Block block;
-			block.rMin = rPosition;
-			block.rMax = rPosition + exteriorVerticalInsulation.layer.thickness;
+			block.xMin = xPosition;
+			block.xMax = xPosition + exteriorVerticalInsulation.layer.thickness;
 			block.zMax = zTop;
 			block.zMin = block.zMax - exteriorVerticalInsulation.depth;
 			block.material = exteriorVerticalInsulation.layer.material;
-			rRange.push_back(block.rMin);
-			rRange.push_back(block.rMax);
+			xRange.push_back(block.xMin);
+			xRange.push_back(block.xMax);
 			zRange.push_back(block.zMax);
 			zRange.push_back(block.zMin);
 			blocks.push_back(block);
@@ -466,51 +466,51 @@ public:
 		if (hasExteriorHorizontalInsulation)
 		{
 			Block block;
-			block.rMin = rPosition;
-			block.rMax = rPosition + exteriorHorizontalInsulation.width;
+			block.xMin = xPosition;
+			block.xMax = xPosition + exteriorHorizontalInsulation.width;
 			block.zMax = zTop - exteriorHorizontalInsulation.depth;
 			block.zMin = block.zMax - exteriorHorizontalInsulation.layer.thickness;
 			block.material = exteriorHorizontalInsulation.layer.material;
-			rRange.push_back(block.rMin);
-			rRange.push_back(block.rMax);
+			xRange.push_back(block.xMin);
+			xRange.push_back(block.xMax);
 			zRange.push_back(block.zMax);
 			zRange.push_back(block.zMin);
 			blocks.push_back(block);
 		}
 
-		double rWallExt = rPosition;
-		double rFarField = effectiveLength + farFieldWidth;
+		double xWallExt = xPosition;
+		double xFarField = effectiveLength + farFieldWidth;
 
 		// Exterior Air
 		{
 			Block block;
-			block.rMin = rWallExt;
-			block.rMax = rFarField;
+			block.xMin = xWallExt;
+			block.xMax = xFarField;
 			block.zMax = zTop;
 			block.zMin = 0.0;
 			block.material = null;
-			rRange.push_back(block.rMin);
-			rRange.push_back(block.rMax);
+			xRange.push_back(block.xMin);
+			xRange.push_back(block.xMax);
 			zRange.push_back(block.zMax);
 			zRange.push_back(block.zMin);
 			blocks.push_back(block);
 		}
 
 		// Far field
-		rRange.push_back(rFarField);
+		xRange.push_back(xFarField);
 
 		zRange.push_back(0.0);
 
 		// Sort the range vectors
-		sort(rRange.begin(), rRange.end());
+		sort(xRange.begin(), xRange.end());
 		sort(zRange.begin(), zRange.end());
 
 		// erase (approximately) duplicate elements
-		for (size_t i = 1; i < rRange.size(); i++)
+		for (size_t i = 1; i < xRange.size(); i++)
 		{
-			if (std::fabs(rRange[i] - rRange[i-1]) < 0.0000001)
+			if (std::fabs(xRange[i] - xRange[i-1]) < 0.0000001)
 			{
-				rRange.erase(rRange.begin() + i-1);
+				xRange.erase(xRange.begin() + i-1);
 				i -= 1;
 			}
 		}
@@ -537,15 +537,15 @@ public:
 		zRange.push_back(0.0);
 
 		// Axis
-		rRange.push_back(0.0);
+		xRange.push_back(0.0);
 
 		// Wall
 		if (excavationDepth > 0.0)
 		{
-			rRange.push_back(effectiveLength);
+			xRange.push_back(effectiveLength);
 
 			if (hasWall)
-				rRange.push_back(rWallExt);
+				xRange.push_back(xWallExt);
 
 			// Slab
 			if (fabs(zSlab) > 0.000001)
@@ -553,21 +553,21 @@ public:
 		}
 
 		// Far field
-		rRange.push_back(effectiveLength + farFieldWidth);
+		xRange.push_back(effectiveLength + farFieldWidth);
 
 		// Sort the range vectors again this time it includes doubles for zero thickness cells
-		sort(rRange.begin(), rRange.end());
+		sort(xRange.begin(), xRange.end());
 		sort(zRange.begin(), zRange.end());
 
 
-		rMeshData.points = rRange;
+		xMeshData.points = xRange;
 		zMeshData.points = zRange;
 
 		std::vector<Interval> rintervals;
 		rintervals.push_back(interior);
 		rintervals.push_back(interior);
 
-		for (size_t i = 2; i < rRange.size() - 3; i++)
+		for (size_t i = 2; i < xRange.size() - 3; i++)
 		{
 			rintervals.push_back(near);
 		}
@@ -589,7 +589,7 @@ public:
 			zintervals.push_back(near);
 		}
 
-		rMeshData.intervals = rintervals;
+		xMeshData.intervals = rintervals;
 		zMeshData.intervals = zintervals;
 
 	}

@@ -1206,16 +1206,16 @@ void Ground::plot()
 		// Draw blocks
 		for (size_t b = 0; b < foundation.blocks.size(); b++)
 		{
-			mglPoint bl = mglPoint(foundation.blocks[b].rMin,
+			mglPoint bl = mglPoint(foundation.blocks[b].xMin,
 			         	 	 	   foundation.blocks[b].zMin,
 			         	 	 	   210.0);
-			mglPoint br = mglPoint(foundation.blocks[b].rMax,
+			mglPoint br = mglPoint(foundation.blocks[b].xMax,
 			         	 	 	   foundation.blocks[b].zMin,
 			         	 	 	   210.0);
-			mglPoint tr = mglPoint(foundation.blocks[b].rMax,
+			mglPoint tr = mglPoint(foundation.blocks[b].xMax,
 			         	 	 	   foundation.blocks[b].zMax,
 			         	 	 	   210.0);
-			mglPoint tl = mglPoint(foundation.blocks[b].rMin,
+			mglPoint tl = mglPoint(foundation.blocks[b].xMin,
 			         	 	 	   foundation.blocks[b].zMax,
 			         	 	 	   210.0);
 
@@ -1226,6 +1226,7 @@ void Ground::plot()
 
 		}
 
+		// Timestamp
 		boost::posix_time::ptime tp(simulationControl.startDate,boost::posix_time::seconds(tNow));
 		gr.Puts(mglPoint(-0.10,0.40), to_simple_string(tp).c_str(), ":C");
 
