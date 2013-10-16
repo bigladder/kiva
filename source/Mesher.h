@@ -19,8 +19,7 @@
 #ifndef Mesher_HPP
 #define Mesher_HPP
 
-#include <boost/numeric/ublas/vector.hpp>
-namespace blas = boost::numeric::ublas;
+#include <vector>
 
 class Interval
 {
@@ -49,21 +48,17 @@ public:
 class Mesher
 {
 private:
-		MeshData xData;
-		MeshData yData;
+		MeshData data;
 
 public:
-		blas::vector<double> xDividers, yDividers;
-		blas::vector<double> xDeltas, yDeltas;
-		blas::vector<double> xCenters, yCenters;
+		std::vector<double> dividers;
+		std::vector<double> deltas;
+		std::vector<double> centers;
 
 public:
 
 		Mesher();
-		Mesher(MeshData &xData, MeshData &yData);
-		void makeMesh(MeshData data, blas::vector<double> &dividers,
-				      blas::vector<double> &deltas,
-				      blas::vector<double> &centers);
+		Mesher(MeshData &data);
 
 };
 

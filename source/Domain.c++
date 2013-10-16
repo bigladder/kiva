@@ -28,31 +28,49 @@ Domain::Domain()
 
 }
 
-Domain::Domain(Mesher &mesher, Foundation &foundation, double &timestep)  :
-			   mesher(mesher)
+Domain::Domain(Foundation &foundation, double &timestep)
 {
 
-	nR = mesher.xCenters.size();
-	nZ = mesher.yCenters.size();
+	setDomain(foundation, timestep);
 
-	rho = blas::matrix<double>(nR, nZ);
-	cp = blas::matrix<double>(nR, nZ);
-	k = blas::matrix<double>(nR, nZ);
+}
 
-	theta = blas::matrix<double>(nR, nZ);
-	a = blas::matrix<double>(nR, nZ);
-	b = blas::matrix<double>(nR, nZ);
-	c = blas::matrix<double>(nR, nZ);
-	d = blas::matrix<double>(nR, nZ);
-	e = blas::matrix<double>(nR, nZ);
-	f = blas::matrix<double>(nR, nZ);
+void Domain::setDomain(Foundation &foundation, double &timestep)
+{
+	{
+		Mesher mX(foundation.rMeshData);
+		meshX = mX;
 
-	cellType = blas::matrix<CellType>(nR, nZ);
+		Mesher mZ(foundation.zMeshData);
+		meshZ = mZ;
+	}
+
+	nX = meshX.centers.size();
+	nY = meshY.centers.size();
+	nZ = meshZ.centers.size();
+
+	density.resize(boost::extents[nX][nY][nZ]);
+	specificHeat.resize(boost::extents[nX][nY][nZ]);
+	conductivity.resize(boost::extents[nX][nY][nZ]);
+
+	theta.resize(boost::extents[nX][nY][nZ]);
+
+	// PDE Coefficients
+	cxp_c.resize(boost::extents[nX][nY][nZ]);
+	cxm_c.resize(boost::extents[nX][nY][nZ]);
+	cxp.resize(boost::extents[nX][nY][nZ]);
+	cxm.resize(boost::extents[nX][nY][nZ]);
+	cyp.resize(boost::extents[nX][nY][nZ]);
+	cym.resize(boost::extents[nX][nY][nZ]);
+	czp.resize(boost::extents[nX][nY][nZ]);
+	czm.resize(boost::extents[nX][nY][nZ]);
+
+	cellType.resize(boost::extents[nX][nY][nZ]);
 
 	// Slab and Wall indices
-	bool slabJSet = false;
+	bool slabKSet = false;
 	bool slabIminSet = false;
-
+	
 	// z dimensions
 	double zWallTop = foundation.wall.height - foundation.wall.depth;
 	double zGrade = 0.0;
@@ -68,337 +86,429 @@ Domain::Domain(Mesher &mesher, Foundation &foundation, double &timestep)  :
 					 foundation.exteriorVerticalInsulation.layer.d;
 	double rFarField = foundation.radius + foundation.farFieldWidth;
 
-
-	for (size_t j = 0; j < nZ; j++)
+	for (size_t k = 0; k < nZ; k++)
 	{
-		for (size_t i = 0; i < nR; i++)
+		for (size_t j = 0; j < nY; j++)
 		{
-
-			rho(i, j) = foundation.soil.rho;
-			cp(i, j) = foundation.soil.cp;
-			k(i, j) = foundation.soil.k;
-
-			for (size_t b = 0; b < foundation.blocks.size(); b++)
+			for (size_t i = 0; i < nX; i++)
 			{
-				if (mesher.xCenters[i] > foundation.blocks[b].rMin &&
-					mesher.xCenters[i] < foundation.blocks[b].rMax &&
-					mesher.yCenters[j] > foundation.blocks[b].zMin &&
-					mesher.yCenters[j] < foundation.blocks[b].zMax)
+
+				// Set Cell Properties
+				density[i][j][k] = foundation.soil.rho;
+				specificHeat[i][j][k] = foundation.soil.cp;
+				conductivity[i][j][k] = foundation.soil.k;
+
+				for (size_t b = 0; b < foundation.blocks.size(); b++)
 				{
-					rho(i, j) = foundation.blocks[b].material.rho;
-					cp(i, j) = foundation.blocks[b].material.cp;
-					k(i, j) = foundation.blocks[b].material.k;
-				}
-			}
-
-			// Set Cell Types
-
-			// Default to normal cells
-			cellType(i, j) = NORMAL;
-
-			// Next set zero-width cells
-			if (mesher.xDeltas[i] < 0.00000001)
-			{
-				cellType(i, j) = ZERO_WIDTH_R;
-			}
-
-			if (mesher.yDeltas[j] < 0.00000001)
-			{
-				cellType(i, j) = ZERO_WIDTH_Z;
-			}
-
-			if (mesher.xDeltas[i] < 0.00000001 &&
-				mesher.yDeltas[j] < 0.00000001)
-			{
-				cellType(i, j) = ZERO_WIDTH_RZ;
-			}
-
-			// Interior Air
-			if (mesher.xCenters[i] - rIntIns < -0.00000001 &&
-				mesher.yCenters[j] - zSlab > 0.00000001)
-			{
-				cellType(i, j) = INTERIOR_AIR;
-			}
-
-			// Exterior Air
-			if (mesher.xCenters[i] - rExtIns > 0.00000001 &&
-				mesher.yCenters[j] - zGrade > 0.00000001)
-			{
-				cellType(i, j) = EXTERIOR_AIR;
-			}
-
-			// Top of Wall
-			if (fabs(mesher.yCenters[j] - zWallTop) < 0.00000001)
-			{
-				if (mesher.xCenters[i] - rIntIns > -0.00000001 &&
-					mesher.xCenters[i] - rExtIns < 0.00000001)
-				{
-					cellType(i, j) = WALL_TOP;
-				}
-			}
-
-			// Exterior Grade
-			if (fabs(mesher.yCenters[j] - zGrade) < 0.00000001)
-			{
-				if (mesher.xCenters[i] - rExtIns > 0.00000001)
-				{
-					cellType(i, j) = EXTERIOR_GRADE;
-				}
-			}
-
-			// Exterior Wall
-			if (fabs(mesher.xCenters[i] - rExtIns) < 0.00000001)
-			{
-				if (mesher.yCenters[j] - zGrade > 0.00000001 &&
-					mesher.yCenters[j] - zWallTop < -0.00000001)
-				{
-					cellType(i, j) = EXTERIOR_WALL;
-				}
-			}
-
-			// Interior Slab
-			if (fabs(mesher.yCenters[j] - zSlab) < 0.00000001)
-			{
-				if (! slabJSet)
-				{
-					slabJ = j;
-					slabJSet = true;
-				}
-
-				if (mesher.xCenters[i] - rIntIns < -0.00000001)
-				{
-					if (! slabIminSet)
+					if (meshX.centers[i] > foundation.blocks[b].rMin &&
+						meshX.centers[i] < foundation.blocks[b].rMax &&
+						meshZ.centers[k] > foundation.blocks[b].zMin &&
+						meshZ.centers[k] < foundation.blocks[b].zMax)
 					{
-						slabImin = i;
-						slabIminSet = true;
+						density[i][j][k] = foundation.blocks[b].material.rho;
+						specificHeat[i][j][k] = foundation.blocks[b].material.cp;
+						conductivity[i][j][k] = foundation.blocks[b].material.k;
+					}
+				}
+
+				// Set Cell Types
+
+				// Default to normal cells
+				cellType[i][j][k] = NORMAL;
+
+				// Next set zero-width cells
+				if (meshX.deltas[i] < 0.00000001)
+				{
+					cellType[i][j][k] = ZERO_WIDTH_R;
+				}
+
+				if (meshZ.deltas[k] < 0.00000001)
+				{
+					cellType[i][j][k] = ZERO_WIDTH_Z;
+				}
+
+				if (meshX.deltas[i] < 0.00000001 &&
+					meshZ.deltas[k] < 0.00000001)
+				{
+					cellType[i][j][k] = ZERO_WIDTH_RZ;
+				}
+
+				// Interior Air
+				if (meshX.centers[i] - rIntIns < -0.00000001 &&
+					meshZ.centers[k] - zSlab > 0.00000001)
+				{
+					cellType[i][j][k] = INTERIOR_AIR;
+				}
+
+				// Exterior Air
+				if (meshX.centers[i] - rExtIns > 0.00000001 &&
+					meshZ.centers[k] - zGrade > 0.00000001)
+				{
+					cellType[i][j][k] = EXTERIOR_AIR;
+				}
+
+				// Top of Wall
+				if (fabs(meshZ.centers[k] - zWallTop) < 0.00000001)
+				{
+					if (meshX.centers[i] - rIntIns > -0.00000001 &&
+						meshX.centers[i] - rExtIns < 0.00000001)
+					{
+						cellType[i][j][k] = WALL_TOP;
+					}
+				}
+
+				// Exterior Grade
+				if (fabs(meshZ.centers[k] - zGrade) < 0.00000001)
+				{
+					if (meshX.centers[i] - rExtIns > 0.00000001)
+					{
+						cellType[i][j][k] = EXTERIOR_GRADE;
+					}
+				}
+
+				// Exterior Wall
+				if (fabs(meshX.centers[i] - rExtIns) < 0.00000001)
+				{
+					if (meshZ.centers[k] - zGrade > 0.00000001 &&
+						meshZ.centers[k] - zWallTop < -0.00000001)
+					{
+						cellType[i][j][k] = EXTERIOR_WALL;
+					}
+				}
+
+				// Interior Slab
+				if (fabs(meshZ.centers[k] - zSlab) < 0.00000001)
+				{
+					if (! slabKSet)
+					{
+						slabK = k;
+						slabKSet = true;
 					}
 
-					slabImax = i;
+					if (meshX.centers[i] - rIntIns < -0.00000001)
+					{
+						if (! slabIminSet)
+						{
+							slabImin = i;
+							slabIminSet = true;
+						}
 
-					cellType(i, j) = INTERIOR_SLAB;
+						slabImax = i;
+
+						cellType[i][j][k] = INTERIOR_SLAB;
+					}
 				}
-			}
 
-			// Interior Wall
-			if (fabs(mesher.xCenters[i] - rIntIns) < 0.00000001)
-			{
-				if (mesher.yCenters[j] - zSlab > 0.00000001 &&
-					mesher.yCenters[j] - zWallTop < -0.00000001)
+				// Interior Wall
+				if (fabs(meshX.centers[i] - rIntIns) < 0.00000001)
 				{
-					cellType(i, j) = INTERIOR_WALL;
+					if (meshZ.centers[k] - zSlab > 0.00000001 &&
+						meshZ.centers[k] - zWallTop < -0.00000001)
+					{
+						cellType[i][j][k] = INTERIOR_WALL;
+					}
 				}
-			}
 
-			// Axis
-			if (fabs(mesher.xCenters[i] - rAxis) < 0.00000001)
-			{
-				if (mesher.yCenters[j] - zSlab < -0.00000001)
+				// Axis
+				if (fabs(meshX.centers[i] - rAxis) < 0.00000001)
 				{
-					cellType(i, j) = AXIS;
+					if (meshZ.centers[k] - zSlab < -0.00000001)
+					{
+						cellType[i][j][k] = SYMMETRY;
+					}
 				}
-			}
 
-			// Far Field
-			if (fabs(mesher.xCenters[i] - rFarField) < 0.00000001)
-			{
-				if (mesher.yCenters[j] - zGrade < -0.00000001)
+				// Far Field
+				if (fabs(meshX.centers[i] - rFarField) < 0.00000001)
 				{
-					cellType(i, j) = FAR_FIELD;
+					if (meshZ.centers[k] - zGrade < -0.00000001)
+					{
+						cellType[i][j][k] = FAR_FIELD;
+					}
 				}
-			}
 
-			// Deep Ground
-			if (fabs(mesher.yCenters[j] - zDeepGround) < 0.00000001)
-			{
-				cellType(i, j) = DEEP_GROUND;
+				// Deep Ground
+				if (fabs(meshZ.centers[k] - zDeepGround) < 0.00000001)
+				{
+					cellType[i][j][k] = DEEP_GROUND;
+				}
 			}
 		}
-	}
 
-	// Calculate matrix coefficients
-	for (size_t j = 0; j < nZ; j++)
-	{
-		for (size_t i = 0; i < nR; i++)
+		// Calculate matrix coefficients
+		for (size_t k = 0; k < nZ; k++)
 		{
+			for (size_t j = 0; j < nY; j++)
+			{
+				for (size_t i = 0; i < nX; i++)
+				{
 
-			double drp;  // Delta r+
-			double drm;  // Delta r-
-			double dzp;  // Delta z+
-			double dzm;  // Delta z-
-			double krp;  // kr+
-			double krm;  // kr-
-			double kzp;  // kz+
-			double kzm;  // kz-
+					double dxp;  // Delta x+
+					double dxm;  // Delta x-
+					double dyp;  // Delta y+
+					double dym;  // Delta y-
+					double dzp;  // Delta z+
+					double dzm;  // Delta z-
+					double kxp;  // kx+
+					double kxm;  // kx-
+					double kyp;  // ky+
+					double kym;  // ky-
+					double kzp;  // kz+
+					double kzm;  // kz-
 
-			// Intermediate Values
-			drp = getDRP(i);
-			drm = getDRM(i);
-			dzp = getDZP(j);
-			dzm = getDZM(j);
-			krp = getKRP(i,j);
-			krm = getKRM(i,j);
-			kzp = getKZP(i,j);
-			kzm = getKZM(i,j);
+					// Intermediate Values
+					dxp = getDXP(i);
+					dxm = getDXM(i);
+					dyp = getDYP(j);
+					dym = getDYM(j);
+					dzp = getDZP(k);
+					dzm = getDZM(k);
+					kxp = getKXP(i,j,k);
+					kxm = getKXM(i,j,k);
+					kyp = getKYP(i,j,k);
+					kym = getKYM(i,j,k);
+					kzp = getKZP(i,j,k);
+					kzm = getKZM(i,j,k);
 
-			theta(i, j) = timestep/(rho(i, j)*cp(i, j));
+					// TODO: This should be taken out of the domain since timestep may vary
+					theta[i][j][k] = timestep/(density[i][j][k]*
+							                         specificHeat[i][j][k]);
 
-			// PDE Coefficients
-			if (drp < 0.00000001)
-			{
-				a(i, j) = 0.0;
-				c(i, j) = 0.0;
-			}
-			else
-			{
-				a(i, j) = (drm*krp)/((drm + drp)*drp);
-				c(i, j) = (2*krp)/((drm + drp)*drp);
-			}
+					// PDE Coefficients
+					if (dxp < 0.00000001)
+					{
+						cxp_c[i][j][k] = 0.0;
+						cxp[i][j][k] = 0.0;
+					}
+					else
+					{
+						cxp_c[i][j][k] = (dxm*kxp)/((dxm + dxp)*dxp);
+						cxp[i][j][k] = (2*kxp)/((dxm + dxp)*dxp);
+					}
 
-			if (drm < 0.00000001)
-			{
-				b(i, j) = 0.0;
-				d(i, j) = 0.0;
-			}
-			else
-			{
-				b(i, j) = (drp*krm)/((drm + drp)*drm);
-				d(i, j) = -1*(2*krm)/((drm + drp)*drm);
-			}
+					if (dxm < 0.00000001)
+					{
+						cxm_c[i][j][k] = 0.0;
+						cxm[i][j][k] = 0.0;
+					}
+					else
+					{
+						cxm_c[i][j][k] = (dxp*kxm)/((dxm + dxp)*dxm);
+						cxm[i][j][k] = -1*(2*kxm)/((dxm + dxp)*dxm);
+					}
 
-			if (dzp < 0.00000001)
-			{
-				e(i, j) = 0.0;
-			}
-			else
-			{
-				e(i, j) = (2*kzp)/((dzm + dzp)*dzp);
-			}
+					if (dyp < 0.00000001)
+					{
+						cyp[i][j][k] = 0.0;
+					}
+					else
+					{
+						cyp[i][j][k] = (2*kyp)/((dym + dyp)*dyp);
+					}
 
-			if (dzm < 0.00000001)
-			{
-				f(i, j) = 0.0;
-			}
-			else
-			{
-				f(i, j) = -1*(2*kzm)/((dzm + dzp)*dzm);
+					if (dym < 0.00000001)
+					{
+						cym[i][j][k] = 0.0;
+					}
+					else
+					{
+						cym[i][j][k] = -1*(2*kym)/((dym + dyp)*dym);
+					}
+
+					if (dzp < 0.00000001)
+					{
+						czp[i][j][k] = 0.0;
+					}
+					else
+					{
+						czp[i][j][k] = (2*kzp)/((dzm + dzp)*dzp);
+					}
+
+					if (dzm < 0.00000001)
+					{
+						czm[i][j][k] = 0.0;
+					}
+					else
+					{
+						czm[i][j][k] = -1*(2*kzm)/((dzm + dzp)*dzm);
+					}
+				}
 			}
 		}
 	}
 }
 
-double Domain::getDRP(size_t i)
+double Domain::getDXP(size_t i)
 {
-	if (i == nR - 1)
+	if (i == nX - 1)
 	{
 		// For boundary cells assume that the cell on the other side of the
 		// boundary is the same as the previous cell
-		return (mesher.xDeltas[i] + mesher.xDeltas[i - 1])/2.0;
+		return (meshX.deltas[i] + meshX.deltas[i - 1])/2.0;
 	}
 	else
 	{
-		return (mesher.xDeltas[i] + mesher.xDeltas[i + 1])/2.0;
+		return (meshX.deltas[i] + meshX.deltas[i + 1])/2.0;
 	}
 }
 
-double Domain::getDRM(size_t i)
+double Domain::getDXM(size_t i)
 {
 	if (i == 0)
 	{
 		// For boundary cells assume that the cell on the other side of the
 		// boundary is the same as the previous cell
-		return (mesher.xDeltas[i] + mesher.xDeltas[i + 1])/2.0;
+		return (meshX.deltas[i] + meshX.deltas[i + 1])/2.0;
 	}
 	else
 	{
-		return (mesher.xDeltas[i] + mesher.xDeltas[i - 1])/2.0;
+		return (meshX.deltas[i] + meshX.deltas[i - 1])/2.0;
 	}
 }
 
-double Domain::getDZP(size_t j)
+double Domain::getDYP(size_t j)
 {
-	if (j == nZ - 1)
+	if (j == nY - 1)
 	{
 		// For boundary cells assume that the cell on the other side of the
 		// boundary is the same as the previous cell
-		return (mesher.yDeltas[j] + mesher.yDeltas[j - 1])/2.0;
+		return (meshY.deltas[j] + meshY.deltas[j - 1])/2.0;
 	}
 	else
 	{
-		return (mesher.yDeltas[j] + mesher.yDeltas[j + 1])/2.0;
+		return (meshY.deltas[j] + meshY.deltas[j + 1])/2.0;
 	}
 }
 
-double Domain::getDZM(size_t j)
+double Domain::getDYM(size_t j)
 {
 	if (j == 0)
 	{
 		// For boundary cells assume that the cell on the other side of the
 		// boundary is the same as the previous cell
-		return (mesher.yDeltas[j] + mesher.yDeltas[j + 1])/2.0;
+		return (meshY.deltas[j] + meshY.deltas[j + 1])/2.0;
 	}
 	else
 	{
-		return (mesher.yDeltas[j] + mesher.yDeltas[j - 1])/2.0;
+		return (meshY.deltas[j] + meshY.deltas[j - 1])/2.0;
 	}
 }
 
-double Domain::getKRP(size_t i, size_t j)
+double Domain::getDZP(size_t k)
 {
-	if (i == nR - 1)
+	if (k == nZ - 1)
+	{
+		// For boundary cells assume that the cell on the other side of the
+		// boundary is the same as the previous cell
+		return (meshZ.deltas[k] + meshZ.deltas[k - 1])/2.0;
+	}
+	else
+	{
+		return (meshZ.deltas[k] + meshZ.deltas[k + 1])/2.0;
+	}
+}
+
+double Domain::getDZM(size_t k)
+{
+	if (k == 0)
+	{
+		// For boundary cells assume that the cell on the other side of the
+		// boundary is the same as the previous cell
+		return (meshZ.deltas[k] + meshZ.deltas[k + 1])/2.0;
+	}
+	else
+	{
+		return (meshZ.deltas[k] + meshZ.deltas[k - 1])/2.0;
+	}
+}
+
+double Domain::getKXP(size_t i, size_t j, size_t k)
+{
+	if (i == nX - 1)
 	{
 		// For boundary cells assume that the cell on the other side of the
 		// boundary is the same as the current cell
-		return k(i,j);
+		return conductivity[i][j][k];
 	}
 	else
 	{
-		return 1/(mesher.xDeltas[i]/(2*getDRP(i)*k(i,j)) +
-				  mesher.xDeltas[i + 1]/(2*getDRP(i)*k(i + 1,j)));
+		return 1/(meshX.deltas[i]/(2*getDXP(i)*conductivity[i][j][k]) +
+				meshX.deltas[i + 1]/(2*getDXP(i)*conductivity[i+1][j][k]));
 	}
 }
 
-double Domain::getKRM(size_t i, size_t j)
+double Domain::getKXM(size_t i, size_t j, size_t k)
 {
 	if (i == 0)
 	{
 		// For boundary cells assume that the cell on the other side of the
 		// boundary is the same as the current cell
-		return k(i,j);
+		return conductivity[i][j][k];
 	}
 	else
 	{
-		return 1/(mesher.xDeltas[i]/(2*getDRM(i)*k(i,j)) +
-				  mesher.xDeltas[i - 1]/(2*getDRM(i)*k(i - 1,j)));
+		return 1/(meshX.deltas[i]/(2*getDXM(i)*conductivity[i][j][k]) +
+				meshX.deltas[i - 1]/(2*getDXM(i)*conductivity[i-1][j][k]));
 	}
 }
 
-double Domain::getKZP(size_t i, size_t j)
+double Domain::getKYP(size_t i, size_t j, size_t k)
 {
-	if (j == nZ - 1)
+	if (j == nY - 1)
 	{
 		// For boundary cells assume that the cell on the other side of the
 		// boundary is the same as the current cell
-		return k(i,j);
+		return conductivity[i][j][k];
 	}
 	else
 	{
-		return 1/(mesher.yDeltas[j]/(2*getDZP(j)*k(i,j)) +
-				  mesher.yDeltas[j + 1]/(2*getDZP(j)*k(i,j + 1)));
+		return 1/(meshY.deltas[j]/(2*getDYP(j)*conductivity[i][j][k]) +
+				meshY.deltas[j + 1]/(2*getDYP(j)*conductivity[i][j+1][k]));
 	}
 }
 
-double Domain::getKZM(size_t i, size_t j)
+double Domain::getKYM(size_t i, size_t j, size_t k)
 {
 	if (j == 0)
 	{
 		// For boundary cells assume that the cell on the other side of the
 		// boundary is the same as the current cell
-		return k(i,j);
+		return conductivity[i][j][k];
 	}
 	else
 	{
-		return 1/(mesher.yDeltas[j]/(2*getDZM(j)*k(i,j)) +
-				  mesher.yDeltas[j - 1]/(2*getDZM(j)*k(i,j - 1)));
+		return 1/(meshY.deltas[j]/(2*getDYM(j)*conductivity[i][j][k]) +
+				meshY.deltas[j - 1]/(2*getDYM(j)*conductivity[i][j-1][k]));
+	}
+}
+
+double Domain::getKZP(size_t i, size_t j, size_t k)
+{
+	if (k == nZ - 1)
+	{
+		// For boundary cells assume that the cell on the other side of the
+		// boundary is the same as the current cell
+		return conductivity[i][j][k];
+	}
+	else
+	{
+		return 1/(meshZ.deltas[k]/(2*getDZP(k)*conductivity[i][j][k]) +
+				meshZ.deltas[k + 1]/(2*getDZP(k)*conductivity[i][j][k+1]));
+	}
+}
+
+double Domain::getKZM(size_t i, size_t j, size_t k)
+{
+	if (k == 0)
+	{
+		// For boundary cells assume that the cell on the other side of the
+		// boundary is the same as the current cell
+		return conductivity[i][j][k];
+	}
+	else
+	{
+		return 1/(meshZ.deltas[k]/(2*getDZM(k)*conductivity[i][j][k]) +
+				meshZ.deltas[k - 1]/(2*getDZM(k)*conductivity[i][j][k-1]));
 	}
 }
 
@@ -407,7 +517,7 @@ void Domain::printCellTypes()
 	ofstream output;
 	output.open("Cells.csv");
 
-	for (size_t i = 0; i < nR; i++)
+	for (size_t i = 0; i < nX; i++)
 	{
 
 		output << ", " << i;
@@ -416,15 +526,15 @@ void Domain::printCellTypes()
 
 	output << endl;
 
-	for (size_t j = nZ - 1; j >= 0 && j < nZ; j--)
+	for (size_t k = nZ - 1; k >= 0 && k < nZ; k--)
 	{
 
-		output << j;
+		output << k;
 
-		for (size_t i = 0; i < nR; i++)
+		for (size_t i = 0; i < nX; i++)
 		{
 
-			output << ", " << cellType(i,j);
+			output << ", " << cellType[i][0][k];
 
 		}
 

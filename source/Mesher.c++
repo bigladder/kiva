@@ -25,25 +25,15 @@
 
 Mesher::Mesher()
 {
-
+  dividers.push_back(0.0);
+  dividers.push_back(1.0);
+  deltas.push_back(1.0);
+  centers.push_back(0.5);
 }
 
-Mesher::Mesher(MeshData &xData, MeshData &yData) : xData(xData), yData(yData)
-{ // Describe the domain of integration
-
-	makeMesh(xData, xDividers, xDeltas, xCenters);
-	makeMesh(yData, yDividers, yDeltas, yCenters);
-
-}
-
-void Mesher::makeMesh(MeshData data, blas::vector<double> &dividers,
-	      	  	  	  blas::vector<double> &deltas,
-	      	  	  	  blas::vector<double> &centers)
+Mesher::Mesher(MeshData &data) : data(data)
 {
-	std::vector<double> divArray;
-	std::vector<double> deltArray;
-	std::vector<double> centArray;
-	divArray.push_back(data.points[0]);
+	dividers.push_back(data.points[0]);
 
 	// Loop through intervals
 	for (std::size_t i = 0; i < data.points.size() -1; ++i)
@@ -57,9 +47,9 @@ void Mesher::makeMesh(MeshData data, blas::vector<double> &dividers,
 		if (length < 0.00000001)
 		{
 			// Zero width cells (used for boundary conditions)
-			divArray.push_back(max);
-			deltArray.push_back(0.0);
-			centArray.push_back(max);
+			dividers.push_back(max);
+			deltas.push_back(0.0);
+			centers.push_back(max);
 		}
 		else
 		{
@@ -86,9 +76,9 @@ void Mesher::makeMesh(MeshData data, blas::vector<double> &dividers,
 
 				for (int j = 1; j <= numCells; ++j)
 				{
-					divArray.push_back(min + j*cellWidth);
-					deltArray.push_back(cellWidth);
-					centArray.push_back(min + j*cellWidth - cellWidth/2.0);
+					dividers.push_back(min + j*cellWidth);
+					deltas.push_back(cellWidth);
+					centers.push_back(min + j*cellWidth - cellWidth/2.0);
 				}
 
 			}
@@ -148,9 +138,9 @@ void Mesher::makeMesh(MeshData data, blas::vector<double> &dividers,
 					double position = min;
 					for (int j = 0; j < numCells; ++j)
 					{
-						divArray.push_back(position + temp[j]);
-						deltArray.push_back(temp[j]);
-						centArray.push_back(position + temp[j]/2.0);
+						dividers.push_back(position + temp[j]);
+						deltas.push_back(temp[j]);
+						centers.push_back(position + temp[j]/2.0);
 						position += temp[j];
 					}
 
@@ -160,33 +150,17 @@ void Mesher::makeMesh(MeshData data, blas::vector<double> &dividers,
 					double position = min;
 					for (int j = 1; j <= numCells; ++j)
 					{
-						divArray.push_back(position +
+						dividers.push_back(position +
 								           temp[numCells - j]);
-						deltArray.push_back(temp[numCells - j]);
-						centArray.push_back(position +
+						deltas.push_back(temp[numCells - j]);
+						centers.push_back(position +
 								            temp[numCells - j]/2.0);
 						position += temp[numCells - j];
 					}
 				}
 			}
 		}
-
 	}
-
-	// Create BLAS vectors from standard vectors
-	blas::vector<double> divTemp(divArray.size());
-	copy(divArray.begin(), divArray.end(), divTemp.begin());
-	dividers = divTemp;
-
-	blas::vector<double> deltTemp(deltArray.size());
-	copy(deltArray.begin(), deltArray.end(), deltTemp.begin());
-	deltas = deltTemp;
-
-	blas::vector<double> centTemp(centArray.size());
-	copy(centArray.begin(), centArray.end(), centTemp.begin());
-	centers = centTemp;
-
-
 }
 
 #endif

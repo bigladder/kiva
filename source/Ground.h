@@ -51,7 +51,7 @@ private:
 	WeatherData &weatherData;
 
 	double tNow;
-	size_t nR, nZ;
+	size_t nX, nY, nZ;
 	double annualAverageDryBulbTemperature;
 
 	// Data structures

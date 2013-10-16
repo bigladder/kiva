@@ -21,6 +21,7 @@
 
 #include <boost/numeric/ublas/matrix.hpp>
 #include <boost/numeric/ublas/vector.hpp>
+#include <boost/multi_array.hpp>
 #include "Input.h"
 #include "Mesher.h"
 
@@ -30,61 +31,73 @@ class Domain
 {
 public:
 
-		// mesher
-		Mesher mesher;
-		size_t nR;
+		// mesh
+		Mesher meshX;
+		Mesher meshY;
+		Mesher meshZ;
+		size_t nX;
+		size_t nY;
 		size_t nZ;
 
 		// inherent properties
-		blas::matrix<double> rho;
-		blas::matrix<double> cp;
-		blas::matrix<double> k;
+		boost::multi_array<double, 3> density;
+		boost::multi_array<double, 3> specificHeat;
+		boost::multi_array<double, 3> conductivity;
 
 		// derived properties
-		blas::matrix<double> theta;
-		blas::matrix<double> a;
-		blas::matrix<double> b;
-		blas::matrix<double> c;
-		blas::matrix<double> d;
-		blas::matrix<double> e;
-		blas::matrix<double> f;
+		boost::multi_array<double, 3> theta;
+		boost::multi_array<double, 3> cxp_c;
+		boost::multi_array<double, 3> cxm_c;
+		boost::multi_array<double, 3> cxp;
+		boost::multi_array<double, 3> cxm;
+		boost::multi_array<double, 3> cyp;
+		boost::multi_array<double, 3> cym;
+		boost::multi_array<double, 3> czp;
+		boost::multi_array<double, 3> czm;
+
 
 		// organizational properties
 		enum CellType
 		{
-			EXTERIOR_AIR,
-			EXTERIOR_GRADE,
-			EXTERIOR_WALL,
-			INTERIOR_AIR,
-			INTERIOR_SLAB,
-			INTERIOR_WALL,
-			INTERIOR_INSULATION_EDGE, // The bottom edge of partial wall insulation
-			WALL_TOP,
-			AXIS,  // TODO: Change to SYMMETRY
-			FAR_FIELD,
-			DEEP_GROUND,
-			NORMAL,
-			ZERO_WIDTH_R,
-			ZERO_WIDTH_Z,
-			ZERO_WIDTH_RZ
+			EXTERIOR_AIR,  // 0
+			EXTERIOR_GRADE,  // 1
+			EXTERIOR_WALL,  // 2
+			INTERIOR_AIR,  // 3
+			INTERIOR_SLAB,  // 4
+			INTERIOR_WALL,  // 5
+			INTERIOR_INSULATION_EDGE,  // 6
+			WALL_TOP,  // 7
+			SYMMETRY,  // 8
+			FAR_FIELD,  // 9
+			DEEP_GROUND,  // 10
+			NORMAL,  // 11
+			ZERO_WIDTH_Z,  // 12
+			ZERO_WIDTH_R,  // 13
+			ZERO_WIDTH_RZ  // 14
 		};
-		blas::matrix<CellType> cellType;
-		size_t slabJ;
+		boost::multi_array<CellType, 3>  cellType;
+
+		size_t slabK;
 		size_t slabImin;
 		size_t slabImax;
-
+		
 public:
 
 		Domain();
-		Domain(Mesher &mesher, Foundation &foundation, double &timestep);
-		double getDRP(size_t i);
-		double getDRM(size_t i);
-		double getDZP(size_t j);
-		double getDZM(size_t j);
-		double getKRP(size_t i,size_t j);
-		double getKRM(size_t i,size_t j);
-		double getKZP(size_t i,size_t j);
-		double getKZM(size_t i,size_t j);
+		Domain(Foundation &foundation, double &timestep);
+		void setDomain(Foundation &foundation, double &timestep);
+		double getDXP(size_t i);
+		double getDXM(size_t i);
+		double getDYP(size_t j);
+		double getDYM(size_t j);
+		double getDZP(size_t k);
+		double getDZM(size_t k);
+		double getKXP(size_t i,size_t j,size_t k);
+		double getKXM(size_t i,size_t j,size_t k);
+		double getKYP(size_t i,size_t j,size_t k);
+		double getKYM(size_t i,size_t j,size_t k);
+		double getKZP(size_t i,size_t j,size_t k);
+		double getKZM(size_t i,size_t j,size_t k);
 		void printCellTypes();
 
 };
