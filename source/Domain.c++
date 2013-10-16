@@ -515,6 +515,7 @@ double Domain::getKZM(size_t i, size_t j, size_t k)
 
 void Domain::printCellTypes()
 {
+	// TODO: Make the ability to output a specific slice in i, j, or k
 	std::ofstream output;
 	output.open("Cells.csv");
 
