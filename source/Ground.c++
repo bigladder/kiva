@@ -1121,7 +1121,7 @@ void Ground::calculate(double t)
 		QSlab[i] = h*A*(Tair - TNew[i][j][domain.slabK]);
 	}
 
-	QSlabTotal = accumulate((QSlab).begin(),(QSlab).end(), 0.0)/(PI*pow(foundation.radius,2.0));  // for cylindrical coordinates
+	QSlabTotal = accumulate((QSlab).begin(),(QSlab).end(), 0.0)/(PI*pow(foundation.effectiveLength,2.0));  // for cylindrical coordinates
 	//QSlabTotal = accumulate((QSlab).begin(),(QSlab).end(), 0.0)/foundation.radius;  // for cartesian coordinates
 
 	if (makePlot)
@@ -1148,14 +1148,14 @@ void Ground::plot()
 		double rmin = 0.0;
 		double rmax = rGrid.a[nX];
 		double rrange = rmax - rmin;
-		double radius = foundation.radius;
+		double length = foundation.effectiveLength;
 		mglData rTicks(2);
-		rTicks.a[0] = radius;
+		rTicks.a[0] = length;
 		rTicks.a[1] = rmax;
 
-		std::string sRadius = str(boost::format("%0.2f") % radius) + " m";
+		std::string sLength = str(boost::format("%0.2f") % length) + " m";
 		std::string sRmax = str(boost::format("%0.2f") % rmax) + " m";
-		std::string rTickString = sRadius + "\n" + sRmax;
+		std::string rTickString = sLength + "\n" + sRmax;
 
 		int nZ = zDat.GetNN();
 		double zmin = zGrid.a[0];

@@ -81,11 +81,11 @@ void Domain::setDomain(Foundation &foundation, double &timestep)
 
 	// r dimensions
 	double rAxis = 0.0;
-	double rIntIns = foundation.radius - foundation.interiorVerticalInsulation.layer.thickness;
-	double rExtIns = foundation.radius +
+	double rIntIns = foundation.effectiveLength - foundation.interiorVerticalInsulation.layer.thickness;
+	double rExtIns = foundation.effectiveLength +
 					 foundation.wall.totalWidth() +
 					 foundation.exteriorVerticalInsulation.layer.thickness;
-	double rFarField = foundation.radius + foundation.farFieldWidth;
+	double rFarField = foundation.effectiveLength + foundation.farFieldWidth;
 
 	for (size_t k = 0; k < nZ; k++)
 	{

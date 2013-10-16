@@ -198,8 +198,15 @@ Input inputParser(std::string inputFile)
 
 
 	// Geometry
-	foundation1.area = yamlInput["Foundation"]["area"].as<double>();
-	foundation1.perimeter = yamlInput["Foundation"]["perimeter"].as<double>();
+	if (yamlInput["Foundation"]["coordinateSystem"].as<std::string>() == "2DAXIAL")
+		foundation1.coordinateSystem = Foundation::CS_2DAXIAL;
+	else if (yamlInput["Foundation"]["coordinateSystem"].as<std::string>() == "2DLINEAR")
+		foundation1.coordinateSystem = Foundation::CS_2DLINEAR;
+	else if (yamlInput["Foundation"]["coordinateSystem"].as<std::string>() == "3D")
+		foundation1.coordinateSystem = Foundation::CS_3D;
+
+	foundation1.width = yamlInput["Foundation"]["width"].as<double>();
+	foundation1.length = yamlInput["Foundation"]["length"].as<double>();
 
 	// Meshing
 	if  (yamlInput["Foundation"]["mesh"].IsDefined())

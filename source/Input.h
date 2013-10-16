@@ -183,8 +183,15 @@ public:
 
 
 	// Geometry
-	double area;  // [m2] Area of foundation
-	double perimeter;  // [m] Perimeter of foundation
+	enum CoordinateSystem
+	{
+		CS_2DAXIAL,
+		CS_2DLINEAR,
+		CS_3D
+	};
+	CoordinateSystem coordinateSystem;
+	double length;  // [m]
+	double width;  // [m]
 
 	// Constructions
 	Wall wall;
@@ -266,14 +273,19 @@ public:
 
 
 	// Derived variables
-	double radius;
+	double area;  // [m2] Area of foundation
+	double perimeter;  // [m] Perimeter of foundation
+	double effectiveLength;
+
 	MeshData rMeshData;
 	MeshData zMeshData;
 	std::vector<Block> blocks;
 
 	void setMeshData()
 	{
-		radius = 2.0*area/perimeter;
+		area = length*width;  // [m2] Area of foundation
+		perimeter = 2*length + 2*width;  // [m] Perimeter of foundation
+		effectiveLength = 2.0*area/perimeter;
 
 		// points are the coordinate values of the interval boundaries.
 		// Intervals explain how each interval between a set of points is
@@ -320,9 +332,9 @@ public:
 		// Grade
 		zRange.push_back(0.0);
 
-		// Foundation Radius
-		rRange.push_back(radius);
-		rPosition = radius;
+		// Foundation Effective Length (radius or half width)
+		rRange.push_back(effectiveLength);
+		rPosition = effectiveLength;
 
 		// Top of domain
 		double zTop;
@@ -401,7 +413,7 @@ public:
 		{
 			Block block;
 			block.rMin = 0.0;
-			block.rMax = radius;
+			block.rMax = effectiveLength;
 			block.zMax = zTop;
 			block.zMin = zSlab;
 			block.material = null;
@@ -432,7 +444,7 @@ public:
 			}
 		}
 		else if (excavationDepth > 0.0)
-			rRange.push_back(radius);
+			rRange.push_back(effectiveLength);
 
 		// Exterior Vertical Insulation
 		if (hasExteriorVerticalInsulation)
@@ -467,7 +479,7 @@ public:
 		}
 
 		double rWallExt = rPosition;
-		double rFarField = radius + farFieldWidth;
+		double rFarField = effectiveLength + farFieldWidth;
 
 		// Exterior Air
 		{
@@ -530,7 +542,7 @@ public:
 		// Wall
 		if (excavationDepth > 0.0)
 		{
-			rRange.push_back(radius);
+			rRange.push_back(effectiveLength);
 
 			if (hasWall)
 				rRange.push_back(rWallExt);
@@ -541,7 +553,7 @@ public:
 		}
 
 		// Far field
-		rRange.push_back(radius + farFieldWidth);
+		rRange.push_back(effectiveLength + farFieldWidth);
 
 		// Sort the range vectors again this time it includes doubles for zero thickness cells
 		sort(rRange.begin(), rRange.end());
