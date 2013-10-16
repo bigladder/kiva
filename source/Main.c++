@@ -27,17 +27,13 @@
 #include <cmath>
 #include <boost/program_options.hpp>
 
-
-using namespace std;
-using namespace boost::posix_time;
-using namespace boost::gregorian;
 namespace po = boost::program_options;
 
 int main(int argc, char *argv[])
 {
 
-	string versionInfo = "kiva 0.0.1";
-	string copyrightInfo = "Copyright (C) 2012-2013 Big Ladder Software\n"
+	std::string versionInfo = "kiva 0.0.1";
+	std::string copyrightInfo = "Copyright (C) 2012-2013 Big Ladder Software\n"
 			               "Web: www.bigladdersoftware.com";
 
 	try {
@@ -49,7 +45,7 @@ int main(int argc, char *argv[])
 
         po::options_description hidden("Hidden options");
         hidden.add_options()
-            ("input-file", po::value<string>(), "input file");
+            ("input-file", po::value<std::string>(), "input file");
 
         po::options_description cmdLine;
         cmdLine.add(generic).add(hidden);
@@ -64,35 +60,35 @@ int main(int argc, char *argv[])
 
 		if (vm.count("help"))
 		{
-			cout << versionInfo << "\n";
-			cout << copyrightInfo << "\n";
-			cout << "Usage: kiva [Input File]\n"
+			std::cout << versionInfo << "\n";
+			std::cout << copyrightInfo << "\n";
+			std::cout << "Usage: kiva [Input File]\n"
 					"   Input format: yaml\n";
-			cout << generic;
+			std::cout << generic;
 			return 0;
 		}
 		if (vm.count("version"))
 		{
-			cout << versionInfo << "\n";
-			cout << copyrightInfo << "\n";
+			std::cout << versionInfo << "\n";
+			std::cout << copyrightInfo << "\n";
 			return 0;
 		}
 		if (vm.count("input-file"))
 		{
-			ptime beginCalc = second_clock::local_time();
-			cout << "Starting Program: " << beginCalc << endl;
+			boost::posix_time::ptime beginCalc = boost::posix_time::second_clock::local_time();
+			std::cout << "Starting Program: " << beginCalc << std::endl;
 
 			// parse input
-			Input input = inputParser(vm["input-file"].as<string>());
+			Input input = inputParser(vm["input-file"].as<std::string>());
 
 			// parse weather
 			WeatherData weather(input.simulationControl.weatherFile);
 
 			// simulation
 			input.simulationControl.setStartTime();
-			ptime simStart = input.simulationControl.startTime;
-			ptime simEnd(input.simulationControl.endDate + days(1));
-			time_duration simDuration =  simEnd - simStart;
+			boost::posix_time::ptime simStart = input.simulationControl.startTime;
+			boost::posix_time::ptime simEnd(input.simulationControl.endDate + boost::gregorian::days(1));
+			boost::posix_time::time_duration simDuration =  simEnd - simStart;
 
 
 			double tstart = 0.0; // [s] Simulation start time
@@ -100,64 +96,64 @@ int main(int argc, char *argv[])
 			double timestep = input.simulationControl.timestep.total_seconds();
 
 			// set up output file
-			ofstream output;
+			std::ofstream output;
 			output.open("Output.csv");
-			output << "Time Stamp, Heat Flux [W/m2]" << endl;
+			output << "Time Stamp, Heat Flux [W/m2]" << std::endl;
 
 			// initialize
 			Ground ground(weather,input.foundations[0],input.simulationControl);
 
 			// loop
 
-			ptime prevTime = second_clock::local_time();
+			boost::posix_time::ptime prevTime = boost::posix_time::second_clock::local_time();
 
 			for (double t = tstart; t < tend; t = t + timestep)
 			{
-				ptime currentTime = second_clock::local_time();
-				ptime simTime(input.simulationControl.startDate,seconds(t));
-				date today = simTime.date();
+				boost::posix_time::ptime currentTime = boost::posix_time::second_clock::local_time();
+				boost::posix_time::ptime simTime(input.simulationControl.startDate,boost::posix_time::seconds(t));
+				boost::gregorian::date today = simTime.date();
 
 				ground.calculate(t);
 
-				if (currentTime - prevTime > milliseconds(500))
+				if (currentTime - prevTime > boost::posix_time::milliseconds(500))
 				{
 
 					double percentComplete = round(t/tend*1000)/10.0;
 
-					cout << percentComplete << "% (" << today << ")\n";
+					std::cout << percentComplete << "% (" << today << ")\n";
 
 					prevTime = currentTime;
 				}
 
 				output << to_simple_string(simTime) << ", " <<
-						  ground.QSlabTotal << endl;
+						  ground.QSlabTotal << std::endl;
 
 			}
 
 			output.close();
 
-			ptime simTime(input.simulationControl.startDate,seconds(tend));
-			date today = simTime.date();
-			cout << "100% (" << today << ")\n";
+			boost::posix_time::ptime simTime(input.simulationControl.startDate,boost::posix_time::seconds(tend));
+			boost::gregorian::date today = simTime.date();
+			std::cout << "100% (" << today << ")\n";
 
 			// process output
 			//cout << "Total Heat Flux: "<< ground.QSlabTotal << endl;
 
 
-			ptime finishCalc = second_clock::local_time();
-			cout << "Finished Program: " << finishCalc << endl;
+			boost::posix_time::ptime finishCalc = boost::posix_time::second_clock::local_time();
+			std::cout << "Finished Program: " << finishCalc << std::endl;
 
-			time_duration totalCalc = finishCalc - beginCalc;
-			cout << "Elapsed Time: " << totalCalc << endl;
+			boost::posix_time::time_duration totalCalc = finishCalc - beginCalc;
+			std::cout << "Elapsed Time: " << totalCalc << std::endl;
 
 			return 0;
 
 		}
 
 	}
-    catch(exception& e)
+    catch(std::exception& e)
     {
-        cout << e.what() << endl;
+    	std::cout << e.what() << std::endl;
         return 1;
     }
 

@@ -23,23 +23,19 @@
 #include <boost/date_time/gregorian/gregorian.hpp>
 #include "Mesher.h"
 
-using namespace std;
-using namespace boost::posix_time;
-using namespace boost::gregorian;
-
 class SimulationControl
 {
 public:
 	// Simulation Control
-	date startDate;
-	date endDate;
-	time_duration timestep;
-	string weatherFile;
-	ptime startTime;
+	boost::gregorian::date startDate;
+	boost::gregorian::date endDate;
+	boost::posix_time::time_duration timestep;
+	std::string weatherFile;
+	boost::posix_time::ptime startTime;
 
 	void setStartTime()
 	{
-		ptime st(startDate,hours(0));
+		boost::posix_time::ptime st(startDate,boost::posix_time::hours(0));
 		startTime = st;
 	}
 };
@@ -90,7 +86,7 @@ public:
 	double exteriorAbsorptivity;
 	double depth;  // [m] below grade depth
 	double height;  // [m] total height
-	vector <Layer> layers;
+	std::vector <Layer> layers;
 
 	double totalWidth()
 	{
@@ -107,7 +103,7 @@ class Slab
 public:
 
 	double emissivity;
-	vector <Layer> layers;
+	std::vector <Layer> layers;
 
 	double totalWidth()
 	{
@@ -135,8 +131,8 @@ class OutputAnimation
 {
 public:
 
-	string name;
-	time_duration frequency;
+	std::string name;
+	boost::posix_time::time_duration frequency;
 	bool grid;
 	bool contours;
 	bool gradients;
@@ -273,7 +269,7 @@ public:
 	double radius;
 	MeshData rMeshData;
 	MeshData zMeshData;
-	vector<Block> blocks;
+	std::vector<Block> blocks;
 
 	void setMeshData()
 	{
@@ -304,8 +300,8 @@ public:
 		exterior.minCellDim = mesh.minCellDim;
 		exterior.growthDir = Interval::FORWARD;
 
-		vector<double> rRange;
-		vector<double> zRange;
+		std::vector<double> rRange;
+		std::vector<double> zRange;
 
 		double rPosition;
 		double zPosition;
@@ -555,7 +551,7 @@ public:
 		rMeshData.points = rRange;
 		zMeshData.points = zRange;
 
-		vector<Interval> rintervals;
+		std::vector<Interval> rintervals;
 		rintervals.push_back(interior);
 		rintervals.push_back(interior);
 
@@ -568,7 +564,7 @@ public:
 		// Zero-thickness far-field boundary
 		rintervals.push_back(exterior);
 
-		vector<Interval> zintervals;
+		std::vector<Interval> zintervals;
 
 		// Zero-thickness lower boundary
 		zintervals.push_back(deep);
@@ -593,7 +589,7 @@ class Input
 {
 public:
 	SimulationControl simulationControl;
-	vector <Foundation> foundations;
+	std::vector <Foundation> foundations;
 };
 
 #endif /* INPUT_HPP_ */

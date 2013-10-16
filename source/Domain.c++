@@ -20,8 +20,6 @@
 #define Domain_CPP
 
 #include "Domain.h"
-#include <fstream>
-
 
 Domain::Domain()
 {
@@ -517,7 +515,7 @@ double Domain::getKZM(size_t i, size_t j, size_t k)
 
 void Domain::printCellTypes()
 {
-	ofstream output;
+	std::ofstream output;
 	output.open("Cells.csv");
 
 	for (size_t i = 0; i < nX; i++)
@@ -527,7 +525,7 @@ void Domain::printCellTypes()
 
 	}
 
-	output << endl;
+	output << std::endl;
 
 	for (size_t k = nZ - 1; k >= 0 && k < nZ; k--)
 	{
@@ -541,7 +539,7 @@ void Domain::printCellTypes()
 
 		}
 
-		output << endl;
+		output << std::endl;
 	}
 	output.close();
 

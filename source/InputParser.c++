@@ -20,9 +20,7 @@
 #include "yaml-cpp/yaml.h"
 #include <fstream>
 
-using namespace std;
-
-Input inputParser(string inputFile)
+Input inputParser(std::string inputFile)
 {
 
 	Input input;
@@ -33,16 +31,16 @@ Input inputParser(string inputFile)
 
 
 	simulationControl.weatherFile =
-			yamlInput["Simulation Control"]["weatherFile"].as<string>();
+			yamlInput["Simulation Control"]["weatherFile"].as<std::string>();
 	simulationControl.startDate =
-			from_string(yamlInput["Simulation Control"]["startDate"].as<string>());
+			boost::gregorian::from_string(yamlInput["Simulation Control"]["startDate"].as<std::string>());
 	simulationControl.endDate =
-			from_string(yamlInput["Simulation Control"]["endDate"].as<string>());
+			boost::gregorian::from_string(yamlInput["Simulation Control"]["endDate"].as<std::string>());
 	simulationControl.timestep =
-			minutes(yamlInput["Simulation Control"]["timeStep"].as<long>());
+			boost::posix_time::minutes(yamlInput["Simulation Control"]["timeStep"].as<long>());
 
 	// Materials
-	map<string, Material> materials;
+	std::map<std::string, Material> materials;
 
 	for(YAML::const_iterator it=yamlInput["Materials"].begin();it!=yamlInput["Materials"].end();++it)
 	{
@@ -51,13 +49,13 @@ Input inputParser(string inputFile)
 		tempMaterial.density = it->second["rho"].as<double>();
 		tempMaterial.specificHeat = it->second["cp"].as<double>();
 
-		materials.insert(std::pair<string,Material>(it->first.as<string>(),tempMaterial));
+		materials.insert(std::pair<std::string,Material>(it->first.as<std::string>(),tempMaterial));
 	}
 
 	// Foundation
 
 	// Soil
-	foundation1.soil = materials[yamlInput["Foundation"]["soil"].as<string>()];
+	foundation1.soil = materials[yamlInput["Foundation"]["soil"].as<std::string>()];
     foundation1.soilAbsorptivity = yamlInput["Foundation"]["soilAbsorptivity"].as<double>();
     foundation1.soilEmissivity = yamlInput["Foundation"]["soilEmissivity"].as<double>();
 
@@ -77,7 +75,7 @@ Input inputParser(string inputFile)
 
 			Layer tempLayer;
 			tempLayer.thickness = yamlInput["Foundation"]["slab"]["layers"][i]["thickness"].as<double>();
-			tempLayer.material = materials[yamlInput["Foundation"]["slab"]["layers"][i]["material"].as<string>()];
+			tempLayer.material = materials[yamlInput["Foundation"]["slab"]["layers"][i]["material"].as<std::string>()];
 
 			foundation1.slab.layers.push_back(tempLayer);
 
@@ -101,7 +99,7 @@ Input inputParser(string inputFile)
 
 			Layer tempLayer;
 			tempLayer.thickness = yamlInput["Foundation"]["wall"]["layers"][i]["thickness"].as<double>();
-			tempLayer.material = materials[yamlInput["Foundation"]["slab"]["layers"][i]["material"].as<string>()];
+			tempLayer.material = materials[yamlInput["Foundation"]["slab"]["layers"][i]["material"].as<std::string>()];
 
 			foundation1.wall.layers.push_back(tempLayer);
 
@@ -124,7 +122,7 @@ Input inputParser(string inputFile)
 		foundation1.hasInteriorHorizontalInsulation = true;
 
 		foundation1.interiorHorizontalInsulation.layer.thickness = yamlInput["Foundation"]["interiorHorizontalInsulation"]["thickness"].as<double>();
-		foundation1.interiorHorizontalInsulation.layer.material = materials[yamlInput["Foundation"]["interiorHorizontalInsulation"]["material"].as<string>()];
+		foundation1.interiorHorizontalInsulation.layer.material = materials[yamlInput["Foundation"]["interiorHorizontalInsulation"]["material"].as<std::string>()];
 		foundation1.interiorHorizontalInsulation.depth = yamlInput["Foundation"]["interiorHorizontalInsulation"]["depth"].as<double>();
 		foundation1.interiorHorizontalInsulation.width = yamlInput["Foundation"]["interiorHorizontalInsulation"]["width"].as<double>();
 
@@ -140,7 +138,7 @@ Input inputParser(string inputFile)
 		foundation1.hasInteriorVerticalInsulation = true;
 
 		foundation1.interiorVerticalInsulation.layer.thickness = yamlInput["Foundation"]["interiorVerticalInsulation"]["thickness"].as<double>();
-		foundation1.interiorVerticalInsulation.layer.material = materials[yamlInput["Foundation"]["interiorVerticalInsulation"]["material"].as<string>()];
+		foundation1.interiorVerticalInsulation.layer.material = materials[yamlInput["Foundation"]["interiorVerticalInsulation"]["material"].as<std::string>()];
 		foundation1.interiorVerticalInsulation.depth = yamlInput["Foundation"]["interiorVerticalInsulation"]["depth"].as<double>();
 
 	}
@@ -155,7 +153,7 @@ Input inputParser(string inputFile)
 		foundation1.hasExteriorHorizontalInsulation = true;
 
 		foundation1.exteriorHorizontalInsulation.layer.thickness = yamlInput["Foundation"]["exteriorHorizontalInsulation"]["thickness"].as<double>();
-		foundation1.exteriorHorizontalInsulation.layer.material = materials[yamlInput["Foundation"]["exteriorHorizontalInsulation"]["material"].as<string>()];
+		foundation1.exteriorHorizontalInsulation.layer.material = materials[yamlInput["Foundation"]["exteriorHorizontalInsulation"]["material"].as<std::string>()];
 		foundation1.exteriorHorizontalInsulation.depth = yamlInput["Foundation"]["exteriorHorizontalInsulation"]["depth"].as<double>();
 		foundation1.exteriorHorizontalInsulation.width = yamlInput["Foundation"]["exteriorHorizontalInsulation"]["width"].as<double>();
 
@@ -171,7 +169,7 @@ Input inputParser(string inputFile)
 		foundation1.hasExteriorVerticalInsulation = true;
 
 		foundation1.exteriorVerticalInsulation.layer.thickness = yamlInput["Foundation"]["exteriorVerticalInsulation"]["thickness"].as<double>();
-		foundation1.exteriorVerticalInsulation.layer.material = materials[yamlInput["Foundation"]["exteriorVerticalInsulation"]["material"].as<string>()];
+		foundation1.exteriorVerticalInsulation.layer.material = materials[yamlInput["Foundation"]["exteriorVerticalInsulation"]["material"].as<std::string>()];
 		foundation1.exteriorVerticalInsulation.depth = yamlInput["Foundation"]["exteriorVerticalInsulation"]["depth"].as<double>();
 
 	}
@@ -187,9 +185,9 @@ Input inputParser(string inputFile)
 	foundation1.farFieldWidth = yamlInput["Foundation"]["farFieldWidth"].as<double>();
 	foundation1.deepGroundDepth = yamlInput["Foundation"]["deepGroundDepth"].as<double>();
 
-	if (yamlInput["Foundation"]["deepGroundBoundary"].as<string>() == "AUTO")
+	if (yamlInput["Foundation"]["deepGroundBoundary"].as<std::string>() == "AUTO")
 		foundation1.deepGroundBoundary = Foundation::DGB_AUTO;
-	else if (yamlInput["Foundation"]["deepGroundBoundary"].as<string>() == "CONSTANT-TEMP")
+	else if (yamlInput["Foundation"]["deepGroundBoundary"].as<std::string>() == "CONSTANT-TEMP")
 	{
 		foundation1.deepGroundBoundary = Foundation::DGB_CONSTANT_TEMPERATURE;
 		foundation1.deepGroundTemperature = yamlInput["Foundation"]["deepGroundTemperature"].as<double>();
@@ -222,15 +220,15 @@ Input inputParser(string inputFile)
 	// Simulation Control
 	if  (yamlInput["Foundation"]["numericalScheme"].IsDefined())
 	{
-		if (yamlInput["Foundation"]["numericalScheme"].as<string>() == "ADE")
+		if (yamlInput["Foundation"]["numericalScheme"].as<std::string>() == "ADE")
 			foundation1.numericalScheme = Foundation::NS_ADE;
-		else if (yamlInput["Foundation"]["numericalScheme"].as<string>() == "EXPLICIT")
+		else if (yamlInput["Foundation"]["numericalScheme"].as<std::string>() == "EXPLICIT")
 			foundation1.numericalScheme = Foundation::NS_EXPLICIT;
-		else if (yamlInput["Foundation"]["numericalScheme"].as<string>() == "IMPLICIT")
+		else if (yamlInput["Foundation"]["numericalScheme"].as<std::string>() == "IMPLICIT")
 			foundation1.numericalScheme = Foundation::NS_IMPLICIT;
-		else if (yamlInput["Foundation"]["numericalScheme"].as<string>() == "CRANK-NICOLSON")
+		else if (yamlInput["Foundation"]["numericalScheme"].as<std::string>() == "CRANK-NICOLSON")
 			foundation1.numericalScheme = Foundation::NS_CRANK_NICOLSON;
-		else if (yamlInput["Foundation"]["numericalScheme"].as<string>() == "STEADY-STATE")
+		else if (yamlInput["Foundation"]["numericalScheme"].as<std::string>() == "STEADY-STATE")
 			foundation1.numericalScheme = Foundation::NS_STEADY_STATE;
 	}
 	else
@@ -240,17 +238,17 @@ Input inputParser(string inputFile)
 
 	if  (yamlInput["Foundation"]["initializationMethod"].IsDefined())
 	{
-		if (yamlInput["Foundation"]["initializationMethod"].as<string>() == "KUSUDA")
+		if (yamlInput["Foundation"]["initializationMethod"].as<std::string>() == "KUSUDA")
 			foundation1.initializationMethod = Foundation::IM_KUSUDA;
-		else if (yamlInput["Foundation"]["initializationMethod"].as<string>() == "IMPLICIT-ACCEL")
+		else if (yamlInput["Foundation"]["initializationMethod"].as<std::string>() == "IMPLICIT-ACCEL")
 		{
 			foundation1.initializationMethod = Foundation::IM_IMPLICIT_ACCELERATION;
 			foundation1.implicitAccelTimestep = yamlInput["Foundation"]["implicitAccelTimestep"].as<long>();
 			foundation1.implicitAccelPeriods = yamlInput["Foundation"]["implicitAccelPeriods"].as<long>();
 		}
-		else if (yamlInput["Foundation"]["initializationMethod"].as<string>() == "STEADY-STATE")
+		else if (yamlInput["Foundation"]["initializationMethod"].as<std::string>() == "STEADY-STATE")
 			foundation1.initializationMethod = Foundation::IM_STEADY_STATE;
-		else if (yamlInput["Foundation"]["initializationMethod"].as<string>() == "CONSTANT")
+		else if (yamlInput["Foundation"]["initializationMethod"].as<std::string>() == "CONSTANT")
 		{
 			foundation1.initializationMethod = Foundation::IM_CONSTANT_TEMPERATURE;
 			foundation1.initialTemperature = yamlInput["Foundation"]["initialTemperature"].as<double>();
@@ -263,9 +261,9 @@ Input inputParser(string inputFile)
 
 	if  (yamlInput["Foundation"]["convectionCalculationMethod"].IsDefined())
 	{
-		if (yamlInput["Foundation"]["convectionCalculationMethod"].as<string>() == "AUTO")
+		if (yamlInput["Foundation"]["convectionCalculationMethod"].as<std::string>() == "AUTO")
 			foundation1.convectionCalculationMethod = Foundation::CCM_AUTO;
-		else if (yamlInput["Foundation"]["convectionCalculationMethod"].as<string>() == "CONSTANT")
+		else if (yamlInput["Foundation"]["convectionCalculationMethod"].as<std::string>() == "CONSTANT")
 		{
 			foundation1.convectionCalculationMethod = Foundation::CCM_CONSTANT_COEFFICIENT;
 			foundation1.interiorConvectiveCoefficient = yamlInput["Foundation"]["interiorConvectiveCoefficient"].as<double>();
@@ -279,9 +277,9 @@ Input inputParser(string inputFile)
 
 	if  (yamlInput["Foundation"]["outdoorTemperatureMethod"].IsDefined())
 	{
-		if (yamlInput["Foundation"]["outdoorTemperatureMethod"].as<string>() == "WEATHER-FILE")
+		if (yamlInput["Foundation"]["outdoorTemperatureMethod"].as<std::string>() == "WEATHER-FILE")
 			foundation1.outdoorTemperatureMethod = Foundation::OTM_WEATHER_FILE;
-		else if (yamlInput["Foundation"]["outdoorTemperatureMethod"].as<string>() == "CONSTANT")
+		else if (yamlInput["Foundation"]["outdoorTemperatureMethod"].as<std::string>() == "CONSTANT")
 		{
 			foundation1.outdoorTemperatureMethod = Foundation::OTM_CONSTANT_TEMPERATURE;
 			foundation1.outdoorDryBulbTemperature = yamlInput["Foundation"]["outdoorDryBulbTemperature"].as<double>();
@@ -294,8 +292,8 @@ Input inputParser(string inputFile)
 
 	// Output
 
-	foundation1.outputAnimation.name = yamlInput["Foundation"]["outputAnimation"]["name"].as<string>();
-	foundation1.outputAnimation.frequency = hours(yamlInput["Foundation"]["outputAnimation"]["frequency"].as<long>());
+	foundation1.outputAnimation.name = yamlInput["Foundation"]["outputAnimation"]["name"].as<std::string>();
+	foundation1.outputAnimation.frequency = boost::posix_time::hours(yamlInput["Foundation"]["outputAnimation"]["frequency"].as<long>());
 	foundation1.outputAnimation.grid = yamlInput["Foundation"]["outputAnimation"]["grid"].as<bool>();
 	foundation1.outputAnimation.gradients = yamlInput["Foundation"]["outputAnimation"]["gradients"].as<bool>();
 	foundation1.outputAnimation.contours = yamlInput["Foundation"]["outputAnimation"]["contours"].as<bool>();

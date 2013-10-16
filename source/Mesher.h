@@ -20,6 +20,8 @@
 #define Mesher_HPP
 
 #include <vector>
+#include <cmath>
+#include <math.h>
 
 class Interval
 {

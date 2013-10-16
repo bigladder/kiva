@@ -20,8 +20,6 @@
 #define Mesher_CPP
 
 #include "Mesher.h"
-#include <cmath>
-#include <math.h>
 
 Mesher::Mesher()
 {

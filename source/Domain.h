@@ -19,13 +19,12 @@
 #ifndef Domain_HPP
 #define Domain_HPP
 
-#include <boost/numeric/ublas/matrix.hpp>
-#include <boost/numeric/ublas/vector.hpp>
-#include <boost/multi_array.hpp>
 #include "Input.h"
 #include "Mesher.h"
 
-namespace blas = boost::numeric::ublas;
+#include <fstream>
+
+#include <boost/multi_array.hpp>
 
 class Domain
 {
@@ -35,9 +34,9 @@ public:
 		Mesher meshX;
 		Mesher meshY;
 		Mesher meshZ;
-		size_t nX;
-		size_t nY;
-		size_t nZ;
+		std::size_t nX;
+		std::size_t nY;
+		std::size_t nZ;
 
 		// inherent properties
 		boost::multi_array<double, 3> density;
@@ -77,9 +76,9 @@ public:
 		};
 		boost::multi_array<CellType, 3>  cellType;
 
-		size_t slabK;
-		size_t slabImin;
-		size_t slabImax;
+		std::size_t slabK;
+		std::size_t slabImin;
+		std::size_t slabImax;
 		
 public:
 

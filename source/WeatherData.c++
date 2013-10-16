@@ -19,31 +19,23 @@
 #ifndef WeatherData_CPP
 #define WeatherData_CPP
 
-#include <fstream>
 #include "WeatherData.h"
-#include <boost/tokenizer.hpp>
-#include <boost/algorithm/string.hpp>
-#include <boost/lexical_cast.hpp>
-#include <cmath>
-
-using namespace std;
-using namespace boost;
 
 static const double PI = 4.0*atan(1.0);
 
-double HourlyData::getValue(ptime t)
+double HourlyData::getValue(boost::posix_time::ptime t)
 {
 	long year = t.date().year();
-	date newYearDate(year,Jan,1);
-	ptime newYear(newYearDate);
-	time_duration duration = t - newYear;
+	boost::gregorian::date newYearDate(year,boost::gregorian::Jan,1);
+	boost::posix_time::ptime newYear(newYearDate);
+	boost::posix_time::time_duration duration = t - newYear;
 	long second = duration.total_seconds();
 	double hour = second/60.0/60.0;
 	long hour_before = hour;
 	long hour_after = hour_before + 1;
 	double frac = hour - hour_before;
 
-	if (gregorian_calendar::is_leap_year(year))
+	if (boost::gregorian::gregorian_calendar::is_leap_year(year))
 	{
 
 		if (hour < 1416.0)
@@ -79,38 +71,38 @@ double HourlyData::getMax()
 	return *max_element((*this).begin(),(*this).end());
 }
 
-WeatherData::WeatherData(string weatherFile)
+WeatherData::WeatherData(std::string weatherFile)
 {
 	importEPW(weatherFile);
 }
 
-void WeatherData::importEPW(string epwFile)
+void WeatherData::importEPW(std::string epwFile)
 {
 
-	ifstream inf;
+	std::ifstream inf;
 	inf.open(epwFile.c_str());
 
     if (!inf)
     {
         // Print an error and exit
-        cerr << "Unable to read EPW file" << endl;
+        std::cerr << "Unable to read EPW file" << std::endl;
         exit(1);
     }
 
     // While there's still stuff left to read
-    string line;
-    vector <string> columns;
+    std::string line;
+    std::vector <std::string> columns;
 
-    typedef tokenizer< escaped_list_separator<char> > Tokenizer;
+    typedef boost::tokenizer< boost::escaped_list_separator<char> > Tokenizer;
 
     int row = 0;
 
     while (getline(inf,line))
     {
     	row += 1;
-    	Tokenizer tok(line, escaped_list_separator<char>("\\",",","\""));
+    	Tokenizer tok(line, boost::escaped_list_separator<char>("\\",",","\""));
 
-    	for (tokenizer< escaped_list_separator<char> >::iterator
+    	for (boost::tokenizer< boost::escaped_list_separator<char> >::iterator
     			i(tok.begin()); i!=tok.end(); ++i)
     	{
     		columns.push_back(*i);
@@ -126,43 +118,43 @@ void WeatherData::importEPW(string epwFile)
 
     	if (row > 8)
     	{
-    		double Tdb = double(lexical_cast<double>(columns[6])) +
+    		double Tdb = double(boost::lexical_cast<double>(columns[6])) +
 		              273.15;
 
     		dryBulbTemp.push_back(Tdb);  // [K]
 
-    		double Tdp = double(lexical_cast<double>(columns[7])) +
+    		double Tdp = double(boost::lexical_cast<double>(columns[7])) +
 		              273.15;
 
     		dewPointTemp.push_back(Tdp);  // [K]
 
     		relativeHumidity.push_back(
-    				double(lexical_cast<double>(columns[8]))/100.0);  // [frac]
+    				double(boost::lexical_cast<double>(columns[8]))/100.0);  // [frac]
 
     		atmosphericPressure.push_back(
-    				double(lexical_cast<double>(columns[9])));  // [Pa]
+    				double(boost::lexical_cast<double>(columns[9])));  // [Pa]
 
     		globalHorizontalSolar.push_back(
-    				double(lexical_cast<double>(columns[13])));  // [W/m2]
+    				double(boost::lexical_cast<double>(columns[13])));  // [W/m2]
 
     		directNormalSolar.push_back(
-    				double(lexical_cast<double>(columns[14])));  // [W/m2]
+    				double(boost::lexical_cast<double>(columns[14])));  // [W/m2]
 
     		diffuseHorizontalSolar.push_back(
-    				double(lexical_cast<double>(columns[15])));  // [W/m2]
+    				double(boost::lexical_cast<double>(columns[15])));  // [W/m2]
 
-    		windDirection.push_back(double(lexical_cast<double>(columns[20]))*
+    		windDirection.push_back(double(boost::lexical_cast<double>(columns[20]))*
     					PI/180.0);  // [rad]
 
     		windSpeed.push_back(
-    				double(lexical_cast<double>(columns[21])));  // [m/s]
+    				double(boost::lexical_cast<double>(columns[21])));  // [m/s]
 
-    		double fc = double(lexical_cast<double>(columns[22]));
+    		double fc = double(boost::lexical_cast<double>(columns[22]));
 
     		totalSkyCover.push_back(fc);  // [tenths]
 
     		opaqueSkyCover.push_back(
-    				double(lexical_cast<double>(columns[23])));  // [tenths]
+    				double(boost::lexical_cast<double>(columns[23])));  // [tenths]
 
     		double eSky = 0.787 + 0.764*log(Tdp/Tdb)*
     				(1 + 0.0224*fc + 0.0035*pow(fc,2) + 0.00028*pow(fc,3));

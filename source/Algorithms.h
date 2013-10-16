@@ -21,8 +21,6 @@
 
 #include <cmath>
 
-using namespace std;
-
 // TODO: use defaulting inputs
 double getDOE2ConvectionCoeff(double tilt,
 		  	  	  	  	  	  double azimuth,

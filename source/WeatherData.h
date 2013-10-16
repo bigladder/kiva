@@ -19,19 +19,21 @@
 #ifndef WEATHERDATA_H_
 #define WEATHERDATA_H_
 
-#include <boost/date_time/posix_time/posix_time.hpp>
-#include <boost/date_time/gregorian/gregorian.hpp>
+#include <fstream>
+#include <cmath>
 #include <numeric>
 
-using namespace std;
-using namespace boost::posix_time;
-using namespace boost::gregorian;
+#include <boost/tokenizer.hpp>
+#include <boost/algorithm/string.hpp>
+#include <boost/lexical_cast.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/date_time/gregorian/gregorian.hpp>
 
-class HourlyData: public vector<double>
+class HourlyData: public std::vector<double>
 {
 public:
 
-	double getValue(ptime t);
+	double getValue(boost::posix_time::ptime t);
 	double getAverage();
 	double getMin();
 	double getMax();
@@ -41,9 +43,9 @@ class WeatherData
 {
 public:
 
-	string city;
-	string state;
-	string country;
+	std::string city;
+	std::string state;
+	std::string country;
 
 	HourlyData dryBulbTemp;
 	//HourlyData wetBulbTemp;
@@ -71,10 +73,10 @@ public:
 	//HourlyData rainFlag;
 
 public:
-	WeatherData(string weatherFile);
+	WeatherData(std::string weatherFile);
 
 private:
-	void importEPW(string epwFile);
+	void importEPW(std::string epwFile);
 
 };
 

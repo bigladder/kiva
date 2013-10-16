@@ -21,7 +21,7 @@
 
 #include "Input.h"
 
-Input inputParser(string inputFile);
+Input inputParser(std::string inputFile);
 
 
 #endif /* INPUTPARSER_HPP_ */
