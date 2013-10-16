@@ -37,6 +37,9 @@ Domain::Domain(Foundation &foundation, double &timestep)
 
 void Domain::setDomain(Foundation &foundation, double &timestep)
 {
+	// Having this separate from the constructor allows the correct resizing of
+	// multidimensional arrays on pre-existing initialized instances.
+
 	{
 		Mesher mX(foundation.rMeshData);
 		meshX = mX;
@@ -80,10 +83,10 @@ void Domain::setDomain(Foundation &foundation, double &timestep)
 
 	// r dimensions
 	double rAxis = 0.0;
-	double rIntIns = foundation.radius - foundation.interiorVerticalInsulation.layer.d;
+	double rIntIns = foundation.radius - foundation.interiorVerticalInsulation.layer.thickness;
 	double rExtIns = foundation.radius +
 					 foundation.wall.totalWidth() +
-					 foundation.exteriorVerticalInsulation.layer.d;
+					 foundation.exteriorVerticalInsulation.layer.thickness;
 	double rFarField = foundation.radius + foundation.farFieldWidth;
 
 	for (size_t k = 0; k < nZ; k++)
@@ -94,9 +97,9 @@ void Domain::setDomain(Foundation &foundation, double &timestep)
 			{
 
 				// Set Cell Properties
-				density[i][j][k] = foundation.soil.rho;
-				specificHeat[i][j][k] = foundation.soil.cp;
-				conductivity[i][j][k] = foundation.soil.k;
+				density[i][j][k] = foundation.soil.density;
+				specificHeat[i][j][k] = foundation.soil.specificHeat;
+				conductivity[i][j][k] = foundation.soil.conductivity;
 
 				for (size_t b = 0; b < foundation.blocks.size(); b++)
 				{
@@ -105,9 +108,9 @@ void Domain::setDomain(Foundation &foundation, double &timestep)
 						meshZ.centers[k] > foundation.blocks[b].zMin &&
 						meshZ.centers[k] < foundation.blocks[b].zMax)
 					{
-						density[i][j][k] = foundation.blocks[b].material.rho;
-						specificHeat[i][j][k] = foundation.blocks[b].material.cp;
-						conductivity[i][j][k] = foundation.blocks[b].material.k;
+						density[i][j][k] = foundation.blocks[b].material.density;
+						specificHeat[i][j][k] = foundation.blocks[b].material.specificHeat;
+						conductivity[i][j][k] = foundation.blocks[b].material.conductivity;
 					}
 				}
 

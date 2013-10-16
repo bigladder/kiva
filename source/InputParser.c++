@@ -47,9 +47,9 @@ Input inputParser(string inputFile)
 	for(YAML::const_iterator it=yamlInput["Materials"].begin();it!=yamlInput["Materials"].end();++it)
 	{
 		Material tempMaterial;
-		tempMaterial.k = it->second["k"].as<double>();
-		tempMaterial.rho = it->second["rho"].as<double>();
-		tempMaterial.cp = it->second["cp"].as<double>();
+		tempMaterial.conductivity = it->second["k"].as<double>();
+		tempMaterial.density = it->second["rho"].as<double>();
+		tempMaterial.specificHeat = it->second["cp"].as<double>();
 
 		materials.insert(std::pair<string,Material>(it->first.as<string>(),tempMaterial));
 	}
@@ -76,7 +76,7 @@ Input inputParser(string inputFile)
 		{
 
 			Layer tempLayer;
-			tempLayer.d = yamlInput["Foundation"]["slab"]["layers"][i]["thickness"].as<double>();
+			tempLayer.thickness = yamlInput["Foundation"]["slab"]["layers"][i]["thickness"].as<double>();
 			tempLayer.material = materials[yamlInput["Foundation"]["slab"]["layers"][i]["material"].as<string>()];
 
 			foundation1.slab.layers.push_back(tempLayer);
@@ -100,7 +100,7 @@ Input inputParser(string inputFile)
 		{
 
 			Layer tempLayer;
-			tempLayer.d = yamlInput["Foundation"]["wall"]["layers"][i]["thickness"].as<double>();
+			tempLayer.thickness = yamlInput["Foundation"]["wall"]["layers"][i]["thickness"].as<double>();
 			tempLayer.material = materials[yamlInput["Foundation"]["slab"]["layers"][i]["material"].as<string>()];
 
 			foundation1.wall.layers.push_back(tempLayer);
@@ -123,7 +123,7 @@ Input inputParser(string inputFile)
 	{
 		foundation1.hasInteriorHorizontalInsulation = true;
 
-		foundation1.interiorHorizontalInsulation.layer.d = yamlInput["Foundation"]["interiorHorizontalInsulation"]["thickness"].as<double>();
+		foundation1.interiorHorizontalInsulation.layer.thickness = yamlInput["Foundation"]["interiorHorizontalInsulation"]["thickness"].as<double>();
 		foundation1.interiorHorizontalInsulation.layer.material = materials[yamlInput["Foundation"]["interiorHorizontalInsulation"]["material"].as<string>()];
 		foundation1.interiorHorizontalInsulation.depth = yamlInput["Foundation"]["interiorHorizontalInsulation"]["depth"].as<double>();
 		foundation1.interiorHorizontalInsulation.width = yamlInput["Foundation"]["interiorHorizontalInsulation"]["width"].as<double>();
@@ -139,7 +139,7 @@ Input inputParser(string inputFile)
 	{
 		foundation1.hasInteriorVerticalInsulation = true;
 
-		foundation1.interiorVerticalInsulation.layer.d = yamlInput["Foundation"]["interiorVerticalInsulation"]["thickness"].as<double>();
+		foundation1.interiorVerticalInsulation.layer.thickness = yamlInput["Foundation"]["interiorVerticalInsulation"]["thickness"].as<double>();
 		foundation1.interiorVerticalInsulation.layer.material = materials[yamlInput["Foundation"]["interiorVerticalInsulation"]["material"].as<string>()];
 		foundation1.interiorVerticalInsulation.depth = yamlInput["Foundation"]["interiorVerticalInsulation"]["depth"].as<double>();
 
@@ -154,7 +154,7 @@ Input inputParser(string inputFile)
 	{
 		foundation1.hasExteriorHorizontalInsulation = true;
 
-		foundation1.exteriorHorizontalInsulation.layer.d = yamlInput["Foundation"]["exteriorHorizontalInsulation"]["thickness"].as<double>();
+		foundation1.exteriorHorizontalInsulation.layer.thickness = yamlInput["Foundation"]["exteriorHorizontalInsulation"]["thickness"].as<double>();
 		foundation1.exteriorHorizontalInsulation.layer.material = materials[yamlInput["Foundation"]["exteriorHorizontalInsulation"]["material"].as<string>()];
 		foundation1.exteriorHorizontalInsulation.depth = yamlInput["Foundation"]["exteriorHorizontalInsulation"]["depth"].as<double>();
 		foundation1.exteriorHorizontalInsulation.width = yamlInput["Foundation"]["exteriorHorizontalInsulation"]["width"].as<double>();
@@ -170,7 +170,7 @@ Input inputParser(string inputFile)
 	{
 		foundation1.hasExteriorVerticalInsulation = true;
 
-		foundation1.exteriorVerticalInsulation.layer.d = yamlInput["Foundation"]["exteriorVerticalInsulation"]["thickness"].as<double>();
+		foundation1.exteriorVerticalInsulation.layer.thickness = yamlInput["Foundation"]["exteriorVerticalInsulation"]["thickness"].as<double>();
 		foundation1.exteriorVerticalInsulation.layer.material = materials[yamlInput["Foundation"]["exteriorVerticalInsulation"]["material"].as<string>()];
 		foundation1.exteriorVerticalInsulation.depth = yamlInput["Foundation"]["exteriorVerticalInsulation"]["depth"].as<double>();
 

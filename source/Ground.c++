@@ -1275,7 +1275,7 @@ double Ground::getInitialTemperature(double t, double z)
 		double tshift = 0;  // Assume min temperature occurs at the beginning of the year
 		double seconds_in_day = 60.0*60.0*24.0;
 		double Tamp = (maxDryBulb - minDryBulb) / 2.0;
-		double diff = foundation.soil.k/(foundation.soil.rho*foundation.soil.cp);
+		double diff = foundation.soil.conductivity/(foundation.soil.density*foundation.soil.specificHeat);
 
 		return annualAverageDryBulbTemperature
 				- Tamp*exp(z*pow(PI/(365*seconds_in_day*diff),0.5))

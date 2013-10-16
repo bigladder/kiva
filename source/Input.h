@@ -48,9 +48,9 @@ class Material
 {
 public:
 
-	double k;  // [W/m-K] conductivity (boost function of z, t?)
-	double rho;  // [kg/m3] density
-	double cp;  // [J/kg-K] specific heat
+	double conductivity;  // [W/m-K] conductivity (boost function of z, t?)
+	double density;  // [kg/m3] density
+	double specificHeat;  // [J/kg-K] specific heat
 };
 
 class Layer
@@ -58,7 +58,7 @@ class Layer
 public:
 
 	Material material;
-	double d;  // [m] thickness
+	double thickness;  // [m] thickness
 };
 
 class HorizontalInsulation
@@ -96,7 +96,7 @@ public:
 	{
 		double width = 0.0;
 
-		for (size_t n = 0; n < layers.size(); n++) width += layers[n].d;
+		for (size_t n = 0; n < layers.size(); n++) width += layers[n].thickness;
 
 		return width;
 	}
@@ -113,7 +113,7 @@ public:
 	{
 		double width = 0.0;
 
-		for (size_t n = 0; n < layers.size(); n++) width += layers[n].d;
+		for (size_t n = 0; n < layers.size(); n++) width += layers[n].thickness;
 
 		return width;
 	}
@@ -311,9 +311,9 @@ public:
 		double zPosition;
 
 		Material null;
-		null.k = 1;
-		null.rho = 1;
-		null.cp = 1;
+		null.conductivity = 1;
+		null.density = 1;
+		null.specificHeat = 1;
 
 		// Cylinder Axis
 		rRange.push_back(0.0);
@@ -344,7 +344,7 @@ public:
 			block.rMin = rPosition - interiorHorizontalInsulation.width;
 			block.rMax = rPosition;
 			block.zMax = zTop - interiorHorizontalInsulation.depth;
-			block.zMin = block.zMax - interiorHorizontalInsulation.layer.d;
+			block.zMin = block.zMax - interiorHorizontalInsulation.layer.thickness;
 			block.material = interiorHorizontalInsulation.layer.material;
 			rRange.push_back(block.rMin);
 			rRange.push_back(block.rMax);
@@ -366,7 +366,7 @@ public:
 				block.rMin = 0.0;
 				block.rMax = rPosition;
 				block.zMin = zPosition;
-				block.zMax = block.zMin + slab.layers[n].d;
+				block.zMax = block.zMin + slab.layers[n].thickness;
 				zPosition = block.zMax;
 				block.material = slab.layers[n].material;
 				rRange.push_back(block.rMin);
@@ -389,7 +389,7 @@ public:
 		if (hasInteriorVerticalInsulation)
 		{
 			Block block;
-			block.rMin = rPosition - interiorVerticalInsulation.layer.d;
+			block.rMin = rPosition - interiorVerticalInsulation.layer.thickness;
 			block.rMax = rPosition;
 			block.zMax = zTop;
 			block.zMin = block.zMax - interiorVerticalInsulation.depth;
@@ -423,7 +423,7 @@ public:
 			{
 				Block block;
 				block.rMin = rPosition;
-				block.rMax = block.rMin + wall.layers[n].d;
+				block.rMax = block.rMin + wall.layers[n].thickness;
 				rPosition = block.rMax;
 				block.zMax = zTop;
 				block.zMin = -1*wall.depth;
@@ -443,7 +443,7 @@ public:
 		{
 			Block block;
 			block.rMin = rPosition;
-			block.rMax = rPosition + exteriorVerticalInsulation.layer.d;
+			block.rMax = rPosition + exteriorVerticalInsulation.layer.thickness;
 			block.zMax = zTop;
 			block.zMin = block.zMax - exteriorVerticalInsulation.depth;
 			block.material = exteriorVerticalInsulation.layer.material;
@@ -461,7 +461,7 @@ public:
 			block.rMin = rPosition;
 			block.rMax = rPosition + exteriorHorizontalInsulation.width;
 			block.zMax = zTop - exteriorHorizontalInsulation.depth;
-			block.zMin = block.zMax - exteriorHorizontalInsulation.layer.d;
+			block.zMin = block.zMax - exteriorHorizontalInsulation.layer.thickness;
 			block.material = exteriorHorizontalInsulation.layer.material;
 			rRange.push_back(block.rMin);
 			rRange.push_back(block.rMax);
