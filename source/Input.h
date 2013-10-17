@@ -318,10 +318,10 @@ public:
 		double xPosition;
 		double zPosition;
 
-		Material null;
-		null.conductivity = 1;
-		null.density = 1;
-		null.specificHeat = 1;
+		Material air;
+		air.conductivity = 0.02587;
+		air.density = 1.275;
+		air.specificHeat = 1007;
 
 		// Cylinder Axis
 		xRange.push_back(0.0);
@@ -335,6 +335,7 @@ public:
 		// Foundation Effective Length (radius or half width)
 		xRange.push_back(effectiveLength);
 		xPosition = effectiveLength;
+		double xIntWall = effectiveLength;
 
 		// Top of domain
 		double zTop;
@@ -396,8 +397,10 @@ public:
 		// Interior Vertical Insulation
 		if (hasInteriorVerticalInsulation)
 		{
+			xIntWall = xPosition - interiorVerticalInsulation.layer.thickness;
+
 			Block block;
-			block.xMin = xPosition - interiorVerticalInsulation.layer.thickness;
+			block.xMin = xIntWall;
 			block.xMax = xPosition;
 			block.zMax = zTop;
 			block.zMin = block.zMax - interiorVerticalInsulation.depth;
@@ -413,10 +416,10 @@ public:
 		{
 			Block block;
 			block.xMin = 0.0;
-			block.xMax = effectiveLength;
+			block.xMax = xIntWall;
 			block.zMax = zTop;
 			block.zMin = zSlab;
-			block.material = null;
+			block.material = air;
 			xRange.push_back(block.xMin);
 			xRange.push_back(block.xMax);
 			zRange.push_back(block.zMax);
@@ -488,7 +491,7 @@ public:
 			block.xMax = xFarField;
 			block.zMax = zTop;
 			block.zMin = 0.0;
-			block.material = null;
+			block.material = air;
 			xRange.push_back(block.xMin);
 			xRange.push_back(block.xMax);
 			zRange.push_back(block.zMax);
@@ -542,9 +545,9 @@ public:
 		// Wall
 		if (excavationDepth > 0.0)
 		{
-			xRange.push_back(effectiveLength);
+			xRange.push_back(xIntWall);
 
-			if (hasWall)
+			if (hasWall && zTop > 0.000001)
 				xRange.push_back(xWallExt);
 
 			// Slab

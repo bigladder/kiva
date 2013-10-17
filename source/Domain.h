@@ -70,9 +70,7 @@ public:
 			FAR_FIELD,  // 9
 			DEEP_GROUND,  // 10
 			NORMAL,  // 11
-			ZERO_WIDTH_Z,  // 12
-			ZERO_WIDTH_R,  // 13
-			ZERO_WIDTH_RZ  // 14
+			ZERO_THICKNESS
 		};
 		boost::multi_array<CellType, 3>  cellType;
 

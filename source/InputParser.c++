@@ -99,7 +99,7 @@ Input inputParser(std::string inputFile)
 
 			Layer tempLayer;
 			tempLayer.thickness = yamlInput["Foundation"]["wall"]["layers"][i]["thickness"].as<double>();
-			tempLayer.material = materials[yamlInput["Foundation"]["slab"]["layers"][i]["material"].as<std::string>()];
+			tempLayer.material = materials[yamlInput["Foundation"]["wall"]["layers"][i]["material"].as<std::string>()];
 
 			foundation1.wall.layers.push_back(tempLayer);
 

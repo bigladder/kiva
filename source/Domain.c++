@@ -80,12 +80,12 @@ void Domain::setDomain(Foundation &foundation, double &timestep)
 	double zDeepGround = -foundation.deepGroundDepth;
 
 	// r dimensions
-	double rAxis = 0.0;
-	double rIntIns = foundation.effectiveLength - foundation.interiorVerticalInsulation.layer.thickness;
-	double rExtIns = foundation.effectiveLength +
+	double xAxis = 0.0;
+	double xIntIns = foundation.effectiveLength - foundation.interiorVerticalInsulation.layer.thickness;
+	double xExtIns = foundation.effectiveLength +
 					 foundation.wall.totalWidth() +
 					 foundation.exteriorVerticalInsulation.layer.thickness;
-	double rFarField = foundation.effectiveLength + foundation.farFieldWidth;
+	double xFarField = foundation.effectiveLength + foundation.farFieldWidth;
 
 	for (size_t k = 0; k < nZ; k++)
 	{
@@ -117,32 +117,21 @@ void Domain::setDomain(Foundation &foundation, double &timestep)
 				// Default to normal cells
 				cellType[i][j][k] = NORMAL;
 
-				// Next set zero-width cells
-				if (meshX.deltas[i] < 0.00000001)
-				{
-					cellType[i][j][k] = ZERO_WIDTH_R;
-				}
-
-				if (meshZ.deltas[k] < 0.00000001)
-				{
-					cellType[i][j][k] = ZERO_WIDTH_Z;
-				}
-
-				if (meshX.deltas[i] < 0.00000001 &&
+				// Next set interior zero-width cells
+				if (meshX.deltas[i] < 0.00000001 ||
 					meshZ.deltas[k] < 0.00000001)
 				{
-					cellType[i][j][k] = ZERO_WIDTH_RZ;
+					cellType[i][j][k] = ZERO_THICKNESS;
 				}
-
 				// Interior Air
-				if (meshX.centers[i] - rIntIns < -0.00000001 &&
+				if (meshX.centers[i] - xIntIns < -0.00000001 &&
 					meshZ.centers[k] - zSlab > 0.00000001)
 				{
 					cellType[i][j][k] = INTERIOR_AIR;
 				}
 
 				// Exterior Air
-				if (meshX.centers[i] - rExtIns > 0.00000001 &&
+				if (meshX.centers[i] - xExtIns > 0.00000001 &&
 					meshZ.centers[k] - zGrade > 0.00000001)
 				{
 					cellType[i][j][k] = EXTERIOR_AIR;
@@ -151,8 +140,8 @@ void Domain::setDomain(Foundation &foundation, double &timestep)
 				// Top of Wall
 				if (fabs(meshZ.centers[k] - zWallTop) < 0.00000001)
 				{
-					if (meshX.centers[i] - rIntIns > -0.00000001 &&
-						meshX.centers[i] - rExtIns < 0.00000001)
+					if (meshX.centers[i] - xIntIns > -0.00000001 &&
+						meshX.centers[i] - xExtIns < 0.00000001)
 					{
 						cellType[i][j][k] = WALL_TOP;
 					}
@@ -161,14 +150,14 @@ void Domain::setDomain(Foundation &foundation, double &timestep)
 				// Exterior Grade
 				if (fabs(meshZ.centers[k] - zGrade) < 0.00000001)
 				{
-					if (meshX.centers[i] - rExtIns > 0.00000001)
+					if (meshX.centers[i] - xExtIns > 0.00000001)
 					{
 						cellType[i][j][k] = EXTERIOR_GRADE;
 					}
 				}
 
 				// Exterior Wall
-				if (fabs(meshX.centers[i] - rExtIns) < 0.00000001)
+				if (fabs(meshX.centers[i] - xExtIns) < 0.00000001)
 				{
 					if (meshZ.centers[k] - zGrade > 0.00000001 &&
 						meshZ.centers[k] - zWallTop < -0.00000001)
@@ -186,7 +175,7 @@ void Domain::setDomain(Foundation &foundation, double &timestep)
 						slabKSet = true;
 					}
 
-					if (meshX.centers[i] - rIntIns < -0.00000001)
+					if (meshX.centers[i] - xIntIns < -0.00000001)
 					{
 						if (! slabIminSet)
 						{
@@ -201,7 +190,7 @@ void Domain::setDomain(Foundation &foundation, double &timestep)
 				}
 
 				// Interior Wall
-				if (fabs(meshX.centers[i] - rIntIns) < 0.00000001)
+				if (fabs(meshX.centers[i] - xIntIns) < 0.00000001)
 				{
 					if (meshZ.centers[k] - zSlab > 0.00000001 &&
 						meshZ.centers[k] - zWallTop < -0.00000001)
@@ -211,7 +200,7 @@ void Domain::setDomain(Foundation &foundation, double &timestep)
 				}
 
 				// Axis
-				if (fabs(meshX.centers[i] - rAxis) < 0.00000001)
+				if (fabs(meshX.centers[i] - xAxis) < 0.00000001)
 				{
 					if (meshZ.centers[k] - zSlab < -0.00000001)
 					{
@@ -220,7 +209,7 @@ void Domain::setDomain(Foundation &foundation, double &timestep)
 				}
 
 				// Far Field
-				if (fabs(meshX.centers[i] - rFarField) < 0.00000001)
+				if (fabs(meshX.centers[i] - xFarField) < 0.00000001)
 				{
 					if (meshZ.centers[k] - zGrade < -0.00000001)
 					{
@@ -243,6 +232,105 @@ void Domain::setDomain(Foundation &foundation, double &timestep)
 			{
 				for (size_t i = 0; i < nX; i++)
 				{
+
+					// First set effective properties of zero-thickness cells
+					// based on other cells
+					if (i != 0 && i != nX - 1 && k != 0 && k != nZ - 1)
+					{
+						if (meshX.deltas[i] < 0.00000001 &&
+							meshZ.deltas[k] < 0.00000001)
+						{
+							double volTL = meshX.deltas[i-1]*meshZ.deltas[k+1];
+							double volTR = meshX.deltas[i+1]*meshZ.deltas[k+1];
+							double volBL = meshX.deltas[i-1]*meshZ.deltas[k-1];
+							double volBR = meshX.deltas[i+1]*meshZ.deltas[k-1];
+							double volTotal = volTL + volTR + volBL + volBR;
+
+							double densTL = density[i-1][j][k+1];
+							double densTR = density[i+1][j][k+1];
+							double densBL = density[i-1][j][k-1];
+							double densBR = density[i+1][j][k-1];
+
+							density[i][j][k] = (volTL*densTL + volTR*densTR +
+												volBL*densBL + volBR*densBR) /
+												volTotal;
+
+							double cpTL = specificHeat[i-1][j][k+1];
+							double cpTR = specificHeat[i+1][j][k+1];
+							double cpBL = specificHeat[i-1][j][k-1];
+							double cpBR = specificHeat[i+1][j][k-1];
+
+							specificHeat[i][j][k] = (volTL*cpTL*densTL +
+													 volTR*cpTR*densTR +
+													 volBL*cpBL*densBL +
+													 volBR*cpBR*densBR) /
+													 (volTotal*density[i][j][k]);
+
+							double condTL = conductivity[i-1][j][k+1];
+							double condTR = conductivity[i+1][j][k+1];
+							double condBL = conductivity[i-1][j][k-1];
+							double condBR = conductivity[i+1][j][k-1];
+
+							conductivity[i][j][k] = (volTL*condTL +
+													 volTR*condTR +
+													 volBL*condBL +
+													 volBR*condBR) /
+													 volTotal;
+						}
+						else if (meshX.deltas[i] < 0.00000001)
+						{
+							double volL = meshX.deltas[i-1];
+							double volR = meshX.deltas[i+1];
+							double volTotal = volL + volR;
+
+							double densL = density[i-1][j][k];
+							double densR = density[i+1][j][k];
+
+							density[i][j][k] = (volL*densL + volR*densR) /
+												volTotal;
+
+							double cpL = specificHeat[i-1][j][k];
+							double cpR = specificHeat[i+1][j][k];
+
+							specificHeat[i][j][k] = (volL*cpL*densL +
+													 volR*cpR*densR) /
+													 (volTotal*density[i][j][k]);
+
+							double condL = conductivity[i-1][j][k];
+							double condR = conductivity[i+1][j][k];
+
+							conductivity[i][j][k] = (volL*condL +
+													 volR*condR) /
+													 volTotal;
+
+						}
+						else if (meshZ.deltas[k] < 0.00000001)
+						{
+							double volT = meshZ.deltas[k+1];
+							double volB = meshZ.deltas[k-1];
+							double volTotal = volT + volB;
+
+							double densT = density[i][j][k+1];
+							double densB = density[i][j][k-1];
+
+							density[i][j][k] = (volT*densT + volB*densB) /
+												volTotal;
+
+							double cpT = specificHeat[i][j][k+1];
+							double cpB = specificHeat[i][j][k-1];
+
+							specificHeat[i][j][k] = (volT*cpT*densT +
+													 volB*cpB*densB) /
+													 (volTotal*density[i][j][k]);
+
+							double condT = conductivity[i][j][k+1];
+							double condB = conductivity[i][j][k-1];
+
+							conductivity[i][j][k] = (volT*condT +
+													 volB*condB) /
+													 volTotal;
+						}
+					}
 
 					double dxp;  // Delta x+
 					double dxm;  // Delta x-
@@ -536,7 +624,7 @@ void Domain::printCellTypes()
 		for (size_t i = 0; i < nX; i++)
 		{
 
-			output << ", " << cellType[i][0][k];
+			output << ", " << specificHeat[i][0][k];
 
 		}
 
