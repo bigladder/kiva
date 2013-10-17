@@ -58,6 +58,15 @@ int main(int argc, char *argv[])
 				options(cmdLine).positional(p).run(), vm);
 		po::notify(vm);
 
+		if (vm.empty())
+		{
+			std::cout << versionInfo << "\n";
+			std::cout << copyrightInfo << "\n";
+			std::cout << "Usage: kiva [Input File]\n"
+					"   Input format: yaml\n";
+			std::cout << generic;
+			return 0;
+		}
 		if (vm.count("help"))
 		{
 			std::cout << versionInfo << "\n";

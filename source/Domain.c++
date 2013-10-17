@@ -26,14 +26,12 @@ Domain::Domain()
 
 }
 
-Domain::Domain(Foundation &foundation, double &timestep)
+Domain::Domain(Foundation &foundation)
 {
-
-	setDomain(foundation, timestep);
-
+	setDomain(foundation);
 }
 
-void Domain::setDomain(Foundation &foundation, double &timestep)
+void Domain::setDomain(Foundation &foundation)
 {
 	// Having this separate from the constructor allows the correct resizing of
 	// multidimensional arrays on pre-existing initialized instances.
@@ -53,8 +51,6 @@ void Domain::setDomain(Foundation &foundation, double &timestep)
 	density.resize(boost::extents[nX][nY][nZ]);
 	specificHeat.resize(boost::extents[nX][nY][nZ]);
 	conductivity.resize(boost::extents[nX][nY][nZ]);
-
-	theta.resize(boost::extents[nX][nY][nZ]);
 
 	// PDE Coefficients
 	cxp_c.resize(boost::extents[nX][nY][nZ]);
@@ -358,10 +354,6 @@ void Domain::setDomain(Foundation &foundation, double &timestep)
 					kym = getKYM(i,j,k);
 					kzp = getKZP(i,j,k);
 					kzm = getKZM(i,j,k);
-
-					// TODO: This should be taken out of the domain since timestep may vary
-					theta[i][j][k] = timestep/(density[i][j][k]*
-							                         specificHeat[i][j][k]);
 
 					// PDE Coefficients
 					if (dxp < 0.00000001)

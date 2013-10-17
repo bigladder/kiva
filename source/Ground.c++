@@ -53,7 +53,7 @@ void Ground::buildDomain()
 	foundation.setMeshData();
 
 	// Build matrices for PDE term coefficients
-	domain.setDomain(foundation, timestep);
+	domain.setDomain(foundation);
 
 	nX = domain.meshX.centers.size();
 	nY = domain.meshY.centers.size();
@@ -78,9 +78,11 @@ void Ground::initializeConditions()
 		V.resize(boost::extents[nX][nY][nZ]);
 		VOld.resize(boost::extents[nX][nY][nZ]);
 	}
-	else if (foundation.numericalScheme == Foundation::NS_CRANK_NICOLSON ||
+
+	if (foundation.numericalScheme == Foundation::NS_CRANK_NICOLSON ||
 			 foundation.numericalScheme == Foundation::NS_IMPLICIT ||
-			 foundation.numericalScheme == Foundation::NS_STEADY_STATE)
+			 foundation.numericalScheme == Foundation::NS_STEADY_STATE ||
+			 foundation.initializationMethod == Foundation::IM_STEADY_STATE)
 	{
 		Amat = boost::numeric::ublas::compressed_matrix<double,
 		boost::numeric::ublas::column_major, 0,
@@ -162,7 +164,6 @@ void Ground::initializeConditions()
 
 void Ground::initializePlot()
 {
-
 	startString = boost::posix_time::to_simple_string(boost::posix_time::second_clock::local_time());
 
 	size_t contourLevels = 13;
@@ -274,13 +275,16 @@ void Ground::calculateADEUpwardSweep()
 		{
 			for (size_t i = 0; i < nX; i++)
 			{
+				double theta = timestep/
+						(domain.density[i][j][k]*domain.specificHeat[i][j][k]);
+
 				double r = domain.meshX.centers[i];
-				double A = domain.cxp_c[i][j][k]*domain.theta[i][j][k]/r;
-				double B = domain.cxm_c[i][j][k]*domain.theta[i][j][k]/r;
-				double C = domain.cxp[i][j][k]*domain.theta[i][j][k];
-				double D = domain.cxm[i][j][k]*domain.theta[i][j][k];
-				double E = domain.czp[i][j][k]*domain.theta[i][j][k];
-				double F = domain.czm[i][j][k]*domain.theta[i][j][k];
+				double A = domain.cxp_c[i][j][k]*theta/r;
+				double B = domain.cxm_c[i][j][k]*theta/r;
+				double C = domain.cxp[i][j][k]*theta;
+				double D = domain.cxm[i][j][k]*theta;
+				double E = domain.czp[i][j][k]*theta;
+				double F = domain.czm[i][j][k]*theta;
 
 				switch (domain.cellType[i][j][k])
 				{
@@ -384,13 +388,16 @@ void Ground::calculateADEDownwardSweep()
 		{
 			for (size_t i = nX - 1; i >= 0 && i < nX; i--)
 			{
+				double theta = timestep/
+						(domain.density[i][j][k]*domain.specificHeat[i][j][k]);
+
 				double r = domain.meshX.centers[i];
-				double A = domain.cxp_c[i][j][k]*domain.theta[i][j][k]/r;
-				double B = domain.cxm_c[i][j][k]*domain.theta[i][j][k]/r;
-				double C = domain.cxp[i][j][k]*domain.theta[i][j][k];
-				double D = domain.cxm[i][j][k]*domain.theta[i][j][k];
-				double E = domain.czp[i][j][k]*domain.theta[i][j][k];
-				double F = domain.czm[i][j][k]*domain.theta[i][j][k];
+				double A = domain.cxp_c[i][j][k]*theta/r;
+				double B = domain.cxm_c[i][j][k]*theta/r;
+				double C = domain.cxp[i][j][k]*theta;
+				double D = domain.cxm[i][j][k]*theta;
+				double E = domain.czp[i][j][k]*theta;
+				double F = domain.czm[i][j][k]*theta;
 
 				switch (domain.cellType[i][j][k])
 				{
@@ -487,20 +494,22 @@ void Ground::calculateADEDownwardSweep()
 
 void Ground::calculateExplicit()
 {
-
 	for (size_t k = 0; k < nZ; k++)
 	{
 		for (size_t j = 0; j < nY; ++j)
 		{
 			for (size_t i = 0; i < nX; i++)
 			{
+				double theta = timestep/
+						(domain.density[i][j][k]*domain.specificHeat[i][j][k]);
+
 				double r = domain.meshX.centers[i];
-				double A = domain.cxp_c[i][j][k]*domain.theta[i][j][k]/r;
-				double B = domain.cxm_c[i][j][k]*domain.theta[i][j][k]/r;
-				double C = domain.cxp[i][j][k]*domain.theta[i][j][k];
-				double D = domain.cxm[i][j][k]*domain.theta[i][j][k];
-				double E = domain.czp[i][j][k]*domain.theta[i][j][k];
-				double F = domain.czm[i][j][k]*domain.theta[i][j][k];
+				double A = domain.cxp_c[i][j][k]*theta/r;
+				double B = domain.cxm_c[i][j][k]*theta/r;
+				double C = domain.cxp[i][j][k]*theta;
+				double D = domain.cxm[i][j][k]*theta;
+				double E = domain.czp[i][j][k]*theta;
+				double F = domain.czm[i][j][k]*theta;
 
 				switch (domain.cellType[i][j][k])
 				{
@@ -611,13 +620,16 @@ void Ground::calculateImplicit()
 		{
 			for (size_t i = 0; i < nX; i++)
 			{
+				double theta = timestep/
+						(domain.density[i][j][k]*domain.specificHeat[i][j][k]);
+
 				double r = domain.meshX.centers[i];
-				double A = domain.cxp_c[i][j][k]*domain.theta[i][j][k]/r;
-				double B = domain.cxm_c[i][j][k]*domain.theta[i][j][k]/r;
-				double C = domain.cxp[i][j][k]*domain.theta[i][j][k];
-				double D = domain.cxm[i][j][k]*domain.theta[i][j][k];
-				double E = domain.czp[i][j][k]*domain.theta[i][j][k];
-				double F = domain.czm[i][j][k]*domain.theta[i][j][k];
+				double A = domain.cxp_c[i][j][k]*theta/r;
+				double B = domain.cxm_c[i][j][k]*theta/r;
+				double C = domain.cxp[i][j][k]*theta;
+				double D = domain.cxm[i][j][k]*theta;
+				double E = domain.czp[i][j][k]*theta;
+				double F = domain.czm[i][j][k]*theta;
 
 				switch (domain.cellType[i][j][k])
 				{
@@ -767,13 +779,16 @@ void Ground::calculateCrankNicolson()
 		{
 			for (size_t i = 0; i < nX; i++)
 			{
+				double theta = timestep/
+						(domain.density[i][j][k]*domain.specificHeat[i][j][k]);
+
 				double r = domain.meshX.centers[i];
-				double A = 0.5*domain.cxp_c[i][j][k]*domain.theta[i][j][k]/r;
-				double B = 0.5*domain.cxm_c[i][j][k]*domain.theta[i][j][k]/r;
-				double C = 0.5*domain.cxp[i][j][k]*domain.theta[i][j][k];
-				double D = 0.5*domain.cxm[i][j][k]*domain.theta[i][j][k];
-				double E = 0.5*domain.czp[i][j][k]*domain.theta[i][j][k];
-				double F = 0.5*domain.czm[i][j][k]*domain.theta[i][j][k];
+				double A = 0.5*domain.cxp_c[i][j][k]*theta/r;
+				double B = 0.5*domain.cxm_c[i][j][k]*theta/r;
+				double C = 0.5*domain.cxp[i][j][k]*theta;
+				double D = 0.5*domain.cxm[i][j][k]*theta;
+				double E = 0.5*domain.czp[i][j][k]*theta;
+				double F = 0.5*domain.czm[i][j][k]*theta;
 
 				switch (domain.cellType[i][j][k])
 				{
@@ -1155,7 +1170,6 @@ void Ground::plot()
 		double Tmin = cDat.a[0];
 		double Tmax = cDat.a[nT - 1];
 		double Tstep = cDat.a[1] - cDat.a[0];
-
 
 		gr.NewFrame();
 

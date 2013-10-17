@@ -44,7 +44,6 @@ public:
 		boost::multi_array<double, 3> conductivity;
 
 		// derived properties
-		boost::multi_array<double, 3> theta;
 		boost::multi_array<double, 3> cxp_c;
 		boost::multi_array<double, 3> cxm_c;
 		boost::multi_array<double, 3> cxp;
@@ -53,7 +52,6 @@ public:
 		boost::multi_array<double, 3> cym;
 		boost::multi_array<double, 3> czp;
 		boost::multi_array<double, 3> czm;
-
 
 		// organizational properties
 		enum CellType
@@ -81,8 +79,8 @@ public:
 public:
 
 		Domain();
-		Domain(Foundation &foundation, double &timestep);
-		void setDomain(Foundation &foundation, double &timestep);
+		Domain(Foundation &foundation);
+		void setDomain(Foundation &foundation);
 		double getDXP(size_t i);
 		double getDXM(size_t i);
 		double getDYP(size_t j);
