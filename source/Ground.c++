@@ -78,6 +78,17 @@ void Ground::initializeConditions()
 		V.resize(boost::extents[nX][nY][nZ]);
 		VOld.resize(boost::extents[nX][nY][nZ]);
 	}
+	else if (foundation.numericalScheme == Foundation::NS_CRANK_NICOLSON ||
+			 foundation.numericalScheme == Foundation::NS_IMPLICIT ||
+			 foundation.numericalScheme == Foundation::NS_STEADY_STATE)
+	{
+		Amat = boost::numeric::ublas::compressed_matrix<double,
+		boost::numeric::ublas::column_major, 0,
+		boost::numeric::ublas::unbounded_array<int>,
+		boost::numeric::ublas::unbounded_array<double> >(nX*nZ,nX*nZ);  // Coefficient Matrix
+		b = boost::numeric::ublas::vector<double> (nX*nZ);  // constant and unknown vectors
+		x = boost::numeric::ublas::vector<double> (nX*nZ);  // constant and unknown vectors
+	}
 
 	TNew.resize(boost::extents[nX][nY][nZ]);
 	TOld.resize(boost::extents[nX][nY][nZ]);
@@ -263,7 +274,6 @@ void Ground::calculateADEUpwardSweep()
 		{
 			for (size_t i = 0; i < nX; i++)
 			{
-
 				double r = domain.meshX.centers[i];
 				double A = domain.cxp_c[i][j][k]*domain.theta[i][j][k]/r;
 				double B = domain.cxm_c[i][j][k]*domain.theta[i][j][k]/r;
@@ -374,7 +384,6 @@ void Ground::calculateADEDownwardSweep()
 		{
 			for (size_t i = nX - 1; i >= 0 && i < nX; i--)
 			{
-
 				double r = domain.meshX.centers[i];
 				double A = domain.cxp_c[i][j][k]*domain.theta[i][j][k]/r;
 				double B = domain.cxm_c[i][j][k]*domain.theta[i][j][k]/r;
@@ -485,7 +494,6 @@ void Ground::calculateExplicit()
 		{
 			for (size_t i = 0; i < nX; i++)
 			{
-
 				double r = domain.meshX.centers[i];
 				double A = domain.cxp_c[i][j][k]*domain.theta[i][j][k]/r;
 				double B = domain.cxm_c[i][j][k]*domain.theta[i][j][k]/r;
@@ -597,20 +605,12 @@ void Ground::calculateExplicit()
 
 void Ground::calculateImplicit()
 {
-	// TODO: This matrix doesn't need to be constructed each timestep!
-	boost::numeric::ublas::compressed_matrix<double,
-	boost::numeric::ublas::column_major, 0,
-	boost::numeric::ublas::unbounded_array<int>,
-	boost::numeric::ublas::unbounded_array<double> > Amat(nX*nZ,nX*nZ);  // Coefficient Matrix
-	boost::numeric::ublas::vector<double> b(nX*nZ), x(nX*nZ);  // constant and unknown vectors
-
 	for (size_t k = 0; k < nZ; k++)
 	{
 		for (size_t j = 0; j < nY; ++j)
 		{
 			for (size_t i = 0; i < nX; i++)
 			{
-
 				double r = domain.meshX.centers[i];
 				double A = domain.cxp_c[i][j][k]*domain.theta[i][j][k]/r;
 				double B = domain.cxm_c[i][j][k]*domain.theta[i][j][k]/r;
@@ -761,20 +761,12 @@ void Ground::calculateImplicit()
 
 void Ground::calculateCrankNicolson()
 {
-
-	boost::numeric::ublas::compressed_matrix<double,
-	boost::numeric::ublas::column_major, 0,
-	boost::numeric::ublas::unbounded_array<int>,
-	boost::numeric::ublas::unbounded_array<double> > Amat(nX*nZ,nX*nZ);  // Coefficient Matrix
-	boost::numeric::ublas::vector<double> b(nX*nZ), x(nX*nZ);  // constant and unknown vectors
-
 	for (size_t k = 0; k < nZ; k++)
 	{
 		for (size_t j = 0; j < nY; ++j)
 		{
 			for (size_t i = 0; i < nX; i++)
 			{
-
 				double r = domain.meshX.centers[i];
 				double A = 0.5*domain.cxp_c[i][j][k]*domain.theta[i][j][k]/r;
 				double B = 0.5*domain.cxm_c[i][j][k]*domain.theta[i][j][k]/r;
@@ -930,21 +922,12 @@ void Ground::calculateCrankNicolson()
 
 void Ground::calculateSteadyState()
 {
-
-	// TODO: This matrix doesn't need to be constructed each timestep!
-	boost::numeric::ublas::compressed_matrix<double,
-	boost::numeric::ublas::column_major, 0,
-	boost::numeric::ublas::unbounded_array<int>,
-	boost::numeric::ublas::unbounded_array<double> > Amat(nX*nZ,nX*nZ);  // Coefficient Matrix
-	boost::numeric::ublas::vector<double> b(nX*nZ), x(nX*nZ);  // constant and unknown vectors
-
 	for (size_t k = 0; k < nZ; k++)
 	{
 		for (size_t j = 0; j < nY; ++j)
 		{
 			for (size_t i = 0; i < nX; i++)
 			{
-
 				double r = domain.meshX.centers[i];
 				double A = domain.cxp_c[i][j][k]/r;
 				double B = domain.cxm_c[i][j][k]/r;

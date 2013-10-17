@@ -64,6 +64,14 @@ private:
 	boost::multi_array<double, 3> UOld; // ADE upper sweep, n
 	boost::multi_array<double, 3> V; // ADE lower sweep, n+1
 	boost::multi_array<double, 3> VOld; // ADE lower sweep, n
+
+	boost::numeric::ublas::compressed_matrix<double,
+			boost::numeric::ublas::column_major, 0,
+			boost::numeric::ublas::unbounded_array<int>,
+			boost::numeric::ublas::unbounded_array<double> > Amat;
+
+	boost::numeric::ublas::vector<double> b, x;
+
 	boost::multi_array<double, 3> TOld; // solution, n
 
 	std::vector<double> QSlab; // Heat Fluxes through the slab
