@@ -31,10 +31,10 @@ Domain::Domain(Foundation &foundation)
 	setDomain(foundation);
 }
 
+// Having this separate from the constructor allows the correct resizing of
+// multidimensional arrays on pre-existing initialized instances.
 void Domain::setDomain(Foundation &foundation)
 {
-	// Having this separate from the constructor allows the correct resizing of
-	// multidimensional arrays on pre-existing initialized instances.
 
 	{
 		Mesher mX(foundation.xMeshData);
@@ -616,7 +616,7 @@ void Domain::printCellTypes()
 		for (size_t i = 0; i < nX; i++)
 		{
 
-			output << ", " << specificHeat[i][0][k];
+			output << ", " << cellType[i][0][k];
 
 		}
 

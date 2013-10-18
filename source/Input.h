@@ -143,8 +143,81 @@ class Block
 {
 public:
 
-	double xMin, xMax, zMin, zMax;
+	double xMin, xMax, yMin, yMax, zMin, zMax;
 	Material material;
+
+	Block()
+	{
+
+	}
+
+	Block(Material mat, double xmin, double xmax, double zmin, double zmax)
+	{
+		material = mat;
+		xMin = xmin;
+		xMax = xmax;
+		yMin = 0.5;
+		yMax = 0.5;
+		zMin = zmin;
+		zMax = zmax;
+	}
+};
+
+class Surface
+{
+public:
+	double xMin, xMax, yMin, yMax, zMin, zMax;
+	std::string name;
+
+	Surface()
+	{
+
+	}
+
+	Surface(std::string name_, double xmin, double xmax, double zmin, double zmax)
+	{
+		name = name_;
+		xMin = xmin;
+		xMax = xmax;
+		yMin = 0.5;
+		yMax = 0.5;
+		zMin = zmin;
+		zMax = zmax;
+	}
+
+	bool constX()
+	{
+		if(xMin == xMax)
+		{
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+	bool constY()
+	{
+		if(yMin == yMax)
+		{
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+	bool constZ()
+	{
+		if(zMin == zMax)
+		{
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
 
 };
 
@@ -280,6 +353,7 @@ public:
 	MeshData xMeshData;
 	MeshData zMeshData;
 	std::vector<Block> blocks;
+	std::vector<Surface> surfaces;
 
 	void setMeshData()
 	{
@@ -291,7 +365,17 @@ public:
 		// Intervals explain how each interval between a set of points is
 		// discretized.
 
+		Material air;
+		air.conductivity = 0.02587;
+		air.density = 1.275;
+		air.specificHeat = 1007;
+
 		// Meshing info
+		Interval zeroThickness;
+		zeroThickness.maxGrowthCoeff = 1.0;
+		zeroThickness.minCellDim = 1.0;
+		zeroThickness.growthDir = Interval::UNIFORM;
+
 		Interval near;
 		near.maxGrowthCoeff = 1.0;
 		near.minCellDim = mesh.minCellDim;
@@ -312,289 +396,416 @@ public:
 		exterior.minCellDim = mesh.minCellDim;
 		exterior.growthDir = Interval::FORWARD;
 
-		std::vector<double> xRange;
-		std::vector<double> zRange;
 
-		double xPosition;
-		double zPosition;
-
-		Material air;
-		air.conductivity = 0.02587;
-		air.density = 1.275;
-		air.specificHeat = 1007;
-
-		// Cylinder Axis
-		xRange.push_back(0.0);
-
-		// Deep ground
-		zRange.push_back(-deepGroundDepth);
-
-		// Grade
-		zRange.push_back(0.0);
-
-		// Foundation Effective Length (radius or half width)
-		xRange.push_back(effectiveLength);
-		xPosition = effectiveLength;
-		double xIntWall = effectiveLength;
-
-		// Top of domain
-		double zTop;
-		if (hasWall)
-			zTop = wall.height - wall.depth;
-		else
-			zTop = 0.0;
-
-		zRange.push_back(zTop);
-
-		// Interior Horizontal Insulation
-		if (hasInteriorHorizontalInsulation)
+		if (coordinateSystem == CS_2DAXIAL ||
+			coordinateSystem == CS_2DLINEAR)
 		{
-			Block block;
-			block.xMin = xPosition - interiorHorizontalInsulation.width;
-			block.xMax = xPosition;
-			block.zMax = zTop - interiorHorizontalInsulation.depth;
-			block.zMin = block.zMax - interiorHorizontalInsulation.layer.thickness;
-			block.material = interiorHorizontalInsulation.layer.material;
-			xRange.push_back(block.xMin);
-			xRange.push_back(block.xMax);
-			zRange.push_back(block.zMax);
-			zRange.push_back(block.zMin);
-			blocks.push_back(block);
-		}
+			// Set misc. dimensions
+			double zTop;
+			if (hasWall)
+				zTop = wall.height - wall.depth;
+			else
+				zTop = 0.0;
 
-		double zSlab;
-		if (hasSlab)
-		{
-			// Foundation Slab
-			zSlab = zTop - excavationDepth;
-			zPosition = zSlab - slab.totalWidth();
+			double zBottom = -deepGroundDepth;
 
-			for (size_t n = 0; n < slab.layers.size(); n++)
-			{
-				Block block;
-				block.xMin = 0.0;
-				block.xMax = xPosition;
-				block.zMin = zPosition;
-				block.zMax = block.zMin + slab.layers[n].thickness;
-				zPosition = block.zMax;
-				block.material = slab.layers[n].material;
-				xRange.push_back(block.xMin);
-				xRange.push_back(block.xMax);
-				zRange.push_back(block.zMax);
-				zRange.push_back(block.zMin);
-				blocks.push_back(block);
+			double xLeft = 0.0;
+			double xRight = effectiveLength + farFieldWidth;
 
-			}
+			double zGrade = 0.0;
+			double zSlab = zTop - excavationDepth;
 
-		}
-		else
-		{
-			zSlab = zTop - excavationDepth;
-			zPosition = zSlab;
-			zRange.push_back(zPosition);
-		}
+			double zNearBottom = std::min(zSlab, zGrade);  // This will change depending on configuration
 
-		// Interior Vertical Insulation
-		if (hasInteriorVerticalInsulation)
-		{
-			xIntWall = xPosition - interiorVerticalInsulation.layer.thickness;
+    		double xWallExterior;
+    		if (hasWall)
+    		{
+        		if (hasExteriorVerticalInsulation)
+        		{
+        			xWallExterior = effectiveLength
+            				+ wall.totalWidth()
+            				+ exteriorVerticalInsulation.layer.thickness;
 
-			Block block;
-			block.xMin = xIntWall;
-			block.xMax = xPosition;
-			block.zMax = zTop;
-			block.zMin = block.zMax - interiorVerticalInsulation.depth;
-			block.material = interiorVerticalInsulation.layer.material;
-			xRange.push_back(block.xMin);
-			xRange.push_back(block.xMax);
-			zRange.push_back(block.zMax);
-			zRange.push_back(block.zMin);
-			blocks.push_back(block);
-		}
+        		}
+        		else
+        		{
+        			xWallExterior = effectiveLength
+            				+ wall.totalWidth();
+        		}
+    		}
+    		else
+    		{
+    			xWallExterior = effectiveLength;
+    		}
 
-		// Indoor Air
-		{
-			Block block;
-			block.xMin = 0.0;
-			block.xMax = xIntWall;
-			block.zMax = zTop;
-			block.zMin = zSlab;
-			block.material = air;
-			xRange.push_back(block.xMin);
-			xRange.push_back(block.xMax);
-			zRange.push_back(block.zMax);
-			zRange.push_back(block.zMin);
-			blocks.push_back(block);
-		}
+    		double xWallInterior;
+    		if (hasInteriorVerticalInsulation)
+    		{
+    			xWallInterior = effectiveLength
+    					- interiorVerticalInsulation.layer.thickness;
 
-		if (hasWall)
-		{
-			// Foundation Wall
-			for (int n = wall.layers.size() - 1; n >= 0; n--)
-			{
-				Block block;
-				block.xMin = xPosition;
-				block.xMax = block.xMin + wall.layers[n].thickness;
-				xPosition = block.xMax;
-				block.zMax = zTop;
-				block.zMin = -1*wall.depth;
-				block.material = wall.layers[n].material;
-				xRange.push_back(block.xMin);
-				xRange.push_back(block.xMax);
-				zRange.push_back(block.zMax);
-				zRange.push_back(block.zMin);
-				blocks.push_back(block);
-			}
-		}
-		else if (excavationDepth > 0.0)
-			xRange.push_back(effectiveLength);
+    		}
+    		else
+    		{
+    			xWallInterior = effectiveLength;
+    		}
 
-		// Exterior Vertical Insulation
-		if (hasExteriorVerticalInsulation)
-		{
-			Block block;
-			block.xMin = xPosition;
-			block.xMax = xPosition + exteriorVerticalInsulation.layer.thickness;
-			block.zMax = zTop;
-			block.zMin = block.zMax - exteriorVerticalInsulation.depth;
-			block.material = exteriorVerticalInsulation.layer.material;
-			xRange.push_back(block.xMin);
-			xRange.push_back(block.xMax);
-			zRange.push_back(block.zMax);
-			zRange.push_back(block.zMin);
-			blocks.push_back(block);
-		}
+    		double xNearLeft = effectiveLength;  // This will change depending on configuration
 
-		// Interior Horizontal Insulation
-		if (hasExteriorHorizontalInsulation)
-		{
-			Block block;
-			block.xMin = xPosition;
-			block.xMax = xPosition + exteriorHorizontalInsulation.width;
-			block.zMax = zTop - exteriorHorizontalInsulation.depth;
-			block.zMin = block.zMax - exteriorHorizontalInsulation.layer.thickness;
-			block.material = exteriorHorizontalInsulation.layer.material;
-			xRange.push_back(block.xMin);
-			xRange.push_back(block.xMax);
-			zRange.push_back(block.zMax);
-			zRange.push_back(block.zMin);
-			blocks.push_back(block);
-		}
+    		double xNearRight = effectiveLength;  // This will change depending on configuration
 
-		double xWallExt = xPosition;
-		double xFarField = effectiveLength + farFieldWidth;
-
-		// Exterior Air
-		{
-			Block block;
-			block.xMin = xWallExt;
-			block.xMax = xFarField;
-			block.zMax = zTop;
-			block.zMin = 0.0;
-			block.material = air;
-			xRange.push_back(block.xMin);
-			xRange.push_back(block.xMax);
-			zRange.push_back(block.zMax);
-			zRange.push_back(block.zMin);
-			blocks.push_back(block);
-		}
-
-		// Far field
-		xRange.push_back(xFarField);
-
-		zRange.push_back(0.0);
-
-		// Sort the range vectors
-		sort(xRange.begin(), xRange.end());
-		sort(zRange.begin(), zRange.end());
-
-		// erase (approximately) duplicate elements
-		for (size_t i = 1; i < xRange.size(); i++)
-		{
-			if (std::fabs(xRange[i] - xRange[i-1]) < 0.0000001)
-			{
-				xRange.erase(xRange.begin() + i-1);
-				i -= 1;
-			}
-		}
-
-		for (size_t j = 1; j < zRange.size(); j++)
-		{
-			if (std::fabs(zRange[j] - zRange[j-1]) < 0.0000001)
-			{
-				zRange.erase(zRange.begin() + j-1);
-				j -= 1;
-			}
-		}
-
-		// insert zero-thickness cells for boundary conditions
-
-		// Deep ground
-		zRange.push_back(-deepGroundDepth);
-
-		// Top of domain
-		if (zTop > 0.0)
-			zRange.push_back(zTop);
-
-		// Grade
-		zRange.push_back(0.0);
-
-		// Axis
-		xRange.push_back(0.0);
-
-		// Wall
-		if (excavationDepth > 0.0)
-		{
-			xRange.push_back(xIntWall);
-
-			if (hasWall && zTop > 0.000001)
-				xRange.push_back(xWallExt);
+			// Deep ground surface
+			Surface deepGround("Deep Ground",
+					xLeft,
+					xRight,
+					zBottom,
+					zBottom);
+			surfaces.push_back(deepGround);
 
 			// Slab
-			if (fabs(zSlab) > 0.000001)
-				zRange.push_back(zSlab);
+			Surface slabInterior("Slab Interior",
+					xLeft,
+					xWallInterior,
+					zSlab,
+					zSlab);
+			surfaces.push_back(slabInterior);
+
+			// Grade
+			Surface grade("Grade",
+					xWallExterior,
+					xRight,
+					zGrade,
+					zGrade);
+			surfaces.push_back(grade);
+
+			// Wall Top
+			if(hasWall)
+			{
+				Surface wallTop("Wall Top",
+						xWallInterior,
+						xWallExterior,
+						zTop,
+						zTop);
+				surfaces.push_back(wallTop);
+			}
+
+			// Symmetry Surface
+			Surface symmetry("Symmetry",
+					xLeft,
+					xLeft,
+					zBottom,
+					zSlab);
+			surfaces.push_back(symmetry);
+
+			if(excavationDepth > 0.0)
+			{
+				// Interior Wall Surface
+				Surface interiorWall("Interior Wall",
+						xWallInterior,
+						xWallInterior,
+						zSlab,
+						zTop);
+				surfaces.push_back(interiorWall);
+			}
+
+			if(zTop > 0.0)
+			{
+				// Exterior Wall Surface
+				Surface exteriorWall("Exterior Wall",
+						xWallExterior,
+						xWallExterior,
+						zGrade,
+						zTop);
+				surfaces.push_back(exteriorWall);
+			}
+
+			// Far Field Surface
+			Surface farField("Far Field",
+					xRight,
+					xRight,
+					zBottom,
+					zGrade);
+			surfaces.push_back(farField);
+
+			// Interior Horizontal Insulation
+			if (hasInteriorHorizontalInsulation)
+			{
+				Block block(interiorHorizontalInsulation.layer.material,
+						    xNearLeft,
+						    effectiveLength,
+						    zTop - interiorHorizontalInsulation.depth - interiorHorizontalInsulation.layer.thickness,
+						    zTop - interiorHorizontalInsulation.depth);
+				blocks.push_back(block);
+
+				if(block.zMin < zNearBottom)
+				{
+					zNearBottom = block.zMin;
+				}
+				if(block.xMin < xNearLeft)
+				{
+					xNearLeft = block.xMin;
+				}
+			}
+
+			if (hasSlab)
+			{
+				// Foundation Slab
+				double zPosition = zSlab - slab.totalWidth();
+
+				for (size_t n = 0; n < slab.layers.size(); n++)
+				{
+					Block block(slab.layers[n].material,
+							    xLeft,
+							    effectiveLength,
+							    zPosition,
+							    zPosition + slab.layers[n].thickness);
+					blocks.push_back(block);
+					zPosition = block.zMax;
+
+					if(block.zMin < zNearBottom)
+					{
+						zNearBottom = block.zMin;
+					}
+				}
+
+			}
+
+			// Interior Vertical Insulation
+			if (hasInteriorVerticalInsulation)
+			{
+				Block block(interiorVerticalInsulation.layer.material,
+				  			xWallInterior,
+				  			effectiveLength,
+				  			zTop - interiorVerticalInsulation.depth,
+				  			zTop);
+				blocks.push_back(block);
+
+				if(block.zMin < zNearBottom)
+				{
+					zNearBottom = block.zMin;
+				}
+				if(block.xMin < xNearLeft)
+				{
+					xNearLeft = block.xMin;
+				}
+
+			}
+
+			// Indoor Air
+			{
+				Block block(air,
+					  		xLeft,
+					  		xWallInterior,
+					  		zTop,
+					  		zSlab);
+				blocks.push_back(block);
+			}
+
+			if (hasWall)
+			{
+				double xPosition = effectiveLength;
+
+				// Foundation Wall
+				for (int n = wall.layers.size() - 1; n >= 0; n--)
+				{
+					Block block(wall.layers[n].material,
+								xPosition,
+								xPosition + wall.layers[n].thickness,
+								-wall.depth,
+						  		zTop);
+					xPosition = block.xMax;
+					blocks.push_back(block);
+
+					if(block.zMin < zNearBottom)
+					{
+						zNearBottom = block.zMin;
+					}
+					if(block.xMax > xNearRight)
+					{
+						xNearRight = block.xMax;
+					}
+
+				}
+			}
+
+			// Exterior Vertical Insulation
+			if (hasExteriorVerticalInsulation)
+			{
+				Block block(exteriorVerticalInsulation.layer.material,
+						    xWallExterior - exteriorVerticalInsulation.layer.thickness,
+					  		xWallExterior,
+					  		zTop - exteriorVerticalInsulation.depth,
+					  		zTop);
+				blocks.push_back(block);
+
+				if(block.zMin < zNearBottom)
+				{
+					zNearBottom = block.zMin;
+				}
+				if(block.xMax > xNearRight)
+				{
+					xNearRight = block.xMax;
+				}
+
+			}
+
+			// Exterior Horizontal Insulation
+			if (hasExteriorHorizontalInsulation)
+			{
+				Block block(exteriorHorizontalInsulation.layer.material,
+						    effectiveLength + wall.totalWidth(),
+						    xWallExterior,
+					  		zTop - exteriorHorizontalInsulation.depth - exteriorHorizontalInsulation.layer.thickness,
+					  		zTop - exteriorHorizontalInsulation.depth);
+				blocks.push_back(block);
+
+				if(block.zMin < zNearBottom)
+				{
+					zNearBottom = block.zMin;
+				}
+				if(block.xMax > xNearRight)
+				{
+					xNearRight = block.xMax;
+				}
+
+			}
+
+			// Exterior Air
+			{
+				Block block(air,
+							xWallExterior,
+					  		xRight,
+					  		zGrade,
+					  		zTop);
+				blocks.push_back(block);
+			}
+
+			std::vector<double> xPoints;
+			std::vector<double> zPoints;
+
+			std::vector<double> xSurfaces;
+			std::vector<double> zSurfaces;
+
+			for (size_t s = 0; s < surfaces.size(); s++)
+			{
+				xPoints.push_back(surfaces[s].xMin);
+				xPoints.push_back(surfaces[s].xMax);
+				zPoints.push_back(surfaces[s].zMax);
+				zPoints.push_back(surfaces[s].zMin);
+
+				if (surfaces[s].constX())
+				{
+					xSurfaces.push_back(surfaces[s].xMin);
+				}
+				if (surfaces[s].constZ())
+				{
+					zSurfaces.push_back(surfaces[s].zMin);
+				}
+
+			}
+
+			for (size_t b = 0; b < blocks.size(); b++)
+			{
+				xPoints.push_back(blocks[b].xMin);
+				xPoints.push_back(blocks[b].xMax);
+				zPoints.push_back(blocks[b].zMax);
+				zPoints.push_back(blocks[b].zMin);
+			}
+
+			// Sort the points vectors
+			sort(xPoints.begin(), xPoints.end());
+			sort(zPoints.begin(), zPoints.end());
+
+			// erase (approximately) duplicate elements
+			for (size_t i = 1; i < xPoints.size(); i++)
+			{
+				if (std::fabs(xPoints[i] - xPoints[i-1]) < 0.0000001)
+				{
+					xPoints.erase(xPoints.begin() + i-1);
+					i -= 1;
+				}
+			}
+
+			for (size_t k = 1; k < zPoints.size(); k++)
+			{
+				if (std::fabs(zPoints[k] - zPoints[k-1]) < 0.0000001)
+				{
+					zPoints.erase(zPoints.begin() + k-1);
+					k -= 1;
+				}
+			}
+
+			// Sort the surfaces vectors
+			sort(xSurfaces.begin(), xSurfaces.end());
+			sort(zSurfaces.begin(), zSurfaces.end());
+
+			// erase (approximately) duplicate elements
+			for (size_t i = 1; i < xSurfaces.size(); i++)
+			{
+				if (std::fabs(xSurfaces[i] - xSurfaces[i-1]) < 0.0000001)
+				{
+					xSurfaces.erase(xSurfaces.begin() + i-1);
+					i -= 1;
+				}
+			}
+
+			for (size_t k = 1; k < zSurfaces.size(); k++)
+			{
+				if (std::fabs(zSurfaces[k] - zSurfaces[k-1]) < 0.0000001)
+				{
+					zSurfaces.erase(zSurfaces.begin() + k-1);
+					k -= 1;
+				}
+			}
+
+			// re-add the extra surface elements to create zero-thickness cells
+			for (size_t i = 0; i < xSurfaces.size(); i++)
+			{
+				xPoints.push_back(xSurfaces[i]);
+			}
+
+			for (size_t k = 0; k < zSurfaces.size(); k++)
+			{
+				zPoints.push_back(zSurfaces[k]);
+			}
+
+			// Sort the range vectors again this time it includes doubles for zero thickness cells
+			sort(xPoints.begin(), xPoints.end());
+			sort(zPoints.begin(), zPoints.end());
+
+
+			xMeshData.points = xPoints;
+			zMeshData.points = zPoints;
+
+			std::vector<Interval> xIntervals;
+			std::vector<Interval> zIntervals;
+
+			for (size_t i = 1; i < xPoints.size(); i++)
+			{
+				if (std::fabs(xPoints[i] - xPoints[i-1]) < 0.0000001)
+					xIntervals.push_back(zeroThickness);
+				else if (xPoints[i] - xNearLeft < 0.0000001)
+					xIntervals.push_back(interior);
+				else if (xPoints[i] - xNearRight < 0.0000001)
+					xIntervals.push_back(near);
+				else if (xPoints[i] > xNearRight)
+					xIntervals.push_back(exterior);
+			}
+
+			for (size_t k = 1; k < zPoints.size(); k++)
+			{
+				if (std::fabs(zPoints[k] - zPoints[k-1]) < 0.0000001)
+					zIntervals.push_back(zeroThickness);
+				else if (zPoints[k] - zNearBottom < 0.0000001)
+					zIntervals.push_back(deep);
+				else if (zPoints[k] > zNearBottom)
+					zIntervals.push_back(near);
+			}
+
+			xMeshData.intervals = xIntervals;
+			zMeshData.intervals = zIntervals;
+
 		}
-
-		// Far field
-		xRange.push_back(effectiveLength + farFieldWidth);
-
-		// Sort the range vectors again this time it includes doubles for zero thickness cells
-		sort(xRange.begin(), xRange.end());
-		sort(zRange.begin(), zRange.end());
-
-
-		xMeshData.points = xRange;
-		zMeshData.points = zRange;
-
-		std::vector<Interval> rintervals;
-		rintervals.push_back(interior);
-		rintervals.push_back(interior);
-
-		for (size_t i = 2; i < xRange.size() - 3; i++)
-		{
-			rintervals.push_back(near);
-		}
-		rintervals.push_back(exterior);
-
-		// Zero-thickness far-field boundary
-		rintervals.push_back(exterior);
-
-		std::vector<Interval> zintervals;
-
-		// Zero-thickness lower boundary
-		zintervals.push_back(deep);
-
-		// Main "deep" interval
-		zintervals.push_back(deep);
-
-		for (size_t j = 2; j < zRange.size() - 1; j++)
-		{
-			zintervals.push_back(near);
-		}
-
-		xMeshData.intervals = rintervals;
-		zMeshData.intervals = zintervals;
-
 	}
 
 };
