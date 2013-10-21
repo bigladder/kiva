@@ -264,91 +264,48 @@ void Domain::setDomain(Foundation &foundation)
 						}
 					}
 
-					double dxp;  // Delta x+
-					double dxm;  // Delta x-
-					double dyp;  // Delta y+
-					double dym;  // Delta y-
-					double dzp;  // Delta z+
-					double dzm;  // Delta z-
-					double kxp;  // kx+
-					double kxm;  // kx-
-					double kyp;  // ky+
-					double kym;  // ky-
-					double kzp;  // kz+
-					double kzm;  // kz-
-
-					// Intermediate Values
-					dxp = getDXP(i);
-					dxm = getDXM(i);
-					dyp = getDYP(j);
-					dym = getDYM(j);
-					dzp = getDZP(k);
-					dzm = getDZM(k);
-					kxp = getKXP(i,j,k);
-					kxm = getKXM(i,j,k);
-					kyp = getKYP(i,j,k);
-					kym = getKYM(i,j,k);
-					kzp = getKZP(i,j,k);
-					kzm = getKZM(i,j,k);
-
 					// PDE Coefficients
-					if (dxp < 0.00000001)
+
+					// Radial X terms
+					if (foundation.coordinateSystem == Foundation::CS_2DAXIAL)
+					{
+						cell[i][j][k].cxp_c = (getDXM(i)*getKXP(i,j,k))/
+								((getDXM(i) + getDXP(i))*getDXP(i));
+						cell[i][j][k].cxm_c = (getDXP(i)*getKXM(i,j,k))/
+								((getDXM(i) + getDXP(i))*getDXM(i));
+					}
+					else
 					{
 						cell[i][j][k].cxp_c = 0.0;
-						cell[i][j][k].cxp = 0.0;
-					}
-					else
-					{
-						cell[i][j][k].cxp_c = (dxm*kxp)/((dxm + dxp)*dxp);
-						cell[i][j][k].cxp = (2*kxp)/((dxm + dxp)*dxp);
-					}
-
-					if (dxm < 0.00000001)
-					{
 						cell[i][j][k].cxm_c = 0.0;
-						cell[i][j][k].cxm = 0.0;
-					}
-					else
-					{
-						cell[i][j][k].cxm_c = (dxp*kxm)/((dxm + dxp)*dxm);
-						cell[i][j][k].cxm = -1*(2*kxm)/((dxm + dxp)*dxm);
 					}
 
-					if (dyp < 0.00000001)
+					// Cartesian X terms
+					cell[i][j][k].cxp = (2*getKXP(i,j,k))/
+							((getDXM(i) + getDXP(i))*getDXP(i));
+					cell[i][j][k].cxm = -1*(2*getKXM(i,j,k))/
+							((getDXM(i) + getDXP(i))*getDXM(i));
+
+					// Cartesian Y terms
+					cell[i][j][k].czp = (2*getKZP(i,j,k))/
+							((getDZM(k) + getDZP(k))*getDZP(k));
+					cell[i][j][k].czm = -1*(2*getKZM(i,j,k))/
+							((getDZM(k) + getDZP(k))*getDZM(k));
+
+					// Cartesian Y terms
+					if (foundation.coordinateSystem == Foundation::CS_3D)
+					{
+						cell[i][j][k].cyp = (2*getKYP(i,j,k))/
+								((getDYM(j) + getDYP(j))*getDYP(j));
+						cell[i][j][k].cym = -1*(2*getKYM(i,j,k))/
+								((getDYM(j) + getDYP(j))*getDYM(j));
+					}
+					else
 					{
 						cell[i][j][k].cyp = 0.0;
-					}
-					else
-					{
-						cell[i][j][k].cyp = (2*kyp)/((dym + dyp)*dyp);
-					}
-
-					if (dym < 0.00000001)
-					{
 						cell[i][j][k].cym = 0.0;
 					}
-					else
-					{
-						cell[i][j][k].cym = -1*(2*kym)/((dym + dyp)*dym);
-					}
 
-					if (dzp < 0.00000001)
-					{
-						cell[i][j][k].czp = 0.0;
-					}
-					else
-					{
-						cell[i][j][k].czp = (2*kzp)/((dzm + dzp)*dzp);
-					}
-
-					if (dzm < 0.00000001)
-					{
-						cell[i][j][k].czm = 0.0;
-					}
-					else
-					{
-						cell[i][j][k].czm = -1*(2*kzm)/((dzm + dzp)*dzm);
-					}
 				}
 			}
 		}

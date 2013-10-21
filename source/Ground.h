@@ -118,11 +118,7 @@ private:
 
 	void calculateExplicit();
 
-	void calculateImplicit();
-
-	void calculateCrankNicolson();
-
-	void calculateSteadyState();
+	void calculateMatrix(Foundation::NumericalScheme scheme);
 
 	void plot();
 
