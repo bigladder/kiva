@@ -26,6 +26,43 @@
 
 #include <boost/multi_array.hpp>
 
+class Cell
+{
+public:
+
+	// inherent properties
+	double density;
+	double specificHeat;
+	double conductivity;
+
+	// derived properties
+	double cxp_c;
+	double cxm_c;
+	double cxp;
+	double cxm;
+	double cyp;
+	double cym;
+	double czp;
+	double czm;
+
+	// organizational properties
+	enum CellType
+	{
+		EXTERIOR_AIR,  // 0
+		INTERIOR_AIR,  // 1
+		NORMAL,  // 2
+		BOUNDARY,  // 3
+		ZERO_THICKNESS  // 4
+	};
+	CellType cellType;
+
+	size_t blockNumber;
+	Block block;
+
+	size_t surfaceNumber;
+	Surface surface;
+};
+
 class Domain
 {
 public:
@@ -38,39 +75,7 @@ public:
 		std::size_t nY;
 		std::size_t nZ;
 
-		// inherent properties
-		boost::multi_array<double, 3> density;
-		boost::multi_array<double, 3> specificHeat;
-		boost::multi_array<double, 3> conductivity;
-
-		// derived properties
-		boost::multi_array<double, 3> cxp_c;
-		boost::multi_array<double, 3> cxm_c;
-		boost::multi_array<double, 3> cxp;
-		boost::multi_array<double, 3> cxm;
-		boost::multi_array<double, 3> cyp;
-		boost::multi_array<double, 3> cym;
-		boost::multi_array<double, 3> czp;
-		boost::multi_array<double, 3> czm;
-
-		// organizational properties
-		enum CellType
-		{
-			EXTERIOR_AIR,  // 0
-			EXTERIOR_GRADE,  // 1
-			EXTERIOR_WALL,  // 2
-			INTERIOR_AIR,  // 3
-			INTERIOR_SLAB,  // 4
-			INTERIOR_WALL,  // 5
-			INTERIOR_INSULATION_EDGE,  // 6
-			WALL_TOP,  // 7
-			SYMMETRY,  // 8
-			FAR_FIELD,  // 9
-			DEEP_GROUND,  // 10
-			NORMAL,  // 11
-			ZERO_THICKNESS  // 12
-		};
-		boost::multi_array<CellType, 3>  cellType;
+		boost::multi_array<Cell, 3> cell;
 
 		std::size_t slabK;
 		std::size_t slabImin;

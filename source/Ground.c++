@@ -140,22 +140,8 @@ void Ground::initializeConditions()
 			{
 				for (size_t i = 0; i < nX; ++i)
 				{
-					switch (domain.cellType[i][j][k])
-					{
-					case Domain::INTERIOR_AIR:
-						TOld[i][j][k] = foundation.indoorAirTemperature;
-						break;
-					case Domain::EXTERIOR_AIR:
-						TOld[i][j][k] = getOutdoorTemperature();
-						break;
-					case Domain::DEEP_GROUND:
-						TOld[i][j][k] = getDeepGroundTemperature();
-						break;
-					default:
-						TOld[i][j][k]= getInitialTemperature(tNow,
-														domain.meshZ.centers[k]);
-						break;
-					}
+					TOld[i][j][k]= getInitialTemperature(tNow,
+							domain.meshZ.centers[k]);
 				}
 			}
 		}
@@ -276,97 +262,152 @@ void Ground::calculateADEUpwardSweep()
 			for (size_t i = 0; i < nX; i++)
 			{
 				double theta = timestep/
-						(domain.density[i][j][k]*domain.specificHeat[i][j][k]);
+						(domain.cell[i][j][k].density*domain.cell[i][j][k].specificHeat);
 
-				double r = domain.meshX.centers[i];
-				double A = domain.cxp_c[i][j][k]*theta/r;
-				double B = domain.cxm_c[i][j][k]*theta/r;
-				double C = domain.cxp[i][j][k]*theta;
-				double D = domain.cxm[i][j][k]*theta;
-				double E = domain.czp[i][j][k]*theta;
-				double F = domain.czm[i][j][k]*theta;
-
-				switch (domain.cellType[i][j][k])
+				double A = 0;
+				double B = 0;
+				if (foundation.coordinateSystem == Foundation::CS_2DAXIAL)
 				{
-				case Domain::SYMMETRY:
-					// Apply zero-flux BC (U[i-1][j][k] = UOld[i+1][j][k])
-					// Remove A & B at axis to avoid divide by zero
-					U[i][j][k] = (UOld[i][j][k]*(1.0 - C - E) - UOld[i+1][j][k]*D
-							  + UOld[i+1][j][k]*C - U[i][j][k-1]*F + UOld[i][j][k+1]*E)
-							  /(1.0 - D - F);
+					if (i != 0)
+					{
+						double r = domain.meshX.centers[i];
+						double A = domain.cell[i][j][k].cxp_c*theta/r;
+						double B = domain.cell[i][j][k].cxm_c*theta/r;
+					}
+				}
+				double C = domain.cell[i][j][k].cxp*theta;
+				double D = domain.cell[i][j][k].cxm*theta;
+				double E = domain.cell[i][j][k].czp*theta;
+				double F = domain.cell[i][j][k].czm*theta;
+
+				switch (domain.cell[i][j][k].cellType)
+				{
+				case Cell::BOUNDARY:
+					{
+					double tilt;
+					if (domain.cell[i][j][k].surface.orientation == Surface::Z_POS)
+						tilt = 0;
+					else if (domain.cell[i][j][k].surface.orientation == Surface::Z_POS)
+						tilt = PI;
+					else
+						tilt = PI/2.0;
+
+					switch (domain.cell[i][j][k].surface.boundaryConditionType)
+					{
+					case Surface::ZERO_FLUX:
+						{
+						switch (domain.cell[i][j][k].surface.orientation)
+						{
+						case Surface::Z_NEG:
+							// UOld[i][j][k-1] = U[i][j][k+1]
+							U[i][j][k] = (UOld[i][j][k]*(1.0 - A - C - E) - U[i-1][j][k]*(B + D)
+									  + UOld[i+1][j][k]*(A + C) - U[i][j][k+1]*F + U[i][j][k+1]*E)
+									  /(1.0 - B - D - F);
+							break;
+						case Surface::Z_POS:
+							// UOld[i][j][k+1] = U[i][j][k-1]
+							U[i][j][k] = (UOld[i][j][k]*(1.0 - A - C - E) - U[i-1][j][k]*(B + D)
+									  + UOld[i+1][j][k]*(A + C) - U[i][j][k-1]*F + U[i][j][k-1]*E)
+									  /(1.0 - B - D - F);
+
+							break;
+						case Surface::X_NEG:
+							// (U[i-1][j][k] = UOld[i+1][j][k]
+							U[i][j][k] = (UOld[i][j][k]*(1.0 - A - C - E) - UOld[i+1][j][k]*(B +D)
+									  + UOld[i+1][j][k]*(A + C) - U[i][j][k-1]*F + UOld[i][j][k+1]*E)
+									  /(1.0 - B - D - F);
+							break;
+						case Surface::X_POS:
+							// UOld[i+1][j][k] = U[i-1][j][k]
+							U[i][j][k] = (UOld[i][j][k]*(1.0 - A - C - E) - U[i-1][j][k]*(B + D)
+									  + U[i-1][j][k]*(A + C) - U[i][j][k-1]*F + UOld[i][j][k+1]*E)
+									  /(1.0 - B - D - F);
+
+							break;
+						}
+						}
+						break;
+
+					case Surface::CONSTANT_TEMPERATURE:
+
+						U[i][j][k] = domain.cell[i][j][k].surface.temperature;
+						break;
+
+					case Surface::INTERIOR_TEMPERATURE:
+
+						U[i][j][k] = foundation.indoorAirTemperature;
+						break;
+
+					case Surface::EXTERIOR_TEMPERATURE:
+
+						U[i][j][k] = getOutdoorTemperature();
+						break;
+
+					case Surface::INTERIOR_FLUX:
+						{
+						double Tair = foundation.indoorAirTemperature;
+						double q = 0;
+
+						double hc = getConvectionCoeff(TOld[i][j][k],
+										Tair,0.0,1.0,false,tilt);
+						double hr = getSimpleInteriorIRCoeff(domain.cell[i][j][k].surface.emissivity,
+															 TOld[i][j][k],Tair);
+
+						switch (domain.cell[i][j][k].surface.orientation)
+						{
+						case Surface::Z_POS:
+							U[i][j][k] = (domain.getKZM(i,j,k)*U[i][j][k-1]/domain.getDZM(k) +
+									 (hc + hr)*Tair + q)/(domain.getKZM(i,j,k)/domain.getDZM(k) + (hc + hr));
+
+							break;
+						case Surface::X_NEG:
+							U[i][j][k] = (domain.getKXP(i,j,k)*UOld[i+1][j][k]/domain.getDXP(i) +
+									 (hc + hr)*Tair + q)/(domain.getKXP(i,j,k)/domain.getDXP(i) + (hc + hr));
+							break;
+						case Surface::X_POS:
+							U[i][j][k] = (domain.getKXM(i,j,k)*U[i-1][j][k]/domain.getDXM(i) +
+									 (hc + hr)*Tair + q)/(domain.getKXM(i,j,k)/domain.getDXM(i) + (hc + hr));
+
+							break;
+						}
+						}
+						break;
+
+					case Surface::EXTERIOR_FLUX:
+						{
+						double Tair = getOutdoorTemperature();
+						double v = getLocalWindSpeed();
+						double eSky = weatherData.skyEmissivity.getValue(getSimTime(tNow));
+						double F = getEffectiveExteriorViewFactor(eSky,tilt);
+						double hc = getConvectionCoeff(TOld[i][j][k],Tair,v,1.0,true,tilt);
+						double hr = getExteriorIRCoeff(domain.cell[i][j][k].surface.emissivity,TOld[i][j][k],Tair,eSky,tilt);
+						double q = domain.cell[i][j][k].surface.absorptivity*weatherData.globalHorizontalSolar.getValue(getSimTime(tNow));
+
+						switch (domain.cell[i][j][k].surface.orientation)
+						{
+						case Surface::Z_POS:
+							U[i][j][k] = (domain.getKZM(i,j,k)*U[i][j][k-1]/domain.getDZM(k) +
+									  (hc + hr*pow(F,0.25))*Tair + q)/(domain.getKZM(i,j,k)/domain.getDZM(k) + (hc + hr));
+							break;
+						case Surface::X_NEG:
+							U[i][j][k] = (domain.getKXP(i,j,k)*UOld[i+1][j][k]/domain.getDXP(i) +
+									  (hc + hr*pow(F,0.25))*Tair + q)/(domain.getKXP(i,j,k)/domain.getDXP(i) + (hc + hr));
+							break;
+						case Surface::X_POS:
+							U[i][j][k] = (domain.getKXM(i,j,k)*U[i-1][j][k]/domain.getDXM(i) +
+									  (hc + hr*pow(F,0.25))*Tair + q)/(domain.getKXM(i,j,k)/domain.getDXM(i) + (hc + hr));
+							break;
+						}
+						}
+						break;
+					}
+					}
 					break;
-				case Domain::FAR_FIELD:
-					// Apply zero-flux BC (UOld[i+1][j][k] = U[i-1][j][k])
-					U[i][j][k] = (UOld[i][j][k]*(1.0 - A - C - E) - U[i-1][j][k]*(B + D)
-							  + U[i-1][j][k]*(A + C) - U[i][j][k-1]*F + UOld[i][j][k+1]*E)
-							  /(1.0 - B - D - F);
-					break;
-				case Domain::WALL_TOP:
-					// Apply zero-flux BC (UOld[i][j][k+1] = U[i][j][k-1]
-					U[i][j][k] = (UOld[i][j][k]*(1.0 - A - C - E) - U[i-1][j][k]*(B + D)
-							  + UOld[i+1][j][k]*(A + C) - U[i][j][k-1]*F + U[i][j][k-1]*E)
-							  /(1.0 - B - D - F);
-					break;
-				case Domain::INTERIOR_AIR:
+				case Cell::INTERIOR_AIR:
 					U[i][j][k] = foundation.indoorAirTemperature;
 					break;
-				case Domain::INTERIOR_WALL:
-					{
-					double Tair = foundation.indoorAirTemperature;
-					double hc = getConvectionCoeff(TOld[i][j][k],Tair,0.0,1.0,false,PI/2.0);
-					double hr = getSimpleInteriorIRCoeff(foundation.wall.interiorEmissivity,
-														 TOld[i][j][k],Tair);
-					double q = 0;
-
-					U[i][j][k] = (domain.getKXP(i,j,k)*U[i+1][j][k]/domain.getDXP(i) +
-							 (hc + hr)*Tair + q)/(domain.getKXP(i,j,k)/domain.getDXP(i) + (hc + hr));
-					}
-					break;
-				case Domain::INTERIOR_SLAB:
-					{
-					double Tair = foundation.indoorAirTemperature;
-					double hc = getConvectionCoeff(TOld[i][j][k],Tair,0.0,1.0,false,0.0);
-					double hr = getSimpleInteriorIRCoeff(foundation.wall.interiorEmissivity,
-														 TOld[i][j][k],Tair);
-					double q = 0;
-
-					U[i][j][k] = (domain.getKZM(i,j,k)*U[i][j][k-1]/domain.getDZM(k) +
-							 (hc + hr)*Tair + q)/(domain.getKZM(i,j,k)/domain.getDZM(k) + (hc + hr));
-					}
-					break;
-				case Domain::EXTERIOR_AIR:
+				case Cell::EXTERIOR_AIR:
 					U[i][j][k] = getOutdoorTemperature();
-					break;
-				case Domain::EXTERIOR_GRADE:
-					{
-					double Tair = getOutdoorTemperature();
-					double v = getLocalWindSpeed();
-					double eSky = weatherData.skyEmissivity.getValue(getSimTime(tNow));
-					double F = getEffectiveExteriorViewFactor(eSky,0.0);
-					double hc = getConvectionCoeff(TOld[i][j][k],Tair,v,1.0,true,0.0);
-					double hr = getExteriorIRCoeff(foundation.soilEmissivity,TOld[i][j][k],Tair,eSky,0.0);
-					double q = foundation.soilAbsorptivity*weatherData.globalHorizontalSolar.getValue(getSimTime(tNow));
-
-					U[i][j][k] = (domain.getKZM(i,j,k)*U[i][j][k-1]/domain.getDZM(k) +
-							  (hc + hr*pow(F,0.25))*Tair + q)/(domain.getKZM(i,j,k)/domain.getDZM(k) + (hc + hr));
-					}
-					break;
-				case Domain::EXTERIOR_WALL:
-					{
-					double Tair = getOutdoorTemperature();
-					double v = getLocalWindSpeed();
-					double eSky = weatherData.skyEmissivity.getValue(getSimTime(tNow));
-					double F = getEffectiveExteriorViewFactor(eSky,PI/2.0);
-					double hc = getConvectionCoeff(TOld[i][j][k],Tair,v,1.0,true,PI/2.0);
-					double hr = getExteriorIRCoeff(foundation.wall.exteriorEmissivity,TOld[i][j][k],Tair,eSky,PI/2.0);
-					double q = foundation.wall.exteriorAbsorptivity*weatherData.globalHorizontalSolar.getValue(getSimTime(tNow));
-
-					U[i][j][k] = (domain.getKXM(i,j,k)*U[i-1][j][k]/domain.getDXM(i) +
-							  (hc + hr*pow(F,0.25))*Tair + q)/(domain.getKXM(i,j,k)/domain.getDXM(i) + (hc + hr));
-					}
-					break;
-				case Domain::DEEP_GROUND:
-					U[i][j][k] = getDeepGroundTemperature();
 					break;
 				default:
 					U[i][j][k] = (UOld[i][j][k]*(1.0 - A - C - E) - U[i-1][j][k]*(B + D)
@@ -389,97 +430,151 @@ void Ground::calculateADEDownwardSweep()
 			for (size_t i = nX - 1; i >= 0 && i < nX; i--)
 			{
 				double theta = timestep/
-						(domain.density[i][j][k]*domain.specificHeat[i][j][k]);
+						(domain.cell[i][j][k].density*domain.cell[i][j][k].specificHeat);
 
-				double r = domain.meshX.centers[i];
-				double A = domain.cxp_c[i][j][k]*theta/r;
-				double B = domain.cxm_c[i][j][k]*theta/r;
-				double C = domain.cxp[i][j][k]*theta;
-				double D = domain.cxm[i][j][k]*theta;
-				double E = domain.czp[i][j][k]*theta;
-				double F = domain.czm[i][j][k]*theta;
-
-				switch (domain.cellType[i][j][k])
+				double A = 0;
+				double B = 0;
+				if (foundation.coordinateSystem == Foundation::CS_2DAXIAL)
 				{
-				case Domain::SYMMETRY:
-					// Apply zero-flux BC (VOld[i-1][j][k] = V[i+1][j][k])
-					// Remove A & B at axis to avoid divide by zero
-					V[i][j][k] = (VOld[i][j][k]*(1.0 + D + F) - V[i+1][j][k]*D
-							  + V[i+1][j][k]*C - VOld[i][j][k-1]*F + V[i][j][k+1]*E)
-							  /(1.0 + C + E);
+					if (i != 0)
+					{
+						double r = domain.meshX.centers[i];
+						double A = domain.cell[i][j][k].cxp_c*theta/r;
+						double B = domain.cell[i][j][k].cxm_c*theta/r;
+					}
+				}
+				double C = domain.cell[i][j][k].cxp*theta;
+				double D = domain.cell[i][j][k].cxm*theta;
+				double E = domain.cell[i][j][k].czp*theta;
+				double F = domain.cell[i][j][k].czm*theta;
+
+				switch (domain.cell[i][j][k].cellType)
+				{
+				case Cell::BOUNDARY:
+					{
+					double tilt;
+					if (domain.cell[i][j][k].surface.orientation == Surface::Z_POS)
+						tilt = 0;
+					else if (domain.cell[i][j][k].surface.orientation == Surface::Z_POS)
+						tilt = PI;
+					else
+						tilt = PI/2.0;
+
+					switch (domain.cell[i][j][k].surface.boundaryConditionType)
+					{
+					case Surface::ZERO_FLUX:
+						{
+						switch (domain.cell[i][j][k].surface.orientation)
+						{
+						case Surface::Z_NEG:
+							// V[i][j][k-1] = VOld[i][j][k+1]
+							V[i][j][k] = (VOld[i][j][k]*(1.0 + B + D + F) - VOld[i-1][j][k]*(B + D)
+									  + V[i+1][j][k]*(A + C) - VOld[i][j][k+1]*F + VOld[i][j][k+1]*E)
+									  /(1.0 + A + C + E);
+							break;
+						case Surface::Z_POS:
+							// V[i][j][k+1] = VOld[i][j][k-1]
+							V[i][j][k] = (VOld[i][j][k]*(1.0 + B + D + F) - VOld[i-1][j][k]*(B + D)
+									  + V[i+1][j][k]*(A + C) - VOld[i][j][k-1]*F + VOld[i][j][k-1]*E)
+									  /(1.0 + A + C + E);
+							break;
+						case Surface::X_NEG:
+							// VOld[i-1][j][k] = V[i+1][j][k]
+							V[i][j][k] = (VOld[i][j][k]*(1.0 + A + D + F) - V[i+1][j][k]*(B + D)
+									  + V[i+1][j][k]*(A + C) - VOld[i][j][k-1]*F + V[i][j][k+1]*E)
+									  /(1.0 + A + C + E);
+							break;
+						case Surface::X_POS:
+							// V[i+1][j][k] = VOld[i-1][j][k]
+							V[i][j][k] = (VOld[i][j][k]*(1.0 + B + D + F) - VOld[i-1][j][k]*(B + D)
+									  + VOld[i-1][j][k]*(A + C) - VOld[i][j][k-1]*F + V[i][j][k+1]*E)
+									  /(1.0 + A + C + E);
+							break;
+						}
+						}
+						break;
+
+					case Surface::CONSTANT_TEMPERATURE:
+
+						V[i][j][k] = domain.cell[i][j][k].surface.temperature;
+						break;
+
+					case Surface::INTERIOR_TEMPERATURE:
+
+						V[i][j][k] = foundation.indoorAirTemperature;
+						break;
+
+					case Surface::EXTERIOR_TEMPERATURE:
+
+						V[i][j][k] = getOutdoorTemperature();
+						break;
+
+					case Surface::INTERIOR_FLUX:
+						{
+						double Tair = foundation.indoorAirTemperature;
+						double q = 0;
+
+						double hc = getConvectionCoeff(TOld[i][j][k],
+										Tair,0.0,1.0,false,tilt);
+						double hr = getSimpleInteriorIRCoeff(domain.cell[i][j][k].surface.emissivity,
+															 TOld[i][j][k],Tair);
+
+						switch (domain.cell[i][j][k].surface.orientation)
+						{
+						case Surface::Z_POS:
+							V[i][j][k] = (domain.getKZM(i,j,k)*VOld[i][j][k-1]/domain.getDZM(k) +
+									  (hc + hr)*Tair + q)/(domain.getKZM(i,j,k)/domain.getDZM(k) + (hc + hr));
+
+							break;
+						case Surface::X_NEG:
+							V[i][j][k] = (domain.getKXP(i,j,k)*V[i+1][j][k]/domain.getDXP(i) +
+									  (hc + hr)*Tair + q)/(domain.getKXP(i,j,k)/domain.getDXP(i) + (hc + hr));
+							break;
+						case Surface::X_POS:
+							V[i][j][k] = (domain.getKXM(i,j,k)*VOld[i-1][j][k]/domain.getDXM(i) +
+									  (hc + hr)*Tair + q)/(domain.getKXM(i,j,k)/domain.getDXM(i) + (hc + hr));
+
+							break;
+						}
+						}
+						break;
+
+					case Surface::EXTERIOR_FLUX:
+						{
+						double Tair = getOutdoorTemperature();
+						double v = getLocalWindSpeed();
+						double eSky = weatherData.skyEmissivity.getValue(getSimTime(tNow));
+						double F = getEffectiveExteriorViewFactor(eSky,tilt);
+						double hc = getConvectionCoeff(TOld[i][j][k],Tair,v,1.0,true,tilt);
+						double hr = getExteriorIRCoeff(domain.cell[i][j][k].surface.emissivity,TOld[i][j][k],Tair,eSky,tilt);
+						double q = domain.cell[i][j][k].surface.absorptivity*weatherData.globalHorizontalSolar.getValue(getSimTime(tNow));
+
+						switch (domain.cell[i][j][k].surface.orientation)
+						{
+						case Surface::Z_POS:
+							V[i][j][k] = (domain.getKZM(i,j,k)*VOld[i][j][k-1]/domain.getDZM(k) +
+									(hc + hr*pow(F,0.25))*Tair + q)/(domain.getKZM(i,j,k)/domain.getDZM(k) + (hc + hr));
+							break;
+						case Surface::X_NEG:
+							V[i][j][k] = (domain.getKXP(i,j,k)*V[i+1][j][k]/domain.getDXP(i) +
+									(hc + hr*pow(F,0.25))*Tair + q)/(domain.getKXP(i,j,k)/domain.getDXP(i) + (hc + hr));
+							break;
+						case Surface::X_POS:
+							V[i][j][k] = (domain.getKXM(i,j,k)*VOld[i-1][j][k]/domain.getDXM(i) +
+									(hc + hr*pow(F,0.25))*Tair + q)/(domain.getKXM(i,j,k)/domain.getDXM(i) + (hc + hr));
+							break;
+						}
+						}
+						break;
+					}
+					}
 					break;
-				case Domain::FAR_FIELD:
-					// Apply zero-flux BC (V[i+1][j][k] = VOld[i-1][j][k])
-					V[i][j][k] = (VOld[i][j][k]*(1.0 + B + D + F) - VOld[i-1][j][k]*(B + D)
-							  + VOld[i-1][j][k]*(A + C) - VOld[i][j][k-1]*F + V[i][j][k+1]*E)
-							  /(1.0 + A + C + E);
-					break;
-				case Domain::WALL_TOP:
-					// Apply zero-flux BC (V[i][j][k+1] = VOld[i][j][k-1])
-					V[i][j][k] = (VOld[i][j][k]*(1.0 + B + D + F) - VOld[i-1][j][k]*(B + D)
-							  + V[i+1][j][k]*(A + C) - VOld[i][j][k-1]*F + VOld[i][j][k-1]*E)
-							  /(1.0 + A + C + E);
-					break;
-				case Domain::INTERIOR_AIR:
+
+				case Cell::INTERIOR_AIR:
 					V[i][j][k] = foundation.indoorAirTemperature;
 					break;
-				case Domain::INTERIOR_WALL:
-					{
-					double Tair = foundation.indoorAirTemperature;
-					double hc = getConvectionCoeff(TOld[i][j][k],Tair,0.0,1.0,false,PI/2.0);
-					double hr = getSimpleInteriorIRCoeff(foundation.wall.interiorEmissivity,
-														 TOld[i][j][k],Tair);
-					double q = 0;
-
-					V[i][j][k] = (domain.getKXP(i,j,k)*VOld[i+1][j][k]/domain.getDXP(i) +
-							  (hc + hr)*Tair + q)/(domain.getKXP(i,j,k)/domain.getDXP(i) + (hc + hr));
-					}
-					break;
-				case Domain::INTERIOR_SLAB:
-					{
-					double Tair = foundation.indoorAirTemperature;
-					double hc = getConvectionCoeff(TOld[i][j][k],Tair,0.0,1.0,false,0.0);
-					double hr = getSimpleInteriorIRCoeff(foundation.wall.interiorEmissivity,
-														 TOld[i][j][k],Tair);
-					double q = 0;
-
-					V[i][j][k] = (domain.getKZM(i,j,k)*VOld[i][j][k-1]/domain.getDZM(k) +
-							  (hc + hr)*Tair + q)/(domain.getKZM(i,j,k)/domain.getDZM(k) + (hc + hr));
-					}
-					break;
-				case Domain::EXTERIOR_AIR:
+				case Cell::EXTERIOR_AIR:
 					V[i][j][k] = getOutdoorTemperature();
-					break;
-				case Domain::EXTERIOR_GRADE:
-					{
-					double Tair = getOutdoorTemperature();
-					double v = getLocalWindSpeed();
-					double eSky = weatherData.skyEmissivity.getValue(getSimTime(tNow));
-					double F = getEffectiveExteriorViewFactor(eSky,0.0);
-					double hc = getConvectionCoeff(TOld[i][j][k],Tair,v,1.0,true,0.0);
-					double hr = getExteriorIRCoeff(foundation.soilEmissivity,TOld[i][j][k],Tair,eSky,0.0);
-					double q = foundation.soilAbsorptivity*weatherData.globalHorizontalSolar.getValue(getSimTime(tNow));
-
-					V[i][j][k] = (domain.getKZM(i,j,k)*VOld[i][j][k-1]/domain.getDZM(k) +
-							(hc + hr*pow(F,0.25))*Tair + q)/(domain.getKZM(i,j,k)/domain.getDZM(k) + (hc + hr));
-					}
-					break;
-				case Domain::EXTERIOR_WALL:
-					{
-					double Tair = getOutdoorTemperature();
-					double v = getLocalWindSpeed();
-					double eSky = weatherData.skyEmissivity.getValue(getSimTime(tNow));
-					double F = getEffectiveExteriorViewFactor(eSky,PI/2.0);
-					double hc = getConvectionCoeff(TOld[i][j][k],Tair,v,1.0,true,PI/2.0);
-					double hr = getExteriorIRCoeff(foundation.wall.exteriorEmissivity,TOld[i][j][k],Tair,eSky,PI/2.0);
-					double q = foundation.wall.exteriorAbsorptivity*weatherData.globalHorizontalSolar.getValue(getSimTime(tNow));
-
-					V[i][j][k] = (domain.getKXM(i,j,k)*VOld[i-1][j][k]/domain.getDXM(i) +
-							(hc + hr*pow(F,0.25))*Tair + q)/(domain.getKXM(i,j,k)/domain.getDXM(i) + (hc + hr));
-					}
-					break;
-				case Domain::DEEP_GROUND:
-					V[i][j][k] = getDeepGroundTemperature();
 					break;
 				default:
 					V[i][j][k] = (VOld[i][j][k]*(1.0 + B + D + F) - VOld[i-1][j][k]*(B + D)
@@ -501,94 +596,147 @@ void Ground::calculateExplicit()
 			for (size_t i = 0; i < nX; i++)
 			{
 				double theta = timestep/
-						(domain.density[i][j][k]*domain.specificHeat[i][j][k]);
+						(domain.cell[i][j][k].density*domain.cell[i][j][k].specificHeat);
 
-				double r = domain.meshX.centers[i];
-				double A = domain.cxp_c[i][j][k]*theta/r;
-				double B = domain.cxm_c[i][j][k]*theta/r;
-				double C = domain.cxp[i][j][k]*theta;
-				double D = domain.cxm[i][j][k]*theta;
-				double E = domain.czp[i][j][k]*theta;
-				double F = domain.czm[i][j][k]*theta;
-
-				switch (domain.cellType[i][j][k])
+				double A = 0;
+				double B = 0;
+				if (foundation.coordinateSystem == Foundation::CS_2DAXIAL)
 				{
-				case Domain::SYMMETRY:
-					// Apply zero-flux BC (TOld[i-1][j][k] = TOld[i+1][j][k])
-					// Remove A & B at axis to avoid divide by zero
-					TNew[i][j][k] = (TOld[i][j][k]*(1.0 + + D + F - C - E) - TOld[i+1][j][k]*(D)
-							  + TOld[i+1][j][k]*(C) - TOld[i][j][k-1]*F + TOld[i][j][k+1]*E);
+					if (i != 0)
+					{
+						double r = domain.meshX.centers[i];
+						double A = domain.cell[i][j][k].cxp_c*theta/r;
+						double B = domain.cell[i][j][k].cxm_c*theta/r;
+					}
+				}
+				double C = domain.cell[i][j][k].cxp*theta;
+				double D = domain.cell[i][j][k].cxm*theta;
+				double E = domain.cell[i][j][k].czp*theta;
+				double F = domain.cell[i][j][k].czm*theta;
+
+				switch (domain.cell[i][j][k].cellType)
+				{
+				case Cell::BOUNDARY:
+					{
+					double tilt;
+					if (domain.cell[i][j][k].surface.orientation == Surface::Z_POS)
+						tilt = 0;
+					else if (domain.cell[i][j][k].surface.orientation == Surface::Z_POS)
+						tilt = PI;
+					else
+						tilt = PI/2.0;
+
+					switch (domain.cell[i][j][k].surface.boundaryConditionType)
+					{
+					case Surface::ZERO_FLUX:
+						{
+						switch (domain.cell[i][j][k].surface.orientation)
+						{
+						case Surface::Z_NEG:
+							// TOld[i][j][k-1] = TOld[i][j][k+1]
+							TNew[i][j][k] = (TOld[i][j][k]*(1.0 + B + D + F - A - C - E) - TOld[i-1][j][k]*(B + D)
+									  + TOld[i+1][j][k]*(A + C) - TOld[i][j][k+1]*F + TOld[i][j][k+1]*E);
+							break;
+						case Surface::Z_POS:
+							// TOld[i][j][k+1] = TOld[i][j][k-1]
+							TNew[i][j][k] = (TOld[i][j][k]*(1.0 + B + D + F - A - C - E) - TOld[i-1][j][k]*(B + D)
+									  + TOld[i+1][j][k]*(A + C) - TOld[i][j][k-1]*F + TOld[i][j][k-1]*E);
+							break;
+						case Surface::X_NEG:
+							// TOld[i-1][j][k] = TOld[i+1][j][k]
+							TNew[i][j][k] = (TOld[i][j][k]*(1.0 + B + D + F - A - C - E) - TOld[i+1][j][k]*(B + D)
+									  + TOld[i+1][j][k]*(A + C) - TOld[i][j][k-1]*F + TOld[i][j][k+1]*E);
+							break;
+						case Surface::X_POS:
+							// TOld[i+1][j][k] = TOld[i-1][j][k]
+							TNew[i][j][k] = (TOld[i][j][k]*(1.0 + B + D + F - A - C - E) - TOld[i-1][j][k]*(B + D)
+									  + TOld[i-1][j][k]*(A + C) - TOld[i][j][k-1]*F + TOld[i][j][k+1]*E);
+							break;
+						}
+						}
+						break;
+
+					case Surface::CONSTANT_TEMPERATURE:
+
+						TNew[i][j][k] = domain.cell[i][j][k].surface.temperature;
+						break;
+
+					case Surface::INTERIOR_TEMPERATURE:
+
+						TNew[i][j][k] = foundation.indoorAirTemperature;
+						break;
+
+					case Surface::EXTERIOR_TEMPERATURE:
+
+						TNew[i][j][k] = getOutdoorTemperature();
+						break;
+
+					case Surface::INTERIOR_FLUX:
+						{
+						double Tair = foundation.indoorAirTemperature;
+						double q = 0;
+
+						double hc = getConvectionCoeff(TOld[i][j][k],
+										Tair,0.0,1.0,false,tilt);
+						double hr = getSimpleInteriorIRCoeff(domain.cell[i][j][k].surface.emissivity,
+															 TOld[i][j][k],Tair);
+
+						switch (domain.cell[i][j][k].surface.orientation)
+						{
+						case Surface::Z_POS:
+							TNew[i][j][k] = (domain.getKZM(i,j,k)*TOld[i][j][k-1]/domain.getDZM(k) +
+									  (hc + hr)*Tair + q)/(domain.getKZM(i,j,k)/domain.getDZM(k) + (hc + hr));
+							break;
+						case Surface::X_NEG:
+							TNew[i][j][k] = (domain.getKXP(i,j,k)*TOld[i+1][j][k]/domain.getDXP(i) +
+									  (hc + hr)*Tair + q)/(domain.getKXP(i,j,k)/domain.getDXP(i) + (hc + hr));
+							break;
+						case Surface::X_POS:
+							TNew[i][j][k] = (domain.getKXM(i,j,k)*TOld[i-1][j][k]/domain.getDXM(i) +
+									  (hc + hr)*Tair + q)/(domain.getKXM(i,j,k)/domain.getDXM(i) + (hc + hr));
+							break;
+						}
+						}
+						break;
+
+					case Surface::EXTERIOR_FLUX:
+						{
+						double Tair = getOutdoorTemperature();
+						double v = getLocalWindSpeed();
+						double eSky = weatherData.skyEmissivity.getValue(getSimTime(tNow));
+						double F = getEffectiveExteriorViewFactor(eSky,tilt);
+						double hc = getConvectionCoeff(TOld[i][j][k],Tair,v,1.0,true,tilt);
+						double hr = getExteriorIRCoeff(domain.cell[i][j][k].surface.emissivity,TOld[i][j][k],Tair,eSky,tilt);
+						double q = domain.cell[i][j][k].surface.absorptivity*weatherData.globalHorizontalSolar.getValue(getSimTime(tNow));
+
+						switch (domain.cell[i][j][k].surface.orientation)
+						{
+						case Surface::Z_POS:
+							TNew[i][j][k] = (domain.getKZM(i,j,k)*TOld[i][j][k-1]/domain.getDZM(k) +
+									(hc + hr*pow(F,0.25))*Tair + q)/(domain.getKZM(i,j,k)/domain.getDZM(k) + (hc + hr));
+
+							break;
+						case Surface::X_NEG:
+							TNew[i][j][k] = (domain.getKXP(i,j,k)*TOld[i+1][j][k]/domain.getDXP(i) +
+									(hc + hr*pow(F,0.25))*Tair + q)/(domain.getKXP(i,j,k)/domain.getDXP(i) + (hc + hr));
+							break;
+						case Surface::X_POS:
+							TNew[i][j][k] = (domain.getKXM(i,j,k)*TOld[i-1][j][k]/domain.getDXM(i) +
+									(hc + hr*pow(F,0.25))*Tair + q)/(domain.getKXM(i,j,k)/domain.getDXM(i) + (hc + hr));
+
+							break;
+						}
+						}
+						break;
+					}
+					}
 					break;
-				case Domain::FAR_FIELD:
-					// Apply zero-flux BC (TOld[i+1][j][k] = TOld[i-1][j][k])
-					TNew[i][j][k] = (TOld[i][j][k]*(1.0 + B + D + F - A - C - E) - TOld[i-1][j][k]*(B + D)
-							  + TOld[i-1][j][k]*(A + C) - TOld[i][j][k-1]*F + TOld[i][j][k+1]*E);
-					break;
-				case Domain::WALL_TOP:
-					// Apply zero-flux BC (TOld[i][j][k+1] = TOld[i][j][k-1]
-					TNew[i][j][k] = (TOld[i][j][k]*(1.0 + B + D + F - A - C - E) - TOld[i-1][j][k]*(B + D)
-							  + TOld[i+1][j][k]*(A + C) - TOld[i][j][k-1]*F + TOld[i][j][k-1]*E);
-					break;
-				case Domain::INTERIOR_AIR:
+				case Cell::INTERIOR_AIR:
 					TNew[i][j][k] = foundation.indoorAirTemperature;
 					break;
-				case Domain::INTERIOR_SLAB:
-					{
-					double Tair = foundation.indoorAirTemperature;
-					double hc = getConvectionCoeff(TOld[i][j][k],Tair,0.0,1.0,false,0.0);
-					double hr = getSimpleInteriorIRCoeff(foundation.wall.interiorEmissivity,
-														 TOld[i][j][k],Tair);
-					double q = 0;
 
-					TNew[i][j][k] = (domain.getKZM(i,j,k)*TOld[i][j][k-1]/domain.getDZM(k) +
-							  (hc + hr)*Tair + q)/(domain.getKZM(i,j,k)/domain.getDZM(k) + (hc + hr));
-					}
-					break;
-				case Domain::INTERIOR_WALL:
-					{
-					double Tair = foundation.indoorAirTemperature;
-					double hc = getConvectionCoeff(TOld[i][j][k],Tair,0.0,1.0,false,PI/2.0);
-					double hr = getSimpleInteriorIRCoeff(foundation.wall.interiorEmissivity,
-														 TOld[i][j][k],Tair);
-					double q = 0;
-
-					TNew[i][j][k] = (domain.getKXP(i,j,k)*TOld[i+1][j][k]/domain.getDXP(i) +
-							  (hc + hr)*Tair + q)/(domain.getKXP(i,j,k)/domain.getDXP(i) + (hc + hr));
-					}
-					break;
-				case Domain::EXTERIOR_AIR:
+				case Cell::EXTERIOR_AIR:
 					TNew[i][j][k] = getOutdoorTemperature();
-					break;
-				case Domain::EXTERIOR_GRADE:
-					{
-					double Tair = getOutdoorTemperature();
-					double v = getLocalWindSpeed();
-					double eSky = weatherData.skyEmissivity.getValue(getSimTime(tNow));
-					double F = getEffectiveExteriorViewFactor(eSky,0.0);
-					double hc = getConvectionCoeff(TOld[i][j][k],Tair,v,1.0,true,0.0);
-					double hr = getExteriorIRCoeff(foundation.soilEmissivity,TOld[i][j][k],Tair,eSky,0.0);
-					double q = foundation.soilAbsorptivity*weatherData.globalHorizontalSolar.getValue(getSimTime(tNow));
-
-					TNew[i][j][k] = (domain.getKZM(i,j,k)*TOld[i][j][k-1]/domain.getDZM(k) +
-							(hc + hr*pow(F,0.25))*Tair + q)/(domain.getKZM(i,j,k)/domain.getDZM(k) + (hc + hr));
-					}
-					break;
-				case Domain::EXTERIOR_WALL:
-					{
-					double Tair = getOutdoorTemperature();
-					double v = getLocalWindSpeed();
-					double eSky = weatherData.skyEmissivity.getValue(getSimTime(tNow));
-					double F = getEffectiveExteriorViewFactor(eSky,PI/2.0);
-					double hc = getConvectionCoeff(TOld[i][j][k],Tair,v,1.0,true,PI/2.0);
-					double hr = getExteriorIRCoeff(foundation.wall.exteriorEmissivity,TOld[i][j][k],Tair,eSky,PI/2.0);
-					double q = foundation.wall.exteriorAbsorptivity*weatherData.globalHorizontalSolar.getValue(getSimTime(tNow));
-
-					TNew[i][j][k] = (domain.getKXM(i,j,k)*TOld[i][j][k]/domain.getDXM(i) +
-							(hc + hr*pow(F,0.25))*Tair + q)/(domain.getKXM(i,j,k)/domain.getDXM(i) + (hc + hr));
-					}
-					break;
-				case Domain::DEEP_GROUND:
-					TNew[i][j][k] = getDeepGroundTemperature();
 					break;
 				default:
 					TNew[i][j][k] = (TOld[i][j][k]*(1.0 + B + D + F - A - C - E) - TOld[i-1][j][k]*(B + D)
@@ -621,122 +769,197 @@ void Ground::calculateImplicit()
 			for (size_t i = 0; i < nX; i++)
 			{
 				double theta = timestep/
-						(domain.density[i][j][k]*domain.specificHeat[i][j][k]);
+						(domain.cell[i][j][k].density*domain.cell[i][j][k].specificHeat);
 
-				double r = domain.meshX.centers[i];
-				double A = domain.cxp_c[i][j][k]*theta/r;
-				double B = domain.cxm_c[i][j][k]*theta/r;
-				double C = domain.cxp[i][j][k]*theta;
-				double D = domain.cxm[i][j][k]*theta;
-				double E = domain.czp[i][j][k]*theta;
-				double F = domain.czm[i][j][k]*theta;
-
-				switch (domain.cellType[i][j][k])
+				double A = 0;
+				double B = 0;
+				if (foundation.coordinateSystem == Foundation::CS_2DAXIAL)
 				{
-				case Domain::SYMMETRY:
-					// Apply zero-flux BC (T[i-1][j][k] = T[i+1][j][k])
-					// Remove A & B at axis to avoid divide by zero
-					Amat(i + nX*k, i + nX*k) = (1.0 + C + E - D - F);
-					Amat(i + nX*k, (i+1) + nX*k) = D - C;
-					Amat(i + nX*k, i + nX*(k-1)) = F;
-					Amat(i + nX*k, i + nX*(k+1)) = -E;
+					if (i != 0)
+					{
+						double r = domain.meshX.centers[i];
+						double A = domain.cell[i][j][k].cxp_c*theta/r;
+						double B = domain.cell[i][j][k].cxm_c*theta/r;
+					}
+				}
+				double C = domain.cell[i][j][k].cxp*theta;
+				double D = domain.cell[i][j][k].cxm*theta;
+				double E = domain.cell[i][j][k].czp*theta;
+				double F = domain.cell[i][j][k].czm*theta;
 
-					b(i + nX*k) = TOld[i][j][k];
-					break;
-				case Domain::FAR_FIELD:
-					// Apply zero-flux BC (T[i+1][j][k] = T[i-1][j][k])
-					Amat(i + nX*k, i + nX*k) = (1.0 + A + C + E - B - D - F);
-					Amat(i + nX*k, (i-1) + nX*k) = (B + D - A - C);
-					Amat(i + nX*k, i + nX*(k-1)) = F;
-					Amat(i + nX*k, i + nX*(k+1)) = -E;
+				switch (domain.cell[i][j][k].cellType)
+				{
+				case Cell::BOUNDARY:
+					{
+					double tilt;
+					if (domain.cell[i][j][k].surface.orientation == Surface::Z_POS)
+						tilt = 0;
+					else if (domain.cell[i][j][k].surface.orientation == Surface::Z_POS)
+						tilt = PI;
+					else
+						tilt = PI/2.0;
 
-					b(i + nX*k) = TOld[i][j][k];
-					break;
-				case Domain::WALL_TOP:
-					// Apply zero-flux BC (T[i][j][k+1] = T[i][j][k-1]
-					Amat(i + nX*k, i + nX*k) = (1.0 + A + C + E - B - D - F);
-					Amat(i + nX*k, (i-1) + nX*k) = (B + D);
-					Amat(i + nX*k, (i+1) + nX*k) = (-A - C);
-					Amat(i + nX*k, i + nX*(k-1)) = F - E;
+					switch (domain.cell[i][j][k].surface.boundaryConditionType)
+					{
+					case Surface::ZERO_FLUX:
+						{
+						switch (domain.cell[i][j][k].surface.orientation)
+						{
+						case Surface::Z_NEG:
+							// T[i][j][k-1] = T[i][j][k+1]
+							Amat(i + nX*k, i + nX*k) = (1.0 + A + C + E - B - D - F);
+							Amat(i + nX*k, (i-1) + nX*k) = (B + D);
+							Amat(i + nX*k, (i+1) + nX*k) = (-A - C);
+							Amat(i + nX*k, i + nX*(k+1)) = F - E;
 
-					b(i + nX*k) = TOld[i][j][k];
+							b(i + nX*k) = TOld[i][j][k];
+							break;
+						case Surface::Z_POS:
+							// T[i][j][k+1] = T[i][j][k-1]
+							Amat(i + nX*k, i + nX*k) = (1.0 + A + C + E - B - D - F);
+							Amat(i + nX*k, (i-1) + nX*k) = (B + D);
+							Amat(i + nX*k, (i+1) + nX*k) = (-A - C);
+							Amat(i + nX*k, i + nX*(k-1)) = F - E;
+
+							b(i + nX*k) = TOld[i][j][k];
+							break;
+						case Surface::X_NEG:
+							// T[i-1][j][k] = T[i+1][j][k]
+							Amat(i + nX*k, i + nX*k) = (1.0 + A + C + E - B - D - F);
+							Amat(i + nX*k, (i+1) + nX*k) = (B + D - A - C);
+							Amat(i + nX*k, i + nX*(k-1)) = F;
+							Amat(i + nX*k, i + nX*(k+1)) = -E;
+
+							b(i + nX*k) = TOld[i][j][k];
+							break;
+						case Surface::X_POS:
+							// T[i+1][j][k] = T[i-1][j][k]
+							Amat(i + nX*k, i + nX*k) = (1.0 + A + C + E - B - D - F);
+							Amat(i + nX*k, (i-1) + nX*k) = (B + D - A - C);
+							Amat(i + nX*k, i + nX*(k-1)) = F;
+							Amat(i + nX*k, i + nX*(k+1)) = -E;
+
+							b(i + nX*k) = TOld[i][j][k];
+							break;
+						}
+						}
+						break;
+
+					case Surface::CONSTANT_TEMPERATURE:
+						{
+						Amat(i + nX*k, i + nX*k) = 1.0;
+
+						b(i + nX*k) = domain.cell[i][j][k].surface.temperature;
+						}
+						break;
+
+					case Surface::INTERIOR_TEMPERATURE:
+						{
+						Amat(i + nX*k, i + nX*k) = 1.0;
+
+						b(i + nX*k) = foundation.indoorAirTemperature;
+						}
+						break;
+
+					case Surface::EXTERIOR_TEMPERATURE:
+						{
+						Amat(i + nX*k, i + nX*k) = 1.0;
+
+						b(i + nX*k) = getOutdoorTemperature();
+						}
+						break;
+
+					case Surface::INTERIOR_FLUX:
+						{
+						double Tair = foundation.indoorAirTemperature;
+						double q = 0;
+
+						double hc = getConvectionCoeff(TOld[i][j][k],
+										Tair,0.0,1.0,false,tilt);
+						double hr = getSimpleInteriorIRCoeff(domain.cell[i][j][k].surface.emissivity,
+															 TOld[i][j][k],Tair);
+
+						switch (domain.cell[i][j][k].surface.orientation)
+						{
+						case Surface::Z_POS:
+							{
+							Amat(i + nX*k, i + nX*k) = domain.getKZM(i,j,k)/domain.getDZM(k) + (hc + hr);
+							Amat(i + nX*k, i + nX*(k-1)) = -domain.getKZM(i,j,k)/domain.getDZM(k);
+
+							b(i + nX*k) = (hc + hr)*Tair + q;
+							}
+							break;
+						case Surface::X_NEG:
+							{
+							Amat(i + nX*k, i + nX*k) = domain.getKXP(i,j,k)/domain.getDXP(i) + (hc + hr);
+							Amat(i + nX*k, (i+1) + nX*k) = -domain.getKXP(i,j,k)/domain.getDXP(i);
+
+							b(i + nX*k) = (hc + hr)*Tair + q;
+							}
+							break;
+						case Surface::X_POS:
+							{
+							Amat(i + nX*k, i + nX*k) = domain.getKXM(i,j,k)/domain.getDXM(i) + (hc + hr);
+							Amat(i + nX*k, (i-1) + nX*k) = -domain.getKXM(i,j,k)/domain.getDXM(i);
+
+							b(i + nX*k) = (hc + hr)*Tair + q;
+							}
+							break;
+						}
+						}
+						break;
+
+					case Surface::EXTERIOR_FLUX:
+						{
+						double Tair = getOutdoorTemperature();
+						double v = getLocalWindSpeed();
+						double eSky = weatherData.skyEmissivity.getValue(getSimTime(tNow));
+						double F = getEffectiveExteriorViewFactor(eSky,tilt);
+						double hc = getConvectionCoeff(TOld[i][j][k],Tair,v,1.0,true,tilt);
+						double hr = getExteriorIRCoeff(domain.cell[i][j][k].surface.emissivity,TOld[i][j][k],Tair,eSky,tilt);
+						double q = domain.cell[i][j][k].surface.absorptivity*weatherData.globalHorizontalSolar.getValue(getSimTime(tNow));
+
+						switch (domain.cell[i][j][k].surface.orientation)
+						{
+						case Surface::Z_POS:
+							{
+							Amat(i + nX*k, i + nX*k) = domain.getKZM(i,j,k)/domain.getDZM(k) + (hc + hr);
+							Amat(i + nX*k, i + nX*(k-1)) = -domain.getKZM(i,j,k)/domain.getDZM(k);
+
+							b(i + nX*k) = (hc + hr*pow(F,0.25))*Tair + q;
+							}
+							break;
+						case Surface::X_NEG:
+							{
+							Amat(i + nX*k, i + nX*k) = domain.getKXP(i,j,k)/domain.getDXP(i) + (hc + hr);
+							Amat(i + nX*k, (i+1) + nX*k) = -domain.getKXP(i,j,k)/domain.getDXP(i);
+
+							b(i + nX*k) = (hc + hr*pow(F,0.25))*Tair + q;
+							}
+							break;
+						case Surface::X_POS:
+							{
+							Amat(i + nX*k, i + nX*k) = domain.getKXM(i,j,k)/domain.getDXM(i) + (hc + hr);
+							Amat(i + nX*k, (i-1) + nX*k) = -domain.getKXM(i,j,k)/domain.getDXM(i);
+
+							b(i + nX*k) = (hc + hr*pow(F,0.25))*Tair + q;
+							}
+							break;
+						}
+						}
+						break;
+					}
+					}
 					break;
-				case Domain::INTERIOR_AIR:
+				case Cell::INTERIOR_AIR:
 					Amat(i + nX*k, i + nX*k) = 1.0;
 
 					b(i + nX*k) = foundation.indoorAirTemperature;
 					break;
-				case Domain::INTERIOR_SLAB:
-					{
-					double Tair = foundation.indoorAirTemperature;
-					double hc = getConvectionCoeff(TOld[i][j][k],Tair,0.0,1.0,false,0.0);
-					double hr = getSimpleInteriorIRCoeff(foundation.wall.interiorEmissivity,
-														 TOld[i][j][k],Tair);
-					double q = 0;
-
-					Amat(i + nX*k, i + nX*k) = domain.getKZM(i,j,k)/domain.getDZM(k) + (hc + hr);
-					Amat(i + nX*k, i + nX*(k-1)) = -domain.getKZM(i,j,k)/domain.getDZM(k);
-
-					b(i + nX*k) = (hc + hr)*Tair + q;
-					}
-					break;
-				case Domain::INTERIOR_WALL:
-					{
-					double Tair = foundation.indoorAirTemperature;
-					double hc = getConvectionCoeff(TOld[i][j][k],Tair,0.0,1.0,false,PI/2.0);
-					double hr = getSimpleInteriorIRCoeff(foundation.wall.interiorEmissivity,
-														 TOld[i][j][k],Tair);
-					double q = 0;
-
-					Amat(i + nX*k, i + nX*k) = domain.getKXP(i,j,k)/domain.getDXP(i) + (hc + hr);
-					Amat(i + nX*k, (i+1) + nX*k) = -domain.getKXP(i,j,k)/domain.getDXP(i);
-
-					b(i + nX*k) = (hc + hr)*Tair + q;
-					}
-					break;
-				case Domain::EXTERIOR_AIR:
+				case Cell::EXTERIOR_AIR:
 					Amat(i + nX*k, i + nX*k) = 1.0;
 
 					b(i + nX*k) = getOutdoorTemperature();
-					break;
-				case Domain::EXTERIOR_GRADE:
-					{
-					// Apply boundary condition
-					double Tair = getOutdoorTemperature();
-					double v = getLocalWindSpeed();
-					double eSky = weatherData.skyEmissivity.getValue(getSimTime(tNow));
-					double F = getEffectiveExteriorViewFactor(eSky,0.0);
-					double hc = getConvectionCoeff(TOld[i][j][k],Tair,v,1.0,true,0.0);
-					double hr = getExteriorIRCoeff(foundation.soilEmissivity,TOld[i][j][k],Tair,eSky,0.0);
-					double q = foundation.soilAbsorptivity*weatherData.globalHorizontalSolar.getValue(getSimTime(tNow));
-
-					Amat(i + nX*k, i + nX*k) = domain.getKZM(i,j,k)/domain.getDZM(k) + (hc + hr);
-					Amat(i + nX*k, i + nX*(k-1)) = -domain.getKZM(i,j,k)/domain.getDZM(k);
-
-					b(i + nX*k) = (hc + hr*pow(F,0.25))*Tair + q;
-					}
-					break;
-				case Domain::EXTERIOR_WALL:
-					{
-					// Apply boundary condition
-					double Tair = getOutdoorTemperature();
-					double v = getLocalWindSpeed();
-					double eSky = weatherData.skyEmissivity.getValue(getSimTime(tNow));
-					double F = getEffectiveExteriorViewFactor(eSky,PI/2.0);
-					double hc = getConvectionCoeff(TOld[i][j][k],Tair,v,1.0,true,PI/2.0);
-					double hr = getExteriorIRCoeff(foundation.wall.exteriorEmissivity,TOld[i][j][k],Tair,eSky,PI/2.0);
-					double q = foundation.wall.exteriorAbsorptivity*weatherData.globalHorizontalSolar.getValue(getSimTime(tNow));
-
-					Amat(i + nX*k, i + nX*k) = domain.getKXM(i,j,k)/domain.getDXM(i) + (hc + hr);
-					Amat(i + nX*k, ((i-1) + nX*k)) = -domain.getKXM(i,j,k)/domain.getDXM(i);
-
-					b(i + nX*k) = (hc + hr*pow(F,0.25))*Tair + q;
-					}
-					break;
-				case Domain::DEEP_GROUND:
-					Amat(i + nX*k, i + nX*k) = 1.0;
-
-					b(i + nX*k) = getDeepGroundTemperature();
 					break;
 				default:
 					Amat(i + nX*k, i + nX*k) = (1.0 + A + C + E - B - D - F);
@@ -780,125 +1003,201 @@ void Ground::calculateCrankNicolson()
 			for (size_t i = 0; i < nX; i++)
 			{
 				double theta = timestep/
-						(domain.density[i][j][k]*domain.specificHeat[i][j][k]);
+						(domain.cell[i][j][k].density*domain.cell[i][j][k].specificHeat);
 
-				double r = domain.meshX.centers[i];
-				double A = 0.5*domain.cxp_c[i][j][k]*theta/r;
-				double B = 0.5*domain.cxm_c[i][j][k]*theta/r;
-				double C = 0.5*domain.cxp[i][j][k]*theta;
-				double D = 0.5*domain.cxm[i][j][k]*theta;
-				double E = 0.5*domain.czp[i][j][k]*theta;
-				double F = 0.5*domain.czm[i][j][k]*theta;
-
-				switch (domain.cellType[i][j][k])
+				double A = 0;
+				double B = 0;
+				if (foundation.coordinateSystem == Foundation::CS_2DAXIAL)
 				{
-				case Domain::SYMMETRY:
-					// Apply zero-flux BC (T[i-1][j][k] = T[i+1][j][k])
-					// Remove A & B at axis to avoid divide by zero
-					Amat(i + nX*k, i + nX*k) = (1.0 + C + E - D - F);
-					Amat(i + nX*k, (i+1) + nX*k) = D - C;
-					Amat(i + nX*k, i + nX*(k-1)) = F;
-					Amat(i + nX*k, i + nX*(k+1)) = -E;
+					if (i != 0)
+					{
+						double r = domain.meshX.centers[i];
+						double A = 0.5*domain.cell[i][j][k].cxp_c*theta/r;
+						double B = 0.5*domain.cell[i][j][k].cxm_c*theta/r;
+					}
+				}
+				double C = 0.5*domain.cell[i][j][k].cxp*theta;
+				double D = 0.5*domain.cell[i][j][k].cxm*theta;
+				double E = 0.5*domain.cell[i][j][k].czp*theta;
+				double F = 0.5*domain.cell[i][j][k].czm*theta;
 
-					b(i + nX*k) = (TOld[i][j][k]*(1.0 + D + F - C - E) - TOld[i+1][j][k]*(D)
-							  + TOld[i+1][j][k]*(C) - TOld[i][j][k-1]*F + TOld[i][j][k+1]*E);
-					break;
-				case Domain::FAR_FIELD:
-					// Apply zero-flux BC (T[i+1][j][k] = T[i-1][j][k])
-					Amat(i + nX*k, i + nX*k) = (1.0 + A + C + E - B - D - F);
-					Amat(i + nX*k, (i-1) + nX*k) = (B + D - A - C);
-					Amat(i + nX*k, i + nX*(k-1)) = F;
-					Amat(i + nX*k, i + nX*(k+1)) = -E;
+				switch (domain.cell[i][j][k].cellType)
+				{
+				case Cell::BOUNDARY:
+					{
+					double tilt;
+					if (domain.cell[i][j][k].surface.orientation == Surface::Z_POS)
+						tilt = 0;
+					else if (domain.cell[i][j][k].surface.orientation == Surface::Z_POS)
+						tilt = PI;
+					else
+						tilt = PI/2.0;
 
-					b(i + nX*k) = (TOld[i][j][k]*(1.0 + B + D + F - A - C - E) - TOld[i-1][j][k]*(B + D)
-							  + TOld[i-1][j][k]*(A + C) - TOld[i][j][k-1]*F + TOld[i][j][k+1]*E);
-					break;
-				case Domain::WALL_TOP:
-					// Apply zero-flux BC (T[i][j][k+1] = T[i][j][k-1]
-					Amat(i + nX*k, i + nX*k) = (1.0 + A + C + E - B - D - F);
-					Amat(i + nX*k, (i-1) + nX*k) = (B + D);
-					Amat(i + nX*k, (i+1) + nX*k) = (-A - C);
-					Amat(i + nX*k, i + nX*(k-1)) = F - E;
+					switch (domain.cell[i][j][k].surface.boundaryConditionType)
+					{
+					case Surface::ZERO_FLUX:
+						{
+						switch (domain.cell[i][j][k].surface.orientation)
+						{
+						case Surface::Z_NEG:
+							// T[i][j][k-1] = T[i][j][k+1]
+							Amat(i + nX*k, i + nX*k) = (1.0 + A + C + E - B - D - F);
+							Amat(i + nX*k, (i-1) + nX*k) = (B + D);
+							Amat(i + nX*k, (i+1) + nX*k) = (-A - C);
+							Amat(i + nX*k, i + nX*(k+1)) = F - E;
 
-					b(i + nX*k) = (TOld[i][j][k]*(1.0 + B + D + F - A - C - E) - TOld[i-1][j][k]*(B + D)
-							  + TOld[i+1][j][k]*(A + C) - TOld[i][j][k-1]*F + TOld[i][j][k-1]*E);
+							b(i + nX*k) = (TOld[i][j][k]*(1.0 + B + D + F - A - C - E) - TOld[i-1][j][k]*(B + D)
+									  + TOld[i+1][j][k]*(A + C) - TOld[i][j][k+1]*F + TOld[i][j][k+1]*E);
+							break;
+						case Surface::Z_POS:
+							// T[i][j][k+1] = T[i][j][k-1]
+							Amat(i + nX*k, i + nX*k) = (1.0 + A + C + E - B - D - F);
+							Amat(i + nX*k, (i-1) + nX*k) = (B + D);
+							Amat(i + nX*k, (i+1) + nX*k) = (-A - C);
+							Amat(i + nX*k, i + nX*(k-1)) = F - E;
+
+							b(i + nX*k) = (TOld[i][j][k]*(1.0 + B + D + F - A - C - E) - TOld[i-1][j][k]*(B + D)
+									  + TOld[i+1][j][k]*(A + C) - TOld[i][j][k-1]*F + TOld[i][j][k-1]*E);
+							break;
+						case Surface::X_NEG:
+							// T[i-1][j][k] = T[i+1][j][k]
+							Amat(i + nX*k, i + nX*k) = (1.0 + A + C + E - B - D - F);
+							Amat(i + nX*k, (i+1) + nX*k) = (B + D - A - C);
+							Amat(i + nX*k, i + nX*(k-1)) = F;
+							Amat(i + nX*k, i + nX*(k+1)) = -E;
+
+							b(i + nX*k) = (TOld[i][j][k]*(1.0 + B + D + F - A - C - E) - TOld[i+1][j][k]*(B + D)
+									  + TOld[i+1][j][k]*(A + C) - TOld[i][j][k-1]*F + TOld[i][j][k+1]*E);
+							break;
+						case Surface::X_POS:
+							// T[i+1][j][k] = T[i-1][j][k]
+							Amat(i + nX*k, i + nX*k) = (1.0 + A + C + E - B - D - F);
+							Amat(i + nX*k, (i-1) + nX*k) = (B + D - A - C);
+							Amat(i + nX*k, i + nX*(k-1)) = F;
+							Amat(i + nX*k, i + nX*(k+1)) = -E;
+
+							b(i + nX*k) = (TOld[i][j][k]*(1.0 + B + D + F - A - C - E) - TOld[i-1][j][k]*(B + D)
+									  + TOld[i-1][j][k]*(A + C) - TOld[i][j][k-1]*F + TOld[i][j][k+1]*E);
+							break;
+						}
+						}
+						break;
+
+					case Surface::CONSTANT_TEMPERATURE:
+						{
+						Amat(i + nX*k, i + nX*k) = 1.0;
+
+						b(i + nX*k) = domain.cell[i][j][k].surface.temperature;
+						}
+						break;
+
+					case Surface::INTERIOR_TEMPERATURE:
+						{
+						Amat(i + nX*k, i + nX*k) = 1.0;
+
+						b(i + nX*k) = foundation.indoorAirTemperature;
+						}
+						break;
+
+					case Surface::EXTERIOR_TEMPERATURE:
+						{
+						Amat(i + nX*k, i + nX*k) = 1.0;
+
+						b(i + nX*k) = getOutdoorTemperature();
+						}
+						break;
+
+					case Surface::INTERIOR_FLUX:
+						{
+						double Tair = foundation.indoorAirTemperature;
+						double q = 0;
+
+						double hc = getConvectionCoeff(TOld[i][j][k],
+										Tair,0.0,1.0,false,tilt);
+						double hr = getSimpleInteriorIRCoeff(domain.cell[i][j][k].surface.emissivity,
+															 TOld[i][j][k],Tair);
+
+						switch (domain.cell[i][j][k].surface.orientation)
+						{
+						case Surface::Z_POS:
+							{
+							Amat(i + nX*k, i + nX*k) = domain.getKZM(i,j,k)/domain.getDZM(k) + (hc + hr);
+							Amat(i + nX*k, i + nX*(k-1)) = -domain.getKZM(i,j,k)/domain.getDZM(k);
+
+							b(i + nX*k) = (hc + hr)*Tair + q;
+							}
+							break;
+						case Surface::X_NEG:
+							{
+							Amat(i + nX*k, i + nX*k) = domain.getKXP(i,j,k)/domain.getDXP(i) + (hc + hr);
+							Amat(i + nX*k, (i+1) + nX*k) = -domain.getKXP(i,j,k)/domain.getDXP(i);
+
+							b(i + nX*k) = (hc + hr)*Tair + q;
+							}
+							break;
+						case Surface::X_POS:
+							{
+							Amat(i + nX*k, i + nX*k) = domain.getKXM(i,j,k)/domain.getDXM(i) + (hc + hr);
+							Amat(i + nX*k, (i-1) + nX*k) = -domain.getKXM(i,j,k)/domain.getDXM(i);
+
+							b(i + nX*k) = (hc + hr)*Tair + q;
+							}
+							break;
+						}
+						}
+						break;
+
+					case Surface::EXTERIOR_FLUX:
+						{
+						double Tair = getOutdoorTemperature();
+						double v = getLocalWindSpeed();
+						double eSky = weatherData.skyEmissivity.getValue(getSimTime(tNow));
+						double F = getEffectiveExteriorViewFactor(eSky,tilt);
+						double hc = getConvectionCoeff(TOld[i][j][k],Tair,v,1.0,true,tilt);
+						double hr = getExteriorIRCoeff(domain.cell[i][j][k].surface.emissivity,TOld[i][j][k],Tair,eSky,tilt);
+						double q = domain.cell[i][j][k].surface.absorptivity*weatherData.globalHorizontalSolar.getValue(getSimTime(tNow));
+
+						switch (domain.cell[i][j][k].surface.orientation)
+						{
+						case Surface::Z_POS:
+							{
+							Amat(i + nX*k, i + nX*k) = domain.getKZM(i,j,k)/domain.getDZM(k) + (hc + hr);
+							Amat(i + nX*k, i + nX*(k-1)) = -domain.getKZM(i,j,k)/domain.getDZM(k);
+
+							b(i + nX*k) = (hc + hr*pow(F,0.25))*Tair + q;
+							}
+							break;
+						case Surface::X_NEG:
+							{
+							Amat(i + nX*k, i + nX*k) = domain.getKXP(i,j,k)/domain.getDXP(i) + (hc + hr);
+							Amat(i + nX*k, (i+1) + nX*k) = -domain.getKXP(i,j,k)/domain.getDXP(i);
+
+							b(i + nX*k) = (hc + hr*pow(F,0.25))*Tair + q;
+							}
+							break;
+						case Surface::X_POS:
+							{
+							Amat(i + nX*k, i + nX*k) = domain.getKXM(i,j,k)/domain.getDXM(i) + (hc + hr);
+							Amat(i + nX*k, (i-1) + nX*k) = -domain.getKXM(i,j,k)/domain.getDXM(i);
+
+							b(i + nX*k) = (hc + hr*pow(F,0.25))*Tair + q;
+							}
+							break;
+						}
+						}
+						break;
+					}
+					}
 					break;
-				case Domain::INTERIOR_AIR:
+				case Cell::INTERIOR_AIR:
 					Amat(i + nX*k, i + nX*k) = 1.0;
 
 					b(i + nX*k) = foundation.indoorAirTemperature;
 					break;
-				case Domain::INTERIOR_WALL:
-					{
-					double Tair = foundation.indoorAirTemperature;
-					double hc = getConvectionCoeff(TOld[i][j][k],Tair,0.0,1.0,false,PI/2.0);
-					double hr = getSimpleInteriorIRCoeff(foundation.wall.interiorEmissivity,
-														 TOld[i][j][k],Tair);
-					double q = 0;
-
-					Amat(i + nX*k, i + nX*k) = domain.getKXP(i,j,k)/domain.getDXP(i) + (hc + hr);
-					Amat(i + nX*k, (i+1) + nX*k) = -domain.getKXP(i,j,k)/domain.getDXP(i);
-
-					b(i + nX*k) = (hc + hr)*Tair + q;
-					}
-					break;
-				case Domain::INTERIOR_SLAB:
-					{
-					double Tair = foundation.indoorAirTemperature;
-					double hc = getConvectionCoeff(TOld[i][j][k],Tair,0.0,1.0,false,0.0);
-					double hr = getSimpleInteriorIRCoeff(foundation.wall.interiorEmissivity,
-														 TOld[i][j][k],Tair);
-					double q = 0;
-
-					Amat(i + nX*k, i + nX*k) = domain.getKZM(i,j,k)/domain.getDZM(k) + (hc + hr);
-					Amat(i + nX*k, i + nX*(k-1)) = -domain.getKZM(i,j,k)/domain.getDZM(k);
-
-					b(i + nX*k) = (hc + hr)*Tair + q;
-					}
-					break;
-				case Domain::EXTERIOR_AIR:
+				case Cell::EXTERIOR_AIR:
 					Amat(i + nX*k, i + nX*k) = 1.0;
 
 					b(i + nX*k) = getOutdoorTemperature();
-					break;
-				case Domain::EXTERIOR_GRADE:
-					{
-					// Apply boundary condition
-					double Tair = getOutdoorTemperature();
-					double v = getLocalWindSpeed();
-					double eSky = weatherData.skyEmissivity.getValue(getSimTime(tNow));
-					double F = getEffectiveExteriorViewFactor(eSky,0.0);
-					double hc = getConvectionCoeff(TOld[i][j][k],Tair,v,1.0,true,0.0);
-					double hr = getExteriorIRCoeff(foundation.soilEmissivity,TOld[i][j][k],Tair,eSky,0.0);
-					double q = foundation.soilAbsorptivity*weatherData.globalHorizontalSolar.getValue(getSimTime(tNow));
-
-					Amat(i + nX*k, i + nX*k) = domain.getKZM(i,j,k)/domain.getDZM(k) + (hc + hr);
-					Amat(i + nX*k, i + nX*(k-1)) = -domain.getKZM(i,j,k)/domain.getDZM(k);
-
-					b(i + nX*k) = (hc + hr*pow(F,0.25))*Tair + q;
-					}
-					break;
-				case Domain::DEEP_GROUND:
-					Amat(i + nX*k, i + nX*k) = 1.0;
-
-					b(i + nX*k) = getDeepGroundTemperature();
-					break;
-				case Domain::EXTERIOR_WALL:
-					{
-					// Apply boundary condition
-					double Tair = getOutdoorTemperature();
-					double v = getLocalWindSpeed();
-					double eSky = weatherData.skyEmissivity.getValue(getSimTime(tNow));
-					double F = getEffectiveExteriorViewFactor(eSky,PI/2.0);
-					double hc = getConvectionCoeff(TOld[i][j][k],Tair,v,1.0,true,PI/2.0);
-					double hr = getExteriorIRCoeff(foundation.wall.exteriorEmissivity,TOld[i][j][k],Tair,eSky,PI/2.0);
-					double q = foundation.wall.exteriorAbsorptivity*weatherData.globalHorizontalSolar.getValue(getSimTime(tNow));
-
-					Amat(i + nX*k, i + nX*k) = domain.getKXM(i,j,k)/domain.getDXM(i) + (hc + hr);
-					Amat(i + nX*k, ((i-1) + nX*k)) = -domain.getKXM(i,j,k)/domain.getDXM(i);
-
-					b(i + nX*k) = (hc + hr*pow(F,0.25))*Tair + q;
-					}
 					break;
 				default:
 					Amat(i + nX*k, i + nX*k) = (1.0 + A + C + E - B - D - F);
@@ -943,119 +1242,195 @@ void Ground::calculateSteadyState()
 		{
 			for (size_t i = 0; i < nX; i++)
 			{
-				double r = domain.meshX.centers[i];
-				double A = domain.cxp_c[i][j][k]/r;
-				double B = domain.cxm_c[i][j][k]/r;
-				double C = domain.cxp[i][j][k];
-				double D = domain.cxm[i][j][k];
-				double E = domain.czp[i][j][k];
-				double F = domain.czm[i][j][k];
-
-				switch (domain.cellType[i][j][k])
+				double A = 0;
+				double B = 0;
+				if (foundation.coordinateSystem == Foundation::CS_2DAXIAL)
 				{
-				case Domain::SYMMETRY:
-					// Apply zero-flux BC (T[i-1][j][k] = T[i+1][j][k])
-					// Remove A & B at axis to avoid divide by zero
-					Amat(i + nX*k, i + nX*k) = (D + F - C - E);
-					Amat(i + nX*k, (i+1) + nX*k) = C - D;
-					Amat(i + nX*k, i + nX*(k-1)) = -F;
-					Amat(i + nX*k, i + nX*(k+1)) = E;
+					if (i != 0)
+					{
+						double r = domain.meshX.centers[i];
+						double A = domain.cell[i][j][k].cxp_c/r;
+						double B = domain.cell[i][j][k].cxm_c/r;
+					}
+				}
+				double C = domain.cell[i][j][k].cxp;
+				double D = domain.cell[i][j][k].cxm;
+				double E = domain.cell[i][j][k].czp;
+				double F = domain.cell[i][j][k].czm;
 
-					b(i + nX*k) = 0;
-					break;
-				case Domain::FAR_FIELD:
-					// Apply zero-flux BC (T[i+1][j][k] = T[i-1][j][k])
-					Amat(i + nX*k, i + nX*k) = (B + D + F - A - C - E);
-					Amat(i + nX*k, (i-1) + nX*k) = (-B - D) + (A + C);
-					Amat(i + nX*k, i + nX*(k-1)) = -F;
-					Amat(i + nX*k, i + nX*(k+1)) = E;
+				switch (domain.cell[i][j][k].cellType)
+				{
+				case Cell::BOUNDARY:
+					{
+					double tilt;
+					if (domain.cell[i][j][k].surface.orientation == Surface::Z_POS)
+						tilt = 0;
+					else if (domain.cell[i][j][k].surface.orientation == Surface::Z_POS)
+						tilt = PI;
+					else
+						tilt = PI/2.0;
 
-					b(i + nX*k) = 0;
-					break;
-				case Domain::WALL_TOP:
-					// Apply zero-flux BC (T[i][j][k+1] = T[i][j][k-1]
-					Amat(i + nX*k, i + nX*k) = (B + D + F - A - C - E);
-					Amat(i + nX*k, (i-1) + nX*k) = (-B - D);
-					Amat(i + nX*k, (i+1) + nX*k) = (A + C);
-					Amat(i + nX*k, i + nX*(k-1)) = E - F;
+					switch (domain.cell[i][j][k].surface.boundaryConditionType)
+					{
+					case Surface::ZERO_FLUX:
+						{
+						switch (domain.cell[i][j][k].surface.orientation)
+						{
+						case Surface::Z_NEG:
+							// T[i][j][k-1] = T[i][j][k+1]
+							Amat(i + nX*k, i + nX*k) = (B + D + F - A - C - E);
+							Amat(i + nX*k, (i-1) + nX*k) = (-B - D);
+							Amat(i + nX*k, (i+1) + nX*k) = (A + C);
+							Amat(i + nX*k, i + nX*(k+1)) = E - F;
 
-					b(i + nX*k) = 0;
+							b(i + nX*k) = 0;
+							break;
+						case Surface::Z_POS:
+							// T[i][j][k+1] = T[i][j][k-1]
+							Amat(i + nX*k, i + nX*k) = (B + D + F - A - C - E);
+							Amat(i + nX*k, (i-1) + nX*k) = (-B - D);
+							Amat(i + nX*k, (i+1) + nX*k) = (A + C);
+							Amat(i + nX*k, i + nX*(k-1)) = E - F;
+
+							b(i + nX*k) = 0;
+							break;
+						case Surface::X_NEG:
+							// T[i-1][j][k] = T[i+1][j][k]
+							Amat(i + nX*k, i + nX*k) = (B + D + F - A - C - E);
+							Amat(i + nX*k, (i+1) + nX*k) = (-B - D) + (A + C);
+							Amat(i + nX*k, i + nX*(k-1)) = -F;
+							Amat(i + nX*k, i + nX*(k+1)) = E;
+
+							b(i + nX*k) = 0;
+							break;
+						case Surface::X_POS:
+							// T[i+1][j][k] = T[i-1][j][k]
+							Amat(i + nX*k, i + nX*k) = (B + D + F - A - C - E);
+							Amat(i + nX*k, (i-1) + nX*k) = (-B - D) + (A + C);
+							Amat(i + nX*k, i + nX*(k-1)) = -F;
+							Amat(i + nX*k, i + nX*(k+1)) = E;
+
+							b(i + nX*k) = 0;
+							break;
+						}
+						}
+						break;
+
+					case Surface::CONSTANT_TEMPERATURE:
+						{
+						Amat(i + nX*k, i + nX*k) = 1.0;
+
+						b(i + nX*k) = domain.cell[i][j][k].surface.temperature;
+						}
+						break;
+
+					case Surface::INTERIOR_TEMPERATURE:
+						{
+						Amat(i + nX*k, i + nX*k) = 1.0;
+
+						b(i + nX*k) = foundation.indoorAirTemperature;
+						}
+						break;
+
+					case Surface::EXTERIOR_TEMPERATURE:
+						{
+						Amat(i + nX*k, i + nX*k) = 1.0;
+
+						b(i + nX*k) = getOutdoorTemperature();
+						}
+						break;
+
+					case Surface::INTERIOR_FLUX:
+						{
+						double Tair = foundation.indoorAirTemperature;
+						double q = 0;
+
+						double hc = getConvectionCoeff(TOld[i][j][k],
+										Tair,0.0,1.0,false,tilt);
+						double hr = getSimpleInteriorIRCoeff(domain.cell[i][j][k].surface.emissivity,
+															 TOld[i][j][k],Tair);
+
+						switch (domain.cell[i][j][k].surface.orientation)
+						{
+						case Surface::Z_POS:
+							{
+							Amat(i + nX*k, i + nX*k) = domain.getKZM(i,j,k)/domain.getDZM(k) + (hc + hr);
+							Amat(i + nX*k, i + nX*(k-1)) = -domain.getKZM(i,j,k)/domain.getDZM(k);
+
+							b(i + nX*k) = (hc + hr)*Tair + q;
+							}
+							break;
+						case Surface::X_NEG:
+							{
+							Amat(i + nX*k, i + nX*k) = domain.getKXP(i,j,k)/domain.getDXP(i) + (hc + hr);
+							Amat(i + nX*k, (i+1) + nX*k) = -domain.getKXP(i,j,k)/domain.getDXP(i);
+
+							b(i + nX*k) = (hc + hr)*Tair + q;
+							}
+							break;
+						case Surface::X_POS:
+							{
+							Amat(i + nX*k, i + nX*k) = domain.getKXM(i,j,k)/domain.getDXM(i) + (hc + hr);
+							Amat(i + nX*k, (i-1) + nX*k) = -domain.getKXM(i,j,k)/domain.getDXM(i);
+
+							b(i + nX*k) = (hc + hr)*Tair + q;
+							}
+							break;
+						}
+						}
+						break;
+
+					case Surface::EXTERIOR_FLUX:
+						{
+						double Tair = getOutdoorTemperature();
+						double v = getLocalWindSpeed();
+						double eSky = weatherData.skyEmissivity.getValue(getSimTime(tNow));
+						double F = getEffectiveExteriorViewFactor(eSky,tilt);
+						double hc = getConvectionCoeff(TOld[i][j][k],Tair,v,1.0,true,tilt);
+						double hr = getExteriorIRCoeff(domain.cell[i][j][k].surface.emissivity,TOld[i][j][k],Tair,eSky,tilt);
+						double q = domain.cell[i][j][k].surface.absorptivity*weatherData.globalHorizontalSolar.getValue(getSimTime(tNow));
+
+						switch (domain.cell[i][j][k].surface.orientation)
+						{
+						case Surface::Z_POS:
+							{
+							Amat(i + nX*k, i + nX*k) = domain.getKZM(i,j,k)/domain.getDZM(k) + (hc + hr);
+							Amat(i + nX*k, i + nX*(k-1)) = -domain.getKZM(i,j,k)/domain.getDZM(k);
+
+							b(i + nX*k) = (hc + hr*pow(F,0.25))*Tair + q;
+							}
+							break;
+						case Surface::X_NEG:
+							{
+							Amat(i + nX*k, i + nX*k) = domain.getKXP(i,j,k)/domain.getDXP(i) + (hc + hr);
+							Amat(i + nX*k, (i+1) + nX*k) = -domain.getKXP(i,j,k)/domain.getDXP(i);
+
+							b(i + nX*k) = (hc + hr*pow(F,0.25))*Tair + q;
+							}
+							break;
+						case Surface::X_POS:
+							{
+							Amat(i + nX*k, i + nX*k) = domain.getKXM(i,j,k)/domain.getDXM(i) + (hc + hr);
+							Amat(i + nX*k, (i-1) + nX*k) = -domain.getKXM(i,j,k)/domain.getDXM(i);
+
+							b(i + nX*k) = (hc + hr*pow(F,0.25))*Tair + q;
+							}
+							break;
+						}
+						}
+						break;
+					}
+					}
 					break;
-				case Domain::INTERIOR_AIR:
+				case Cell::INTERIOR_AIR:
 					Amat(i + nX*k, i + nX*k) = 1.0;
 
 					b(i + nX*k) = foundation.indoorAirTemperature;
 					break;
-				case Domain::INTERIOR_SLAB:
-					{
-					double Tair = foundation.indoorAirTemperature;
-					double hc = getConvectionCoeff(TOld[i][j][k],Tair,0.0,1.0,false,0.0);
-					double hr = getSimpleInteriorIRCoeff(foundation.wall.interiorEmissivity,
-														 TOld[i][j][k],Tair);
-					double q = 0;
-
-					Amat(i + nX*k, i + nX*k) = domain.getKZM(i,j,k)/domain.getDZM(k) + (hc + hr);
-					Amat(i + nX*k, i + nX*(k-1)) = -domain.getKZM(i,j,k)/domain.getDZM(k);
-
-					b(i + nX*k) = (hc + hr)*Tair + q;
-					}
-					break;
-				case Domain::INTERIOR_WALL:
-					{
-					double Tair = foundation.indoorAirTemperature;
-					double hc = getConvectionCoeff(TOld[i][j][k],Tair,0.0,1.0,false,PI/2.0);
-					double hr = getSimpleInteriorIRCoeff(foundation.wall.interiorEmissivity,
-														 TOld[i][j][k],Tair);
-					double q = 0;
-
-					Amat(i + nX*k, i + nX*k) = domain.getKXP(i,j,k)/domain.getDXP(i) + (hc + hr);
-					Amat(i + nX*k, (i+1) + nX*k) = -domain.getKXP(i,j,k)/domain.getDXP(i);
-
-					b(i + nX*k) = (hc + hr)*Tair + q;
-					}
-					break;
-				case Domain::EXTERIOR_AIR:
+				case Cell::EXTERIOR_AIR:
 					Amat(i + nX*k, i + nX*k) = 1.0;
 
 					b(i + nX*k) = getOutdoorTemperature();
-					break;
-				case Domain::EXTERIOR_GRADE:
-					{
-					// Apply boundary condition
-					double Tair = getOutdoorTemperature();
-					double v = getLocalWindSpeed();
-					double eSky = weatherData.skyEmissivity.getValue(getSimTime(tNow));
-					double F = getEffectiveExteriorViewFactor(eSky,0.0);
-					double hc = getConvectionCoeff(TOld[i][j][k],Tair,v,1.0,true,0.0);
-					double hr = getExteriorIRCoeff(foundation.soilEmissivity,TOld[i][j][k],Tair,eSky,0.0);
-					double q = foundation.soilAbsorptivity*weatherData.globalHorizontalSolar.getValue(getSimTime(tNow));
-
-					Amat(i + nX*k, i + nX*k) = domain.getKZM(i,j,k)/domain.getDZM(k) + (hc + hr);
-					Amat(i + nX*k, i + nX*(k-1)) = -domain.getKZM(i,j,k)/domain.getDZM(k);
-
-					b(i + nX*k) = (hc + hr*pow(F,0.25))*Tair + q;
-					}
-					break;
-				case Domain::EXTERIOR_WALL:
-					{
-					double Tair = getOutdoorTemperature();
-					double v = getLocalWindSpeed();
-					double eSky = weatherData.skyEmissivity.getValue(getSimTime(tNow));
-					double F = getEffectiveExteriorViewFactor(eSky,PI/2.0);
-					double hc = getConvectionCoeff(TOld[i][j][k],Tair,v,1.0,true,PI/2.0);
-					double hr = getExteriorIRCoeff(foundation.wall.exteriorEmissivity,TOld[i][j][k],Tair,eSky,PI/2.0);
-					double q = foundation.wall.exteriorAbsorptivity*weatherData.globalHorizontalSolar.getValue(getSimTime(tNow));
-
-					Amat(i + nX*k, i + nX*k) = domain.getKXM(i,j,k)/domain.getDXM(i) + (hc + hr);
-					Amat(i + nX*k, ((i-1) + nX*k)) = -domain.getKXM(i,j,k)/domain.getDXM(i);
-
-					b(i + nX*k) = (hc + hr*pow(F,0.25))*Tair + q;
-					}
-					break;
-				case Domain::DEEP_GROUND:
-					Amat(i + nX*k, i + nX*k) = 1.0;
-
-					b(i + nX*k) = getDeepGroundTemperature();
 					break;
 				default:
 					Amat(i + nX*k, i + nX*k) = (B + D + F - A - C - E);

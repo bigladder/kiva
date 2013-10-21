@@ -18,6 +18,7 @@
 
 #include "Input.h"
 #include "yaml-cpp/yaml.h"
+#include "WeatherData.h"
 #include <fstream>
 
 Input inputParser(std::string inputFile)
@@ -186,13 +187,20 @@ Input inputParser(std::string inputFile)
 	foundation1.deepGroundDepth = yamlInput["Foundation"]["deepGroundDepth"].as<double>();
 
 	if (yamlInput["Foundation"]["deepGroundBoundary"].as<std::string>() == "AUTO")
+	{
 		foundation1.deepGroundBoundary = Foundation::DGB_AUTO;
+		WeatherData tempWeather(simulationControl.weatherFile);
+		foundation1.deepGroundTemperature = tempWeather.dryBulbTemp.getAverage();
+	}
 	else if (yamlInput["Foundation"]["deepGroundBoundary"].as<std::string>() == "CONSTANT-TEMP")
 	{
 		foundation1.deepGroundBoundary = Foundation::DGB_CONSTANT_TEMPERATURE;
 		foundation1.deepGroundTemperature = yamlInput["Foundation"]["deepGroundTemperature"].as<double>();
 	}
-
+	else if (yamlInput["Foundation"]["deepGroundBoundary"].as<std::string>() == "ZERO-FLUX")
+	{
+		foundation1.deepGroundBoundary = Foundation::DGB_ZERO_FLUX;
+	}
 
 	foundation1.indoorAirTemperature = yamlInput["Foundation"]["indoorAirTemperature"].as<double>();
 

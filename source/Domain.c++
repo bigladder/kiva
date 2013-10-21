@@ -48,41 +48,12 @@ void Domain::setDomain(Foundation &foundation)
 	nY = meshY.centers.size();
 	nZ = meshZ.centers.size();
 
-	density.resize(boost::extents[nX][nY][nZ]);
-	specificHeat.resize(boost::extents[nX][nY][nZ]);
-	conductivity.resize(boost::extents[nX][nY][nZ]);
-
-	// PDE Coefficients
-	cxp_c.resize(boost::extents[nX][nY][nZ]);
-	cxm_c.resize(boost::extents[nX][nY][nZ]);
-	cxp.resize(boost::extents[nX][nY][nZ]);
-	cxm.resize(boost::extents[nX][nY][nZ]);
-	cyp.resize(boost::extents[nX][nY][nZ]);
-	cym.resize(boost::extents[nX][nY][nZ]);
-	czp.resize(boost::extents[nX][nY][nZ]);
-	czm.resize(boost::extents[nX][nY][nZ]);
-
-	cellType.resize(boost::extents[nX][nY][nZ]);
+	cell.resize(boost::extents[nX][nY][nZ]);
 
 	// Slab and Wall indices
 	bool slabKSet = false;
 	bool slabIminSet = false;
 	
-	// z dimensions
-	double zWallTop = foundation.wall.height - foundation.wall.depth;
-	double zGrade = 0.0;
-	// double zInsEdge = zWallTop - foundation.interiorVerticalInsulation.depth;
-	double zSlab = zWallTop - foundation.excavationDepth;
-	double zDeepGround = -foundation.deepGroundDepth;
-
-	// r dimensions
-	double xAxis = 0.0;
-	double xIntIns = foundation.effectiveLength - foundation.interiorVerticalInsulation.layer.thickness;
-	double xExtIns = foundation.effectiveLength +
-					 foundation.wall.totalWidth() +
-					 foundation.exteriorVerticalInsulation.layer.thickness;
-	double xFarField = foundation.effectiveLength + foundation.farFieldWidth;
-
 	for (size_t k = 0; k < nZ; k++)
 	{
 		for (size_t j = 0; j < nY; j++)
@@ -91,9 +62,19 @@ void Domain::setDomain(Foundation &foundation)
 			{
 
 				// Set Cell Properties
-				density[i][j][k] = foundation.soil.density;
-				specificHeat[i][j][k] = foundation.soil.specificHeat;
-				conductivity[i][j][k] = foundation.soil.conductivity;
+				cell[i][j][k].density = foundation.soil.density;
+				cell[i][j][k].specificHeat = foundation.soil.specificHeat;
+				cell[i][j][k].conductivity = foundation.soil.conductivity;
+
+				// Default to normal cells
+				cell[i][j][k].cellType = Cell::NORMAL;
+
+				// Next set interior zero-width cells
+				if (meshX.deltas[i] < 0.00000001 ||
+					meshZ.deltas[k] < 0.00000001)
+				{
+					cell[i][j][k].cellType = Cell::ZERO_THICKNESS;
+				}
 
 				for (size_t b = 0; b < foundation.blocks.size(); b++)
 				{
@@ -102,121 +83,76 @@ void Domain::setDomain(Foundation &foundation)
 						meshZ.centers[k] > foundation.blocks[b].zMin &&
 						meshZ.centers[k] < foundation.blocks[b].zMax)
 					{
-						density[i][j][k] = foundation.blocks[b].material.density;
-						specificHeat[i][j][k] = foundation.blocks[b].material.specificHeat;
-						conductivity[i][j][k] = foundation.blocks[b].material.conductivity;
-					}
-				}
+						cell[i][j][k].density = foundation.blocks[b].material.density;
+						cell[i][j][k].specificHeat = foundation.blocks[b].material.specificHeat;
+						cell[i][j][k].conductivity = foundation.blocks[b].material.conductivity;
 
-				// Set Cell Types
+						cell[i][j][k].blockNumber = b;
+						cell[i][j][k].block = foundation.blocks[b];
 
-				// Default to normal cells
-				cellType[i][j][k] = NORMAL;
 
-				// Next set interior zero-width cells
-				if (meshX.deltas[i] < 0.00000001 ||
-					meshZ.deltas[k] < 0.00000001)
-				{
-					cellType[i][j][k] = ZERO_THICKNESS;
-				}
-				// Interior Air
-				if (meshX.centers[i] - xIntIns < -0.00000001 &&
-					meshZ.centers[k] - zSlab > 0.00000001)
-				{
-					cellType[i][j][k] = INTERIOR_AIR;
-				}
-
-				// Exterior Air
-				if (meshX.centers[i] - xExtIns > 0.00000001 &&
-					meshZ.centers[k] - zGrade > 0.00000001)
-				{
-					cellType[i][j][k] = EXTERIOR_AIR;
-				}
-
-				// Top of Wall
-				if (fabs(meshZ.centers[k] - zWallTop) < 0.00000001)
-				{
-					if (meshX.centers[i] - xIntIns > -0.00000001 &&
-						meshX.centers[i] - xExtIns < 0.00000001)
-					{
-						cellType[i][j][k] = WALL_TOP;
-					}
-				}
-
-				// Exterior Grade
-				if (fabs(meshZ.centers[k] - zGrade) < 0.00000001)
-				{
-					if (meshX.centers[i] - xExtIns > 0.00000001)
-					{
-						cellType[i][j][k] = EXTERIOR_GRADE;
-					}
-				}
-
-				// Exterior Wall
-				if (fabs(meshX.centers[i] - xExtIns) < 0.00000001)
-				{
-					if (meshZ.centers[k] - zGrade > 0.00000001 &&
-						meshZ.centers[k] - zWallTop < -0.00000001)
-					{
-						cellType[i][j][k] = EXTERIOR_WALL;
-					}
-				}
-
-				// Interior Slab
-				if (fabs(meshZ.centers[k] - zSlab) < 0.00000001)
-				{
-					if (! slabKSet)
-					{
-						slabK = k;
-						slabKSet = true;
-					}
-
-					if (meshX.centers[i] - xIntIns < -0.00000001)
-					{
-						if (! slabIminSet)
+						if (foundation.blocks[b].blockType == Block::INTERIOR_AIR)
 						{
-							slabImin = i;
-							slabIminSet = true;
+							cell[i][j][k].cellType = Cell::INTERIOR_AIR;
 						}
-
-						slabImax = i;
-
-						cellType[i][j][k] = INTERIOR_SLAB;
+						else if (foundation.blocks[b].blockType == Block::EXTERIOR_AIR)
+						{
+							cell[i][j][k].cellType = Cell::EXTERIOR_AIR;
+						}
 					}
 				}
 
-				// Interior Wall
-				if (fabs(meshX.centers[i] - xIntIns) < 0.00000001)
+				for (size_t s = 0; s < foundation.surfaces.size(); s++)
 				{
-					if (meshZ.centers[k] - zSlab > 0.00000001 &&
-						meshZ.centers[k] - zWallTop < -0.00000001)
+					if (meshX.centers[i] - foundation.surfaces[s].xMin > -0.00000001
+					&&  meshX.centers[i] - foundation.surfaces[s].xMax < 0.00000001)
 					{
-						cellType[i][j][k] = INTERIOR_WALL;
-					}
-				}
+						if (meshY.centers[j] - foundation.surfaces[s].yMin > -0.00000001
+						&&  meshY.centers[j] - foundation.surfaces[s].yMax < 0.00000001)
+						{
+							if (meshZ.centers[k] - foundation.surfaces[s].zMin > -0.00000001
+							&&  meshZ.centers[k] - foundation.surfaces[s].zMax < 0.00000001)
+							{
+								cell[i][j][k].cellType = Cell::BOUNDARY;
 
-				// Axis
-				if (fabs(meshX.centers[i] - xAxis) < 0.00000001)
-				{
-					if (meshZ.centers[k] - zSlab < -0.00000001)
+								cell[i][j][k].surfaceNumber = s;
+
+								cell[i][j][k].surface = foundation.surfaces[s];
+
+								// TODO: Establish a better way of defining surface cells
+								if (foundation.surfaces[s].name == "Slab Interior")
+								{
+									if (! slabKSet)
+									{
+										slabK = k;
+										slabKSet = true;
+									}
+									if (! slabIminSet)
+									{
+										slabImin = i;
+										slabIminSet = true;
+									}
+
+									slabImax = i;
+								}
+
+								// Point/Line cells not on the boundary should be
+								// zero-thickness cells
+								if ((meshX.deltas[i] < 0.00000001 &&
+									meshZ.deltas[k] < 0.00000001) &&
+									i != 0 && i != nX -1 && k != 0 && k != nZ - 1)
+								{
+									cell[i][j][k].cellType = Cell::ZERO_THICKNESS;
+								}
+
+							}
+						}
+					}
+					else
 					{
-						cellType[i][j][k] = SYMMETRY;
+						// error!
 					}
-				}
 
-				// Far Field
-				if (fabs(meshX.centers[i] - xFarField) < 0.00000001)
-				{
-					if (meshZ.centers[k] - zGrade < -0.00000001)
-					{
-						cellType[i][j][k] = FAR_FIELD;
-					}
-				}
-
-				// Deep Ground
-				if (fabs(meshZ.centers[k] - zDeepGround) < 0.00000001)
-				{
-					cellType[i][j][k] = DEEP_GROUND;
 				}
 			}
 		}
@@ -242,32 +178,32 @@ void Domain::setDomain(Foundation &foundation)
 							double volBR = meshX.deltas[i+1]*meshZ.deltas[k-1];
 							double volTotal = volTL + volTR + volBL + volBR;
 
-							double densTL = density[i-1][j][k+1];
-							double densTR = density[i+1][j][k+1];
-							double densBL = density[i-1][j][k-1];
-							double densBR = density[i+1][j][k-1];
+							double densTL = cell[i-1][j][k+1].density;
+							double densTR = cell[i+1][j][k+1].density;
+							double densBL = cell[i-1][j][k-1].density;
+							double densBR = cell[i+1][j][k-1].density;
 
-							density[i][j][k] = (volTL*densTL + volTR*densTR +
+							cell[i][j][k].density = (volTL*densTL + volTR*densTR +
 												volBL*densBL + volBR*densBR) /
 												volTotal;
 
-							double cpTL = specificHeat[i-1][j][k+1];
-							double cpTR = specificHeat[i+1][j][k+1];
-							double cpBL = specificHeat[i-1][j][k-1];
-							double cpBR = specificHeat[i+1][j][k-1];
+							double cpTL = cell[i-1][j][k+1].specificHeat;
+							double cpTR = cell[i+1][j][k+1].specificHeat;
+							double cpBL = cell[i-1][j][k-1].specificHeat;
+							double cpBR = cell[i+1][j][k-1].specificHeat;
 
-							specificHeat[i][j][k] = (volTL*cpTL*densTL +
+							cell[i][j][k].specificHeat = (volTL*cpTL*densTL +
 													 volTR*cpTR*densTR +
 													 volBL*cpBL*densBL +
 													 volBR*cpBR*densBR) /
-													 (volTotal*density[i][j][k]);
+													 (volTotal*cell[i][j][k].density);
 
-							double condTL = conductivity[i-1][j][k+1];
-							double condTR = conductivity[i+1][j][k+1];
-							double condBL = conductivity[i-1][j][k-1];
-							double condBR = conductivity[i+1][j][k-1];
+							double condTL = cell[i-1][j][k+1].conductivity;
+							double condTR = cell[i+1][j][k+1].conductivity;
+							double condBL = cell[i-1][j][k-1].conductivity;
+							double condBR = cell[i+1][j][k-1].conductivity;
 
-							conductivity[i][j][k] = (volTL*condTL +
+							cell[i][j][k].conductivity = (volTL*condTL +
 													 volTR*condTR +
 													 volBL*condBL +
 													 volBR*condBR) /
@@ -279,23 +215,23 @@ void Domain::setDomain(Foundation &foundation)
 							double volR = meshX.deltas[i+1];
 							double volTotal = volL + volR;
 
-							double densL = density[i-1][j][k];
-							double densR = density[i+1][j][k];
+							double densL = cell[i-1][j][k].density;
+							double densR = cell[i+1][j][k].density;
 
-							density[i][j][k] = (volL*densL + volR*densR) /
+							cell[i][j][k].density = (volL*densL + volR*densR) /
 												volTotal;
 
-							double cpL = specificHeat[i-1][j][k];
-							double cpR = specificHeat[i+1][j][k];
+							double cpL = cell[i-1][j][k].specificHeat;
+							double cpR = cell[i+1][j][k].specificHeat;
 
-							specificHeat[i][j][k] = (volL*cpL*densL +
+							cell[i][j][k].specificHeat = (volL*cpL*densL +
 													 volR*cpR*densR) /
-													 (volTotal*density[i][j][k]);
+													 (volTotal*cell[i][j][k].density);
 
-							double condL = conductivity[i-1][j][k];
-							double condR = conductivity[i+1][j][k];
+							double condL = cell[i-1][j][k].conductivity;
+							double condR = cell[i+1][j][k].conductivity;
 
-							conductivity[i][j][k] = (volL*condL +
+							cell[i][j][k].conductivity = (volL*condL +
 													 volR*condR) /
 													 volTotal;
 
@@ -306,23 +242,23 @@ void Domain::setDomain(Foundation &foundation)
 							double volB = meshZ.deltas[k-1];
 							double volTotal = volT + volB;
 
-							double densT = density[i][j][k+1];
-							double densB = density[i][j][k-1];
+							double densT = cell[i][j][k+1].density;
+							double densB = cell[i][j][k-1].density;
 
-							density[i][j][k] = (volT*densT + volB*densB) /
+							cell[i][j][k].density = (volT*densT + volB*densB) /
 												volTotal;
 
-							double cpT = specificHeat[i][j][k+1];
-							double cpB = specificHeat[i][j][k-1];
+							double cpT = cell[i][j][k+1].specificHeat;
+							double cpB = cell[i][j][k-1].specificHeat;
 
-							specificHeat[i][j][k] = (volT*cpT*densT +
+							cell[i][j][k].specificHeat = (volT*cpT*densT +
 													 volB*cpB*densB) /
-													 (volTotal*density[i][j][k]);
+													 (volTotal*cell[i][j][k].density);
 
-							double condT = conductivity[i][j][k+1];
-							double condB = conductivity[i][j][k-1];
+							double condT = cell[i][j][k+1].conductivity;
+							double condB = cell[i][j][k-1].conductivity;
 
-							conductivity[i][j][k] = (volT*condT +
+							cell[i][j][k].conductivity = (volT*condT +
 													 volB*condB) /
 													 volTotal;
 						}
@@ -358,60 +294,60 @@ void Domain::setDomain(Foundation &foundation)
 					// PDE Coefficients
 					if (dxp < 0.00000001)
 					{
-						cxp_c[i][j][k] = 0.0;
-						cxp[i][j][k] = 0.0;
+						cell[i][j][k].cxp_c = 0.0;
+						cell[i][j][k].cxp = 0.0;
 					}
 					else
 					{
-						cxp_c[i][j][k] = (dxm*kxp)/((dxm + dxp)*dxp);
-						cxp[i][j][k] = (2*kxp)/((dxm + dxp)*dxp);
+						cell[i][j][k].cxp_c = (dxm*kxp)/((dxm + dxp)*dxp);
+						cell[i][j][k].cxp = (2*kxp)/((dxm + dxp)*dxp);
 					}
 
 					if (dxm < 0.00000001)
 					{
-						cxm_c[i][j][k] = 0.0;
-						cxm[i][j][k] = 0.0;
+						cell[i][j][k].cxm_c = 0.0;
+						cell[i][j][k].cxm = 0.0;
 					}
 					else
 					{
-						cxm_c[i][j][k] = (dxp*kxm)/((dxm + dxp)*dxm);
-						cxm[i][j][k] = -1*(2*kxm)/((dxm + dxp)*dxm);
+						cell[i][j][k].cxm_c = (dxp*kxm)/((dxm + dxp)*dxm);
+						cell[i][j][k].cxm = -1*(2*kxm)/((dxm + dxp)*dxm);
 					}
 
 					if (dyp < 0.00000001)
 					{
-						cyp[i][j][k] = 0.0;
+						cell[i][j][k].cyp = 0.0;
 					}
 					else
 					{
-						cyp[i][j][k] = (2*kyp)/((dym + dyp)*dyp);
+						cell[i][j][k].cyp = (2*kyp)/((dym + dyp)*dyp);
 					}
 
 					if (dym < 0.00000001)
 					{
-						cym[i][j][k] = 0.0;
+						cell[i][j][k].cym = 0.0;
 					}
 					else
 					{
-						cym[i][j][k] = -1*(2*kym)/((dym + dyp)*dym);
+						cell[i][j][k].cym = -1*(2*kym)/((dym + dyp)*dym);
 					}
 
 					if (dzp < 0.00000001)
 					{
-						czp[i][j][k] = 0.0;
+						cell[i][j][k].czp = 0.0;
 					}
 					else
 					{
-						czp[i][j][k] = (2*kzp)/((dzm + dzp)*dzp);
+						cell[i][j][k].czp = (2*kzp)/((dzm + dzp)*dzp);
 					}
 
 					if (dzm < 0.00000001)
 					{
-						czm[i][j][k] = 0.0;
+						cell[i][j][k].czm = 0.0;
 					}
 					else
 					{
-						czm[i][j][k] = -1*(2*kzm)/((dzm + dzp)*dzm);
+						cell[i][j][k].czm = -1*(2*kzm)/((dzm + dzp)*dzm);
 					}
 				}
 			}
@@ -509,12 +445,12 @@ double Domain::getKXP(size_t i, size_t j, size_t k)
 	{
 		// For boundary cells assume that the cell on the other side of the
 		// boundary is the same as the current cell
-		return conductivity[i][j][k];
+		return cell[i][j][k].conductivity;
 	}
 	else
 	{
-		return 1/(meshX.deltas[i]/(2*getDXP(i)*conductivity[i][j][k]) +
-				meshX.deltas[i + 1]/(2*getDXP(i)*conductivity[i+1][j][k]));
+		return 1/(meshX.deltas[i]/(2*getDXP(i)*cell[i][j][k].conductivity) +
+				meshX.deltas[i + 1]/(2*getDXP(i)*cell[i+1][j][k].conductivity));
 	}
 }
 
@@ -524,12 +460,12 @@ double Domain::getKXM(size_t i, size_t j, size_t k)
 	{
 		// For boundary cells assume that the cell on the other side of the
 		// boundary is the same as the current cell
-		return conductivity[i][j][k];
+		return cell[i][j][k].conductivity;
 	}
 	else
 	{
-		return 1/(meshX.deltas[i]/(2*getDXM(i)*conductivity[i][j][k]) +
-				meshX.deltas[i - 1]/(2*getDXM(i)*conductivity[i-1][j][k]));
+		return 1/(meshX.deltas[i]/(2*getDXM(i)*cell[i][j][k].conductivity) +
+				meshX.deltas[i - 1]/(2*getDXM(i)*cell[i-1][j][k].conductivity));
 	}
 }
 
@@ -539,12 +475,12 @@ double Domain::getKYP(size_t i, size_t j, size_t k)
 	{
 		// For boundary cells assume that the cell on the other side of the
 		// boundary is the same as the current cell
-		return conductivity[i][j][k];
+		return cell[i][j][k].conductivity;
 	}
 	else
 	{
-		return 1/(meshY.deltas[j]/(2*getDYP(j)*conductivity[i][j][k]) +
-				meshY.deltas[j + 1]/(2*getDYP(j)*conductivity[i][j+1][k]));
+		return 1/(meshY.deltas[j]/(2*getDYP(j)*cell[i][j][k].conductivity) +
+				meshY.deltas[j + 1]/(2*getDYP(j)*cell[i][j+1][k].conductivity));
 	}
 }
 
@@ -554,12 +490,12 @@ double Domain::getKYM(size_t i, size_t j, size_t k)
 	{
 		// For boundary cells assume that the cell on the other side of the
 		// boundary is the same as the current cell
-		return conductivity[i][j][k];
+		return cell[i][j][k].conductivity;
 	}
 	else
 	{
-		return 1/(meshY.deltas[j]/(2*getDYM(j)*conductivity[i][j][k]) +
-				meshY.deltas[j - 1]/(2*getDYM(j)*conductivity[i][j-1][k]));
+		return 1/(meshY.deltas[j]/(2*getDYM(j)*cell[i][j][k].conductivity) +
+				meshY.deltas[j - 1]/(2*getDYM(j)*cell[i][j-1][k].conductivity));
 	}
 }
 
@@ -569,12 +505,12 @@ double Domain::getKZP(size_t i, size_t j, size_t k)
 	{
 		// For boundary cells assume that the cell on the other side of the
 		// boundary is the same as the current cell
-		return conductivity[i][j][k];
+		return cell[i][j][k].conductivity;
 	}
 	else
 	{
-		return 1/(meshZ.deltas[k]/(2*getDZP(k)*conductivity[i][j][k]) +
-				meshZ.deltas[k + 1]/(2*getDZP(k)*conductivity[i][j][k+1]));
+		return 1/(meshZ.deltas[k]/(2*getDZP(k)*cell[i][j][k].conductivity) +
+				meshZ.deltas[k + 1]/(2*getDZP(k)*cell[i][j][k+1].conductivity));
 	}
 }
 
@@ -584,12 +520,12 @@ double Domain::getKZM(size_t i, size_t j, size_t k)
 	{
 		// For boundary cells assume that the cell on the other side of the
 		// boundary is the same as the current cell
-		return conductivity[i][j][k];
+		return cell[i][j][k].conductivity;
 	}
 	else
 	{
-		return 1/(meshZ.deltas[k]/(2*getDZM(k)*conductivity[i][j][k]) +
-				meshZ.deltas[k - 1]/(2*getDZM(k)*conductivity[i][j][k-1]));
+		return 1/(meshZ.deltas[k]/(2*getDZM(k)*cell[i][j][k].conductivity) +
+				meshZ.deltas[k - 1]/(2*getDZM(k)*cell[i][j][k-1].conductivity));
 	}
 }
 
@@ -616,7 +552,7 @@ void Domain::printCellTypes()
 		for (size_t i = 0; i < nX; i++)
 		{
 
-			output << ", " << cellType[i][0][k];
+			output << ", " << cell[i][0][k].cellType;
 
 		}
 
