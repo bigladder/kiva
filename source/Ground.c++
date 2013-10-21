@@ -299,30 +299,16 @@ void Ground::calculateADEUpwardSweep()
 						switch (domain.cell[i][j][k].surface.orientation)
 						{
 						case Surface::Z_NEG:
-							// UOld[i][j][k-1] = U[i][j][k+1]
-							U[i][j][k] = (UOld[i][j][k]*(1.0 - A - C - E) - U[i-1][j][k]*(B + D)
-									  + UOld[i+1][j][k]*(A + C) - U[i][j][k+1]*F + U[i][j][k+1]*E)
-									  /(1.0 - B - D - F);
+							U[i][j][k] = UOld[i][j][k+1];
 							break;
 						case Surface::Z_POS:
-							// UOld[i][j][k+1] = U[i][j][k-1]
-							U[i][j][k] = (UOld[i][j][k]*(1.0 - A - C - E) - U[i-1][j][k]*(B + D)
-									  + UOld[i+1][j][k]*(A + C) - U[i][j][k-1]*F + U[i][j][k-1]*E)
-									  /(1.0 - B - D - F);
-
+							U[i][j][k] = U[i][j][k-1];
 							break;
 						case Surface::X_NEG:
-							// (U[i-1][j][k] = UOld[i+1][j][k]
-							U[i][j][k] = (UOld[i][j][k]*(1.0 - A - C - E) - UOld[i+1][j][k]*(B +D)
-									  + UOld[i+1][j][k]*(A + C) - U[i][j][k-1]*F + UOld[i][j][k+1]*E)
-									  /(1.0 - B - D - F);
+							U[i][j][k] = UOld[i+1][j][k];
 							break;
 						case Surface::X_POS:
-							// UOld[i+1][j][k] = U[i-1][j][k]
-							U[i][j][k] = (UOld[i][j][k]*(1.0 - A - C - E) - U[i-1][j][k]*(B + D)
-									  + U[i-1][j][k]*(A + C) - U[i][j][k-1]*F + UOld[i][j][k+1]*E)
-									  /(1.0 - B - D - F);
-
+							U[i][j][k] = U[i-1][j][k];
 							break;
 						}
 						}
@@ -467,28 +453,16 @@ void Ground::calculateADEDownwardSweep()
 						switch (domain.cell[i][j][k].surface.orientation)
 						{
 						case Surface::Z_NEG:
-							// V[i][j][k-1] = VOld[i][j][k+1]
-							V[i][j][k] = (VOld[i][j][k]*(1.0 + B + D + F) - VOld[i-1][j][k]*(B + D)
-									  + V[i+1][j][k]*(A + C) - VOld[i][j][k+1]*F + VOld[i][j][k+1]*E)
-									  /(1.0 + A + C + E);
+							V[i][j][k] = V[i][j][k+1];
 							break;
 						case Surface::Z_POS:
-							// V[i][j][k+1] = VOld[i][j][k-1]
-							V[i][j][k] = (VOld[i][j][k]*(1.0 + B + D + F) - VOld[i-1][j][k]*(B + D)
-									  + V[i+1][j][k]*(A + C) - VOld[i][j][k-1]*F + VOld[i][j][k-1]*E)
-									  /(1.0 + A + C + E);
+							V[i][j][k] = VOld[i][j][k-1];
 							break;
 						case Surface::X_NEG:
-							// VOld[i-1][j][k] = V[i+1][j][k]
-							V[i][j][k] = (VOld[i][j][k]*(1.0 + A + D + F) - V[i+1][j][k]*(B + D)
-									  + V[i+1][j][k]*(A + C) - VOld[i][j][k-1]*F + V[i][j][k+1]*E)
-									  /(1.0 + A + C + E);
+							V[i][j][k] = V[i+1][j][k];
 							break;
 						case Surface::X_POS:
-							// V[i+1][j][k] = VOld[i-1][j][k]
-							V[i][j][k] = (VOld[i][j][k]*(1.0 + B + D + F) - VOld[i-1][j][k]*(B + D)
-									  + VOld[i-1][j][k]*(A + C) - VOld[i][j][k-1]*F + V[i][j][k+1]*E)
-									  /(1.0 + A + C + E);
+							V[i][j][k] = VOld[i-1][j][k];
 							break;
 						}
 						}
@@ -633,24 +607,16 @@ void Ground::calculateExplicit()
 						switch (domain.cell[i][j][k].surface.orientation)
 						{
 						case Surface::Z_NEG:
-							// TOld[i][j][k-1] = TOld[i][j][k+1]
-							TNew[i][j][k] = (TOld[i][j][k]*(1.0 + B + D + F - A - C - E) - TOld[i-1][j][k]*(B + D)
-									  + TOld[i+1][j][k]*(A + C) - TOld[i][j][k+1]*F + TOld[i][j][k+1]*E);
+							TNew[i][j][k] = TOld[i][j][k+1];
 							break;
 						case Surface::Z_POS:
-							// TOld[i][j][k+1] = TOld[i][j][k-1]
-							TNew[i][j][k] = (TOld[i][j][k]*(1.0 + B + D + F - A - C - E) - TOld[i-1][j][k]*(B + D)
-									  + TOld[i+1][j][k]*(A + C) - TOld[i][j][k-1]*F + TOld[i][j][k-1]*E);
+							TNew[i][j][k] = TOld[i][j][k-1];
 							break;
 						case Surface::X_NEG:
-							// TOld[i-1][j][k] = TOld[i+1][j][k]
-							TNew[i][j][k] = (TOld[i][j][k]*(1.0 + B + D + F - A - C - E) - TOld[i+1][j][k]*(B + D)
-									  + TOld[i+1][j][k]*(A + C) - TOld[i][j][k-1]*F + TOld[i][j][k+1]*E);
+							TNew[i][j][k] = TOld[i+1][j][k];
 							break;
 						case Surface::X_POS:
-							// TOld[i+1][j][k] = TOld[i-1][j][k]
-							TNew[i][j][k] = (TOld[i][j][k]*(1.0 + B + D + F - A - C - E) - TOld[i-1][j][k]*(B + D)
-									  + TOld[i-1][j][k]*(A + C) - TOld[i][j][k-1]*F + TOld[i][j][k+1]*E);
+							TNew[i][j][k] = TOld[i-1][j][k];
 							break;
 						}
 						}
@@ -806,40 +772,28 @@ void Ground::calculateImplicit()
 						switch (domain.cell[i][j][k].surface.orientation)
 						{
 						case Surface::Z_NEG:
-							// T[i][j][k-1] = T[i][j][k+1]
-							Amat(i + nX*k, i + nX*k) = (1.0 + A + C + E - B - D - F);
-							Amat(i + nX*k, (i-1) + nX*k) = (B + D);
-							Amat(i + nX*k, (i+1) + nX*k) = (-A - C);
-							Amat(i + nX*k, i + nX*(k+1)) = F - E;
+							Amat(i + nX*k, i + nX*k) = 1.0;
+							Amat(i + nX*k, i + nX*(k+1)) = -1.0;
 
-							b(i + nX*k) = TOld[i][j][k];
+							b(i + nX*k) = 0;
 							break;
 						case Surface::Z_POS:
-							// T[i][j][k+1] = T[i][j][k-1]
-							Amat(i + nX*k, i + nX*k) = (1.0 + A + C + E - B - D - F);
-							Amat(i + nX*k, (i-1) + nX*k) = (B + D);
-							Amat(i + nX*k, (i+1) + nX*k) = (-A - C);
-							Amat(i + nX*k, i + nX*(k-1)) = F - E;
+							Amat(i + nX*k, i + nX*k) = 1.0;
+							Amat(i + nX*k, i + nX*(k-1)) = -1.0;
 
-							b(i + nX*k) = TOld[i][j][k];
+							b(i + nX*k) = 0;
 							break;
 						case Surface::X_NEG:
-							// T[i-1][j][k] = T[i+1][j][k]
-							Amat(i + nX*k, i + nX*k) = (1.0 + A + C + E - B - D - F);
-							Amat(i + nX*k, (i+1) + nX*k) = (B + D - A - C);
-							Amat(i + nX*k, i + nX*(k-1)) = F;
-							Amat(i + nX*k, i + nX*(k+1)) = -E;
+							Amat(i + nX*k, i + nX*k) = 1.0;
+							Amat(i + nX*k, (i+1) + nX*k) = -1.0;
 
-							b(i + nX*k) = TOld[i][j][k];
+							b(i + nX*k) = 0;
 							break;
 						case Surface::X_POS:
-							// T[i+1][j][k] = T[i-1][j][k]
-							Amat(i + nX*k, i + nX*k) = (1.0 + A + C + E - B - D - F);
-							Amat(i + nX*k, (i-1) + nX*k) = (B + D - A - C);
-							Amat(i + nX*k, i + nX*(k-1)) = F;
-							Amat(i + nX*k, i + nX*(k+1)) = -E;
+							Amat(i + nX*k, i + nX*k) = 1.0;
+							Amat(i + nX*k, (i-1) + nX*k) = -1.0;
 
-							b(i + nX*k) = TOld[i][j][k];
+							b(i + nX*k) = 0.0;
 							break;
 						}
 						}
@@ -1040,44 +994,28 @@ void Ground::calculateCrankNicolson()
 						switch (domain.cell[i][j][k].surface.orientation)
 						{
 						case Surface::Z_NEG:
-							// T[i][j][k-1] = T[i][j][k+1]
-							Amat(i + nX*k, i + nX*k) = (1.0 + A + C + E - B - D - F);
-							Amat(i + nX*k, (i-1) + nX*k) = (B + D);
-							Amat(i + nX*k, (i+1) + nX*k) = (-A - C);
-							Amat(i + nX*k, i + nX*(k+1)) = F - E;
+							Amat(i + nX*k, i + nX*k) = 1.0;
+							Amat(i + nX*k, i + nX*(k+1)) = -1.0;
 
-							b(i + nX*k) = (TOld[i][j][k]*(1.0 + B + D + F - A - C - E) - TOld[i-1][j][k]*(B + D)
-									  + TOld[i+1][j][k]*(A + C) - TOld[i][j][k+1]*F + TOld[i][j][k+1]*E);
+							b(i + nX*k) = 0;
 							break;
 						case Surface::Z_POS:
-							// T[i][j][k+1] = T[i][j][k-1]
-							Amat(i + nX*k, i + nX*k) = (1.0 + A + C + E - B - D - F);
-							Amat(i + nX*k, (i-1) + nX*k) = (B + D);
-							Amat(i + nX*k, (i+1) + nX*k) = (-A - C);
-							Amat(i + nX*k, i + nX*(k-1)) = F - E;
+							Amat(i + nX*k, i + nX*k) = 1.0;
+							Amat(i + nX*k, i + nX*(k-1)) = -1.0;
 
-							b(i + nX*k) = (TOld[i][j][k]*(1.0 + B + D + F - A - C - E) - TOld[i-1][j][k]*(B + D)
-									  + TOld[i+1][j][k]*(A + C) - TOld[i][j][k-1]*F + TOld[i][j][k-1]*E);
+							b(i + nX*k) = 0;
 							break;
 						case Surface::X_NEG:
-							// T[i-1][j][k] = T[i+1][j][k]
-							Amat(i + nX*k, i + nX*k) = (1.0 + A + C + E - B - D - F);
-							Amat(i + nX*k, (i+1) + nX*k) = (B + D - A - C);
-							Amat(i + nX*k, i + nX*(k-1)) = F;
-							Amat(i + nX*k, i + nX*(k+1)) = -E;
+							Amat(i + nX*k, i + nX*k) = 1.0;
+							Amat(i + nX*k, (i+1) + nX*k) = -1.0;
 
-							b(i + nX*k) = (TOld[i][j][k]*(1.0 + B + D + F - A - C - E) - TOld[i+1][j][k]*(B + D)
-									  + TOld[i+1][j][k]*(A + C) - TOld[i][j][k-1]*F + TOld[i][j][k+1]*E);
+							b(i + nX*k) = 0;
 							break;
 						case Surface::X_POS:
-							// T[i+1][j][k] = T[i-1][j][k]
-							Amat(i + nX*k, i + nX*k) = (1.0 + A + C + E - B - D - F);
-							Amat(i + nX*k, (i-1) + nX*k) = (B + D - A - C);
-							Amat(i + nX*k, i + nX*(k-1)) = F;
-							Amat(i + nX*k, i + nX*(k+1)) = -E;
+							Amat(i + nX*k, i + nX*k) = 1.0;
+							Amat(i + nX*k, (i-1) + nX*k) = -1.0;
 
-							b(i + nX*k) = (TOld[i][j][k]*(1.0 + B + D + F - A - C - E) - TOld[i-1][j][k]*(B + D)
-									  + TOld[i-1][j][k]*(A + C) - TOld[i][j][k-1]*F + TOld[i][j][k+1]*E);
+							b(i + nX*k) = 0.0;
 							break;
 						}
 						}
@@ -1277,40 +1215,28 @@ void Ground::calculateSteadyState()
 						switch (domain.cell[i][j][k].surface.orientation)
 						{
 						case Surface::Z_NEG:
-							// T[i][j][k-1] = T[i][j][k+1]
-							Amat(i + nX*k, i + nX*k) = (B + D + F - A - C - E);
-							Amat(i + nX*k, (i-1) + nX*k) = (-B - D);
-							Amat(i + nX*k, (i+1) + nX*k) = (A + C);
-							Amat(i + nX*k, i + nX*(k+1)) = E - F;
+							Amat(i + nX*k, i + nX*k) = 1.0;
+							Amat(i + nX*k, i + nX*(k+1)) = -1.0;
 
 							b(i + nX*k) = 0;
 							break;
 						case Surface::Z_POS:
-							// T[i][j][k+1] = T[i][j][k-1]
-							Amat(i + nX*k, i + nX*k) = (B + D + F - A - C - E);
-							Amat(i + nX*k, (i-1) + nX*k) = (-B - D);
-							Amat(i + nX*k, (i+1) + nX*k) = (A + C);
-							Amat(i + nX*k, i + nX*(k-1)) = E - F;
+							Amat(i + nX*k, i + nX*k) = 1.0;
+							Amat(i + nX*k, i + nX*(k-1)) = -1.0;
 
 							b(i + nX*k) = 0;
 							break;
 						case Surface::X_NEG:
-							// T[i-1][j][k] = T[i+1][j][k]
-							Amat(i + nX*k, i + nX*k) = (B + D + F - A - C - E);
-							Amat(i + nX*k, (i+1) + nX*k) = (-B - D) + (A + C);
-							Amat(i + nX*k, i + nX*(k-1)) = -F;
-							Amat(i + nX*k, i + nX*(k+1)) = E;
+							Amat(i + nX*k, i + nX*k) = 1.0;
+							Amat(i + nX*k, (i+1) + nX*k) = -1.0;
 
 							b(i + nX*k) = 0;
 							break;
 						case Surface::X_POS:
-							// T[i+1][j][k] = T[i-1][j][k]
-							Amat(i + nX*k, i + nX*k) = (B + D + F - A - C - E);
-							Amat(i + nX*k, (i-1) + nX*k) = (-B - D) + (A + C);
-							Amat(i + nX*k, i + nX*(k-1)) = -F;
-							Amat(i + nX*k, i + nX*(k+1)) = E;
+							Amat(i + nX*k, i + nX*k) = 1.0;
+							Amat(i + nX*k, (i-1) + nX*k) = -1.0;
 
-							b(i + nX*k) = 0;
+							b(i + nX*k) = 0.0;
 							break;
 						}
 						}
