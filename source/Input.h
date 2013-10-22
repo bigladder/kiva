@@ -229,7 +229,7 @@ public:
 		absorptivity = abs;
 	}
 
-	bool constX()
+	bool isConstX()
 	{
 		if(xMin == xMax)
 		{
@@ -240,7 +240,7 @@ public:
 			return false;
 		}
 	}
-	bool constY()
+	bool isConstY()
 	{
 		if(yMin == yMax)
 		{
@@ -251,7 +251,7 @@ public:
 			return false;
 		}
 	}
-	bool constZ()
+	bool isConstZ()
 	{
 		if(zMin == zMax)
 		{
@@ -432,70 +432,150 @@ public:
 		exterior.minCellDim = mesh.minCellDim;
 		exterior.growthDir = Interval::FORWARD;
 
+		// Set misc. "Z" dimensions (relative to grade)
+		double zMax;
+		if (hasWall)
+			zMax = wall.height - wall.depth;
+		else
+			zMax = 0.0;
+
+		double zMin = -deepGroundDepth;
+
+		double zGrade = 0.0;
+		double zSlab = zMax - excavationDepth;
+
+		double zNearDeep = std::min(zSlab, zGrade);  // This will change depending on configuration
+
+		// Set misc. "X/Y" dimensions (relative to foundation outline --
+		// currently the interior of the wall)
+
+		double xyWallExterior;
+		if (hasWall)
+		{
+    		if (hasExteriorVerticalInsulation)
+    		{
+    			xyWallExterior = wall.totalWidth()
+        				+ exteriorVerticalInsulation.layer.thickness;
+
+    		}
+    		else
+    		{
+    			xyWallExterior = wall.totalWidth();
+    		}
+		}
+		else
+		{
+			xyWallExterior = 0.0;
+		}
+
+		double xyWallInterior;
+		if (hasInteriorVerticalInsulation)
+		{
+			xyWallInterior = -interiorVerticalInsulation.layer.thickness;
+
+		}
+		else
+		{
+			xyWallInterior = 0.0;
+		}
+
+		double xyNearInt = xyWallInterior;  // This will change depending on configuration
+		double xyNearExt = xyWallExterior;  // This will change depending on configuration
+
+		double xyIntHIns = 0.0;
+		double zIntHIns = 0.0;
+		if (hasInteriorHorizontalInsulation)
+		{
+			xyIntHIns = -interiorHorizontalInsulation.width;
+			zIntHIns = zMax - interiorHorizontalInsulation.depth - interiorHorizontalInsulation.layer.thickness;
+
+			if(zIntHIns < zNearDeep)
+			{
+				zNearDeep = zIntHIns;
+			}
+			if(xyIntHIns < xyNearInt)
+			{
+				xyNearInt = xyIntHIns;
+			}
+
+		}
+
+		double zSlabBottom = zSlab;
+		if (hasSlab)
+		{
+			zSlabBottom = zSlab - slab.totalWidth();
+
+			if(zSlabBottom < zNearDeep)
+			{
+				zNearDeep = zSlabBottom;
+			}
+		}
+
+		double zIntVIns = 0.0;
+		if (hasInteriorVerticalInsulation)
+		{
+			zIntVIns = zMax -interiorVerticalInsulation.depth;
+
+			if(zIntVIns < zNearDeep)
+			{
+				zNearDeep = zIntVIns;
+			}
+		}
+
+		double zWall = 0.0;
+		if (hasWall)
+		{
+			zWall = -wall.depth;
+			if(zWall < zNearDeep)
+			{
+				zNearDeep = zWall;
+			}
+		}
+
+		double zExtVIns = 0.0;
+		if (hasExteriorVerticalInsulation)
+		{
+			zExtVIns = zMax - exteriorVerticalInsulation.depth;
+
+			if(zExtVIns < zNearDeep)
+			{
+				zNearDeep = zExtVIns;
+			}
+		}
+
+		double xyExtHIns = 0.0;
+		double zExtHIns = 0.0;
+		if (hasExteriorHorizontalInsulation)
+		{
+			xyExtHIns = exteriorHorizontalInsulation.width;
+			zExtHIns = zMax - exteriorHorizontalInsulation.depth - exteriorHorizontalInsulation.layer.thickness;
+
+			if(zExtHIns < zNearDeep)
+			{
+				zNearDeep = zExtHIns;
+			}
+			if(xyExtHIns > xyNearExt)
+			{
+				xyNearExt = xyExtHIns;
+			}
+
+
+		}
 
 		if (coordinateSystem == CS_2DAXIAL ||
 			coordinateSystem == CS_2DLINEAR)
 		{
-			// Set misc. dimensions
-			double zTop;
-			if (hasWall)
-				zTop = wall.height - wall.depth;
-			else
-				zTop = 0.0;
 
-			double zBottom = -deepGroundDepth;
+			double xMin = 0.0;
+			double xMax = effectiveLength + farFieldWidth;
 
-			double xLeft = 0.0;
-			double xRight = effectiveLength + farFieldWidth;
-
-			double zGrade = 0.0;
-			double zSlab = zTop - excavationDepth;
-
-			double zNearBottom = std::min(zSlab, zGrade);  // This will change depending on configuration
-
-    		double xWallExterior;
-    		if (hasWall)
-    		{
-        		if (hasExteriorVerticalInsulation)
-        		{
-        			xWallExterior = effectiveLength
-            				+ wall.totalWidth()
-            				+ exteriorVerticalInsulation.layer.thickness;
-
-        		}
-        		else
-        		{
-        			xWallExterior = effectiveLength
-            				+ wall.totalWidth();
-        		}
-    		}
-    		else
-    		{
-    			xWallExterior = effectiveLength;
-    		}
-
-    		double xWallInterior;
-    		if (hasInteriorVerticalInsulation)
-    		{
-    			xWallInterior = effectiveLength
-    					- interiorVerticalInsulation.layer.thickness;
-
-    		}
-    		else
-    		{
-    			xWallInterior = effectiveLength;
-    		}
-
-    		double xNearLeft = effectiveLength;  // This will change depending on configuration
-
-    		double xNearRight = effectiveLength;  // This will change depending on configuration
-
+			double xRef = effectiveLength;
 
 			// Symmetry Surface
 			Surface symmetry("Symmetry",
-					xLeft,
-					xLeft,
-					zBottom,
+					xMin,
+					xMin,
+					zMin,
 					zSlab,
 					Surface::ZERO_FLUX,
 					Surface::X_NEG,
@@ -507,10 +587,10 @@ public:
 			{
 				// Interior Wall Surface
 				Surface interiorWall("Interior Wall",
-						xWallInterior,
-						xWallInterior,
+						xRef + xyWallInterior,
+						xRef + xyWallInterior,
 						zSlab,
-						zTop,
+						zMax,
 						Surface::INTERIOR_FLUX,
 						Surface::X_NEG,
 						wall.interiorEmissivity,
@@ -519,10 +599,10 @@ public:
 
 				// Interior Air Left Temperature
 				Surface interiorAirLeft("Interior Air Left",
-						xLeft,
-						xLeft,
+						xMin,
+						xMin,
 						zSlab,
-						zTop,
+						zMax,
 						Surface::INTERIOR_TEMPERATURE,
 						Surface::X_NEG,
 						0.8,
@@ -531,14 +611,14 @@ public:
 
 			}
 
-			if(zTop > 0.0)
+			if(zMax > 0.0)
 			{
 				// Exterior Wall Surface
 				Surface exteriorWall("Exterior Wall",
-						xWallExterior,
-						xWallExterior,
+						xRef + xyWallExterior,
+						xRef + xyWallExterior,
 						zGrade,
-						zTop,
+						zMax,
 						Surface::EXTERIOR_FLUX,
 						Surface::X_POS,
 						wall.exteriorEmissivity,
@@ -547,10 +627,10 @@ public:
 
 				// Exterior Air Right Surface
 				Surface exteriorAirRight("Exterior Air Right",
-						xRight,
-						xRight,
+						xMax,
+						xMax,
 						zGrade,
-						zTop,
+						zMax,
 						Surface::EXTERIOR_TEMPERATURE,
 						Surface::X_POS,
 						0.8,
@@ -560,9 +640,9 @@ public:
 
 			// Far Field Surface
 			Surface farField("Far Field",
-					xRight,
-					xRight,
-					zBottom,
+					xMax,
+					xMax,
+					zMin,
 					zGrade,
 					Surface::ZERO_FLUX,
 					Surface::X_POS,
@@ -575,10 +655,10 @@ public:
     			deepGroundBoundary == DGB_AUTO)
     		{
     			Surface deepGround("Deep Ground",
-    					xLeft,
-    					xRight,
-    					zBottom,
-    					zBottom,
+    					xMin,
+    					xMax,
+    					zMin,
+    					zMin,
     					Surface::CONSTANT_TEMPERATURE,
     					Surface::Z_NEG,
     					0.8,
@@ -590,10 +670,10 @@ public:
     		else if (deepGroundBoundary == DGB_ZERO_FLUX)
     		{
     			Surface deepGround("Deep Ground",
-    					xLeft,
-    					xRight,
-    					zBottom,
-    					zBottom,
+    					xMin,
+    					xMax,
+    					zMin,
+    					zMin,
     					Surface::ZERO_FLUX,
     					Surface::Z_NEG,
     					0.8,
@@ -603,8 +683,8 @@ public:
 
 			// Slab
 			Surface slabInterior("Slab Interior",
-					xLeft,
-					xWallInterior,
+					xMin,
+					xRef + xyWallInterior,
 					zSlab,
 					zSlab,
 					Surface::INTERIOR_FLUX,
@@ -615,8 +695,8 @@ public:
 
 			// Grade
 			Surface grade("Grade",
-					xWallExterior,
-					xRight,
+					xRef + xyWallExterior,
+					xMax,
 					zGrade,
 					zGrade,
 					Surface::EXTERIOR_FLUX,
@@ -629,10 +709,10 @@ public:
 			{
 				// Interior Air Top Surface
 				Surface interiorAirTop("Interior Air Top",
-						xLeft,
-						xWallInterior,
-						zTop,
-						zTop,
+						xMin,
+						xRef + xyWallInterior,
+						zMax,
+						zMax,
 						Surface::INTERIOR_TEMPERATURE,
 						Surface::Z_POS,
 						0.8,
@@ -640,14 +720,14 @@ public:
 				surfaces.push_back(interiorAirTop);
 			}
 
-			if(zTop > 0.0)
+			if(zMax > 0.0)
 			{
 				// Exterior Air Top Surface
 				Surface exteriorAirTop("Exterior Air Top",
-						xWallExterior,
-						xRight,
-						zTop,
-						zTop,
+						xRef + xyWallExterior,
+						xMax,
+						zMax,
+						zMax,
 						Surface::EXTERIOR_TEMPERATURE,
 						Surface::Z_POS,
 						0.8,
@@ -659,10 +739,10 @@ public:
 			if(hasWall)
 			{
 				Surface wallTop("Wall Top",
-						xWallInterior,
-						xWallExterior,
-						zTop,
-						zTop,
+						xRef + xyWallInterior,
+						xRef + xyWallExterior,
+						zMax,
+						zMax,
 						Surface::ZERO_FLUX,
 						Surface::Z_POS,
     					0.8,
@@ -675,42 +755,28 @@ public:
 			{
 				Block block(interiorHorizontalInsulation.layer.material,
 						    Block::SOLID,
-						    xNearLeft,
+						    xRef + xyIntHIns,
 						    effectiveLength,
-						    zTop - interiorHorizontalInsulation.depth - interiorHorizontalInsulation.layer.thickness,
-						    zTop - interiorHorizontalInsulation.depth);
+						    zIntHIns,
+						    zIntHIns + interiorHorizontalInsulation.layer.thickness);
 				blocks.push_back(block);
-
-				if(block.zMin < zNearBottom)
-				{
-					zNearBottom = block.zMin;
-				}
-				if(block.xMin < xNearLeft)
-				{
-					xNearLeft = block.xMin;
-				}
 			}
 
 			if (hasSlab)
 			{
 				// Foundation Slab
-				double zPosition = zSlab - slab.totalWidth();
+				double zPosition = zSlabBottom;
 
 				for (size_t n = 0; n < slab.layers.size(); n++)
 				{
 					Block block(slab.layers[n].material,
 								Block::SOLID,
-							    xLeft,
-							    effectiveLength,
+								xMin,
+							    xRef,
 							    zPosition,
 							    zPosition + slab.layers[n].thickness);
 					blocks.push_back(block);
 					zPosition = block.zMax;
-
-					if(block.zMin < zNearBottom)
-					{
-						zNearBottom = block.zMin;
-					}
 				}
 
 			}
@@ -720,37 +786,27 @@ public:
 			{
 				Block block(interiorVerticalInsulation.layer.material,
 							Block::SOLID,
-				  			xWallInterior,
-				  			effectiveLength,
-				  			zTop - interiorVerticalInsulation.depth,
-				  			zTop);
+							xRef + xyWallInterior,
+				  			xRef,
+				  			zIntVIns,
+				  			zMax);
 				blocks.push_back(block);
-
-				if(block.zMin < zNearBottom)
-				{
-					zNearBottom = block.zMin;
-				}
-				if(block.xMin < xNearLeft)
-				{
-					xNearLeft = block.xMin;
-				}
-
 			}
 
 			// Indoor Air
 			{
 				Block block(air,
 						    Block::INTERIOR_AIR,
-					  		xLeft,
-					  		xWallInterior,
+						    xMin,
+						    xRef + xyWallInterior,
 					  		zSlab,
-					  		zTop);
+					  		zMax);
 				blocks.push_back(block);
 			}
 
 			if (hasWall)
 			{
-				double xPosition = effectiveLength;
+				double xPosition = xRef;
 
 				// Foundation Wall
 				for (int n = wall.layers.size() - 1; n >= 0; n--)
@@ -759,19 +815,10 @@ public:
 								Block::SOLID,
 								xPosition,
 								xPosition + wall.layers[n].thickness,
-								-wall.depth,
-						  		zTop);
+								zWall,
+								zMax);
 					xPosition = block.xMax;
 					blocks.push_back(block);
-
-					if(block.zMin < zNearBottom)
-					{
-						zNearBottom = block.zMin;
-					}
-					if(block.xMax > xNearRight)
-					{
-						xNearRight = block.xMax;
-					}
 
 				}
 			}
@@ -781,21 +828,11 @@ public:
 			{
 				Block block(exteriorVerticalInsulation.layer.material,
 							Block::SOLID,
-							xWallExterior - exteriorVerticalInsulation.layer.thickness,
-					  		xWallExterior,
-					  		zTop - exteriorVerticalInsulation.depth,
-					  		zTop);
+							xRef + xyWallExterior - exteriorVerticalInsulation.layer.thickness,
+							xRef + xyWallExterior,
+							zExtVIns,
+					  		zMax);
 				blocks.push_back(block);
-
-				if(block.zMin < zNearBottom)
-				{
-					zNearBottom = block.zMin;
-				}
-				if(block.xMax > xNearRight)
-				{
-					xNearRight = block.xMax;
-				}
-
 			}
 
 			// Exterior Horizontal Insulation
@@ -803,31 +840,21 @@ public:
 			{
 				Block block(exteriorHorizontalInsulation.layer.material,
 							Block::SOLID,
-							effectiveLength + wall.totalWidth(),
-						    xWallExterior,
-					  		zTop - exteriorHorizontalInsulation.depth - exteriorHorizontalInsulation.layer.thickness,
-					  		zTop - exteriorHorizontalInsulation.depth);
+							xRef + wall.totalWidth(),
+							xRef + xyWallExterior,
+							zExtHIns,
+							zExtHIns + exteriorHorizontalInsulation.layer.thickness);
 				blocks.push_back(block);
-
-				if(block.zMin < zNearBottom)
-				{
-					zNearBottom = block.zMin;
-				}
-				if(block.xMax > xNearRight)
-				{
-					xNearRight = block.xMax;
-				}
-
 			}
 
 			// Exterior Air
 			{
 				Block block(air,
 							Block::EXTERIOR_AIR,
-							xWallExterior,
-					  		xRight,
+							xRef + xyWallExterior,
+							xMax,
 					  		zGrade,
-					  		zTop);
+					  		zMax);
 				blocks.push_back(block);
 			}
 
@@ -844,11 +871,11 @@ public:
 				zPoints.push_back(surfaces[s].zMax);
 				zPoints.push_back(surfaces[s].zMin);
 
-				if (surfaces[s].constX())
+				if (surfaces[s].isConstX())
 				{
 					xSurfaces.push_back(surfaces[s].xMin);
 				}
-				if (surfaces[s].constZ())
+				if (surfaces[s].isConstZ())
 				{
 					zSurfaces.push_back(surfaces[s].zMin);
 				}
@@ -935,11 +962,11 @@ public:
 			{
 				if (isEqual(xPoints[i], xPoints[i-1]))
 					xIntervals.push_back(zeroThickness);
-				else if (isLessOrEqual(xPoints[i], xNearLeft))
+				else if (isLessOrEqual(xPoints[i], xRef + xyNearInt))
 					xIntervals.push_back(interior);
-				else if (isLessOrEqual(xPoints[i], xNearRight))
+				else if (isLessOrEqual(xPoints[i], xRef + xyNearExt))
 					xIntervals.push_back(near);
-				else if (isGreaterThan(xPoints[i], xNearRight))
+				else if (isGreaterThan(xPoints[i], xRef + xyNearExt))
 					xIntervals.push_back(exterior);
 			}
 
@@ -947,14 +974,18 @@ public:
 			{
 				if (isEqual(zPoints[k], zPoints[k-1]))
 					zIntervals.push_back(zeroThickness);
-				else if (isLessOrEqual(zPoints[k], zNearBottom))
+				else if (isLessOrEqual(zPoints[k], zNearDeep))
 					zIntervals.push_back(deep);
-				else if (isGreaterThan(zPoints[k], zNearBottom))
+				else if (isGreaterThan(zPoints[k], zNearDeep))
 					zIntervals.push_back(near);
 			}
 
 			xMeshData.intervals = xIntervals;
 			zMeshData.intervals = zIntervals;
+
+		}
+		else  // if(coordinateSystem == CS_3D)
+		{
 
 		}
 	}
