@@ -22,6 +22,7 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/date_time/gregorian/gregorian.hpp>
 #include "Mesher.h"
+#include "Functions.h"
 
 class SimulationControl
 {
@@ -866,10 +867,10 @@ public:
 			sort(xPoints.begin(), xPoints.end());
 			sort(zPoints.begin(), zPoints.end());
 
-			// erase (approximately) duplicate elements
+			// erase duplicate elements
 			for (size_t i = 1; i < xPoints.size(); i++)
 			{
-				if (std::fabs(xPoints[i] - xPoints[i-1]) < 0.0000001)
+				if (isEqual(xPoints[i], xPoints[i-1]))
 				{
 					xPoints.erase(xPoints.begin() + i-1);
 					i -= 1;
@@ -878,7 +879,7 @@ public:
 
 			for (size_t k = 1; k < zPoints.size(); k++)
 			{
-				if (std::fabs(zPoints[k] - zPoints[k-1]) < 0.0000001)
+				if (isEqual(zPoints[k], zPoints[k-1]))
 				{
 					zPoints.erase(zPoints.begin() + k-1);
 					k -= 1;
@@ -892,7 +893,7 @@ public:
 			// erase (approximately) duplicate elements
 			for (size_t i = 1; i < xSurfaces.size(); i++)
 			{
-				if (std::fabs(xSurfaces[i] - xSurfaces[i-1]) < 0.0000001)
+				if (isEqual(xSurfaces[i], xSurfaces[i-1]))
 				{
 					xSurfaces.erase(xSurfaces.begin() + i-1);
 					i -= 1;
@@ -901,7 +902,7 @@ public:
 
 			for (size_t k = 1; k < zSurfaces.size(); k++)
 			{
-				if (std::fabs(zSurfaces[k] - zSurfaces[k-1]) < 0.0000001)
+				if (isEqual(zSurfaces[k], zSurfaces[k-1]))
 				{
 					zSurfaces.erase(zSurfaces.begin() + k-1);
 					k -= 1;
@@ -932,23 +933,23 @@ public:
 
 			for (size_t i = 1; i < xPoints.size(); i++)
 			{
-				if (std::fabs(xPoints[i] - xPoints[i-1]) < 0.0000001)
+				if (isEqual(xPoints[i], xPoints[i-1]))
 					xIntervals.push_back(zeroThickness);
-				else if (xPoints[i] - xNearLeft < 0.0000001)
+				else if (isLessOrEqual(xPoints[i], xNearLeft))
 					xIntervals.push_back(interior);
-				else if (xPoints[i] - xNearRight < 0.0000001)
+				else if (isLessOrEqual(xPoints[i], xNearRight))
 					xIntervals.push_back(near);
-				else if (xPoints[i] > xNearRight)
+				else if (isGreaterThan(xPoints[i], xNearRight))
 					xIntervals.push_back(exterior);
 			}
 
 			for (size_t k = 1; k < zPoints.size(); k++)
 			{
-				if (std::fabs(zPoints[k] - zPoints[k-1]) < 0.0000001)
+				if (isEqual(zPoints[k], zPoints[k-1]))
 					zIntervals.push_back(zeroThickness);
-				else if (zPoints[k] - zNearBottom < 0.0000001)
+				else if (isLessOrEqual(zPoints[k], zNearBottom))
 					zIntervals.push_back(deep);
-				else if (zPoints[k] > zNearBottom)
+				else if (isGreaterThan(zPoints[k], zNearBottom))
 					zIntervals.push_back(near);
 			}
 

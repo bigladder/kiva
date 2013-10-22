@@ -66,18 +66,19 @@ void Domain::setDomain(Foundation &foundation)
 				cell[i][j][k].cellType = Cell::NORMAL;
 
 				// Next set interior zero-width cells
-				if (meshX.deltas[i] < 0.00000001 ||
-					meshZ.deltas[k] < 0.00000001)
+				if (isEqual(meshX.deltas[i], 0.0) ||
+					isEqual(meshZ.deltas[k], 0.0) ||
+					isEqual(meshY.deltas[j], 0.0))
 				{
 					cell[i][j][k].cellType = Cell::ZERO_THICKNESS;
 				}
 
 				for (size_t b = 0; b < foundation.blocks.size(); b++)
 				{
-					if (meshX.centers[i] > foundation.blocks[b].xMin &&
-						meshX.centers[i] < foundation.blocks[b].xMax &&
-						meshZ.centers[k] > foundation.blocks[b].zMin &&
-						meshZ.centers[k] < foundation.blocks[b].zMax)
+					if (isGreaterThan(meshX.centers[i], foundation.blocks[b].xMin) &&
+						isLessThan(meshX.centers[i], foundation.blocks[b].xMax) &&
+						isGreaterThan(meshZ.centers[k], foundation.blocks[b].zMin) &&
+						isLessThan(meshZ.centers[k], foundation.blocks[b].zMax))
 					{
 						cell[i][j][k].density = foundation.blocks[b].material.density;
 						cell[i][j][k].specificHeat = foundation.blocks[b].material.specificHeat;
@@ -100,14 +101,14 @@ void Domain::setDomain(Foundation &foundation)
 
 				for (size_t s = 0; s < foundation.surfaces.size(); s++)
 				{
-					if (meshX.centers[i] - foundation.surfaces[s].xMin > -0.00000001
-					&&  meshX.centers[i] - foundation.surfaces[s].xMax < 0.00000001)
+					if (isGreaterOrEqual(meshX.centers[i], foundation.surfaces[s].xMin)
+					&&  isLessOrEqual(meshX.centers[i], foundation.surfaces[s].xMax))
 					{
-						if (meshY.centers[j] - foundation.surfaces[s].yMin > -0.00000001
-						&&  meshY.centers[j] - foundation.surfaces[s].yMax < 0.00000001)
+						if (isGreaterOrEqual(meshY.centers[j], foundation.surfaces[s].yMin)
+						&&  isLessOrEqual(meshY.centers[j], foundation.surfaces[s].yMax))
 						{
-							if (meshZ.centers[k] - foundation.surfaces[s].zMin > -0.00000001
-							&&  meshZ.centers[k] - foundation.surfaces[s].zMax < 0.00000001)
+							if (isGreaterOrEqual(meshZ.centers[k], foundation.surfaces[s].zMin)
+							&&  isLessOrEqual(meshZ.centers[k], foundation.surfaces[s].zMax))
 							{
 								cell[i][j][k].cellType = Cell::BOUNDARY;
 
@@ -117,8 +118,8 @@ void Domain::setDomain(Foundation &foundation)
 
 								// Point/Line cells not on the boundary should be
 								// zero-thickness cells
-								if ((meshX.deltas[i] < 0.00000001 &&
-									meshZ.deltas[k] < 0.00000001) &&
+								if ((isEqual(meshX.deltas[i], 0.0) &&
+									 isEqual(meshZ.deltas[k], 0.0)) &&
 									i != 0 && i != nX -1 && k != 0 && k != nZ - 1)
 								{
 									cell[i][j][k].cellType = Cell::ZERO_THICKNESS;
@@ -142,8 +143,8 @@ void Domain::setDomain(Foundation &foundation)
 					// based on other cells
 					if (i != 0 && i != nX - 1 && k != 0 && k != nZ - 1)
 					{
-						if (meshX.deltas[i] < 0.00000001 &&
-							meshZ.deltas[k] < 0.00000001)
+						if (isEqual(meshX.deltas[i], 0.0) &&
+							isEqual(meshZ.deltas[k], 0.0))
 						{
 							double volTL = meshX.deltas[i-1]*meshZ.deltas[k+1];
 							double volTR = meshX.deltas[i+1]*meshZ.deltas[k+1];
@@ -182,7 +183,7 @@ void Domain::setDomain(Foundation &foundation)
 													 volBR*condBR) /
 													 volTotal;
 						}
-						else if (meshX.deltas[i] < 0.00000001)
+						else if (isEqual(meshX.deltas[i], 0.0))
 						{
 							double volL = meshX.deltas[i-1];
 							double volR = meshX.deltas[i+1];
@@ -209,7 +210,7 @@ void Domain::setDomain(Foundation &foundation)
 													 volTotal;
 
 						}
-						else if (meshZ.deltas[k] < 0.00000001)
+						else if (isEqual(meshZ.deltas[k], 0.0))
 						{
 							double volT = meshZ.deltas[k+1];
 							double volB = meshZ.deltas[k-1];

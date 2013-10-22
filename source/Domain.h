@@ -21,6 +21,7 @@
 
 #include "Input.h"
 #include "Mesher.h"
+#include "Functions.h"
 
 #include <fstream>
 

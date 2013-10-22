@@ -42,7 +42,7 @@ Mesher::Mesher(MeshData &data) : data(data)
 		double cellWidth;
 		int numCells;
 
-		if (length < 0.00000001)
+		if (isEqual(length, 0.0))
 		{
 			// Zero width cells (used for boundary conditions)
 			dividers.push_back(max);
@@ -59,10 +59,8 @@ Mesher::Mesher(MeshData &data) : data(data)
 				// Make sure that there is at least one cell
 				if (numCells == 0) numCells = 1;
 
-				// Check to make sure that an exact fit isn't excluded due to
-				// numerical precision
-				if (std::abs(length/(numCells + 1) -
-				data.intervals[i].minCellDim) < 0.00000001)
+				if (isEqual(length/(numCells + 1),
+				data.intervals[i].minCellDim))
 				{
 					cellWidth = data.intervals[i].minCellDim;
 					numCells = numCells + 1;
@@ -86,7 +84,7 @@ Mesher::Mesher(MeshData &data) : data(data)
 				std::vector<double> temp;
 
 				// Create temp. delta array
-				if (data.intervals[i].minCellDim >= length)
+				if (isGreaterOrEqual(data.intervals[i].minCellDim, length))
 				{
 					// If min. cell width is greater than interval length then
 					// set width equal to the length
