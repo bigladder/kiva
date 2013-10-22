@@ -96,8 +96,20 @@ void Ground::initializeConditions()
 	TOld.resize(boost::extents[nX][nY][nZ]);
 
 	if (foundation.initializationMethod == Foundation::IM_STEADY_STATE)
+	{
 		calculateMatrix(Foundation::NS_STEADY_STATE);
-
+		for (size_t k = 0; k < nZ; ++k)
+		{
+			for (size_t j = 0; j < nY; ++j)
+			{
+				for (size_t i = 0; i < nX; ++i)
+				{
+					// Update old values for next timestep
+					TOld[i][j][k] = TNew[i][j][k];
+				}
+			}
+		}
+	}
 	else if (foundation.initializationMethod == Foundation::IM_IMPLICIT_ACCELERATION)
 	{
 		Foundation initialFoundation = foundation;
