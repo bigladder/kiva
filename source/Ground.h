@@ -74,9 +74,6 @@ private:
 
 	boost::multi_array<double, 3> TOld; // solution, n
 
-	std::vector<double> QSlab; // Heat Fluxes through the slab
-
-
 	// Plotting variables
 	mglData TDat, rDat, zDat, cDat, rGrid, zGrid, TGrid;
 	mglGraph gr;		// class for plot drawing
@@ -137,7 +134,10 @@ private:
 							  double tilt);
 
 	double getOutdoorTemperature();
+
 	double getLocalWindSpeed();
+
+	double getSurfaceAverageHeatFlux(std::string surfaceName);
 };
 
 

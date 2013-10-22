@@ -76,10 +76,6 @@ public:
 		std::size_t nZ;
 
 		boost::multi_array<Cell, 3> cell;
-
-		std::size_t slabK;
-		std::size_t slabImin;
-		std::size_t slabImax;
 		
 public:
 

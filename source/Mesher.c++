@@ -161,4 +161,63 @@ Mesher::Mesher(MeshData &data) : data(data)
 	}
 }
 
+std::size_t Mesher::getNearestIndex(double position)
+{
+	if (isLessOrEqual(position,this->centers[0]))
+		return 0;
+	else if (isGreaterOrEqual(position,this->centers[this->centers.size() - 1]))
+		return this->centers.size() - 1;
+	else
+	{
+		for (std::size_t i = 1; i < this->centers.size(); i++)
+		{
+			if (isGreaterOrEqual(position,this->centers[i-1]) &&
+				isLessOrEqual(position,this->centers[i]))
+			{
+				double diffDown = position - this->centers[i-1];
+				double diffUp = this->centers[i] - position;
+
+				if (isLessOrEqual(diffDown, diffUp))
+					return i-1;
+				else
+					return i;
+			}
+		}
+	}
+}
+
+std::size_t Mesher::getNextIndex(double position)
+{
+	if (isLessThan(position,this->centers[0]))
+		return 0;
+	else if (isGreaterOrEqual(position,this->centers[this->centers.size() - 1]))
+		return this->centers.size() - 1;
+	else
+	{
+		for (std::size_t i = 1; i < this->centers.size(); i++)
+		{
+			if (isGreaterOrEqual(position,this->centers[i-1]) &&
+				isLessThan(position,this->centers[i]))
+				return i;
+		}
+	}
+}
+
+std::size_t Mesher::getPreviousIndex(double position)
+{
+	if (isLessOrEqual(position,this->centers[0]))
+		return 0;
+	else if (isGreaterThan(position,this->centers[this->centers.size() - 1]))
+		return this->centers.size() - 1;
+	else
+	{
+		for (std::size_t i = 1; i < this->centers.size(); i++)
+		{
+			if (isGreaterThan(position,this->centers[i-1]) &&
+				isLessOrEqual(position,this->centers[i]))
+				return i-1;
+		}
+	}
+}
+
 #endif

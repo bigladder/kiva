@@ -15,6 +15,7 @@ message(${CMAKE_PREFIX_PATH})
 set(kiva_src Main.c++
              Algorithms.c++
              Domain.c++
+             Functions.c++
              Ground.c++
              InputParser.c++
              Mesher.c++
@@ -22,6 +23,7 @@ set(kiva_src Main.c++
 
 set(kiva_hdr Algorithms.h
              Domain.h
+             Functions.h
              Ground.h
              Input.h
              InputParser.h

@@ -50,10 +50,6 @@ void Domain::setDomain(Foundation &foundation)
 
 	cell.resize(boost::extents[nX][nY][nZ]);
 
-	// Slab and Wall indices
-	bool slabKSet = false;
-	bool slabIminSet = false;
-	
 	for (size_t k = 0; k < nZ; k++)
 	{
 		for (size_t j = 0; j < nY; j++)
@@ -119,23 +115,6 @@ void Domain::setDomain(Foundation &foundation)
 
 								cell[i][j][k].surface = foundation.surfaces[s];
 
-								// TODO: Establish a better way of defining surface cells
-								if (foundation.surfaces[s].name == "Slab Interior")
-								{
-									if (! slabKSet)
-									{
-										slabK = k;
-										slabKSet = true;
-									}
-									if (! slabIminSet)
-									{
-										slabImin = i;
-										slabIminSet = true;
-									}
-
-									slabImax = i;
-								}
-
 								// Point/Line cells not on the boundary should be
 								// zero-thickness cells
 								if ((meshX.deltas[i] < 0.00000001 &&
@@ -144,15 +123,9 @@ void Domain::setDomain(Foundation &foundation)
 								{
 									cell[i][j][k].cellType = Cell::ZERO_THICKNESS;
 								}
-
 							}
 						}
 					}
-					else
-					{
-						// error!
-					}
-
 				}
 			}
 		}

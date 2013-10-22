@@ -22,6 +22,7 @@
 #include <vector>
 #include <cmath>
 #include <math.h>
+#include "Functions.h"
 
 class Interval
 {
@@ -61,6 +62,9 @@ public:
 
 		Mesher();
 		Mesher(MeshData &data);
+		std::size_t getNearestIndex(double position);
+		std::size_t getNextIndex(double position);
+		std::size_t getPreviousIndex(double position);
 
 };
 
