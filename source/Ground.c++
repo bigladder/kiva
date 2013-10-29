@@ -1253,7 +1253,7 @@ void Ground::plot()
 		{
 			for(size_t i = 0; i < nX; i++)
 			{
-				size_t j = 0;
+				size_t j = nY/2;
 			    double TinF = (TNew[i][j][k] - 273.15)*9/5 + 32.0;
 				TDat.a[i+nX*k] = TinF;
 			}
@@ -1643,6 +1643,11 @@ double Ground::getSurfaceAverageHeatFlux(std::string surfaceName)
 	double totalFlux = std::accumulate((heatFlux).begin(),(heatFlux).end(), 0.0);
 
 	return totalFlux/totalArea;
+}
+
+double getArrayValue(boost::multi_array<double, 3> Mat, std::size_t i, std::size_t j, std::size_t k)
+{
+	return Mat[i][j][k];
 }
 
 #endif

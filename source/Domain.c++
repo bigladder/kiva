@@ -175,11 +175,13 @@ void Domain::setDomain(Foundation &foundation)
 
 					if (numZeroDims > 0)
 					{
-						if (foundation.coordinateSystem == Foundation::CS_3D &&
-								i != 0 && i != nX - 1 &&
+						if (foundation.coordinateSystem == Foundation::CS_3D)
+						{
+							if (i != 0 && i != nX - 1 &&
 								j != 0 && j != nY - 1 &&
 								k != 0 && k != nZ - 1)
-							set3DZeroThicknessCellProperties(i,j,k);
+								set3DZeroThicknessCellProperties(i,j,k);
+						}
 						else
 						{
 							if (i != 0 && i != nX - 1 && k != 0 && k != nZ - 1)

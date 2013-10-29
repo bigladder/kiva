@@ -97,6 +97,7 @@ Mesher::Mesher(MeshData &data) : data(data)
 					// If min. cell width is greater than interval length then
 					// set width equal to the length
 					temp.push_back(length);
+					numCells = 1;
 
 				}
 				else
