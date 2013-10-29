@@ -34,7 +34,8 @@ public:
 	{
 		FORWARD,
 		BACKWARD,
-		UNIFORM
+		UNIFORM,
+		CENTERED
 	};
 	Growth growthDir;
 

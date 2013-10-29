@@ -28,7 +28,7 @@ Input inputParser(std::string inputFile)
 	SimulationControl simulationControl;
 	Foundation foundation1;
 
-	YAML::Node yamlInput = YAML::LoadFile("in.yaml");
+	YAML::Node yamlInput = YAML::LoadFile(inputFile);
 
 
 	simulationControl.weatherFile =
@@ -213,8 +213,12 @@ Input inputParser(std::string inputFile)
 	else if (yamlInput["Foundation"]["coordinateSystem"].as<std::string>() == "3D")
 		foundation1.coordinateSystem = Foundation::CS_3D;
 
-	foundation1.width = yamlInput["Foundation"]["width"].as<double>();
-	foundation1.length = yamlInput["Foundation"]["length"].as<double>();
+	for (size_t i=0;i<yamlInput["Foundation"]["polygon"].size();i++)
+	{
+		foundation1.polygon.outer().push_back(Point(
+				yamlInput["Foundation"]["polygon"][i][0].as<double>(),
+				yamlInput["Foundation"]["polygon"][i][1].as<double>()));
+	}
 
 	// Meshing
 	if  (yamlInput["Foundation"]["mesh"].IsDefined())
@@ -222,14 +226,14 @@ Input inputParser(std::string inputFile)
 		foundation1.mesh.minCellDim = yamlInput["Foundation"]["mesh"]["minCellDim"].as<double>();
 		foundation1.mesh.maxDepthGrowthCoeff = yamlInput["Foundation"]["mesh"]["maxDepthGrowthCoeff"].as<double>();
 		foundation1.mesh.maxInteriorGrowthCoeff = yamlInput["Foundation"]["mesh"]["maxInteriorGrowthCoeff"].as<double>();
-		foundation1.mesh.maxRadialGrowthCoeff = yamlInput["Foundation"]["mesh"]["maxExteriorGrowthCoeff"].as<double>();
+		foundation1.mesh.maxExteriorGrowthCoeff = yamlInput["Foundation"]["mesh"]["maxExteriorGrowthCoeff"].as<double>();
 	}
 	else
 	{
 		foundation1.mesh.minCellDim = 0.05;
 		foundation1.mesh.maxDepthGrowthCoeff = 1.25;
 		foundation1.mesh.maxInteriorGrowthCoeff = 1.25;
-		foundation1.mesh.maxRadialGrowthCoeff = 1.25;
+		foundation1.mesh.maxExteriorGrowthCoeff = 1.25;
 	}
 
 	// Simulation Control

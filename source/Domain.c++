@@ -40,6 +40,9 @@ void Domain::setDomain(Foundation &foundation)
 		Mesher mX(foundation.xMeshData);
 		meshX = mX;
 
+		Mesher mY(foundation.yMeshData);
+		meshY = mY;
+
 		Mesher mZ(foundation.zMeshData);
 		meshZ = mZ;
 	}
@@ -66,17 +69,27 @@ void Domain::setDomain(Foundation &foundation)
 				cell[i][j][k].cellType = Cell::NORMAL;
 
 				// Next set interior zero-width cells
-				if (isEqual(meshX.deltas[i], 0.0) ||
-					isEqual(meshZ.deltas[k], 0.0) ||
-					isEqual(meshY.deltas[j], 0.0))
+				if (foundation.coordinateSystem == Foundation::CS_3D)
 				{
-					cell[i][j][k].cellType = Cell::ZERO_THICKNESS;
+					if (isEqual(meshX.deltas[i], 0.0) ||
+						isEqual(meshZ.deltas[k], 0.0) ||
+						isEqual(meshY.deltas[j], 0.0))
+					{
+						cell[i][j][k].cellType = Cell::ZERO_THICKNESS;
+					}
+				}
+				else
+				{
+					if (isEqual(meshX.deltas[i], 0.0) ||
+						isEqual(meshZ.deltas[k], 0.0))
+					{
+						cell[i][j][k].cellType = Cell::ZERO_THICKNESS;
+					}
 				}
 
 				for (size_t b = 0; b < foundation.blocks.size(); b++)
 				{
-					if (isGreaterThan(meshX.centers[i], foundation.blocks[b].xMin) &&
-						isLessThan(meshX.centers[i], foundation.blocks[b].xMax) &&
+					if (boost::geometry::within(Point(meshX.centers[i],meshY.centers[j]), foundation.blocks[b].polygon) &&
 						isGreaterThan(meshZ.centers[k], foundation.blocks[b].zMin) &&
 						isLessThan(meshZ.centers[k], foundation.blocks[b].zMax))
 					{
@@ -101,30 +114,76 @@ void Domain::setDomain(Foundation &foundation)
 
 				for (size_t s = 0; s < foundation.surfaces.size(); s++)
 				{
-					if (isGreaterOrEqual(meshX.centers[i], foundation.surfaces[s].xMin)
-					&&  isLessOrEqual(meshX.centers[i], foundation.surfaces[s].xMax))
+					if (boost::geometry::intersects(Point(meshX.centers[i],meshY.centers[j]), foundation.surfaces[s].polygon))
 					{
-						if (isGreaterOrEqual(meshY.centers[j], foundation.surfaces[s].yMin)
-						&&  isLessOrEqual(meshY.centers[j], foundation.surfaces[s].yMax))
+						if (isGreaterOrEqual(meshZ.centers[k], foundation.surfaces[s].zMin)
+						&&  isLessOrEqual(meshZ.centers[k], foundation.surfaces[s].zMax))
 						{
-							if (isGreaterOrEqual(meshZ.centers[k], foundation.surfaces[s].zMin)
-							&&  isLessOrEqual(meshZ.centers[k], foundation.surfaces[s].zMax))
+							cell[i][j][k].cellType = Cell::BOUNDARY;
+
+							cell[i][j][k].surfaceNumber = s;
+
+							cell[i][j][k].surface = foundation.surfaces[s];
+
+							// Point/Line cells not on the boundary should be
+							// zero-thickness cells
+							int numZeroDims = 0;
+							if (isEqual(meshX.deltas[i], 0.0))
+								numZeroDims += 1;
+							if (isEqual(meshY.deltas[j], 0.0))
+								numZeroDims += 1;
+							if (isEqual(meshZ.deltas[k], 0.0))
+								numZeroDims += 1;
+
+							if (foundation.coordinateSystem == Foundation::CS_3D)
 							{
-								cell[i][j][k].cellType = Cell::BOUNDARY;
-
-								cell[i][j][k].surfaceNumber = s;
-
-								cell[i][j][k].surface = foundation.surfaces[s];
-
-								// Point/Line cells not on the boundary should be
-								// zero-thickness cells
-								if ((isEqual(meshX.deltas[i], 0.0) &&
-									 isEqual(meshZ.deltas[k], 0.0)) &&
-									i != 0 && i != nX -1 && k != 0 && k != nZ - 1)
-								{
+								if ((numZeroDims > 1) &&
+									i != 0 && i != nX - 1 &&
+									j != 0 && j != nY - 1 &&
+									k != 0 && k != nZ - 1)
 									cell[i][j][k].cellType = Cell::ZERO_THICKNESS;
-								}
 							}
+							else
+							{
+								if ((numZeroDims > 1) &&
+									i != 0 && i != nX - 1 &&
+									k != 0 && k != nZ - 1)
+									cell[i][j][k].cellType = Cell::ZERO_THICKNESS;
+							}
+
+						}
+					}
+				}
+			}
+		}
+
+		// Set effective properties of zero-thickness cells
+		// based on other cells
+		for (size_t k = 0; k < nZ; k++)
+		{
+			for (size_t j = 0; j < nY; j++)
+			{
+				for (size_t i = 0; i < nX; i++)
+				{
+					int numZeroDims = 0;
+					if (isEqual(meshX.deltas[i], 0.0))
+						numZeroDims += 1;
+					if (isEqual(meshY.deltas[j], 0.0))
+						numZeroDims += 1;
+					if (isEqual(meshZ.deltas[k], 0.0))
+						numZeroDims += 1;
+
+					if (numZeroDims > 0)
+					{
+						if (foundation.coordinateSystem == Foundation::CS_3D &&
+								i != 0 && i != nX - 1 &&
+								j != 0 && j != nY - 1 &&
+								k != 0 && k != nZ - 1)
+							set3DZeroThicknessCellProperties(i,j,k);
+						else
+						{
+							if (i != 0 && i != nX - 1 && k != 0 && k != nZ - 1)
+								set2DZeroThicknessCellProperties(i,j,k);
 						}
 					}
 				}
@@ -138,105 +197,6 @@ void Domain::setDomain(Foundation &foundation)
 			{
 				for (size_t i = 0; i < nX; i++)
 				{
-
-					// First set effective properties of zero-thickness cells
-					// based on other cells
-					if (i != 0 && i != nX - 1 && k != 0 && k != nZ - 1)
-					{
-						if (isEqual(meshX.deltas[i], 0.0) &&
-							isEqual(meshZ.deltas[k], 0.0))
-						{
-							double volTL = meshX.deltas[i-1]*meshZ.deltas[k+1];
-							double volTR = meshX.deltas[i+1]*meshZ.deltas[k+1];
-							double volBL = meshX.deltas[i-1]*meshZ.deltas[k-1];
-							double volBR = meshX.deltas[i+1]*meshZ.deltas[k-1];
-							double volTotal = volTL + volTR + volBL + volBR;
-
-							double densTL = cell[i-1][j][k+1].density;
-							double densTR = cell[i+1][j][k+1].density;
-							double densBL = cell[i-1][j][k-1].density;
-							double densBR = cell[i+1][j][k-1].density;
-
-							cell[i][j][k].density = (volTL*densTL + volTR*densTR +
-												volBL*densBL + volBR*densBR) /
-												volTotal;
-
-							double cpTL = cell[i-1][j][k+1].specificHeat;
-							double cpTR = cell[i+1][j][k+1].specificHeat;
-							double cpBL = cell[i-1][j][k-1].specificHeat;
-							double cpBR = cell[i+1][j][k-1].specificHeat;
-
-							cell[i][j][k].specificHeat = (volTL*cpTL*densTL +
-													 volTR*cpTR*densTR +
-													 volBL*cpBL*densBL +
-													 volBR*cpBR*densBR) /
-													 (volTotal*cell[i][j][k].density);
-
-							double condTL = cell[i-1][j][k+1].conductivity;
-							double condTR = cell[i+1][j][k+1].conductivity;
-							double condBL = cell[i-1][j][k-1].conductivity;
-							double condBR = cell[i+1][j][k-1].conductivity;
-
-							cell[i][j][k].conductivity = (volTL*condTL +
-													 volTR*condTR +
-													 volBL*condBL +
-													 volBR*condBR) /
-													 volTotal;
-						}
-						else if (isEqual(meshX.deltas[i], 0.0))
-						{
-							double volL = meshX.deltas[i-1];
-							double volR = meshX.deltas[i+1];
-							double volTotal = volL + volR;
-
-							double densL = cell[i-1][j][k].density;
-							double densR = cell[i+1][j][k].density;
-
-							cell[i][j][k].density = (volL*densL + volR*densR) /
-												volTotal;
-
-							double cpL = cell[i-1][j][k].specificHeat;
-							double cpR = cell[i+1][j][k].specificHeat;
-
-							cell[i][j][k].specificHeat = (volL*cpL*densL +
-													 volR*cpR*densR) /
-													 (volTotal*cell[i][j][k].density);
-
-							double condL = cell[i-1][j][k].conductivity;
-							double condR = cell[i+1][j][k].conductivity;
-
-							cell[i][j][k].conductivity = (volL*condL +
-													 volR*condR) /
-													 volTotal;
-
-						}
-						else if (isEqual(meshZ.deltas[k], 0.0))
-						{
-							double volT = meshZ.deltas[k+1];
-							double volB = meshZ.deltas[k-1];
-							double volTotal = volT + volB;
-
-							double densT = cell[i][j][k+1].density;
-							double densB = cell[i][j][k-1].density;
-
-							cell[i][j][k].density = (volT*densT + volB*densB) /
-												volTotal;
-
-							double cpT = cell[i][j][k+1].specificHeat;
-							double cpB = cell[i][j][k-1].specificHeat;
-
-							cell[i][j][k].specificHeat = (volT*cpT*densT +
-													 volB*cpB*densB) /
-													 (volTotal*cell[i][j][k].density);
-
-							double condT = cell[i][j][k+1].conductivity;
-							double condB = cell[i][j][k-1].conductivity;
-
-							cell[i][j][k].conductivity = (volT*condT +
-													 volB*condB) /
-													 volTotal;
-						}
-					}
 
 					// PDE Coefficients
 
@@ -460,6 +420,168 @@ double Domain::getKZM(size_t i, size_t j, size_t k)
 	}
 }
 
+void Domain::set2DZeroThicknessCellProperties(size_t i,size_t j,size_t k)
+{
+	if (isEqual(meshX.deltas[i], 0.0) &&
+		isEqual(meshZ.deltas[k], 0.0))
+	{
+
+		std::vector<boost::tuple<std::size_t,std::size_t,std::size_t> >
+		pointSet = boost::assign::tuple_list_of(i-1,j,k+1)
+								 	 	  	   (i+1,j,k+1)
+								 	 	 	   (i-1,j,k-1)
+								 	 	 	   (i+1,j,k-1);
+
+		setZeroThicknessCellProperties(i, j, k, pointSet);
+
+	}
+	else if (isEqual(meshX.deltas[i], 0.0))
+	{
+		std::vector<boost::tuple<std::size_t,std::size_t,std::size_t> >
+		pointSet = boost::assign::tuple_list_of(i-1,j,k)
+								 	 	  	   (i+1,j,k);
+
+		setZeroThicknessCellProperties(i, j, k, pointSet);
+
+	}
+	else if (isEqual(meshZ.deltas[k], 0.0))
+	{
+		std::vector<boost::tuple<std::size_t,std::size_t,std::size_t> >
+		pointSet = boost::assign::tuple_list_of(i,j,k-1)
+								 	 	  	   (i,j,k+1);
+
+		setZeroThicknessCellProperties(i, j, k, pointSet);
+	}
+}
+
+void Domain::set3DZeroThicknessCellProperties(size_t i,size_t j,size_t k)
+{
+	if (isEqual(meshX.deltas[i], 0.0) &&
+		isEqual(meshY.deltas[j], 0.0) &&
+		isEqual(meshZ.deltas[k], 0.0))
+	{
+		// Use all 8 full volume cells
+		std::vector<boost::tuple<std::size_t,std::size_t,std::size_t> >
+		pointSet = boost::assign::tuple_list_of(i-1,j-1,k+1)
+								 	 	  	   (i+1,j-1,k+1)
+								 	 	 	   (i-1,j-1,k-1)
+								 	 	 	   (i+1,j-1,k-1)
+								 	 	 	   (i-1,j+1,k+1)
+								 	 	 	   (i+1,j+1,k+1)
+								 	 	 	   (i-1,j+1,k-1)
+								 	 	 	   (i+1,j+1,k-1);
+
+		setZeroThicknessCellProperties(i, j, k, pointSet);
+	}
+	else if (isEqual(meshX.deltas[i], 0.0) &&
+		isEqual(meshY.deltas[j], 0.0))
+	{
+		std::vector<boost::tuple<std::size_t,std::size_t,std::size_t> >
+		pointSet = boost::assign::tuple_list_of(i-1,j-1,k)
+								 	 	  	   (i+1,j-1,k)
+								 	 	 	   (i-1,j+1,k)
+								 	 	 	   (i+1,j+1,k);
+
+		setZeroThicknessCellProperties(i, j, k, pointSet);
+	}
+	else if (isEqual(meshX.deltas[i], 0.0) &&
+		isEqual(meshZ.deltas[k], 0.0))
+	{
+		std::vector<boost::tuple<std::size_t,std::size_t,std::size_t> >
+		pointSet = boost::assign::tuple_list_of(i-1,j,k+1)
+								 	 	  	   (i+1,j,k+1)
+								 	 	 	   (i-1,j,k-1)
+								 	 	 	   (i+1,j,k-1);
+
+		setZeroThicknessCellProperties(i, j, k, pointSet);
+	}
+	else if (isEqual(meshY.deltas[j], 0.0) &&
+		isEqual(meshZ.deltas[k], 0.0))
+	{
+		std::vector<boost::tuple<std::size_t,std::size_t,std::size_t> >
+		pointSet = boost::assign::tuple_list_of(i,j-1,k+1)
+								 	 	  	   (i,j+1,k+1)
+								 	 	 	   (i,j-1,k-1)
+								 	 	 	   (i,j+1,k-1);
+
+		setZeroThicknessCellProperties(i, j, k, pointSet);
+	}
+	else if (isEqual(meshX.deltas[i], 0.0))
+	{
+		std::vector<boost::tuple<std::size_t,std::size_t,std::size_t> >
+		pointSet = boost::assign::tuple_list_of(i+1,j,k)
+								 	 	  	   (i-1,j,k);
+
+		setZeroThicknessCellProperties(i, j, k, pointSet);
+	}
+	else if (isEqual(meshY.deltas[j], 0.0))
+	{
+		std::vector<boost::tuple<std::size_t,std::size_t,std::size_t> >
+		pointSet = boost::assign::tuple_list_of(i,j+1,k)
+								 	 	  	   (i,j-1,k);
+
+		setZeroThicknessCellProperties(i, j, k, pointSet);
+	}
+	else if (isEqual(meshZ.deltas[k], 0.0))
+	{
+		std::vector<boost::tuple<std::size_t,std::size_t,std::size_t> >
+		pointSet = boost::assign::tuple_list_of(i,j,k+1)
+								 	 	  	   (i,j,k-1);
+
+		setZeroThicknessCellProperties(i, j, k, pointSet);
+	}
+
+}
+
+void Domain::setZeroThicknessCellProperties(std::size_t i,
+		std::size_t j, std::size_t k,
+		std::vector<boost::tuple<std::size_t,std::size_t,std::size_t> > pointSet)
+{
+	std::vector<double> volumes;
+	std::vector<double> densities;
+	std::vector<double> specificHeats;
+	std::vector<double> conductivities;
+
+	std::vector<double> masses;
+	std::vector<double> capacities;
+	std::vector<double> weightedConductivity;
+
+
+	for (std::size_t p = 0; p < pointSet.size(); p++)
+	{
+		std::size_t iP = boost::get<0>(pointSet[p]);
+		std::size_t jP = boost::get<1>(pointSet[p]);
+		std::size_t kP = boost::get<2>(pointSet[p]);
+
+
+		double vol = meshX.deltas[iP]*meshY.deltas[jP]*meshZ.deltas[kP];
+		double rho = cell[iP][jP][kP].density;
+		double cp = cell[iP][jP][kP].specificHeat;
+		double k = cell[iP][jP][kP].conductivity;
+
+		volumes.push_back(vol);
+		densities.push_back(rho);
+		specificHeats.push_back(cp);
+		conductivities.push_back(k);
+
+		masses.push_back(vol*rho);
+		capacities.push_back(vol*rho*cp);
+		weightedConductivity.push_back(vol*k);
+
+	}
+
+	double totalVolume = std::accumulate(volumes.begin(), volumes.end(), 0.0);
+
+	cell[i][j][k].density = std::accumulate(masses.begin(), masses.end(), 0.0) /
+			totalVolume;
+
+	cell[i][j][k].specificHeat = std::accumulate(capacities.begin(), capacities.end(), 0.0) /
+			(totalVolume*cell[i][j][k].density);
+
+	cell[i][j][k].conductivity = std::accumulate(weightedConductivity.begin(), weightedConductivity.end(), 0.0) /
+			totalVolume;
+}
+
 void Domain::printCellTypes()
 {
 	// TODO: Make the ability to output a specific slice in i, j, or k
@@ -475,15 +597,15 @@ void Domain::printCellTypes()
 
 	output << std::endl;
 
-	for (size_t k = nZ - 1; k >= 0 && k < nZ; k--)
+	for (size_t j = nY - 1; j >= 0 && j < nY; j--)
 	{
 
-		output << k;
+		output << j;
 
 		for (size_t i = 0; i < nX; i++)
 		{
 
-			output << ", " << cell[i][0][k].cellType;
+			output << ", " << cell[i][j][1].cellType;
 
 		}
 

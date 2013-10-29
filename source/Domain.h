@@ -26,6 +26,7 @@
 #include <fstream>
 
 #include <boost/multi_array.hpp>
+#include <boost/assign/list_of.hpp>
 
 class Cell
 {
@@ -95,6 +96,10 @@ public:
 		double getKYM(size_t i,size_t j,size_t k);
 		double getKZP(size_t i,size_t j,size_t k);
 		double getKZM(size_t i,size_t j,size_t k);
+		void set2DZeroThicknessCellProperties(size_t i,size_t j,size_t k);
+		void set3DZeroThicknessCellProperties(size_t i,size_t j,size_t k);
+		void setZeroThicknessCellProperties(std::size_t i, std::size_t j, std::size_t k,
+				std::vector<boost::tuple<std::size_t,std::size_t,std::size_t> > pointSet);
 		void printCellTypes();
 
 };

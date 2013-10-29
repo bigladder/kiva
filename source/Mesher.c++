@@ -23,15 +23,22 @@
 
 Mesher::Mesher()
 {
-  dividers.push_back(0.0);
-  dividers.push_back(1.0);
-  deltas.push_back(1.0);
-  centers.push_back(0.5);
 }
 
 Mesher::Mesher(MeshData &data) : data(data)
 {
 	dividers.push_back(data.points[0]);
+
+	// if there is only one point (or fewer), make into a zero thickness mesh
+	// (effectively eliminates the dimension from the domain.
+	if (data.points.size() <= 3)
+	{
+		dividers.push_back(1.0);
+		deltas.push_back(1.0);
+		centers.push_back(0.5);
+		return;
+	}
+
 
 	// Loop through intervals
 	for (std::size_t i = 0; i < data.points.size() -1; ++i)
@@ -80,6 +87,7 @@ Mesher::Mesher(MeshData &data) : data(data)
 			}
 			else
 			{
+				// TODO: These algorithms need to be cleaned up and commented better
 				// Geometric Meshing
 				std::vector<double> temp;
 
@@ -93,38 +101,113 @@ Mesher::Mesher(MeshData &data) : data(data)
 				}
 				else
 				{
-					bool search = true;
-					int N = 0;
-					double multiplier;
 
-					while (search)
+					if (data.intervals[i].growthDir == Interval::CENTERED)
 					{
-						multiplier = 0.0;
-						for (int j = 0; j <= N; j++)
+						bool search = true;
+						int N = 1;
+						double multiplier;
+						double nTerm;
+						double seriesTerm;
+						double previousMultiplier;
+
+						while (search)
 						{
-							multiplier +=
-								pow(data.intervals[i].maxGrowthCoeff,j);
+							seriesTerm = 0.0;
+
+							if (isOdd(N))
+							{
+								nTerm = pow(data.intervals[i].maxGrowthCoeff,(N - 1)/2);
+								for (int j = 0; j <= (N - 1)/2 - 1; j++)
+								{
+									seriesTerm += 2*pow(data.intervals[i].maxGrowthCoeff,j);
+								}
+							}
+							else
+							{
+								nTerm = 0;
+								for (int j = 0; j <= N/2 - 1; j++)
+								{
+									seriesTerm += 2*pow(data.intervals[i].maxGrowthCoeff,j);
+								}
+							}
+							multiplier = seriesTerm + nTerm;
+
+							if (data.intervals[i].minCellDim*multiplier > length)
+							{
+								numCells = N - 1;
+								multiplier = previousMultiplier;
+								search = false;
+							}
+							else
+							{
+								previousMultiplier = multiplier;
+								N += 1;
+							}
+						}
+						double initialCellWidth = length / previousMultiplier;
+						temp.push_back(initialCellWidth);
+
+						for (int j = 1; j < numCells; j++)
+						{
+							if (isOdd(numCells))
+							{
+								if (j <= (numCells - 1)/2)
+									temp.push_back(temp[j - 1]
+										   *data.intervals[i].maxGrowthCoeff);
+								else
+									temp.push_back(temp[j - 1]/
+										   data.intervals[i].maxGrowthCoeff);
+							}
+							else
+							{
+								if (j < numCells/2)
+									temp.push_back(temp[j - 1]
+										   *data.intervals[i].maxGrowthCoeff);
+								else if (j == numCells/2)
+									temp.push_back(temp[j - 1]);
+								else
+									temp.push_back(temp[j - 1]/
+										   data.intervals[i].maxGrowthCoeff);
+							}
 						}
 
-						if (data.intervals[i].minCellDim*multiplier > length)
-						{
-							numCells = N;
-							multiplier -=
-								pow(data.intervals[i].maxGrowthCoeff,N);
-							search = false;
-						}
-						else
-						{
-							N += 1;
-						}
 					}
-					double initialCellWidth = length / multiplier;
-					temp.push_back(initialCellWidth);
-
-					for (int j = 1; j < numCells; j++)
+					else
 					{
-						temp.push_back(temp[j - 1]
-						               *data.intervals[i].maxGrowthCoeff);
+						bool search = true;
+						int N = 0;
+						double multiplier;
+
+						while (search)
+						{
+							multiplier = 0.0;
+							for (int j = 0; j <= N; j++)
+							{
+								multiplier +=
+									pow(data.intervals[i].maxGrowthCoeff,j);
+							}
+
+							if (data.intervals[i].minCellDim*multiplier > length)
+							{
+								numCells = N;
+								multiplier -=
+									pow(data.intervals[i].maxGrowthCoeff,N);
+								search = false;
+							}
+							else
+							{
+								N += 1;
+							}
+						}
+						double initialCellWidth = length / multiplier;
+						temp.push_back(initialCellWidth);
+
+						for (int j = 1; j < numCells; j++)
+						{
+							temp.push_back(temp[j - 1]
+										   *data.intervals[i].maxGrowthCoeff);
+						}
 					}
 				}
 
@@ -141,7 +224,7 @@ Mesher::Mesher(MeshData &data) : data(data)
 					}
 
 				}
-				else
+				else if (data.intervals[i].growthDir == Interval::BACKWARD)
 				{
 					double position = min;
 					for (int j = 1; j <= numCells; ++j)
@@ -152,6 +235,17 @@ Mesher::Mesher(MeshData &data) : data(data)
 						centers.push_back(position +
 								            temp[numCells - j]/2.0);
 						position += temp[numCells - j];
+					}
+				}
+				else
+				{
+					double position = min;
+					for (int j = 0; j < numCells; ++j)
+					{
+						dividers.push_back(position + temp[j]);
+						deltas.push_back(temp[j]);
+						centers.push_back(position + temp[j]/2.0);
+						position += temp[j];
 					}
 				}
 			}
@@ -181,6 +275,7 @@ std::size_t Mesher::getNearestIndex(double position)
 					return i;
 			}
 		}
+		return -1;
 	}
 }
 
@@ -198,6 +293,7 @@ std::size_t Mesher::getNextIndex(double position)
 				isLessThan(position,this->centers[i]))
 				return i;
 		}
+		return -1;
 	}
 }
 
@@ -215,6 +311,7 @@ std::size_t Mesher::getPreviousIndex(double position)
 				isLessOrEqual(position,this->centers[i]))
 				return i-1;
 		}
+		return -1;
 	}
 }
 

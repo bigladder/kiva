@@ -45,6 +45,15 @@ bool isGreaterOrEqual(double first, double second)
 		return false;
 }
 
+bool isOdd(int N)
+{
+	return (N % 2 != 0);
+}
+
+bool isEven(int N)
+{
+	return (N % 2 == 0);
+}
 
 #endif
 

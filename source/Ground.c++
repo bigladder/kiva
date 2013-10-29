@@ -87,9 +87,9 @@ void Ground::initializeConditions()
 		Amat = boost::numeric::ublas::compressed_matrix<double,
 		boost::numeric::ublas::column_major, 0,
 		boost::numeric::ublas::unbounded_array<int>,
-		boost::numeric::ublas::unbounded_array<double> >(nX*nZ,nX*nZ);  // Coefficient Matrix
-		b = boost::numeric::ublas::vector<double> (nX*nZ);  // constant and unknown vectors
-		x = boost::numeric::ublas::vector<double> (nX*nZ);  // constant and unknown vectors
+		boost::numeric::ublas::unbounded_array<double> >(nX*nY*nZ,nX*nY*nZ);  // Coefficient Matrix
+		b = boost::numeric::ublas::vector<double> (nX*nY*nZ);  // constant and unknown vectors
+		x = boost::numeric::ublas::vector<double> (nX*nY*nZ);  // constant and unknown vectors
 	}
 
 	TNew.resize(boost::extents[nX][nY][nZ]);
@@ -276,7 +276,7 @@ void Ground::calculateADEUpwardSweep()
 					double tilt;
 					if (domain.cell[i][j][k].surface.orientation == Surface::Z_POS)
 						tilt = 0;
-					else if (domain.cell[i][j][k].surface.orientation == Surface::Z_POS)
+					else if (domain.cell[i][j][k].surface.orientation == Surface::Z_NEG)
 						tilt = PI;
 					else
 						tilt = PI/2.0;
@@ -473,7 +473,7 @@ void Ground::calculateADEDownwardSweep()
 					double tilt;
 					if (domain.cell[i][j][k].surface.orientation == Surface::Z_POS)
 						tilt = 0;
-					else if (domain.cell[i][j][k].surface.orientation == Surface::Z_POS)
+					else if (domain.cell[i][j][k].surface.orientation == Surface::Z_NEG)
 						tilt = PI;
 					else
 						tilt = PI/2.0;
@@ -669,7 +669,7 @@ void Ground::calculateExplicit()
 					double tilt;
 					if (domain.cell[i][j][k].surface.orientation == Surface::Z_POS)
 						tilt = 0;
-					else if (domain.cell[i][j][k].surface.orientation == Surface::Z_POS)
+					else if (domain.cell[i][j][k].surface.orientation == Surface::Z_NEG)
 						tilt = PI;
 					else
 						tilt = PI/2.0;
@@ -852,7 +852,7 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
 {
 	for (size_t k = 0; k < nZ; k++)
 	{
-		for (size_t j = 0; j < nY; ++j)
+		for (size_t j = 0; j < nY; j++)
 		{
 			for (size_t i = 0; i < nX; i++)
 			{
@@ -863,7 +863,7 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
 					double tilt;
 					if (domain.cell[i][j][k].surface.orientation == Surface::Z_POS)
 						tilt = 0;
-					else if (domain.cell[i][j][k].surface.orientation == Surface::Z_POS)
+					else if (domain.cell[i][j][k].surface.orientation == Surface::Z_NEG)
 						tilt = PI;
 					else
 						tilt = PI/2.0;
