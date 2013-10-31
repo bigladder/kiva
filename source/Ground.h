@@ -75,7 +75,7 @@ private:
 	boost::multi_array<double, 3> TOld; // solution, n
 
 	// Plotting variables
-	mglData TDat, rDat, zDat, cDat, rGrid, zGrid, TGrid;
+	mglData TDat, xDat, yDat, cDat, xGrid, yGrid, TGrid;
 	mglGraph gr;		// class for plot drawing
 
 	double nextPlotTime, plotFreq;

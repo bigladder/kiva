@@ -555,21 +555,23 @@ void Domain::setZeroThicknessCellProperties(std::size_t i,
 		std::size_t jP = boost::get<1>(pointSet[p]);
 		std::size_t kP = boost::get<2>(pointSet[p]);
 
-
+		if (cell[iP][jP][kP].cellType != Cell::INTERIOR_AIR &&
+			cell[iP][jP][kP].cellType != Cell::EXTERIOR_AIR)
+		{
 		double vol = meshX.deltas[iP]*meshY.deltas[jP]*meshZ.deltas[kP];
 		double rho = cell[iP][jP][kP].density;
 		double cp = cell[iP][jP][kP].specificHeat;
-		double k = cell[iP][jP][kP].conductivity;
+		double kth = cell[iP][jP][kP].conductivity;
 
 		volumes.push_back(vol);
 		densities.push_back(rho);
 		specificHeats.push_back(cp);
-		conductivities.push_back(k);
+		conductivities.push_back(kth);
 
 		masses.push_back(vol*rho);
 		capacities.push_back(vol*rho*cp);
-		weightedConductivity.push_back(vol*k);
-
+		weightedConductivity.push_back(vol*kth);
+		}
 	}
 
 	double totalVolume = std::accumulate(volumes.begin(), volumes.end(), 0.0);
@@ -607,7 +609,7 @@ void Domain::printCellTypes()
 		for (size_t i = 0; i < nX; i++)
 		{
 
-			output << ", " << cell[i][j][1].cellType;
+			output << ", " << cell[i][j][16].cellType;
 
 		}
 

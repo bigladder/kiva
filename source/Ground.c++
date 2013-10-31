@@ -164,20 +164,20 @@ void Ground::initializePlot()
 
 	size_t contourLevels = 13;
 
-	mglData TRef(nX, nZ),
-			rRef(nX),
-			zRef(nZ),
-			rGridRef(nX + 1),
-			zGridRef(nZ + 1),
-			TGridRef(nX + 1, nZ + 1),
+	mglData TRef(nX, nY),
+			xRef(nX),
+			yRef(nY),
+			xGridRef(nX + 1),
+			yGridRef(nY + 1),
+			TGridRef(nX + 1, nY + 1),
 			cRef(contourLevels);
 
 
 	TDat = TRef;
-	rDat = rRef;
-	zDat = zRef;
-	rGrid = rGridRef;
-	zGrid = zGridRef;
+	xDat = xRef;
+	yDat = yRef;
+	xGrid = xGridRef;
+	yGrid = yGridRef;
 	TGrid = TGridRef;
 	cDat = cRef;
 
@@ -191,27 +191,27 @@ void Ground::initializePlot()
 
 	gr.StartGIF((foundation.outputAnimation.name + ".gif").c_str(),100);
 
-	rGrid.a[0] = domain.meshX.dividers[0];
+	xGrid.a[0] = domain.meshX.dividers[0];
 
 	for(size_t i = 0; i < nX; i++)
 	{
-		rDat.a[i] = domain.meshX.centers[i];
-		rGrid.a[i + 1] = domain.meshX.dividers[i + 1];
+		xDat.a[i] = domain.meshX.centers[i];
+		xGrid.a[i + 1] = domain.meshX.dividers[i + 1];
 	}
 
-	zGrid.a[0] = domain.meshZ.dividers[0];
+	yGrid.a[0] = domain.meshY.dividers[0];
 
-	for(size_t k = 0; k < nZ; k++)
+	for(size_t j = 0; j < nY; j++)
 	{
-		zDat.a[k] = domain.meshZ.centers[k];
-		zGrid.a[k + 1] = domain.meshZ.dividers[k + 1];
+		yDat.a[j] = domain.meshY.centers[j];
+		yGrid.a[j + 1] = domain.meshY.dividers[j + 1];
 	}
 
-	for(size_t k = 0; k <= nZ; k++)
+	for(size_t j = 0; j <= nY; j++)
 	{
 		for(size_t i = 0; i <= nX; i++)
 		{
-			TGrid.a[i+nX*k] = 200.0;
+			TGrid.a[i+nX*j] = 200.0;
 		}
 	}
 
@@ -1249,40 +1249,40 @@ void Ground::plot()
 
 	if (tNow >= nextPlotTime)
 	{
-		for(size_t k = 0; k < nZ; k++)
+		for(size_t j = 0; j < nY; j++)
 		{
 			for(size_t i = 0; i < nX; i++)
 			{
-				size_t j = nY/2;
+				size_t k = nZ/2;
 			    double TinF = (TNew[i][j][k] - 273.15)*9/5 + 32.0;
-				TDat.a[i+nX*k] = TinF;
+				TDat.a[i+nX*j] = TinF;
 			}
 
 		}
 
-		int nX = rDat.GetNN();
-		double rmin = 0.0;
-		double rmax = rGrid.a[nX];
-		double rrange = rmax - rmin;
-		double length = foundation.effectiveLength;
-		mglData rTicks(2);
-		rTicks.a[0] = length;
-		rTicks.a[1] = rmax;
+		//int nX = xDat.GetNN();
+		//double xmin = 0.0;
+		//double xmax = xGrid.a[nX];
+		//double xrange = xmax - xmin;
+		//double length = foundation.effectiveLength;
+		//mglData xTicks(2);
+		//xTicks.a[0] = length;
+		//xTicks.a[1] = xmax;
 
-		std::string sLength = str(boost::format("%0.2f") % length) + " m";
-		std::string sRmax = str(boost::format("%0.2f") % rmax) + " m";
-		std::string rTickString = sLength + "\n" + sRmax;
+		//std::string sLength = str(boost::format("%0.2f") % length) + " m";
+		//std::string sRmax = str(boost::format("%0.2f") % xmax) + " m";
+		//std::string rTickString = sLength + "\n" + sRmax;
 
-		int nZ = zDat.GetNN();
-		double zmin = zGrid.a[0];
-		double zmax = zGrid.a[nZ];
-		double zrange = zmax - zmin;
-		mglData zTicks(2);
-		zTicks.a[0] = zmin;
-		zTicks.a[1] = 0.0;
+		//int nY = yDat.GetNN();
+		//double ymin = yGrid.a[0];
+		//double ymax = yGrid.a[nY];
+		//double yrange = ymax - ymin;
+		//mglData yTicks(2);
+		//yTicks.a[0] = ymin;
+		//yTicks.a[1] = 0.0;
 
-		std::string sZmin = str(boost::format("%0.2f") % zmin) + " m";
-		std::string zTickString = sZmin + "\n 0,0\n";
+		//std::string sYmin = str(boost::format("%0.2f") % ymin) + " m";
+		//std::string yTickString = sYmin + "\n 0,0\n";
 
 		int nT = cDat.GetNN();
 		double Tmin = cDat.a[0];
@@ -1295,30 +1295,31 @@ void Ground::plot()
 		//gr.MultiPlot(3,1,0,2,1,"_");
 		gr.LoadFont("none");
 		gr.SetFontSize(2.0);
-		gr.SetOrigin(0.0, zmax);
-		gr.SetRange('x', rGrid);
-		gr.SetRange('y', zGrid);
+		//gr.SetOrigin(0.0, ymax);
+		gr.SetRange('x', xGrid);
+		gr.SetRange('y', yGrid);
 		gr.SetRange('c', Tmin, Tmax);
 		gr.SetRange('z', Tmin, Tmax);
 		gr.SetTicks('c', Tstep, nT, Tmin);
-		gr.SetTicksVal('x', rTicks, rTickString.c_str());
-		gr.SetTicksVal('y', zTicks, zTickString.c_str());
-		gr.SetTickLen(-0.0001);
-		gr.Aspect(rrange, zrange);
+		//gr.SetTicksVal('x', rTicks, rTickString.c_str());
+		//gr.SetTicksVal('y', zTicks, zTickString.c_str());
+		//gr.SetTickLen(-0.0001);
+		//gr.Aspect(xrange, yrange);
 		gr.Axis("yU");
 		gr.Axis("x");
 		gr.Colorbar("_");
 		//gr.Puts(mglPoint(12.5,-10), "Temperature \\textdegree C", ":C");
 		gr.Box("k",false);
-		gr.Dens(rDat, zDat, TDat);
+		gr.Dens(xDat, yDat, TDat);
 		if (foundation.outputAnimation.contours)
-			gr.Cont(cDat, rDat, zDat, TDat,"H");
+			gr.Cont(cDat, xDat, yDat, TDat,"H");
 		if (foundation.outputAnimation.gradients)
-			gr.Grad(rDat, zDat, TDat);
+			gr.Grad(xDat, yDat, TDat);
 		if (foundation.outputAnimation.grid)
-			gr.Grid(rGrid, zGrid, TGrid, "W");
+			gr.Grid(xGrid, yGrid, TGrid, "W");
 
 		// Draw blocks
+		if (false)
 		for (size_t b = 0; b < foundation.blocks.size(); b++)
 		{
 			mglPoint bl = mglPoint(foundation.blocks[b].xMin,
@@ -1343,7 +1344,7 @@ void Ground::plot()
 
 		// Timestamp
 		boost::posix_time::ptime tp(simulationControl.startDate,boost::posix_time::seconds(tNow));
-		gr.Puts(mglPoint(-0.10,0.40), to_simple_string(tp).c_str(), ":C");
+		gr.Puts(mglPoint(-0.10,3.0), to_simple_string(tp).c_str(), ":C");
 
 		/*
 		// Text
