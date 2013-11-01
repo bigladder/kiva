@@ -609,7 +609,7 @@ void Domain::printCellTypes()
 		for (size_t i = 0; i < nX; i++)
 		{
 
-			output << ", " << cell[i][j][16].cellType;
+			output << ", " << cell[i][j][nZ/2].cellType;
 
 		}
 

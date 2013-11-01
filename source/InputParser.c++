@@ -243,6 +243,14 @@ Input inputParser(std::string inputFile)
 			foundation1.numericalScheme = Foundation::NS_ADE;
 		else if (yamlInput["Foundation"]["numericalScheme"].as<std::string>() == "EXPLICIT")
 			foundation1.numericalScheme = Foundation::NS_EXPLICIT;
+		else if (yamlInput["Foundation"]["numericalScheme"].as<std::string>() == "ADI")
+		{
+			foundation1.numericalScheme = Foundation::NS_ADI;
+			if  (yamlInput["Foundation"]["fADI"].IsDefined())
+				foundation1.fADI = yamlInput["Foundation"]["fADI"].as<double>();
+			else
+				foundation1.fADI = 0.01;
+		}
 		else if (yamlInput["Foundation"]["numericalScheme"].as<std::string>() == "IMPLICIT")
 			foundation1.numericalScheme = Foundation::NS_IMPLICIT;
 		else if (yamlInput["Foundation"]["numericalScheme"].as<std::string>() == "CRANK-NICOLSON")
@@ -254,6 +262,7 @@ Input inputParser(std::string inputFile)
 	{
 		foundation1.numericalScheme = Foundation::NS_ADE;
 	}
+
 
 	if  (yamlInput["Foundation"]["initializationMethod"].IsDefined())
 	{

@@ -117,6 +117,8 @@ private:
 
 	void calculateMatrix(Foundation::NumericalScheme scheme);
 
+	void calculateADI(int dim);
+
 	void plot();
 
 	// Misc. Functions

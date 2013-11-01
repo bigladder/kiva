@@ -80,6 +80,7 @@ void Ground::initializeConditions()
 	}
 
 	if (foundation.numericalScheme == Foundation::NS_CRANK_NICOLSON ||
+			 foundation.numericalScheme == Foundation::NS_ADI ||
 			 foundation.numericalScheme == Foundation::NS_IMPLICIT ||
 			 foundation.numericalScheme == Foundation::NS_STEADY_STATE ||
 			 foundation.initializationMethod == Foundation::IM_STEADY_STATE)
@@ -98,17 +99,6 @@ void Ground::initializeConditions()
 	if (foundation.initializationMethod == Foundation::IM_STEADY_STATE)
 	{
 		calculateMatrix(Foundation::NS_STEADY_STATE);
-		for (size_t k = 0; k < nZ; ++k)
-		{
-			for (size_t j = 0; j < nY; ++j)
-			{
-				for (size_t i = 0; i < nX; ++i)
-				{
-					// Update old values for next timestep
-					TOld[i][j][k] = TNew[i][j][k];
-				}
-			}
-		}
 	}
 	else if (foundation.initializationMethod == Foundation::IM_IMPLICIT_ACCELERATION)
 	{
@@ -164,12 +154,12 @@ void Ground::initializePlot()
 
 	size_t contourLevels = 13;
 
-	mglData TRef(nX, nY),
+	mglData TRef(nX, nZ),
 			xRef(nX),
-			yRef(nY),
+			yRef(nZ),
 			xGridRef(nX + 1),
-			yGridRef(nY + 1),
-			TGridRef(nX + 1, nY + 1),
+			yGridRef(nZ + 1),
+			TGridRef(nX + 1, nZ + 1),
 			cRef(contourLevels);
 
 
@@ -199,15 +189,15 @@ void Ground::initializePlot()
 		xGrid.a[i + 1] = domain.meshX.dividers[i + 1];
 	}
 
-	yGrid.a[0] = domain.meshY.dividers[0];
+	yGrid.a[0] = domain.meshZ.dividers[0];
 
-	for(size_t j = 0; j < nY; j++)
+	for(size_t j = 0; j < nZ; j++)
 	{
-		yDat.a[j] = domain.meshY.centers[j];
-		yGrid.a[j + 1] = domain.meshY.dividers[j + 1];
+		yDat.a[j] = domain.meshZ.centers[j];
+		yGrid.a[j + 1] = domain.meshZ.dividers[j + 1];
 	}
 
-	for(size_t j = 0; j <= nY; j++)
+	for(size_t j = 0; j <= nZ; j++)
 	{
 		for(size_t i = 0; i <= nX; i++)
 		{
@@ -223,6 +213,7 @@ void Ground::initializePlot()
 		cDat.a[n] = mid - range/2 + double(n)*step;
 	}
 
+	plot();
 }
 
 void Ground::calculateADE()
@@ -255,6 +246,9 @@ void Ground::calculateADE()
 			{
 				// Calculate average of sweeps
 				TNew[i][j][k] = 0.5*(U[i][j][k] + V[i][j][k]);
+
+				// Update old values for next timestep
+				TOld[i][j][k] = TNew[i][j][k];
 			}
 		}
 	}
@@ -846,6 +840,17 @@ void Ground::calculateExplicit()
 			}
 		}
 	}
+	for (size_t k = 0; k < nZ; ++k)
+	{
+		for (size_t j = 0; j < nY; ++j)
+		{
+			for (size_t i = 0; i < nX; ++i)
+			{
+				// Update old values for next timestep
+				TOld[i][j][k] = TNew[i][j][k];
+			}
+		}
+	}
 }
 
 void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
@@ -1198,9 +1203,497 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
 			{
 				// Read solution into temperature matrix
 				TNew[i][j][k] = x(i + nX*j + nX*nY*k);
+
+				// Update old values for next timestep
+				TOld[i][j][k] = TNew[i][j][k];
 			}
 		}
 	}
+	Amat.clear();
+	b.clear();
+	x.clear();
+
+}
+
+void Ground::calculateADI(int dim)
+{
+	for (size_t k = 0; k < nZ; k++)
+	{
+		for (size_t j = 0; j < nY; j++)
+		{
+			for (size_t i = 0; i < nX; i++)
+			{
+
+				std::size_t index;
+				if (dim == 1)
+					index = i + nX*j + nX*nY*k;
+				else if (dim == 2)
+					index = j + nY*i + nY*nX*k;
+				else if (dim == 3)
+					index = k + nZ*i + nZ*nX*j;
+
+				switch (domain.cell[i][j][k].cellType)
+				{
+				case Cell::BOUNDARY:
+					{
+					double tilt;
+					if (domain.cell[i][j][k].surface.orientation == Surface::Z_POS)
+						tilt = 0;
+					else if (domain.cell[i][j][k].surface.orientation == Surface::Z_NEG)
+						tilt = PI;
+					else
+						tilt = PI/2.0;
+
+					switch (domain.cell[i][j][k].surface.boundaryConditionType)
+					{
+					case Surface::ZERO_FLUX:
+						{
+						switch (domain.cell[i][j][k].surface.orientation)
+						{
+						case Surface::X_NEG:
+							Amat(index, index) = 1.0;
+							if (dim == 1)
+							{
+								Amat(index, index+1) = -1.0;
+								b(index) = 0;
+							}
+							else
+							{
+								b(index) = TOld[i+1][j][k];
+							}
+							break;
+						case Surface::X_POS:
+							Amat(index, index) = 1.0;
+							if (dim == 1)
+							{
+								Amat(index, index-1) = -1.0;
+								b(index) = 0;
+							}
+							else
+							{
+								b(index) = TOld[i-1][j][k];
+							}
+							break;
+						case Surface::Y_NEG:
+							Amat(index, index) = 1.0;
+							if (dim == 2)
+							{
+								Amat(index, index+1) = -1.0;
+								b(index) = 0;
+							}
+							else
+							{
+								b(index) = TOld[i][j+1][k];
+							}
+							break;
+						case Surface::Y_POS:
+							Amat(index, index) = 1.0;
+							if (dim == 2)
+							{
+								Amat(index, index-1) = -1.0;
+								b(index) = 0;
+							}
+							else
+							{
+								b(index) = TOld[i][j-1][k];
+							}
+							break;
+						case Surface::Z_NEG:
+							Amat(index, index) = 1.0;
+							if (dim == 3)
+							{
+								Amat(index, index+1) = -1.0;
+								b(index) = 0;
+							}
+							else
+							{
+								b(index) = TOld[i][j][k+1];
+							}
+							break;
+						case Surface::Z_POS:
+							Amat(index, index) = 1.0;
+							if (dim == 3)
+							{
+								Amat(index, index-1) = -1.0;
+								b(index) = 0;
+							}
+							else
+							{
+								b(index) = TOld[i][j][k-1];
+							}
+							break;
+						}
+						}
+						break;
+
+					case Surface::CONSTANT_TEMPERATURE:
+						{
+						Amat(index, index) = 1.0;
+
+						b(index) = domain.cell[i][j][k].surface.temperature;
+						}
+						break;
+
+					case Surface::INTERIOR_TEMPERATURE:
+						{
+						Amat(index, index) = 1.0;
+
+						b(index) = foundation.indoorAirTemperature;
+						}
+						break;
+
+					case Surface::EXTERIOR_TEMPERATURE:
+						{
+						Amat(index, index) = 1.0;
+
+						b(index) = getOutdoorTemperature();
+						}
+						break;
+
+					case Surface::INTERIOR_FLUX:
+						{
+						double Tair = foundation.indoorAirTemperature;
+						double q = 0;
+
+						double hc = getConvectionCoeff(TOld[i][j][k],
+										Tair,0.0,1.0,false,tilt);
+						double hr = getSimpleInteriorIRCoeff(domain.cell[i][j][k].surface.emissivity,
+															 TOld[i][j][k],Tair);
+
+						switch (domain.cell[i][j][k].surface.orientation)
+						{
+						case Surface::X_NEG:
+							{
+							Amat(index, index) = domain.getKXP(i,j,k)/domain.getDXP(i) + (hc + hr);
+							if (dim == 1)
+							{
+								Amat(index, index+1) = -domain.getKXP(i,j,k)/domain.getDXP(i);
+								b(index) = (hc + hr)*Tair + q;
+							}
+							else
+							{
+								b(index) = TOld[i+1][j][k]*domain.getKXP(i,j,k)/domain.getDXP(i) + (hc + hr)*Tair + q;
+							}
+							}
+							break;
+						case Surface::X_POS:
+							{
+							Amat(index, index) = domain.getKXM(i,j,k)/domain.getDXM(i) + (hc + hr);
+							if (dim == 1)
+							{
+								Amat(index, index-1) = -domain.getKXM(i,j,k)/domain.getDXM(i);
+								b(index) = (hc + hr)*Tair + q;
+							}
+							else
+							{
+								b(index) = TOld[i-1][j][k]*domain.getKXM(i,j,k)/domain.getDXM(i) + (hc + hr)*Tair + q;
+							}
+							}
+							break;
+						case Surface::Y_NEG:
+							{
+							Amat(index, index) = domain.getKYP(i,j,k)/domain.getDYP(j) + (hc + hr);
+							if (dim == 2)
+							{
+								Amat(index, index+1) = -domain.getKYP(i,j,k)/domain.getDYP(j);
+								b(index) = (hc + hr)*Tair + q;
+							}
+							else
+							{
+								b(index) = TOld[i][j+1][k]*domain.getKYP(i,j,k)/domain.getDYP(j) + (hc + hr)*Tair + q;
+							}
+							}
+							break;
+						case Surface::Y_POS:
+							{
+							Amat(index, index) = domain.getKYM(i,j,k)/domain.getDYM(j) + (hc + hr);
+							if (dim == 2)
+							{
+								Amat(index, index-1) = -domain.getKYM(i,j,k)/domain.getDYM(j);
+								b(index) = (hc + hr)*Tair + q;
+							}
+							else
+							{
+								b(index) = TOld[i][j-1][k]*domain.getKYM(i,j,k)/domain.getDYM(j) + (hc + hr)*Tair + q;
+							}
+							}
+							break;
+						case Surface::Z_NEG:
+							{
+							Amat(index, index) = domain.getKZP(i,j,k)/domain.getDZP(k) + (hc + hr);
+							if (dim == 3)
+							{
+								Amat(index, index+1) = -domain.getKZP(i,j,k)/domain.getDZP(k);
+								b(index) = (hc + hr)*Tair + q;
+							}
+							else
+							{
+								b(index) = TOld[i][j][k+1]*domain.getKZP(i,j,k)/domain.getDZP(k) + (hc + hr)*Tair + q;
+							}
+							}
+							break;
+						case Surface::Z_POS:
+							{
+							Amat(index, index) = domain.getKZM(i,j,k)/domain.getDZM(k) + (hc + hr);
+							if (dim == 3)
+							{
+								Amat(index, index-1) = -domain.getKZM(i,j,k)/domain.getDZM(k);
+								b(index) = (hc + hr)*Tair + q;
+							}
+							else
+							{
+								b(index) = TOld[i][j][k-1]*domain.getKZM(i,j,k)/domain.getDZM(k) + (hc + hr)*Tair + q;
+							}
+							}
+							break;
+						}
+						}
+						break;
+
+					case Surface::EXTERIOR_FLUX:
+						{
+						double Tair = getOutdoorTemperature();
+						double v = getLocalWindSpeed();
+						double eSky = weatherData.skyEmissivity.getValue(getSimTime(tNow));
+						double F = getEffectiveExteriorViewFactor(eSky,tilt);
+						double hc = getConvectionCoeff(TOld[i][j][k],Tair,v,1.0,true,tilt);
+						double hr = getExteriorIRCoeff(domain.cell[i][j][k].surface.emissivity,TOld[i][j][k],Tair,eSky,tilt);
+						double q = domain.cell[i][j][k].surface.absorptivity*weatherData.globalHorizontalSolar.getValue(getSimTime(tNow));
+
+						switch (domain.cell[i][j][k].surface.orientation)
+						{
+						case Surface::X_NEG:
+							{
+							Amat(index, index) = domain.getKXP(i,j,k)/domain.getDXP(i) + (hc + hr);
+							if (dim == 1)
+							{
+								Amat(index, index+1) = -domain.getKXP(i,j,k)/domain.getDXP(i);
+								b(index) = (hc + hr*pow(F,0.25))*Tair + q;
+							}
+							else
+							{
+								b(index) = TOld[i+1][j][k]*domain.getKXP(i,j,k)/domain.getDXP(i) + (hc + hr*pow(F,0.25))*Tair + q;
+							}
+							}
+							break;
+						case Surface::X_POS:
+							{
+							Amat(index, index) = domain.getKXM(i,j,k)/domain.getDXM(i) + (hc + hr);
+							if (dim == 1)
+							{
+								Amat(index, index-1) = -domain.getKXM(i,j,k)/domain.getDXM(i);
+								b(index) = (hc + hr*pow(F,0.25))*Tair + q;
+							}
+							else
+							{
+								b(index) = TOld[i-1][j][k]*domain.getKXM(i,j,k)/domain.getDXM(i) + (hc + hr*pow(F,0.25))*Tair + q;
+							}
+							}
+							break;
+						case Surface::Y_NEG:
+							{
+							Amat(index, index) = domain.getKYP(i,j,k)/domain.getDYP(j) + (hc + hr);
+							if (dim == 2)
+							{
+								Amat(index, index+1) = -domain.getKYP(i,j,k)/domain.getDYP(j);
+								b(index) = (hc + hr*pow(F,0.25))*Tair + q;
+							}
+							else
+							{
+								b(index) = TOld[i][j+1][k]*domain.getKYP(i,j,k)/domain.getDYP(j) + (hc + hr*pow(F,0.25))*Tair + q;
+							}
+							}
+							break;
+						case Surface::Y_POS:
+							{
+							Amat(index, index) = domain.getKYM(i,j,k)/domain.getDYM(j) + (hc + hr);
+							if (dim == 2)
+							{
+								Amat(index, index-1) = -domain.getKYM(i,j,k)/domain.getDYM(j);
+								b(index) = (hc + hr*pow(F,0.25))*Tair + q;
+							}
+							else
+							{
+								b(index) = TOld[i][j-1][k]*domain.getKYM(i,j,k)/domain.getDYM(j) + (hc + hr*pow(F,0.25))*Tair + q;
+							}
+							}
+							break;
+						case Surface::Z_NEG:
+							{
+							Amat(index, index) = domain.getKZP(i,j,k)/domain.getDZP(k) + (hc + hr);
+							if (dim == 3)
+							{
+								Amat(index, index+1) = -domain.getKZP(i,j,k)/domain.getDZP(k);
+								b(index) = (hc + hr*pow(F,0.25))*Tair + q;
+							}
+							else
+							{
+								b(index) = TOld[i][j][k+1]*domain.getKZP(i,j,k)/domain.getDZP(k) + (hc + hr*pow(F,0.25))*Tair + q;
+							}
+							}
+							break;
+						case Surface::Z_POS:
+							{
+							Amat(index, index) = domain.getKZM(i,j,k)/domain.getDZM(k) + (hc + hr);
+							if (dim == 3)
+							{
+								Amat(index, index-1) = -domain.getKZM(i,j,k)/domain.getDZM(k);
+								b(index) = (hc + hr*pow(F,0.25))*Tair + q;
+							}
+							else
+							{
+								b(index) = TOld[i][j][k-1]*domain.getKZM(i,j,k)/domain.getDZM(k) + (hc + hr*pow(F,0.25))*Tair + q;
+							}
+							}
+							break;
+						}
+						}
+						break;
+					}
+					}
+					break;
+				case Cell::INTERIOR_AIR:
+					Amat(index, index) = 1.0;
+
+					b(index) = foundation.indoorAirTemperature;
+					break;
+				case Cell::EXTERIOR_AIR:
+					Amat(index, index) = 1.0;
+
+					b(index) = getOutdoorTemperature();
+					break;
+				default:
+					{
+					double theta;
+					if (foundation.coordinateSystem == Foundation::CS_3D)
+					{
+						theta = timestep/
+								(3*domain.cell[i][j][k].density*domain.cell[i][j][k].specificHeat);
+					}
+					else
+					{
+						theta = timestep/
+								(2*domain.cell[i][j][k].density*domain.cell[i][j][k].specificHeat);
+					}
+
+					double A = 0;
+					double B = 0;
+					if (i != 0)
+					{
+						double r = domain.meshX.centers[i];
+						A = domain.cell[i][j][k].cxp_c*theta/r;
+						B = domain.cell[i][j][k].cxm_c*theta/r;
+					}
+					double C = domain.cell[i][j][k].cxp*theta;
+					double D = domain.cell[i][j][k].cxm*theta;
+					double E = domain.cell[i][j][k].czp*theta;
+					double F = domain.cell[i][j][k].czm*theta;
+					double G = domain.cell[i][j][k].cyp*theta;
+					double H = domain.cell[i][j][k].cym*theta;
+
+					double f = foundation.fADI;
+
+					if (foundation.coordinateSystem == Foundation::CS_3D)
+					{
+						if (dim == 1) // x
+						{
+							Amat(index, index) = 1.0 + (3 - 2*f)*(A + C - B - D);
+							Amat(index, index-1) = (3 - 2*f)*(B + D);
+							Amat(index, index+1) = (3 - 2*f)*(-A - C);
+
+							b(index)
+									= TOld[i][j][k]*(1.0 + f*(F + H - E - G))
+									- TOld[i][j][k-1]*f*F
+									+ TOld[i][j][k+1]*f*E
+									- TOld[i][j-1][k]*f*H
+									+ TOld[i][j+1][k]*f*G;
+						}
+						else if (dim == 2) // y
+						{
+							Amat(index, index) = (1.0 + (3 - 2*f)*(G - H));
+							Amat(index, index-1) = (3 - 2*f)*H;
+							Amat(index, index+1) = (3 - 2*f)*(-G);
+
+							b(index)
+									= TOld[i][j][k]*(1.0 + f*(B + D + F - A - C - E))
+									- TOld[i-1][j][k]*f*(B + D)
+									+ TOld[i+1][j][k]*f*(A + C)
+									- TOld[i][j][k-1]*f*F
+									+ TOld[i][j][k+1]*f*E;
+						}
+						else if (dim == 3) // z
+						{
+							Amat(index, index) = (1.0 + (3 - 2*f)*(E - F));
+							Amat(index, index-1) = (3 - 2*f)*F;
+							Amat(index, index+1) = (3 - 2*f)*(-E);
+
+							b(index)
+									= TOld[i][j][k]*(1.0 + f*(B + D + H - A - C - G))
+									- TOld[i-1][j][k]*f*(B + D)
+									+ TOld[i+1][j][k]*f*(A + C)
+									- TOld[i][j-1][k]*f*H
+									+ TOld[i][j+1][k]*f*G;
+						}
+					}
+					else
+					{
+						if (dim == 1) // x
+						{
+							Amat(index, index) = 1.0 + (2 - f)*(A + C - B - D);
+							Amat(index, index-1) = (2 - f)*(B + D);
+							Amat(index, index+1) = (2 - f)*(-A - C);
+
+							b(index)
+									= TOld[i][j][k]*(1.0 + f*(F - E))
+									- TOld[i][j][k-1]*f*F
+									+ TOld[i][j][k+1]*f*E;
+						}
+						else if (dim == 3) // z
+						{
+							Amat(index, index) = 1.0 + (2 - f)*(E - F);
+							Amat(index, index-1) = (2 - f)*F;
+							Amat(index, index+1) = (2 - f)*(-E);
+
+							b(index)
+									= TOld[i][j][k]*(1.0 + f*(B + D - A - C))
+									- TOld[i-1][j][k]*f*(B + D)
+									+ TOld[i+1][j][k]*f*(A + C);
+						}
+					}
+					}
+					break;
+				}
+			}
+		}
+	}
+
+	umf::umf_solve(Amat,x,b);
+
+	for (size_t k = 0; k < nZ; ++k)
+	{
+		for (size_t j = 0; j < nY; ++j)
+		{
+			for (size_t i = 0; i < nX; ++i)
+			{
+				std::size_t index;
+				if (dim == 1)
+					index = i + nX*j + nX*nY*k;
+				else if (dim == 2)
+					index = j + nY*i + nY*nX*k;
+				else if (dim == 3)
+					index = k + nZ*i + nZ*nX*j;
+
+				// Read solution into temperature matrix
+				TNew[i][j][k] = x(index);
+				// Update old values for next timestep
+				TOld[i][j][k] = TNew[i][j][k];
+			}
+		}
+	}
+	Amat.clear();
+	b.clear();
+	x.clear();
+
 }
 
 void Ground::calculate(double t)
@@ -1216,6 +1709,12 @@ void Ground::calculate(double t)
 	case Foundation::NS_EXPLICIT:
 		calculateExplicit();
 		break;
+	case Foundation::NS_ADI:
+		calculateADI(1);
+		if (foundation.coordinateSystem == Foundation::CS_3D)
+			calculateADI(2);
+		calculateADI(3);
+		break;
 	case Foundation::NS_IMPLICIT:
 		calculateMatrix(Foundation::NS_IMPLICIT);
 		break;
@@ -1225,17 +1724,6 @@ void Ground::calculate(double t)
 	case Foundation::NS_STEADY_STATE:
 		calculateMatrix(Foundation::NS_STEADY_STATE);
 		break;
-	}
-	for (size_t k = 0; k < nZ; ++k)
-	{
-		for (size_t j = 0; j < nY; ++j)
-		{
-			for (size_t i = 0; i < nX; ++i)
-			{
-				// Update old values for next timestep
-				TOld[i][j][k] = TNew[i][j][k];
-			}
-		}
 	}
 	// Calculate Heat Fluxes
 	QSlabTotal = getSurfaceAverageHeatFlux("Slab Interior");
@@ -1249,13 +1737,13 @@ void Ground::plot()
 
 	if (tNow >= nextPlotTime)
 	{
-		for(size_t j = 0; j < nY; j++)
+		for(size_t k = 0; k < nZ; k++)
 		{
 			for(size_t i = 0; i < nX; i++)
 			{
-				size_t k = nZ/2;
+				size_t j = nY/2;
 			    double TinF = (TNew[i][j][k] - 273.15)*9/5 + 32.0;
-				TDat.a[i+nX*j] = TinF;
+				TDat.a[i+nX*k] = TinF;
 			}
 
 		}
@@ -1344,7 +1832,7 @@ void Ground::plot()
 
 		// Timestamp
 		boost::posix_time::ptime tp(simulationControl.startDate,boost::posix_time::seconds(tNow));
-		gr.Puts(mglPoint(-0.10,3.0), to_simple_string(tp).c_str(), ":C");
+		gr.Puts(mglPoint(-0.10,4.8), to_simple_string(tp).c_str(), ":C");
 
 		/*
 		// Text

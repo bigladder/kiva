@@ -329,12 +329,15 @@ public:
 	{
 		NS_ADE,
 		NS_EXPLICIT,
+		NS_ADI,
 		NS_IMPLICIT,
 		NS_CRANK_NICOLSON,
 		NS_STEADY_STATE
 	};
 
 	NumericalScheme numericalScheme;
+
+	double fADI;  // ADI modified f-factor
 
 	double initialTemperature;
 	long implicitAccelTimestep;
