@@ -24,14 +24,13 @@
 #include "WeatherData.h"
 #include "Input.h"
 #include "Algorithms.h"
+#include "GroundPlot.h"
 
 #include <cmath>
 #include <vector>
 
 #include <mgl2/mgl.h>
 
-#include <boost/lexical_cast.hpp>
-#include <boost/format.hpp>
 #include <boost/thread.hpp>
 #include <boost/bind.hpp>
 
@@ -59,6 +58,8 @@ private:
 	size_t nX, nY, nZ;
 	double annualAverageDryBulbTemperature;
 
+	Domain domain;
+
 	// Data structures
 	boost::multi_array<double, 3> U; // ADE upper sweep, n+1
 	boost::multi_array<double, 3> UOld; // ADE upper sweep, n
@@ -74,17 +75,7 @@ private:
 
 	boost::multi_array<double, 3> TOld; // solution, n
 
-	std::vector<double> QSlab; // Heat Fluxes through the slab
-
-
-	// Plotting variables
-	mglData TDat, rDat, zDat, cDat, rGrid, zGrid, TGrid;
-	mglGraph gr;		// class for plot drawing
-
-	double nextPlotTime, plotFreq;
-	std::string startString;
-	bool makePlot;
-	Domain domain;
+	std::vector<GroundPlot> plots;
 
 public:
 
@@ -107,7 +98,7 @@ private:
 
 	void initializeConditions();
 
-	void initializePlot();
+	void initializePlots();
 
 	// Calculators (Called from main calculator)
 	void calculateADE();
@@ -118,11 +109,9 @@ private:
 
 	void calculateExplicit();
 
-	void calculateImplicit();
+	void calculateMatrix(Foundation::NumericalScheme scheme);
 
-	void calculateCrankNicolson();
-
-	void calculateSteadyState();
+	void calculateADI(int dim);
 
 	void plot();
 
@@ -141,7 +130,10 @@ private:
 							  double tilt);
 
 	double getOutdoorTemperature();
+
 	double getLocalWindSpeed();
+
+	double getSurfaceAverageHeatFlux(std::string surfaceName);
 };
 
 

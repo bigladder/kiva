@@ -28,7 +28,7 @@ Input inputParser(std::string inputFile)
 	SimulationControl simulationControl;
 	Foundation foundation1;
 
-	YAML::Node yamlInput = YAML::LoadFile("in.yaml");
+	YAML::Node yamlInput = YAML::LoadFile(inputFile);
 
 
 	simulationControl.weatherFile =
@@ -213,8 +213,12 @@ Input inputParser(std::string inputFile)
 	else if (yamlInput["Foundation"]["coordinateSystem"].as<std::string>() == "3D")
 		foundation1.coordinateSystem = Foundation::CS_3D;
 
-	foundation1.width = yamlInput["Foundation"]["width"].as<double>();
-	foundation1.length = yamlInput["Foundation"]["length"].as<double>();
+	for (size_t i=0;i<yamlInput["Foundation"]["polygon"].size();i++)
+	{
+		foundation1.polygon.outer().push_back(Point(
+				yamlInput["Foundation"]["polygon"][i][0].as<double>(),
+				yamlInput["Foundation"]["polygon"][i][1].as<double>()));
+	}
 
 	// Meshing
 	if  (yamlInput["Foundation"]["mesh"].IsDefined())
@@ -222,14 +226,14 @@ Input inputParser(std::string inputFile)
 		foundation1.mesh.minCellDim = yamlInput["Foundation"]["mesh"]["minCellDim"].as<double>();
 		foundation1.mesh.maxDepthGrowthCoeff = yamlInput["Foundation"]["mesh"]["maxDepthGrowthCoeff"].as<double>();
 		foundation1.mesh.maxInteriorGrowthCoeff = yamlInput["Foundation"]["mesh"]["maxInteriorGrowthCoeff"].as<double>();
-		foundation1.mesh.maxRadialGrowthCoeff = yamlInput["Foundation"]["mesh"]["maxExteriorGrowthCoeff"].as<double>();
+		foundation1.mesh.maxExteriorGrowthCoeff = yamlInput["Foundation"]["mesh"]["maxExteriorGrowthCoeff"].as<double>();
 	}
 	else
 	{
 		foundation1.mesh.minCellDim = 0.05;
 		foundation1.mesh.maxDepthGrowthCoeff = 1.25;
 		foundation1.mesh.maxInteriorGrowthCoeff = 1.25;
-		foundation1.mesh.maxRadialGrowthCoeff = 1.25;
+		foundation1.mesh.maxExteriorGrowthCoeff = 1.25;
 	}
 
 	// Simulation Control
@@ -239,6 +243,14 @@ Input inputParser(std::string inputFile)
 			foundation1.numericalScheme = Foundation::NS_ADE;
 		else if (yamlInput["Foundation"]["numericalScheme"].as<std::string>() == "EXPLICIT")
 			foundation1.numericalScheme = Foundation::NS_EXPLICIT;
+		else if (yamlInput["Foundation"]["numericalScheme"].as<std::string>() == "ADI")
+		{
+			foundation1.numericalScheme = Foundation::NS_ADI;
+			if  (yamlInput["Foundation"]["fADI"].IsDefined())
+				foundation1.fADI = yamlInput["Foundation"]["fADI"].as<double>();
+			else
+				foundation1.fADI = 0.01;
+		}
 		else if (yamlInput["Foundation"]["numericalScheme"].as<std::string>() == "IMPLICIT")
 			foundation1.numericalScheme = Foundation::NS_IMPLICIT;
 		else if (yamlInput["Foundation"]["numericalScheme"].as<std::string>() == "CRANK-NICOLSON")
@@ -250,6 +262,7 @@ Input inputParser(std::string inputFile)
 	{
 		foundation1.numericalScheme = Foundation::NS_ADE;
 	}
+
 
 	if  (yamlInput["Foundation"]["initializationMethod"].IsDefined())
 	{
@@ -307,12 +320,63 @@ Input inputParser(std::string inputFile)
 
 	// Output
 
-	foundation1.outputAnimation.name = yamlInput["Foundation"]["outputAnimation"]["name"].as<std::string>();
-	foundation1.outputAnimation.frequency = boost::posix_time::hours(yamlInput["Foundation"]["outputAnimation"]["frequency"].as<long>());
-	foundation1.outputAnimation.grid = yamlInput["Foundation"]["outputAnimation"]["grid"].as<bool>();
-	foundation1.outputAnimation.gradients = yamlInput["Foundation"]["outputAnimation"]["gradients"].as<bool>();
-	foundation1.outputAnimation.contours = yamlInput["Foundation"]["outputAnimation"]["contours"].as<bool>();
-	foundation1.outputAnimation.size = yamlInput["Foundation"]["outputAnimation"]["size"].as<int>();
+	for(size_t i=0;i<yamlInput["Foundation"]["outputAnimations"].size();i++)
+	{
+		OutputAnimation temp;
+		temp.name = yamlInput["Foundation"]["outputAnimations"][i]["name"].as<std::string>();
+		temp.frequency = boost::posix_time::hours(yamlInput["Foundation"]["outputAnimations"][i]["frequency"].as<long>());
+		temp.grid = yamlInput["Foundation"]["outputAnimations"][i]["grid"].as<bool>();
+		temp.gradients = yamlInput["Foundation"]["outputAnimations"][i]["gradients"].as<bool>();
+		temp.contours = yamlInput["Foundation"]["outputAnimations"][i]["contours"].as<bool>();
+		temp.size = yamlInput["Foundation"]["outputAnimations"][i]["size"].as<int>();
+
+		if (yamlInput["Foundation"]["outputAnimations"][i]["startDate"].IsDefined())
+		{
+			temp.startDate = boost::gregorian::from_string(yamlInput["Foundation"]["outputAnimations"][i]["startDate"].as<std::string>());
+			temp.startDateSet = true;
+		}
+		else
+			temp.startDateSet = false;
+
+		if (yamlInput["Foundation"]["outputAnimations"][i]["endDate"].IsDefined())
+		{
+			temp.endDate = boost::gregorian::from_string(yamlInput["Foundation"]["outputAnimations"][i]["endDate"].as<std::string>());
+			temp.endDateSet = true;
+		}
+		else
+			temp.endDateSet = false;
+
+		if (yamlInput["Foundation"]["outputAnimations"][i]["xRange"].IsDefined())
+		{
+			temp.xRange.first = yamlInput["Foundation"]["outputAnimations"][i]["xRange"][0].as<double>();
+			temp.xRange.second = yamlInput["Foundation"]["outputAnimations"][i]["xRange"][1].as<double>();
+			temp.xRangeSet = true;
+		}
+		else
+			temp.xRangeSet = false;
+
+		if (yamlInput["Foundation"]["outputAnimations"][i]["yRange"].IsDefined())
+		{
+			temp.yRange.first = yamlInput["Foundation"]["outputAnimations"][i]["yRange"][0].as<double>();
+			temp.yRange.second = yamlInput["Foundation"]["outputAnimations"][i]["yRange"][1].as<double>();
+			temp.yRangeSet = true;
+		}
+		else
+			temp.yRangeSet = false;
+
+		if (yamlInput["Foundation"]["outputAnimations"][i]["zRange"].IsDefined())
+		{
+
+			temp.zRange.first = yamlInput["Foundation"]["outputAnimations"][i]["zRange"][0].as<double>();
+			temp.zRange.second = yamlInput["Foundation"]["outputAnimations"][i]["zRange"][1].as<double>();
+			temp.zRangeSet = true;
+		}
+		else
+			temp.zRangeSet = false;
+
+		foundation1.outputAnimations.push_back(temp);
+	}
+
 
 	// Full Input
 	input.simulationControl = simulationControl;

@@ -33,15 +33,15 @@ Ground::Ground(WeatherData &weatherData, Foundation &foundation,
 	// Initial Conditions
 	initializeConditions();
 
-	makePlot = true;
-	if (foundation.outputAnimation.name == "") makePlot = false;
-
-	if (makePlot) initializePlot();
+	initializePlots();
 }
 
 Ground::~Ground()
 {
-	if (makePlot) gr.CloseGIF();
+	for (std::size_t p = 0; p < plots.size(); p++)
+	{
+		plots[p].gr.CloseGIF();
+	}
 }
 
 void Ground::buildDomain()
@@ -59,8 +59,7 @@ void Ground::buildDomain()
 	nY = domain.meshY.centers.size();
 	nZ = domain.meshZ.centers.size();
 
-	//cout << "Number of Cells: " << nX << " x " << nZ << " = " << nX*nZ << endl;
-	domain.printCellTypes();
+	//domain.printCellTypes();
 }
 
 void Ground::initializeConditions()
@@ -80,6 +79,7 @@ void Ground::initializeConditions()
 	}
 
 	if (foundation.numericalScheme == Foundation::NS_CRANK_NICOLSON ||
+			 foundation.numericalScheme == Foundation::NS_ADI ||
 			 foundation.numericalScheme == Foundation::NS_IMPLICIT ||
 			 foundation.numericalScheme == Foundation::NS_STEADY_STATE ||
 			 foundation.initializationMethod == Foundation::IM_STEADY_STATE)
@@ -87,25 +87,24 @@ void Ground::initializeConditions()
 		Amat = boost::numeric::ublas::compressed_matrix<double,
 		boost::numeric::ublas::column_major, 0,
 		boost::numeric::ublas::unbounded_array<int>,
-		boost::numeric::ublas::unbounded_array<double> >(nX*nZ,nX*nZ);  // Coefficient Matrix
-		b = boost::numeric::ublas::vector<double> (nX*nZ);  // constant and unknown vectors
-		x = boost::numeric::ublas::vector<double> (nX*nZ);  // constant and unknown vectors
+		boost::numeric::ublas::unbounded_array<double> >(nX*nY*nZ,nX*nY*nZ);  // Coefficient Matrix
+		b = boost::numeric::ublas::vector<double> (nX*nY*nZ);  // constant and unknown vectors
+		x = boost::numeric::ublas::vector<double> (nX*nY*nZ);  // constant and unknown vectors
 	}
 
 	TNew.resize(boost::extents[nX][nY][nZ]);
 	TOld.resize(boost::extents[nX][nY][nZ]);
 
-	QSlab = std::vector<double>(domain.slabImax - domain.slabImin + 1);
-
 	if (foundation.initializationMethod == Foundation::IM_STEADY_STATE)
-		calculateSteadyState();
-
+	{
+		calculateMatrix(Foundation::NS_STEADY_STATE);
+	}
 	else if (foundation.initializationMethod == Foundation::IM_IMPLICIT_ACCELERATION)
 	{
 		Foundation initialFoundation = foundation;
 		initialFoundation.initializationMethod = Foundation::IM_STEADY_STATE;
 		initialFoundation.numericalScheme = Foundation::NS_IMPLICIT;
-		initialFoundation.outputAnimation.name = "";
+		initialFoundation.outputAnimations.clear();
 		SimulationControl initialSimControl;
 		initialSimControl.timestep = boost::posix_time::hours(foundation.implicitAccelTimestep);
 		initialSimControl.endDate = simulationControl.startDate;
@@ -148,71 +147,79 @@ void Ground::initializeConditions()
 	}
 }
 
-void Ground::initializePlot()
+void Ground::initializePlots()
 {
-	startString = boost::posix_time::to_simple_string(boost::posix_time::second_clock::local_time());
-
-	size_t contourLevels = 13;
-
-	mglData TRef(nX, nZ),
-			rRef(nX),
-			zRef(nZ),
-			rGridRef(nX + 1),
-			zGridRef(nZ + 1),
-			TGridRef(nX + 1, nZ + 1),
-			cRef(contourLevels);
-
-
-	TDat = TRef;
-	rDat = rRef;
-	zDat = zRef;
-	rGrid = rGridRef;
-	zGrid = zGridRef;
-	TGrid = TGridRef;
-	cDat = cRef;
-
-	nextPlotTime = 0.0;
-	plotFreq = foundation.outputAnimation.frequency.total_seconds();
-
-	double aspect = 1.0;
-	int height = foundation.outputAnimation.size;
-	int width = height*aspect;
-	gr.SetSize(width,height);
-
-	gr.StartGIF((foundation.outputAnimation.name + ".gif").c_str(),100);
-
-	rGrid.a[0] = domain.meshX.dividers[0];
-
-	for(size_t i = 0; i < nX; i++)
+	for (std::size_t p = 0; p < foundation.outputAnimations.size(); p++)
 	{
-		rDat.a[i] = domain.meshX.centers[i];
-		rGrid.a[i + 1] = domain.meshX.dividers[i + 1];
-	}
+		if (!foundation.outputAnimations[p].startDateSet)
+			foundation.outputAnimations[p].startDate = simulationControl.startDate;
 
-	zGrid.a[0] = domain.meshZ.dividers[0];
+		if (!foundation.outputAnimations[p].endDateSet)
+			foundation.outputAnimations[p].endDate = simulationControl.endDate;
 
-	for(size_t k = 0; k < nZ; k++)
-	{
-		zDat.a[k] = domain.meshZ.centers[k];
-		zGrid.a[k + 1] = domain.meshZ.dividers[k + 1];
-	}
-
-	for(size_t k = 0; k <= nZ; k++)
-	{
-		for(size_t i = 0; i <= nX; i++)
+		if (foundation.coordinateSystem == Foundation::CS_3D)
 		{
-			TGrid.a[i+nX*k] = 200.0;
+			if (!foundation.outputAnimations[p].xRangeSet)
+			{
+				foundation.outputAnimations[p].xRange.first = domain.meshX.dividers[0];
+				foundation.outputAnimations[p].xRange.second = domain.meshX.dividers[nX];
+			}
+
+			if (!foundation.outputAnimations[p].yRangeSet)
+			{
+				foundation.outputAnimations[p].yRange.first = domain.meshY.dividers[0];
+				foundation.outputAnimations[p].yRange.second = domain.meshY.dividers[nY];
+			}
+
+			if (!foundation.outputAnimations[p].zRangeSet)
+			{
+
+				if (!foundation.outputAnimations[p].xRangeSet && !foundation.outputAnimations[p].yRangeSet)
+				{
+					foundation.outputAnimations[p].zRange.first = 0;
+					foundation.outputAnimations[p].zRange.second = 0;
+				}
+				else
+				{
+					foundation.outputAnimations[p].zRange.first = domain.meshZ.dividers[0];
+					foundation.outputAnimations[p].zRange.second = domain.meshZ.dividers[nZ];
+				}
+			}
+
+
 		}
-	}
+		else
+		{
+			if (!foundation.outputAnimations[p].xRangeSet)
+			{
+				foundation.outputAnimations[p].xRange.first = domain.meshX.dividers[0];
+				foundation.outputAnimations[p].xRange.second = domain.meshX.dividers[nX];
+			}
 
-	for (size_t n = 0; n < contourLevels; n++)
-	{
-		double mid = 50.0;
-		double range = 120.0;
-		double step = range / (contourLevels - 1);
-		cDat.a[n] = mid - range/2 + double(n)*step;
-	}
+			if (!foundation.outputAnimations[p].yRangeSet)
+			{
+				foundation.outputAnimations[p].yRange.first = 0.5;
+				foundation.outputAnimations[p].yRange.second = 0.5;
+			}
 
+			if (!foundation.outputAnimations[p].zRangeSet)
+			{
+				foundation.outputAnimations[p].zRange.first = domain.meshZ.dividers[0];
+				foundation.outputAnimations[p].zRange.second = domain.meshZ.dividers[nZ];
+			}
+		}
+
+		plots.push_back(GroundPlot(foundation.outputAnimations[p],domain,foundation.blocks));
+
+		boost::posix_time::ptime simStart = simulationControl.startTime;
+		boost::posix_time::ptime startTime(foundation.outputAnimations[p].startDate,boost::posix_time::hours(0));;
+		boost::posix_time::ptime endTime(foundation.outputAnimations[p].endDate + boost::gregorian::days(1));
+		boost::posix_time::time_duration untilStart =  startTime - simStart;
+		boost::posix_time::time_duration untilEnd =  endTime - simStart;
+
+		plots[p].tStart = untilStart.total_seconds();
+		plots[p].tEnd = untilEnd.total_seconds();
+	}
 }
 
 void Ground::calculateADE()
@@ -245,6 +252,7 @@ void Ground::calculateADE()
 			{
 				// Calculate average of sweeps
 				TNew[i][j][k] = 0.5*(U[i][j][k] + V[i][j][k]);
+
 				// Update old values for next timestep
 				TOld[i][j][k] = TNew[i][j][k];
 			}
@@ -261,25 +269,6 @@ void Ground::calculateADEUpwardSweep()
 		{
 			for (size_t i = 0; i < nX; i++)
 			{
-				double theta = timestep/
-						(domain.cell[i][j][k].density*domain.cell[i][j][k].specificHeat);
-
-				double A = 0;
-				double B = 0;
-				if (foundation.coordinateSystem == Foundation::CS_2DAXIAL)
-				{
-					if (i != 0)
-					{
-						double r = domain.meshX.centers[i];
-						double A = domain.cell[i][j][k].cxp_c*theta/r;
-						double B = domain.cell[i][j][k].cxm_c*theta/r;
-					}
-				}
-				double C = domain.cell[i][j][k].cxp*theta;
-				double D = domain.cell[i][j][k].cxm*theta;
-				double E = domain.cell[i][j][k].czp*theta;
-				double F = domain.cell[i][j][k].czm*theta;
-
 				switch (domain.cell[i][j][k].cellType)
 				{
 				case Cell::BOUNDARY:
@@ -287,7 +276,7 @@ void Ground::calculateADEUpwardSweep()
 					double tilt;
 					if (domain.cell[i][j][k].surface.orientation == Surface::Z_POS)
 						tilt = 0;
-					else if (domain.cell[i][j][k].surface.orientation == Surface::Z_POS)
+					else if (domain.cell[i][j][k].surface.orientation == Surface::Z_NEG)
 						tilt = PI;
 					else
 						tilt = PI/2.0;
@@ -298,17 +287,23 @@ void Ground::calculateADEUpwardSweep()
 						{
 						switch (domain.cell[i][j][k].surface.orientation)
 						{
-						case Surface::Z_NEG:
-							U[i][j][k] = UOld[i][j][k+1];
-							break;
-						case Surface::Z_POS:
-							U[i][j][k] = U[i][j][k-1];
-							break;
 						case Surface::X_NEG:
 							U[i][j][k] = UOld[i+1][j][k];
 							break;
 						case Surface::X_POS:
 							U[i][j][k] = U[i-1][j][k];
+							break;
+						case Surface::Y_NEG:
+							U[i][j][k] = UOld[i][j+1][k];
+							break;
+						case Surface::Y_POS:
+							U[i][j][k] = U[i][j-1][k];
+							break;
+						case Surface::Z_NEG:
+							U[i][j][k] = UOld[i][j][k+1];
+							break;
+						case Surface::Z_POS:
+							U[i][j][k] = U[i][j][k-1];
 							break;
 						}
 						}
@@ -341,11 +336,6 @@ void Ground::calculateADEUpwardSweep()
 
 						switch (domain.cell[i][j][k].surface.orientation)
 						{
-						case Surface::Z_POS:
-							U[i][j][k] = (domain.getKZM(i,j,k)*U[i][j][k-1]/domain.getDZM(k) +
-									 (hc + hr)*Tair + q)/(domain.getKZM(i,j,k)/domain.getDZM(k) + (hc + hr));
-
-							break;
 						case Surface::X_NEG:
 							U[i][j][k] = (domain.getKXP(i,j,k)*UOld[i+1][j][k]/domain.getDXP(i) +
 									 (hc + hr)*Tair + q)/(domain.getKXP(i,j,k)/domain.getDXP(i) + (hc + hr));
@@ -353,7 +343,22 @@ void Ground::calculateADEUpwardSweep()
 						case Surface::X_POS:
 							U[i][j][k] = (domain.getKXM(i,j,k)*U[i-1][j][k]/domain.getDXM(i) +
 									 (hc + hr)*Tair + q)/(domain.getKXM(i,j,k)/domain.getDXM(i) + (hc + hr));
-
+							break;
+						case Surface::Y_NEG:
+							U[i][j][k] = (domain.getKYP(i,j,k)*UOld[i][j+1][k]/domain.getDYP(j) +
+									 (hc + hr)*Tair + q)/(domain.getKYP(i,j,k)/domain.getDYP(j) + (hc + hr));
+							break;
+						case Surface::Y_POS:
+							U[i][j][k] = (domain.getKYM(i,j,k)*U[i][j-1][k]/domain.getDYM(j) +
+									 (hc + hr)*Tair + q)/(domain.getKYM(i,j,k)/domain.getDYM(j) + (hc + hr));
+							break;
+						case Surface::Z_NEG:
+							U[i][j][k] = (domain.getKZP(i,j,k)*UOld[i][j][k+1]/domain.getDZP(k) +
+									 (hc + hr)*Tair + q)/(domain.getKZP(i,j,k)/domain.getDZP(k) + (hc + hr));
+							break;
+						case Surface::Z_POS:
+							U[i][j][k] = (domain.getKZM(i,j,k)*U[i][j][k-1]/domain.getDZM(k) +
+									 (hc + hr)*Tair + q)/(domain.getKZM(i,j,k)/domain.getDZM(k) + (hc + hr));
 							break;
 						}
 						}
@@ -371,10 +376,6 @@ void Ground::calculateADEUpwardSweep()
 
 						switch (domain.cell[i][j][k].surface.orientation)
 						{
-						case Surface::Z_POS:
-							U[i][j][k] = (domain.getKZM(i,j,k)*U[i][j][k-1]/domain.getDZM(k) +
-									  (hc + hr*pow(F,0.25))*Tair + q)/(domain.getKZM(i,j,k)/domain.getDZM(k) + (hc + hr));
-							break;
 						case Surface::X_NEG:
 							U[i][j][k] = (domain.getKXP(i,j,k)*UOld[i+1][j][k]/domain.getDXP(i) +
 									  (hc + hr*pow(F,0.25))*Tair + q)/(domain.getKXP(i,j,k)/domain.getDXP(i) + (hc + hr));
@@ -382,6 +383,22 @@ void Ground::calculateADEUpwardSweep()
 						case Surface::X_POS:
 							U[i][j][k] = (domain.getKXM(i,j,k)*U[i-1][j][k]/domain.getDXM(i) +
 									  (hc + hr*pow(F,0.25))*Tair + q)/(domain.getKXM(i,j,k)/domain.getDXM(i) + (hc + hr));
+							break;
+						case Surface::Y_NEG:
+							U[i][j][k] = (domain.getKYP(i,j,k)*UOld[i][j+1][k]/domain.getDYP(j) +
+									  (hc + hr*pow(F,0.25))*Tair + q)/(domain.getKYP(i,j,k)/domain.getDYP(j) + (hc + hr));
+							break;
+						case Surface::Y_POS:
+							U[i][j][k] = (domain.getKYM(i,j,k)*U[i][j-1][k]/domain.getDYM(j) +
+									  (hc + hr*pow(F,0.25))*Tair + q)/(domain.getKYM(i,j,k)/domain.getDYM(j) + (hc + hr));
+							break;
+						case Surface::Z_NEG:
+							U[i][j][k] = (domain.getKZP(i,j,k)*UOld[i][j][k+1]/domain.getDZP(k) +
+									  (hc + hr*pow(F,0.25))*Tair + q)/(domain.getKZP(i,j,k)/domain.getDZP(k) + (hc + hr));
+							break;
+						case Surface::Z_POS:
+							U[i][j][k] = (domain.getKZM(i,j,k)*U[i][j][k-1]/domain.getDZM(k) +
+									  (hc + hr*pow(F,0.25))*Tair + q)/(domain.getKZM(i,j,k)/domain.getDZM(k) + (hc + hr));
 							break;
 						}
 						}
@@ -396,9 +413,43 @@ void Ground::calculateADEUpwardSweep()
 					U[i][j][k] = getOutdoorTemperature();
 					break;
 				default:
-					U[i][j][k] = (UOld[i][j][k]*(1.0 - A - C - E) - U[i-1][j][k]*(B + D)
-							  + UOld[i+1][j][k]*(A + C) - U[i][j][k-1]*F + UOld[i][j][k+1]*E)
-							  /(1.0 - B - D - F);
+					{
+					double theta = timestep/
+						(domain.cell[i][j][k].density*domain.cell[i][j][k].specificHeat);
+
+					double A = 0;
+					double B = 0;
+					if (i != 0)
+					{
+						double r = domain.meshX.centers[i];
+						A = domain.cell[i][j][k].cxp_c*theta/r;
+						B = domain.cell[i][j][k].cxm_c*theta/r;
+					}
+					double C = domain.cell[i][j][k].cxp*theta;
+					double D = domain.cell[i][j][k].cxm*theta;
+					double E = domain.cell[i][j][k].czp*theta;
+					double F = domain.cell[i][j][k].czm*theta;
+					double G = domain.cell[i][j][k].cyp*theta;
+					double H = domain.cell[i][j][k].cym*theta;
+
+					if (foundation.coordinateSystem == Foundation::CS_3D)
+						U[i][j][k] = (UOld[i][j][k]*(1.0 - A - C - E - G)
+								- U[i-1][j][k]*(B + D)
+								+ UOld[i+1][j][k]*(A + C)
+								- U[i][j][k-1]*F
+								+ UOld[i][j][k+1]*E
+								- U[i][j-1][k]*H
+								+ UOld[i][j+1][k]*G) /
+								(1.0 - B - D - F - H);
+					else
+						U[i][j][k] = (UOld[i][j][k]*(1.0 - A - C - E)
+								- U[i-1][j][k]*(B + D)
+								+ UOld[i+1][j][k]*(A + C)
+								- U[i][j][k-1]*F
+								+ UOld[i][j][k+1]*E) /
+								(1.0 - B - D - F);
+
+					}
 					break;
 				}
 			}
@@ -415,25 +466,6 @@ void Ground::calculateADEDownwardSweep()
 		{
 			for (size_t i = nX - 1; i >= 0 && i < nX; i--)
 			{
-				double theta = timestep/
-						(domain.cell[i][j][k].density*domain.cell[i][j][k].specificHeat);
-
-				double A = 0;
-				double B = 0;
-				if (foundation.coordinateSystem == Foundation::CS_2DAXIAL)
-				{
-					if (i != 0)
-					{
-						double r = domain.meshX.centers[i];
-						double A = domain.cell[i][j][k].cxp_c*theta/r;
-						double B = domain.cell[i][j][k].cxm_c*theta/r;
-					}
-				}
-				double C = domain.cell[i][j][k].cxp*theta;
-				double D = domain.cell[i][j][k].cxm*theta;
-				double E = domain.cell[i][j][k].czp*theta;
-				double F = domain.cell[i][j][k].czm*theta;
-
 				switch (domain.cell[i][j][k].cellType)
 				{
 				case Cell::BOUNDARY:
@@ -441,7 +473,7 @@ void Ground::calculateADEDownwardSweep()
 					double tilt;
 					if (domain.cell[i][j][k].surface.orientation == Surface::Z_POS)
 						tilt = 0;
-					else if (domain.cell[i][j][k].surface.orientation == Surface::Z_POS)
+					else if (domain.cell[i][j][k].surface.orientation == Surface::Z_NEG)
 						tilt = PI;
 					else
 						tilt = PI/2.0;
@@ -452,17 +484,23 @@ void Ground::calculateADEDownwardSweep()
 						{
 						switch (domain.cell[i][j][k].surface.orientation)
 						{
-						case Surface::Z_NEG:
-							V[i][j][k] = V[i][j][k+1];
-							break;
-						case Surface::Z_POS:
-							V[i][j][k] = VOld[i][j][k-1];
-							break;
 						case Surface::X_NEG:
 							V[i][j][k] = V[i+1][j][k];
 							break;
 						case Surface::X_POS:
 							V[i][j][k] = VOld[i-1][j][k];
+							break;
+						case Surface::Y_NEG:
+							V[i][j][k] = V[i][j+1][k];
+							break;
+						case Surface::Y_POS:
+							V[i][j][k] = VOld[i][j-1][k];
+							break;
+						case Surface::Z_NEG:
+							V[i][j][k] = V[i][j][k+1];
+							break;
+						case Surface::Z_POS:
+							V[i][j][k] = VOld[i][j][k-1];
 							break;
 						}
 						}
@@ -495,11 +533,6 @@ void Ground::calculateADEDownwardSweep()
 
 						switch (domain.cell[i][j][k].surface.orientation)
 						{
-						case Surface::Z_POS:
-							V[i][j][k] = (domain.getKZM(i,j,k)*VOld[i][j][k-1]/domain.getDZM(k) +
-									  (hc + hr)*Tair + q)/(domain.getKZM(i,j,k)/domain.getDZM(k) + (hc + hr));
-
-							break;
 						case Surface::X_NEG:
 							V[i][j][k] = (domain.getKXP(i,j,k)*V[i+1][j][k]/domain.getDXP(i) +
 									  (hc + hr)*Tair + q)/(domain.getKXP(i,j,k)/domain.getDXP(i) + (hc + hr));
@@ -507,7 +540,22 @@ void Ground::calculateADEDownwardSweep()
 						case Surface::X_POS:
 							V[i][j][k] = (domain.getKXM(i,j,k)*VOld[i-1][j][k]/domain.getDXM(i) +
 									  (hc + hr)*Tair + q)/(domain.getKXM(i,j,k)/domain.getDXM(i) + (hc + hr));
-
+							break;
+						case Surface::Y_NEG:
+							V[i][j][k] = (domain.getKYP(i,j,k)*V[i][j+1][k]/domain.getDYP(j) +
+									  (hc + hr)*Tair + q)/(domain.getKYP(i,j,k)/domain.getDYP(j) + (hc + hr));
+							break;
+						case Surface::Y_POS:
+							V[i][j][k] = (domain.getKYM(i,j,k)*VOld[i][j-1][k]/domain.getDYM(j) +
+									  (hc + hr)*Tair + q)/(domain.getKYM(i,j,k)/domain.getDYM(j) + (hc + hr));
+							break;
+						case Surface::Z_NEG:
+							V[i][j][k] = (domain.getKZP(i,j,k)*V[i][j][k+1]/domain.getDZP(k) +
+									  (hc + hr)*Tair + q)/(domain.getKZP(i,j,k)/domain.getDZP(k) + (hc + hr));
+							break;
+						case Surface::Z_POS:
+							V[i][j][k] = (domain.getKZM(i,j,k)*VOld[i][j][k-1]/domain.getDZM(k) +
+									  (hc + hr)*Tair + q)/(domain.getKZM(i,j,k)/domain.getDZM(k) + (hc + hr));
 							break;
 						}
 						}
@@ -525,10 +573,6 @@ void Ground::calculateADEDownwardSweep()
 
 						switch (domain.cell[i][j][k].surface.orientation)
 						{
-						case Surface::Z_POS:
-							V[i][j][k] = (domain.getKZM(i,j,k)*VOld[i][j][k-1]/domain.getDZM(k) +
-									(hc + hr*pow(F,0.25))*Tair + q)/(domain.getKZM(i,j,k)/domain.getDZM(k) + (hc + hr));
-							break;
 						case Surface::X_NEG:
 							V[i][j][k] = (domain.getKXP(i,j,k)*V[i+1][j][k]/domain.getDXP(i) +
 									(hc + hr*pow(F,0.25))*Tair + q)/(domain.getKXP(i,j,k)/domain.getDXP(i) + (hc + hr));
@@ -536,6 +580,22 @@ void Ground::calculateADEDownwardSweep()
 						case Surface::X_POS:
 							V[i][j][k] = (domain.getKXM(i,j,k)*VOld[i-1][j][k]/domain.getDXM(i) +
 									(hc + hr*pow(F,0.25))*Tair + q)/(domain.getKXM(i,j,k)/domain.getDXM(i) + (hc + hr));
+							break;
+						case Surface::Y_NEG:
+							V[i][j][k] = (domain.getKYP(i,j,k)*V[i][j+1][k]/domain.getDYP(j) +
+									(hc + hr*pow(F,0.25))*Tair + q)/(domain.getKYP(i,j,k)/domain.getDYP(j) + (hc + hr));
+							break;
+						case Surface::Y_POS:
+							V[i][j][k] = (domain.getKYM(i,j,k)*VOld[i][j-1][k]/domain.getDYM(j) +
+									(hc + hr*pow(F,0.25))*Tair + q)/(domain.getKYM(i,j,k)/domain.getDYM(j) + (hc + hr));
+							break;
+						case Surface::Z_NEG:
+							V[i][j][k] = (domain.getKZP(i,j,k)*VOld[i][j][k+1]/domain.getDZP(k) +
+									(hc + hr*pow(F,0.25))*Tair + q)/(domain.getKZP(i,j,k)/domain.getDZP(k) + (hc + hr));
+							break;
+						case Surface::Z_POS:
+							V[i][j][k] = (domain.getKZM(i,j,k)*VOld[i][j][k-1]/domain.getDZM(k) +
+									(hc + hr*pow(F,0.25))*Tair + q)/(domain.getKZM(i,j,k)/domain.getDZM(k) + (hc + hr));
 							break;
 						}
 						}
@@ -551,9 +611,42 @@ void Ground::calculateADEDownwardSweep()
 					V[i][j][k] = getOutdoorTemperature();
 					break;
 				default:
-					V[i][j][k] = (VOld[i][j][k]*(1.0 + B + D + F) - VOld[i-1][j][k]*(B + D)
-							  + V[i+1][j][k]*(A + C) - VOld[i][j][k-1]*F + V[i][j][k+1]*E)
-							  /(1.0 + A + C + E);
+					{
+					double theta = timestep/
+						(domain.cell[i][j][k].density*domain.cell[i][j][k].specificHeat);
+
+					double A = 0;
+					double B = 0;
+					if (i != 0)
+					{
+						double r = domain.meshX.centers[i];
+						A = domain.cell[i][j][k].cxp_c*theta/r;
+						B = domain.cell[i][j][k].cxm_c*theta/r;
+					}
+					double C = domain.cell[i][j][k].cxp*theta;
+					double D = domain.cell[i][j][k].cxm*theta;
+					double E = domain.cell[i][j][k].czp*theta;
+					double F = domain.cell[i][j][k].czm*theta;
+					double G = domain.cell[i][j][k].cyp*theta;
+					double H = domain.cell[i][j][k].cym*theta;
+
+					if (foundation.coordinateSystem == Foundation::CS_3D)
+						V[i][j][k] = (VOld[i][j][k]*(1.0 + B + D + F + H)
+								- VOld[i-1][j][k]*(B + D)
+								+ V[i+1][j][k]*(A + C)
+								- VOld[i][j][k-1]*F
+								+ V[i][j][k+1]*E
+								- VOld[i][j-1][k]*H
+								+ V[i][j+1][k]*G) /
+								(1.0 + A + C + E + G);
+					else
+						V[i][j][k] = (VOld[i][j][k]*(1.0 + B + D + F)
+								- VOld[i-1][j][k]*(B + D)
+								+ V[i+1][j][k]*(A + C)
+								- VOld[i][j][k-1]*F
+								+ V[i][j][k+1]*E) /
+								(1.0 + A + C + E);
+					}
 					break;
 				}
 			}
@@ -569,25 +662,6 @@ void Ground::calculateExplicit()
 		{
 			for (size_t i = 0; i < nX; i++)
 			{
-				double theta = timestep/
-						(domain.cell[i][j][k].density*domain.cell[i][j][k].specificHeat);
-
-				double A = 0;
-				double B = 0;
-				if (foundation.coordinateSystem == Foundation::CS_2DAXIAL)
-				{
-					if (i != 0)
-					{
-						double r = domain.meshX.centers[i];
-						double A = domain.cell[i][j][k].cxp_c*theta/r;
-						double B = domain.cell[i][j][k].cxm_c*theta/r;
-					}
-				}
-				double C = domain.cell[i][j][k].cxp*theta;
-				double D = domain.cell[i][j][k].cxm*theta;
-				double E = domain.cell[i][j][k].czp*theta;
-				double F = domain.cell[i][j][k].czm*theta;
-
 				switch (domain.cell[i][j][k].cellType)
 				{
 				case Cell::BOUNDARY:
@@ -595,7 +669,7 @@ void Ground::calculateExplicit()
 					double tilt;
 					if (domain.cell[i][j][k].surface.orientation == Surface::Z_POS)
 						tilt = 0;
-					else if (domain.cell[i][j][k].surface.orientation == Surface::Z_POS)
+					else if (domain.cell[i][j][k].surface.orientation == Surface::Z_NEG)
 						tilt = PI;
 					else
 						tilt = PI/2.0;
@@ -606,17 +680,23 @@ void Ground::calculateExplicit()
 						{
 						switch (domain.cell[i][j][k].surface.orientation)
 						{
-						case Surface::Z_NEG:
-							TNew[i][j][k] = TOld[i][j][k+1];
-							break;
-						case Surface::Z_POS:
-							TNew[i][j][k] = TOld[i][j][k-1];
-							break;
 						case Surface::X_NEG:
 							TNew[i][j][k] = TOld[i+1][j][k];
 							break;
 						case Surface::X_POS:
 							TNew[i][j][k] = TOld[i-1][j][k];
+							break;
+						case Surface::Y_NEG:
+							TNew[i][j][k] = TOld[i][j+1][k];
+							break;
+						case Surface::Y_POS:
+							TNew[i][j][k] = TOld[i][j-1][k];
+							break;
+						case Surface::Z_NEG:
+							TNew[i][j][k] = TOld[i][j][k+1];
+							break;
+						case Surface::Z_POS:
+							TNew[i][j][k] = TOld[i][j][k-1];
 							break;
 						}
 						}
@@ -649,10 +729,6 @@ void Ground::calculateExplicit()
 
 						switch (domain.cell[i][j][k].surface.orientation)
 						{
-						case Surface::Z_POS:
-							TNew[i][j][k] = (domain.getKZM(i,j,k)*TOld[i][j][k-1]/domain.getDZM(k) +
-									  (hc + hr)*Tair + q)/(domain.getKZM(i,j,k)/domain.getDZM(k) + (hc + hr));
-							break;
 						case Surface::X_NEG:
 							TNew[i][j][k] = (domain.getKXP(i,j,k)*TOld[i+1][j][k]/domain.getDXP(i) +
 									  (hc + hr)*Tair + q)/(domain.getKXP(i,j,k)/domain.getDXP(i) + (hc + hr));
@@ -660,6 +736,22 @@ void Ground::calculateExplicit()
 						case Surface::X_POS:
 							TNew[i][j][k] = (domain.getKXM(i,j,k)*TOld[i-1][j][k]/domain.getDXM(i) +
 									  (hc + hr)*Tair + q)/(domain.getKXM(i,j,k)/domain.getDXM(i) + (hc + hr));
+							break;
+						case Surface::Y_NEG:
+							TNew[i][j][k] = (domain.getKYP(i,j,k)*TOld[i][j+1][k]/domain.getDYP(j) +
+									  (hc + hr)*Tair + q)/(domain.getKYP(i,j,k)/domain.getDYP(j) + (hc + hr));
+							break;
+						case Surface::Y_POS:
+							TNew[i][j][k] = (domain.getKYM(i,j,k)*TOld[i][j-1][k]/domain.getDYM(j) +
+									  (hc + hr)*Tair + q)/(domain.getKYM(i,j,k)/domain.getDYM(j) + (hc + hr));
+							break;
+						case Surface::Z_NEG:
+							TNew[i][j][k] = (domain.getKZP(i,j,k)*TOld[i][j][k+1]/domain.getDZP(k) +
+									  (hc + hr)*Tair + q)/(domain.getKZP(i,j,k)/domain.getDZP(k) + (hc + hr));
+							break;
+						case Surface::Z_POS:
+							TNew[i][j][k] = (domain.getKZM(i,j,k)*TOld[i][j][k-1]/domain.getDZM(k) +
+									  (hc + hr)*Tair + q)/(domain.getKZM(i,j,k)/domain.getDZM(k) + (hc + hr));
 							break;
 						}
 						}
@@ -677,11 +769,6 @@ void Ground::calculateExplicit()
 
 						switch (domain.cell[i][j][k].surface.orientation)
 						{
-						case Surface::Z_POS:
-							TNew[i][j][k] = (domain.getKZM(i,j,k)*TOld[i][j][k-1]/domain.getDZM(k) +
-									(hc + hr*pow(F,0.25))*Tair + q)/(domain.getKZM(i,j,k)/domain.getDZM(k) + (hc + hr));
-
-							break;
 						case Surface::X_NEG:
 							TNew[i][j][k] = (domain.getKXP(i,j,k)*TOld[i+1][j][k]/domain.getDXP(i) +
 									(hc + hr*pow(F,0.25))*Tair + q)/(domain.getKXP(i,j,k)/domain.getDXP(i) + (hc + hr));
@@ -689,7 +776,22 @@ void Ground::calculateExplicit()
 						case Surface::X_POS:
 							TNew[i][j][k] = (domain.getKXM(i,j,k)*TOld[i-1][j][k]/domain.getDXM(i) +
 									(hc + hr*pow(F,0.25))*Tair + q)/(domain.getKXM(i,j,k)/domain.getDXM(i) + (hc + hr));
-
+							break;
+						case Surface::Y_NEG:
+							TNew[i][j][k] = (domain.getKYP(i,j,k)*TOld[i][j+1][k]/domain.getDYP(j) +
+									(hc + hr*pow(F,0.25))*Tair + q)/(domain.getKYP(i,j,k)/domain.getDYP(j) + (hc + hr));
+							break;
+						case Surface::Y_POS:
+							TNew[i][j][k] = (domain.getKYM(i,j,k)*TOld[i][j-1][k]/domain.getDYM(j) +
+									(hc + hr*pow(F,0.25))*Tair + q)/(domain.getKYM(i,j,k)/domain.getDYM(j) + (hc + hr));
+							break;
+						case Surface::Z_NEG:
+							TNew[i][j][k] = (domain.getKZP(i,j,k)*TOld[i][j][k+1]/domain.getDZP(k) +
+									(hc + hr*pow(F,0.25))*Tair + q)/(domain.getKZP(i,j,k)/domain.getDZP(k) + (hc + hr));
+							break;
+						case Surface::Z_POS:
+							TNew[i][j][k] = (domain.getKZM(i,j,k)*TOld[i][j][k-1]/domain.getDZM(k) +
+									(hc + hr*pow(F,0.25))*Tair + q)/(domain.getKZM(i,j,k)/domain.getDZM(k) + (hc + hr));
 							break;
 						}
 						}
@@ -705,276 +807,66 @@ void Ground::calculateExplicit()
 					TNew[i][j][k] = getOutdoorTemperature();
 					break;
 				default:
-					TNew[i][j][k] = (TOld[i][j][k]*(1.0 + B + D + F - A - C - E) - TOld[i-1][j][k]*(B + D)
-							  + TOld[i+1][j][k]*(A + C) - TOld[i][j][k-1]*F + TOld[i][j][k+1]*E);
-					break;
-				}
-			}
-		}
-	}
-
-	for (size_t k = 0; k < nZ; ++k)
-	{
-		for (size_t j = 0; j < nY; ++j)
-		{
-			for (size_t i = 0; i < nX; ++i)
-			{
-				// Update old values for next timestep
-				TOld[i][j][k] = TNew[i][j][k];
-			}
-		}
-	}
-}
-
-void Ground::calculateImplicit()
-{
-	for (size_t k = 0; k < nZ; k++)
-	{
-		for (size_t j = 0; j < nY; ++j)
-		{
-			for (size_t i = 0; i < nX; i++)
-			{
-				double theta = timestep/
+					{
+					double theta = timestep/
 						(domain.cell[i][j][k].density*domain.cell[i][j][k].specificHeat);
 
-				double A = 0;
-				double B = 0;
-				if (foundation.coordinateSystem == Foundation::CS_2DAXIAL)
-				{
+					double A = 0;
+					double B = 0;
 					if (i != 0)
 					{
 						double r = domain.meshX.centers[i];
-						double A = domain.cell[i][j][k].cxp_c*theta/r;
-						double B = domain.cell[i][j][k].cxm_c*theta/r;
+						A = domain.cell[i][j][k].cxp_c*theta/r;
+						B = domain.cell[i][j][k].cxm_c*theta/r;
 					}
-				}
-				double C = domain.cell[i][j][k].cxp*theta;
-				double D = domain.cell[i][j][k].cxm*theta;
-				double E = domain.cell[i][j][k].czp*theta;
-				double F = domain.cell[i][j][k].czm*theta;
+					double C = domain.cell[i][j][k].cxp*theta;
+					double D = domain.cell[i][j][k].cxm*theta;
+					double E = domain.cell[i][j][k].czp*theta;
+					double F = domain.cell[i][j][k].czm*theta;
+					double G = domain.cell[i][j][k].cyp*theta;
+					double H = domain.cell[i][j][k].cym*theta;
 
-				switch (domain.cell[i][j][k].cellType)
-				{
-				case Cell::BOUNDARY:
-					{
-					double tilt;
-					if (domain.cell[i][j][k].surface.orientation == Surface::Z_POS)
-						tilt = 0;
-					else if (domain.cell[i][j][k].surface.orientation == Surface::Z_POS)
-						tilt = PI;
+					if (foundation.coordinateSystem == Foundation::CS_3D)
+						TNew[i][j][k] = TOld[i][j][k]*(1.0 + B + D + F + H - A - C - E - G)
+								- TOld[i-1][j][k]*(B + D)
+								+ TOld[i+1][j][k]*(A + C)
+								- TOld[i][j][k-1]*F
+								+ TOld[i][j][k+1]*E
+								- TOld[i][j-1][k]*H
+								+ TOld[i][j+1][k]*G;
 					else
-						tilt = PI/2.0;
-
-					switch (domain.cell[i][j][k].surface.boundaryConditionType)
-					{
-					case Surface::ZERO_FLUX:
-						{
-						switch (domain.cell[i][j][k].surface.orientation)
-						{
-						case Surface::Z_NEG:
-							Amat(i + nX*k, i + nX*k) = 1.0;
-							Amat(i + nX*k, i + nX*(k+1)) = -1.0;
-
-							b(i + nX*k) = 0;
-							break;
-						case Surface::Z_POS:
-							Amat(i + nX*k, i + nX*k) = 1.0;
-							Amat(i + nX*k, i + nX*(k-1)) = -1.0;
-
-							b(i + nX*k) = 0;
-							break;
-						case Surface::X_NEG:
-							Amat(i + nX*k, i + nX*k) = 1.0;
-							Amat(i + nX*k, (i+1) + nX*k) = -1.0;
-
-							b(i + nX*k) = 0;
-							break;
-						case Surface::X_POS:
-							Amat(i + nX*k, i + nX*k) = 1.0;
-							Amat(i + nX*k, (i-1) + nX*k) = -1.0;
-
-							b(i + nX*k) = 0.0;
-							break;
-						}
-						}
-						break;
-
-					case Surface::CONSTANT_TEMPERATURE:
-						{
-						Amat(i + nX*k, i + nX*k) = 1.0;
-
-						b(i + nX*k) = domain.cell[i][j][k].surface.temperature;
-						}
-						break;
-
-					case Surface::INTERIOR_TEMPERATURE:
-						{
-						Amat(i + nX*k, i + nX*k) = 1.0;
-
-						b(i + nX*k) = foundation.indoorAirTemperature;
-						}
-						break;
-
-					case Surface::EXTERIOR_TEMPERATURE:
-						{
-						Amat(i + nX*k, i + nX*k) = 1.0;
-
-						b(i + nX*k) = getOutdoorTemperature();
-						}
-						break;
-
-					case Surface::INTERIOR_FLUX:
-						{
-						double Tair = foundation.indoorAirTemperature;
-						double q = 0;
-
-						double hc = getConvectionCoeff(TOld[i][j][k],
-										Tair,0.0,1.0,false,tilt);
-						double hr = getSimpleInteriorIRCoeff(domain.cell[i][j][k].surface.emissivity,
-															 TOld[i][j][k],Tair);
-
-						switch (domain.cell[i][j][k].surface.orientation)
-						{
-						case Surface::Z_POS:
-							{
-							Amat(i + nX*k, i + nX*k) = domain.getKZM(i,j,k)/domain.getDZM(k) + (hc + hr);
-							Amat(i + nX*k, i + nX*(k-1)) = -domain.getKZM(i,j,k)/domain.getDZM(k);
-
-							b(i + nX*k) = (hc + hr)*Tair + q;
-							}
-							break;
-						case Surface::X_NEG:
-							{
-							Amat(i + nX*k, i + nX*k) = domain.getKXP(i,j,k)/domain.getDXP(i) + (hc + hr);
-							Amat(i + nX*k, (i+1) + nX*k) = -domain.getKXP(i,j,k)/domain.getDXP(i);
-
-							b(i + nX*k) = (hc + hr)*Tair + q;
-							}
-							break;
-						case Surface::X_POS:
-							{
-							Amat(i + nX*k, i + nX*k) = domain.getKXM(i,j,k)/domain.getDXM(i) + (hc + hr);
-							Amat(i + nX*k, (i-1) + nX*k) = -domain.getKXM(i,j,k)/domain.getDXM(i);
-
-							b(i + nX*k) = (hc + hr)*Tair + q;
-							}
-							break;
-						}
-						}
-						break;
-
-					case Surface::EXTERIOR_FLUX:
-						{
-						double Tair = getOutdoorTemperature();
-						double v = getLocalWindSpeed();
-						double eSky = weatherData.skyEmissivity.getValue(getSimTime(tNow));
-						double F = getEffectiveExteriorViewFactor(eSky,tilt);
-						double hc = getConvectionCoeff(TOld[i][j][k],Tair,v,1.0,true,tilt);
-						double hr = getExteriorIRCoeff(domain.cell[i][j][k].surface.emissivity,TOld[i][j][k],Tair,eSky,tilt);
-						double q = domain.cell[i][j][k].surface.absorptivity*weatherData.globalHorizontalSolar.getValue(getSimTime(tNow));
-
-						switch (domain.cell[i][j][k].surface.orientation)
-						{
-						case Surface::Z_POS:
-							{
-							Amat(i + nX*k, i + nX*k) = domain.getKZM(i,j,k)/domain.getDZM(k) + (hc + hr);
-							Amat(i + nX*k, i + nX*(k-1)) = -domain.getKZM(i,j,k)/domain.getDZM(k);
-
-							b(i + nX*k) = (hc + hr*pow(F,0.25))*Tair + q;
-							}
-							break;
-						case Surface::X_NEG:
-							{
-							Amat(i + nX*k, i + nX*k) = domain.getKXP(i,j,k)/domain.getDXP(i) + (hc + hr);
-							Amat(i + nX*k, (i+1) + nX*k) = -domain.getKXP(i,j,k)/domain.getDXP(i);
-
-							b(i + nX*k) = (hc + hr*pow(F,0.25))*Tair + q;
-							}
-							break;
-						case Surface::X_POS:
-							{
-							Amat(i + nX*k, i + nX*k) = domain.getKXM(i,j,k)/domain.getDXM(i) + (hc + hr);
-							Amat(i + nX*k, (i-1) + nX*k) = -domain.getKXM(i,j,k)/domain.getDXM(i);
-
-							b(i + nX*k) = (hc + hr*pow(F,0.25))*Tair + q;
-							}
-							break;
-						}
-						}
-						break;
+						TNew[i][j][k] = TOld[i][j][k]*(1.0 + B + D + F - A - C - E)
+								- TOld[i-1][j][k]*(B + D)
+								+ TOld[i+1][j][k]*(A + C)
+								- TOld[i][j][k-1]*F
+								+ TOld[i][j][k+1]*E;
 					}
-					}
-					break;
-				case Cell::INTERIOR_AIR:
-					Amat(i + nX*k, i + nX*k) = 1.0;
-
-					b(i + nX*k) = foundation.indoorAirTemperature;
-					break;
-				case Cell::EXTERIOR_AIR:
-					Amat(i + nX*k, i + nX*k) = 1.0;
-
-					b(i + nX*k) = getOutdoorTemperature();
-					break;
-				default:
-					Amat(i + nX*k, i + nX*k) = (1.0 + A + C + E - B - D - F);
-					Amat(i + nX*k, (i-1) + nX*k) = (B + D);
-					Amat(i + nX*k, (i+1) + nX*k) = (-A - C);
-					Amat(i + nX*k, i + nX*(k-1)) = F;
-					Amat(i + nX*k, i + nX*(k+1)) = -E;
-
-					b(i + nX*k) = TOld[i][j][k];
 					break;
 				}
 			}
 		}
 	}
-
-	umf::umf_solve(Amat,x,b);
-
 	for (size_t k = 0; k < nZ; ++k)
 	{
 		for (size_t j = 0; j < nY; ++j)
 		{
 			for (size_t i = 0; i < nX; ++i)
 			{
-				// Read solution into temperature matrix
-				TNew[i][j][k] = x(i + nX*k);
-
 				// Update old values for next timestep
 				TOld[i][j][k] = TNew[i][j][k];
 			}
 		}
 	}
-
 }
 
-void Ground::calculateCrankNicolson()
+void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
 {
 	for (size_t k = 0; k < nZ; k++)
 	{
-		for (size_t j = 0; j < nY; ++j)
+		for (size_t j = 0; j < nY; j++)
 		{
 			for (size_t i = 0; i < nX; i++)
 			{
-				double theta = timestep/
-						(domain.cell[i][j][k].density*domain.cell[i][j][k].specificHeat);
-
-				double A = 0;
-				double B = 0;
-				if (foundation.coordinateSystem == Foundation::CS_2DAXIAL)
-				{
-					if (i != 0)
-					{
-						double r = domain.meshX.centers[i];
-						double A = 0.5*domain.cell[i][j][k].cxp_c*theta/r;
-						double B = 0.5*domain.cell[i][j][k].cxm_c*theta/r;
-					}
-				}
-				double C = 0.5*domain.cell[i][j][k].cxp*theta;
-				double D = 0.5*domain.cell[i][j][k].cxm*theta;
-				double E = 0.5*domain.cell[i][j][k].czp*theta;
-				double F = 0.5*domain.cell[i][j][k].czm*theta;
-
 				switch (domain.cell[i][j][k].cellType)
 				{
 				case Cell::BOUNDARY:
@@ -982,7 +874,7 @@ void Ground::calculateCrankNicolson()
 					double tilt;
 					if (domain.cell[i][j][k].surface.orientation == Surface::Z_POS)
 						tilt = 0;
-					else if (domain.cell[i][j][k].surface.orientation == Surface::Z_POS)
+					else if (domain.cell[i][j][k].surface.orientation == Surface::Z_NEG)
 						tilt = PI;
 					else
 						tilt = PI/2.0;
@@ -993,29 +885,41 @@ void Ground::calculateCrankNicolson()
 						{
 						switch (domain.cell[i][j][k].surface.orientation)
 						{
-						case Surface::Z_NEG:
-							Amat(i + nX*k, i + nX*k) = 1.0;
-							Amat(i + nX*k, i + nX*(k+1)) = -1.0;
-
-							b(i + nX*k) = 0;
-							break;
-						case Surface::Z_POS:
-							Amat(i + nX*k, i + nX*k) = 1.0;
-							Amat(i + nX*k, i + nX*(k-1)) = -1.0;
-
-							b(i + nX*k) = 0;
-							break;
 						case Surface::X_NEG:
-							Amat(i + nX*k, i + nX*k) = 1.0;
-							Amat(i + nX*k, (i+1) + nX*k) = -1.0;
+							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = 1.0;
+							Amat(i + nX*j + nX*nY*k, (i+1) + nX*j + nX*nY*k) = -1.0;
 
-							b(i + nX*k) = 0;
+							b(i + nX*j + nX*nY*k) = 0;
 							break;
 						case Surface::X_POS:
-							Amat(i + nX*k, i + nX*k) = 1.0;
-							Amat(i + nX*k, (i-1) + nX*k) = -1.0;
+							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = 1.0;
+							Amat(i + nX*j + nX*nY*k, (i-1) + nX*j + nX*nY*k) = -1.0;
 
-							b(i + nX*k) = 0.0;
+							b(i + nX*j + nX*nY*k) = 0.0;
+							break;
+						case Surface::Y_NEG:
+							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = 1.0;
+							Amat(i + nX*j + nX*nY*k, i + nX*(j+1) + nX*nY*k) = -1.0;
+
+							b(i + nX*j + nX*nY*k) = 0;
+							break;
+						case Surface::Y_POS:
+							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = 1.0;
+							Amat(i + nX*j + nX*nY*k, i + nX*(j-1) + nX*nY*k) = -1.0;
+
+							b(i + nX*j + nX*nY*k) = 0.0;
+							break;
+						case Surface::Z_NEG:
+							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = 1.0;
+							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*(k+1)) = -1.0;
+
+							b(i + nX*j + nX*nY*k) = 0;
+							break;
+						case Surface::Z_POS:
+							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = 1.0;
+							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*(k-1)) = -1.0;
+
+							b(i + nX*j + nX*nY*k) = 0;
 							break;
 						}
 						}
@@ -1023,25 +927,25 @@ void Ground::calculateCrankNicolson()
 
 					case Surface::CONSTANT_TEMPERATURE:
 						{
-						Amat(i + nX*k, i + nX*k) = 1.0;
+						Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = 1.0;
 
-						b(i + nX*k) = domain.cell[i][j][k].surface.temperature;
+						b(i + nX*j + nX*nY*k) = domain.cell[i][j][k].surface.temperature;
 						}
 						break;
 
 					case Surface::INTERIOR_TEMPERATURE:
 						{
-						Amat(i + nX*k, i + nX*k) = 1.0;
+						Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = 1.0;
 
-						b(i + nX*k) = foundation.indoorAirTemperature;
+						b(i + nX*j + nX*nY*k) = foundation.indoorAirTemperature;
 						}
 						break;
 
 					case Surface::EXTERIOR_TEMPERATURE:
 						{
-						Amat(i + nX*k, i + nX*k) = 1.0;
+						Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = 1.0;
 
-						b(i + nX*k) = getOutdoorTemperature();
+						b(i + nX*j + nX*nY*k) = getOutdoorTemperature();
 						}
 						break;
 
@@ -1057,28 +961,52 @@ void Ground::calculateCrankNicolson()
 
 						switch (domain.cell[i][j][k].surface.orientation)
 						{
-						case Surface::Z_POS:
-							{
-							Amat(i + nX*k, i + nX*k) = domain.getKZM(i,j,k)/domain.getDZM(k) + (hc + hr);
-							Amat(i + nX*k, i + nX*(k-1)) = -domain.getKZM(i,j,k)/domain.getDZM(k);
-
-							b(i + nX*k) = (hc + hr)*Tair + q;
-							}
-							break;
 						case Surface::X_NEG:
 							{
-							Amat(i + nX*k, i + nX*k) = domain.getKXP(i,j,k)/domain.getDXP(i) + (hc + hr);
-							Amat(i + nX*k, (i+1) + nX*k) = -domain.getKXP(i,j,k)/domain.getDXP(i);
+							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = domain.getKXP(i,j,k)/domain.getDXP(i) + (hc + hr);
+							Amat(i + nX*j + nX*nY*k, (i+1) + nX*j + nX*nY*k) = -domain.getKXP(i,j,k)/domain.getDXP(i);
 
-							b(i + nX*k) = (hc + hr)*Tair + q;
+							b(i + nX*j + nX*nY*k) = (hc + hr)*Tair + q;
 							}
 							break;
 						case Surface::X_POS:
 							{
-							Amat(i + nX*k, i + nX*k) = domain.getKXM(i,j,k)/domain.getDXM(i) + (hc + hr);
-							Amat(i + nX*k, (i-1) + nX*k) = -domain.getKXM(i,j,k)/domain.getDXM(i);
+							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = domain.getKXM(i,j,k)/domain.getDXM(i) + (hc + hr);
+							Amat(i + nX*j + nX*nY*k, (i-1) + nX*j + nX*nY*k) = -domain.getKXM(i,j,k)/domain.getDXM(i);
 
-							b(i + nX*k) = (hc + hr)*Tair + q;
+							b(i + nX*j + nX*nY*k) = (hc + hr)*Tair + q;
+							}
+							break;
+						case Surface::Y_NEG:
+							{
+							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = domain.getKYP(i,j,k)/domain.getDYP(j) + (hc + hr);
+							Amat(i + nX*j + nX*nY*k, i + nX*(j+1) + nX*nY*k) = -domain.getKYP(i,j,k)/domain.getDYP(j);
+
+							b(i + nX*j + nX*nY*k) = (hc + hr)*Tair + q;
+							}
+							break;
+						case Surface::Y_POS:
+							{
+							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = domain.getKYM(i,j,k)/domain.getDYM(j) + (hc + hr);
+							Amat(i + nX*j + nX*nY*k, i + nX*(j-1) + nX*nY*k) = -domain.getKYM(i,j,k)/domain.getDYM(j);
+
+							b(i + nX*j + nX*nY*k) = (hc + hr)*Tair + q;
+							}
+							break;
+						case Surface::Z_NEG:
+							{
+							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = domain.getKZP(i,j,k)/domain.getDZP(k) + (hc + hr);
+							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*(k+1)) = -domain.getKZP(i,j,k)/domain.getDZP(k);
+
+							b(i + nX*j + nX*nY*k) = (hc + hr)*Tair + q;
+							}
+							break;
+						case Surface::Z_POS:
+							{
+							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = domain.getKZM(i,j,k)/domain.getDZM(k) + (hc + hr);
+							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*(k-1)) = -domain.getKZM(i,j,k)/domain.getDZM(k);
+
+							b(i + nX*j + nX*nY*k) = (hc + hr)*Tair + q;
 							}
 							break;
 						}
@@ -1097,28 +1025,52 @@ void Ground::calculateCrankNicolson()
 
 						switch (domain.cell[i][j][k].surface.orientation)
 						{
-						case Surface::Z_POS:
-							{
-							Amat(i + nX*k, i + nX*k) = domain.getKZM(i,j,k)/domain.getDZM(k) + (hc + hr);
-							Amat(i + nX*k, i + nX*(k-1)) = -domain.getKZM(i,j,k)/domain.getDZM(k);
-
-							b(i + nX*k) = (hc + hr*pow(F,0.25))*Tair + q;
-							}
-							break;
 						case Surface::X_NEG:
 							{
-							Amat(i + nX*k, i + nX*k) = domain.getKXP(i,j,k)/domain.getDXP(i) + (hc + hr);
-							Amat(i + nX*k, (i+1) + nX*k) = -domain.getKXP(i,j,k)/domain.getDXP(i);
+							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = domain.getKXP(i,j,k)/domain.getDXP(i) + (hc + hr);
+							Amat(i + nX*j + nX*nY*k, (i+1) + nX*j + nX*nY*k) = -domain.getKXP(i,j,k)/domain.getDXP(i);
 
-							b(i + nX*k) = (hc + hr*pow(F,0.25))*Tair + q;
+							b(i + nX*j + nX*nY*k) = (hc + hr*pow(F,0.25))*Tair + q;
 							}
 							break;
 						case Surface::X_POS:
 							{
-							Amat(i + nX*k, i + nX*k) = domain.getKXM(i,j,k)/domain.getDXM(i) + (hc + hr);
-							Amat(i + nX*k, (i-1) + nX*k) = -domain.getKXM(i,j,k)/domain.getDXM(i);
+							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = domain.getKXM(i,j,k)/domain.getDXM(i) + (hc + hr);
+							Amat(i + nX*j + nX*nY*k, (i-1) + nX*j + nX*nY*k) = -domain.getKXM(i,j,k)/domain.getDXM(i);
 
-							b(i + nX*k) = (hc + hr*pow(F,0.25))*Tair + q;
+							b(i + nX*j + nX*nY*k) = (hc + hr*pow(F,0.25))*Tair + q;
+							}
+							break;
+						case Surface::Y_NEG:
+							{
+							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = domain.getKYP(i,j,k)/domain.getDYP(j) + (hc + hr);
+							Amat(i + nX*j + nX*nY*k, i + nX*(j+1) + nX*nY*k) = -domain.getKYP(i,j,k)/domain.getDYP(j);
+
+							b(i + nX*j + nX*nY*k) = (hc + hr*pow(F,0.25))*Tair + q;
+							}
+							break;
+						case Surface::Y_POS:
+							{
+							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = domain.getKYM(i,j,k)/domain.getDYM(j) + (hc + hr);
+							Amat(i + nX*j + nX*nY*k, i + nX*(j-1) + nX*nY*k) = -domain.getKYM(i,j,k)/domain.getDYM(j);
+
+							b(i + nX*j + nX*nY*k) = (hc + hr*pow(F,0.25))*Tair + q;
+							}
+							break;
+						case Surface::Z_NEG:
+							{
+							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = domain.getKZP(i,j,k)/domain.getDZP(k) + (hc + hr);
+							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*(k+1)) = -domain.getKZP(i,j,k)/domain.getDZP(k);
+
+							b(i + nX*j + nX*nY*k) = (hc + hr*pow(F,0.25))*Tair + q;
+							}
+							break;
+						case Surface::Z_POS:
+							{
+							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = domain.getKZM(i,j,k)/domain.getDZM(k) + (hc + hr);
+							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*(k-1)) = -domain.getKZM(i,j,k)/domain.getDZM(k);
+
+							b(i + nX*j + nX*nY*k) = (hc + hr*pow(F,0.25))*Tair + q;
 							}
 							break;
 						}
@@ -1128,24 +1080,119 @@ void Ground::calculateCrankNicolson()
 					}
 					break;
 				case Cell::INTERIOR_AIR:
-					Amat(i + nX*k, i + nX*k) = 1.0;
+					Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = 1.0;
 
-					b(i + nX*k) = foundation.indoorAirTemperature;
+					b(i + nX*j + nX*nY*k) = foundation.indoorAirTemperature;
 					break;
 				case Cell::EXTERIOR_AIR:
-					Amat(i + nX*k, i + nX*k) = 1.0;
+					Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = 1.0;
 
-					b(i + nX*k) = getOutdoorTemperature();
+					b(i + nX*j + nX*nY*k) = getOutdoorTemperature();
 					break;
 				default:
-					Amat(i + nX*k, i + nX*k) = (1.0 + A + C + E - B - D - F);
-					Amat(i + nX*k, (i-1) + nX*k) = (B + D);
-					Amat(i + nX*k, (i+1) + nX*k) = (-A - C);
-					Amat(i + nX*k, i + nX*(k-1)) = F;
-					Amat(i + nX*k, i + nX*(k+1)) = -E;
+					{
+					if (scheme == Foundation::NS_STEADY_STATE)
+					{
+						double A = 0;
+						double B = 0;
+						if (i != 0)
+						{
+							double r = domain.meshX.centers[i];
+							A = domain.cell[i][j][k].cxp_c/r;
+							B = domain.cell[i][j][k].cxm_c/r;
+						}
+						double C = domain.cell[i][j][k].cxp;
+						double D = domain.cell[i][j][k].cxm;
+						double E = domain.cell[i][j][k].czp;
+						double F = domain.cell[i][j][k].czm;
+						double G = domain.cell[i][j][k].cyp;
+						double H = domain.cell[i][j][k].cym;
 
-					b(i + nX*k) = (TOld[i][j][k]*(1.0 + B + D + F - A - C - E) - TOld[i-1][j][k]*(B + D)
-							  + TOld[i+1][j][k]*(A + C) - TOld[i][j][k-1]*F + TOld[i][j][k+1]*E);
+						if (foundation.coordinateSystem == Foundation::CS_3D)
+						{
+							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = (B + D + F + H - A - C - E - G);
+							Amat(i + nX*j + nX*nY*k, (i-1) + nX*j + nX*nY*k) = (-B - D);
+							Amat(i + nX*j + nX*nY*k, (i+1) + nX*j + nX*nY*k) = (A + C);
+							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*(k-1)) = -F;
+							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*(k+1)) = E;
+							Amat(i + nX*j + nX*nY*k, i + nX*(j-1) + nX*nY*k) = -H;
+							Amat(i + nX*j + nX*nY*k, i + nX*(j+1) + nX*nY*k) = G;
+
+							b(i + nX*j + nX*nY*k) = 0;
+						}
+						else
+						{
+							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = (B + D + F - A - C - E);
+							Amat(i + nX*j + nX*nY*k, (i-1) + nX*j + nX*nY*k) = (-B - D);
+							Amat(i + nX*j + nX*nY*k, (i+1) + nX*j + nX*nY*k) = (A + C);
+							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*(k-1)) = -F;
+							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*(k+1)) = E;
+
+							b(i + nX*j + nX*nY*k) = 0;
+						}
+					}
+					else
+					{
+						double theta = timestep/
+							(domain.cell[i][j][k].density*domain.cell[i][j][k].specificHeat);
+
+						double f;
+						if (scheme == Foundation::NS_IMPLICIT)
+							f = 1.0;
+						else
+							f = 0.5;
+
+						double A = 0;
+						double B = 0;
+						if (i != 0)
+						{
+							double r = domain.meshX.centers[i];
+							A = domain.cell[i][j][k].cxp_c*theta/r;
+							B = domain.cell[i][j][k].cxm_c*theta/r;
+						}
+						double C = domain.cell[i][j][k].cxp*theta;
+						double D = domain.cell[i][j][k].cxm*theta;
+						double E = domain.cell[i][j][k].czp*theta;
+						double F = domain.cell[i][j][k].czm*theta;
+						double G = domain.cell[i][j][k].cyp*theta;
+						double H = domain.cell[i][j][k].cym*theta;
+
+						if (foundation.coordinateSystem == Foundation::CS_3D)
+						{
+							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = (1.0 + f*(A + C + E + G - B - D - F - H));
+							Amat(i + nX*j + nX*nY*k, (i-1) + nX*j + nX*nY*k) = f*(B + D);
+							Amat(i + nX*j + nX*nY*k, (i+1) + nX*j + nX*nY*k) = f*(-A - C);
+							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*(k-1)) = f*F;
+							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*(k+1)) = f*(-E);
+							Amat(i + nX*j + nX*nY*k, i + nX*(j-1) + nX*nY*k) = f*H;
+							Amat(i + nX*j + nX*nY*k, i + nX*(j+1) + nX*nY*k) = f*(-G);
+
+							b(i + nX*j + nX*nY*k)
+									= TOld[i][j][k]*(1.0 + (1-f)*(B + D + F + H - A - C - E - G))
+									- TOld[i-1][j][k]*(1-f)*(B + D)
+									+ TOld[i+1][j][k]*(1-f)*(A + C)
+									- TOld[i][j][k-1]*(1-f)*F
+									+ TOld[i][j][k+1]*(1-f)*E
+									- TOld[i][j-1][k]*(1-f)*H
+									+ TOld[i][j+1][k]*(1-f)*G;
+						}
+						else
+						{
+							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = (1.0 + f*(A + C + E - B - D - F));
+							Amat(i + nX*j + nX*nY*k, (i-1) + nX*j + nX*nY*k) = f*(B + D);
+							Amat(i + nX*j + nX*nY*k, (i+1) + nX*j + nX*nY*k) = f*(-A - C);
+							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*(k-1)) = f*F;
+							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*(k+1)) = f*(-E);
+
+							b(i + nX*j + nX*nY*k)
+									= TOld[i][j][k]*(1.0 + (1-f)*(B + D + F - A - C - E))
+									- TOld[i-1][j][k]*(1-f)*(B + D)
+									+ TOld[i+1][j][k]*(1-f)*(A + C)
+									- TOld[i][j][k-1]*(1-f)*F
+									+ TOld[i][j][k+1]*(1-f)*E;
+						}
+					}
+					}
 					break;
 				}
 			}
@@ -1154,7 +1201,6 @@ void Ground::calculateCrankNicolson()
 
 	umf::umf_solve(Amat,x,b);
 
-
 	for (size_t k = 0; k < nZ; ++k)
 	{
 		for (size_t j = 0; j < nY; ++j)
@@ -1162,39 +1208,35 @@ void Ground::calculateCrankNicolson()
 			for (size_t i = 0; i < nX; ++i)
 			{
 				// Read solution into temperature matrix
-				TNew[i][j][k] = x(i + nX*k);
+				TNew[i][j][k] = x(i + nX*j + nX*nY*k);
 
 				// Update old values for next timestep
 				TOld[i][j][k] = TNew[i][j][k];
 			}
 		}
 	}
+	Amat.clear();
+	b.clear();
+	x.clear();
 
 }
 
-void Ground::calculateSteadyState()
+void Ground::calculateADI(int dim)
 {
 	for (size_t k = 0; k < nZ; k++)
 	{
-		for (size_t j = 0; j < nY; ++j)
+		for (size_t j = 0; j < nY; j++)
 		{
 			for (size_t i = 0; i < nX; i++)
 			{
-				double A = 0;
-				double B = 0;
-				if (foundation.coordinateSystem == Foundation::CS_2DAXIAL)
-				{
-					if (i != 0)
-					{
-						double r = domain.meshX.centers[i];
-						double A = domain.cell[i][j][k].cxp_c/r;
-						double B = domain.cell[i][j][k].cxm_c/r;
-					}
-				}
-				double C = domain.cell[i][j][k].cxp;
-				double D = domain.cell[i][j][k].cxm;
-				double E = domain.cell[i][j][k].czp;
-				double F = domain.cell[i][j][k].czm;
+
+				std::size_t index;
+				if (dim == 1)
+					index = i + nX*j + nX*nY*k;
+				else if (dim == 2)
+					index = j + nY*i + nY*nX*k;
+				else if (dim == 3)
+					index = k + nZ*i + nZ*nX*j;
 
 				switch (domain.cell[i][j][k].cellType)
 				{
@@ -1203,7 +1245,7 @@ void Ground::calculateSteadyState()
 					double tilt;
 					if (domain.cell[i][j][k].surface.orientation == Surface::Z_POS)
 						tilt = 0;
-					else if (domain.cell[i][j][k].surface.orientation == Surface::Z_POS)
+					else if (domain.cell[i][j][k].surface.orientation == Surface::Z_NEG)
 						tilt = PI;
 					else
 						tilt = PI/2.0;
@@ -1214,29 +1256,77 @@ void Ground::calculateSteadyState()
 						{
 						switch (domain.cell[i][j][k].surface.orientation)
 						{
-						case Surface::Z_NEG:
-							Amat(i + nX*k, i + nX*k) = 1.0;
-							Amat(i + nX*k, i + nX*(k+1)) = -1.0;
-
-							b(i + nX*k) = 0;
-							break;
-						case Surface::Z_POS:
-							Amat(i + nX*k, i + nX*k) = 1.0;
-							Amat(i + nX*k, i + nX*(k-1)) = -1.0;
-
-							b(i + nX*k) = 0;
-							break;
 						case Surface::X_NEG:
-							Amat(i + nX*k, i + nX*k) = 1.0;
-							Amat(i + nX*k, (i+1) + nX*k) = -1.0;
-
-							b(i + nX*k) = 0;
+							Amat(index, index) = 1.0;
+							if (dim == 1)
+							{
+								Amat(index, index+1) = -1.0;
+								b(index) = 0;
+							}
+							else
+							{
+								b(index) = TOld[i+1][j][k];
+							}
 							break;
 						case Surface::X_POS:
-							Amat(i + nX*k, i + nX*k) = 1.0;
-							Amat(i + nX*k, (i-1) + nX*k) = -1.0;
-
-							b(i + nX*k) = 0.0;
+							Amat(index, index) = 1.0;
+							if (dim == 1)
+							{
+								Amat(index, index-1) = -1.0;
+								b(index) = 0;
+							}
+							else
+							{
+								b(index) = TOld[i-1][j][k];
+							}
+							break;
+						case Surface::Y_NEG:
+							Amat(index, index) = 1.0;
+							if (dim == 2)
+							{
+								Amat(index, index+1) = -1.0;
+								b(index) = 0;
+							}
+							else
+							{
+								b(index) = TOld[i][j+1][k];
+							}
+							break;
+						case Surface::Y_POS:
+							Amat(index, index) = 1.0;
+							if (dim == 2)
+							{
+								Amat(index, index-1) = -1.0;
+								b(index) = 0;
+							}
+							else
+							{
+								b(index) = TOld[i][j-1][k];
+							}
+							break;
+						case Surface::Z_NEG:
+							Amat(index, index) = 1.0;
+							if (dim == 3)
+							{
+								Amat(index, index+1) = -1.0;
+								b(index) = 0;
+							}
+							else
+							{
+								b(index) = TOld[i][j][k+1];
+							}
+							break;
+						case Surface::Z_POS:
+							Amat(index, index) = 1.0;
+							if (dim == 3)
+							{
+								Amat(index, index-1) = -1.0;
+								b(index) = 0;
+							}
+							else
+							{
+								b(index) = TOld[i][j][k-1];
+							}
 							break;
 						}
 						}
@@ -1244,25 +1334,25 @@ void Ground::calculateSteadyState()
 
 					case Surface::CONSTANT_TEMPERATURE:
 						{
-						Amat(i + nX*k, i + nX*k) = 1.0;
+						Amat(index, index) = 1.0;
 
-						b(i + nX*k) = domain.cell[i][j][k].surface.temperature;
+						b(index) = domain.cell[i][j][k].surface.temperature;
 						}
 						break;
 
 					case Surface::INTERIOR_TEMPERATURE:
 						{
-						Amat(i + nX*k, i + nX*k) = 1.0;
+						Amat(index, index) = 1.0;
 
-						b(i + nX*k) = foundation.indoorAirTemperature;
+						b(index) = foundation.indoorAirTemperature;
 						}
 						break;
 
 					case Surface::EXTERIOR_TEMPERATURE:
 						{
-						Amat(i + nX*k, i + nX*k) = 1.0;
+						Amat(index, index) = 1.0;
 
-						b(i + nX*k) = getOutdoorTemperature();
+						b(index) = getOutdoorTemperature();
 						}
 						break;
 
@@ -1278,28 +1368,88 @@ void Ground::calculateSteadyState()
 
 						switch (domain.cell[i][j][k].surface.orientation)
 						{
-						case Surface::Z_POS:
-							{
-							Amat(i + nX*k, i + nX*k) = domain.getKZM(i,j,k)/domain.getDZM(k) + (hc + hr);
-							Amat(i + nX*k, i + nX*(k-1)) = -domain.getKZM(i,j,k)/domain.getDZM(k);
-
-							b(i + nX*k) = (hc + hr)*Tair + q;
-							}
-							break;
 						case Surface::X_NEG:
 							{
-							Amat(i + nX*k, i + nX*k) = domain.getKXP(i,j,k)/domain.getDXP(i) + (hc + hr);
-							Amat(i + nX*k, (i+1) + nX*k) = -domain.getKXP(i,j,k)/domain.getDXP(i);
-
-							b(i + nX*k) = (hc + hr)*Tair + q;
+							Amat(index, index) = domain.getKXP(i,j,k)/domain.getDXP(i) + (hc + hr);
+							if (dim == 1)
+							{
+								Amat(index, index+1) = -domain.getKXP(i,j,k)/domain.getDXP(i);
+								b(index) = (hc + hr)*Tair + q;
+							}
+							else
+							{
+								b(index) = TOld[i+1][j][k]*domain.getKXP(i,j,k)/domain.getDXP(i) + (hc + hr)*Tair + q;
+							}
 							}
 							break;
 						case Surface::X_POS:
 							{
-							Amat(i + nX*k, i + nX*k) = domain.getKXM(i,j,k)/domain.getDXM(i) + (hc + hr);
-							Amat(i + nX*k, (i-1) + nX*k) = -domain.getKXM(i,j,k)/domain.getDXM(i);
-
-							b(i + nX*k) = (hc + hr)*Tair + q;
+							Amat(index, index) = domain.getKXM(i,j,k)/domain.getDXM(i) + (hc + hr);
+							if (dim == 1)
+							{
+								Amat(index, index-1) = -domain.getKXM(i,j,k)/domain.getDXM(i);
+								b(index) = (hc + hr)*Tair + q;
+							}
+							else
+							{
+								b(index) = TOld[i-1][j][k]*domain.getKXM(i,j,k)/domain.getDXM(i) + (hc + hr)*Tair + q;
+							}
+							}
+							break;
+						case Surface::Y_NEG:
+							{
+							Amat(index, index) = domain.getKYP(i,j,k)/domain.getDYP(j) + (hc + hr);
+							if (dim == 2)
+							{
+								Amat(index, index+1) = -domain.getKYP(i,j,k)/domain.getDYP(j);
+								b(index) = (hc + hr)*Tair + q;
+							}
+							else
+							{
+								b(index) = TOld[i][j+1][k]*domain.getKYP(i,j,k)/domain.getDYP(j) + (hc + hr)*Tair + q;
+							}
+							}
+							break;
+						case Surface::Y_POS:
+							{
+							Amat(index, index) = domain.getKYM(i,j,k)/domain.getDYM(j) + (hc + hr);
+							if (dim == 2)
+							{
+								Amat(index, index-1) = -domain.getKYM(i,j,k)/domain.getDYM(j);
+								b(index) = (hc + hr)*Tair + q;
+							}
+							else
+							{
+								b(index) = TOld[i][j-1][k]*domain.getKYM(i,j,k)/domain.getDYM(j) + (hc + hr)*Tair + q;
+							}
+							}
+							break;
+						case Surface::Z_NEG:
+							{
+							Amat(index, index) = domain.getKZP(i,j,k)/domain.getDZP(k) + (hc + hr);
+							if (dim == 3)
+							{
+								Amat(index, index+1) = -domain.getKZP(i,j,k)/domain.getDZP(k);
+								b(index) = (hc + hr)*Tair + q;
+							}
+							else
+							{
+								b(index) = TOld[i][j][k+1]*domain.getKZP(i,j,k)/domain.getDZP(k) + (hc + hr)*Tair + q;
+							}
+							}
+							break;
+						case Surface::Z_POS:
+							{
+							Amat(index, index) = domain.getKZM(i,j,k)/domain.getDZM(k) + (hc + hr);
+							if (dim == 3)
+							{
+								Amat(index, index-1) = -domain.getKZM(i,j,k)/domain.getDZM(k);
+								b(index) = (hc + hr)*Tair + q;
+							}
+							else
+							{
+								b(index) = TOld[i][j][k-1]*domain.getKZM(i,j,k)/domain.getDZM(k) + (hc + hr)*Tair + q;
+							}
 							}
 							break;
 						}
@@ -1318,28 +1468,88 @@ void Ground::calculateSteadyState()
 
 						switch (domain.cell[i][j][k].surface.orientation)
 						{
-						case Surface::Z_POS:
-							{
-							Amat(i + nX*k, i + nX*k) = domain.getKZM(i,j,k)/domain.getDZM(k) + (hc + hr);
-							Amat(i + nX*k, i + nX*(k-1)) = -domain.getKZM(i,j,k)/domain.getDZM(k);
-
-							b(i + nX*k) = (hc + hr*pow(F,0.25))*Tair + q;
-							}
-							break;
 						case Surface::X_NEG:
 							{
-							Amat(i + nX*k, i + nX*k) = domain.getKXP(i,j,k)/domain.getDXP(i) + (hc + hr);
-							Amat(i + nX*k, (i+1) + nX*k) = -domain.getKXP(i,j,k)/domain.getDXP(i);
-
-							b(i + nX*k) = (hc + hr*pow(F,0.25))*Tair + q;
+							Amat(index, index) = domain.getKXP(i,j,k)/domain.getDXP(i) + (hc + hr);
+							if (dim == 1)
+							{
+								Amat(index, index+1) = -domain.getKXP(i,j,k)/domain.getDXP(i);
+								b(index) = (hc + hr*pow(F,0.25))*Tair + q;
+							}
+							else
+							{
+								b(index) = TOld[i+1][j][k]*domain.getKXP(i,j,k)/domain.getDXP(i) + (hc + hr*pow(F,0.25))*Tair + q;
+							}
 							}
 							break;
 						case Surface::X_POS:
 							{
-							Amat(i + nX*k, i + nX*k) = domain.getKXM(i,j,k)/domain.getDXM(i) + (hc + hr);
-							Amat(i + nX*k, (i-1) + nX*k) = -domain.getKXM(i,j,k)/domain.getDXM(i);
-
-							b(i + nX*k) = (hc + hr*pow(F,0.25))*Tair + q;
+							Amat(index, index) = domain.getKXM(i,j,k)/domain.getDXM(i) + (hc + hr);
+							if (dim == 1)
+							{
+								Amat(index, index-1) = -domain.getKXM(i,j,k)/domain.getDXM(i);
+								b(index) = (hc + hr*pow(F,0.25))*Tair + q;
+							}
+							else
+							{
+								b(index) = TOld[i-1][j][k]*domain.getKXM(i,j,k)/domain.getDXM(i) + (hc + hr*pow(F,0.25))*Tair + q;
+							}
+							}
+							break;
+						case Surface::Y_NEG:
+							{
+							Amat(index, index) = domain.getKYP(i,j,k)/domain.getDYP(j) + (hc + hr);
+							if (dim == 2)
+							{
+								Amat(index, index+1) = -domain.getKYP(i,j,k)/domain.getDYP(j);
+								b(index) = (hc + hr*pow(F,0.25))*Tair + q;
+							}
+							else
+							{
+								b(index) = TOld[i][j+1][k]*domain.getKYP(i,j,k)/domain.getDYP(j) + (hc + hr*pow(F,0.25))*Tair + q;
+							}
+							}
+							break;
+						case Surface::Y_POS:
+							{
+							Amat(index, index) = domain.getKYM(i,j,k)/domain.getDYM(j) + (hc + hr);
+							if (dim == 2)
+							{
+								Amat(index, index-1) = -domain.getKYM(i,j,k)/domain.getDYM(j);
+								b(index) = (hc + hr*pow(F,0.25))*Tair + q;
+							}
+							else
+							{
+								b(index) = TOld[i][j-1][k]*domain.getKYM(i,j,k)/domain.getDYM(j) + (hc + hr*pow(F,0.25))*Tair + q;
+							}
+							}
+							break;
+						case Surface::Z_NEG:
+							{
+							Amat(index, index) = domain.getKZP(i,j,k)/domain.getDZP(k) + (hc + hr);
+							if (dim == 3)
+							{
+								Amat(index, index+1) = -domain.getKZP(i,j,k)/domain.getDZP(k);
+								b(index) = (hc + hr*pow(F,0.25))*Tair + q;
+							}
+							else
+							{
+								b(index) = TOld[i][j][k+1]*domain.getKZP(i,j,k)/domain.getDZP(k) + (hc + hr*pow(F,0.25))*Tair + q;
+							}
+							}
+							break;
+						case Surface::Z_POS:
+							{
+							Amat(index, index) = domain.getKZM(i,j,k)/domain.getDZM(k) + (hc + hr);
+							if (dim == 3)
+							{
+								Amat(index, index-1) = -domain.getKZM(i,j,k)/domain.getDZM(k);
+								b(index) = (hc + hr*pow(F,0.25))*Tair + q;
+							}
+							else
+							{
+								b(index) = TOld[i][j][k-1]*domain.getKZM(i,j,k)/domain.getDZM(k) + (hc + hr*pow(F,0.25))*Tair + q;
+							}
 							}
 							break;
 						}
@@ -1349,23 +1559,114 @@ void Ground::calculateSteadyState()
 					}
 					break;
 				case Cell::INTERIOR_AIR:
-					Amat(i + nX*k, i + nX*k) = 1.0;
+					Amat(index, index) = 1.0;
 
-					b(i + nX*k) = foundation.indoorAirTemperature;
+					b(index) = foundation.indoorAirTemperature;
 					break;
 				case Cell::EXTERIOR_AIR:
-					Amat(i + nX*k, i + nX*k) = 1.0;
+					Amat(index, index) = 1.0;
 
-					b(i + nX*k) = getOutdoorTemperature();
+					b(index) = getOutdoorTemperature();
 					break;
 				default:
-					Amat(i + nX*k, i + nX*k) = (B + D + F - A - C - E);
-					Amat(i + nX*k, (i-1) + nX*k) = (-B - D);
-					Amat(i + nX*k, (i+1) + nX*k) = (A + C);
-					Amat(i + nX*k, i + nX*(k-1)) = -F;
-					Amat(i + nX*k, i + nX*(k+1)) = E;
+					{
+					double theta;
+					if (foundation.coordinateSystem == Foundation::CS_3D)
+					{
+						theta = timestep/
+								(3*domain.cell[i][j][k].density*domain.cell[i][j][k].specificHeat);
+					}
+					else
+					{
+						theta = timestep/
+								(2*domain.cell[i][j][k].density*domain.cell[i][j][k].specificHeat);
+					}
 
-					b(i + nX*k) = 0;
+					double A = 0;
+					double B = 0;
+					if (i != 0)
+					{
+						double r = domain.meshX.centers[i];
+						A = domain.cell[i][j][k].cxp_c*theta/r;
+						B = domain.cell[i][j][k].cxm_c*theta/r;
+					}
+					double C = domain.cell[i][j][k].cxp*theta;
+					double D = domain.cell[i][j][k].cxm*theta;
+					double E = domain.cell[i][j][k].czp*theta;
+					double F = domain.cell[i][j][k].czm*theta;
+					double G = domain.cell[i][j][k].cyp*theta;
+					double H = domain.cell[i][j][k].cym*theta;
+
+					double f = foundation.fADI;
+
+					if (foundation.coordinateSystem == Foundation::CS_3D)
+					{
+						if (dim == 1) // x
+						{
+							Amat(index, index) = 1.0 + (3 - 2*f)*(A + C - B - D);
+							Amat(index, index-1) = (3 - 2*f)*(B + D);
+							Amat(index, index+1) = (3 - 2*f)*(-A - C);
+
+							b(index)
+									= TOld[i][j][k]*(1.0 + f*(F + H - E - G))
+									- TOld[i][j][k-1]*f*F
+									+ TOld[i][j][k+1]*f*E
+									- TOld[i][j-1][k]*f*H
+									+ TOld[i][j+1][k]*f*G;
+						}
+						else if (dim == 2) // y
+						{
+							Amat(index, index) = (1.0 + (3 - 2*f)*(G - H));
+							Amat(index, index-1) = (3 - 2*f)*H;
+							Amat(index, index+1) = (3 - 2*f)*(-G);
+
+							b(index)
+									= TOld[i][j][k]*(1.0 + f*(B + D + F - A - C - E))
+									- TOld[i-1][j][k]*f*(B + D)
+									+ TOld[i+1][j][k]*f*(A + C)
+									- TOld[i][j][k-1]*f*F
+									+ TOld[i][j][k+1]*f*E;
+						}
+						else if (dim == 3) // z
+						{
+							Amat(index, index) = (1.0 + (3 - 2*f)*(E - F));
+							Amat(index, index-1) = (3 - 2*f)*F;
+							Amat(index, index+1) = (3 - 2*f)*(-E);
+
+							b(index)
+									= TOld[i][j][k]*(1.0 + f*(B + D + H - A - C - G))
+									- TOld[i-1][j][k]*f*(B + D)
+									+ TOld[i+1][j][k]*f*(A + C)
+									- TOld[i][j-1][k]*f*H
+									+ TOld[i][j+1][k]*f*G;
+						}
+					}
+					else
+					{
+						if (dim == 1) // x
+						{
+							Amat(index, index) = 1.0 + (2 - f)*(A + C - B - D);
+							Amat(index, index-1) = (2 - f)*(B + D);
+							Amat(index, index+1) = (2 - f)*(-A - C);
+
+							b(index)
+									= TOld[i][j][k]*(1.0 + f*(F - E))
+									- TOld[i][j][k-1]*f*F
+									+ TOld[i][j][k+1]*f*E;
+						}
+						else if (dim == 3) // z
+						{
+							Amat(index, index) = 1.0 + (2 - f)*(E - F);
+							Amat(index, index-1) = (2 - f)*F;
+							Amat(index, index+1) = (2 - f)*(-E);
+
+							b(index)
+									= TOld[i][j][k]*(1.0 + f*(B + D - A - C))
+									- TOld[i-1][j][k]*f*(B + D)
+									+ TOld[i+1][j][k]*f*(A + C);
+						}
+					}
+					}
 					break;
 				}
 			}
@@ -1374,21 +1675,31 @@ void Ground::calculateSteadyState()
 
 	umf::umf_solve(Amat,x,b);
 
-
 	for (size_t k = 0; k < nZ; ++k)
 	{
 		for (size_t j = 0; j < nY; ++j)
 		{
 			for (size_t i = 0; i < nX; ++i)
 			{
-				// Read solution into temperature matrix
-				TNew[i][j][k] = x(i + nX*k);
+				std::size_t index;
+				if (dim == 1)
+					index = i + nX*j + nX*nY*k;
+				else if (dim == 2)
+					index = j + nY*i + nY*nX*k;
+				else if (dim == 3)
+					index = k + nZ*i + nZ*nX*j;
 
+				// Read solution into temperature matrix
+				TNew[i][j][k] = x(index);
 				// Update old values for next timestep
 				TOld[i][j][k] = TNew[i][j][k];
 			}
 		}
 	}
+	Amat.clear();
+	b.clear();
+	x.clear();
+
 }
 
 void Ground::calculate(double t)
@@ -1396,178 +1707,46 @@ void Ground::calculate(double t)
 	tNow = t;
 
 	// Calculate Temperatures
-	if (foundation.numericalScheme == Foundation::NS_ADE)
-		calculateADE();
-	else if (foundation.numericalScheme == Foundation::NS_EXPLICIT)
-		calculateExplicit();
-	else if (foundation.numericalScheme == Foundation::NS_IMPLICIT)
-		calculateImplicit();
-	else if (foundation.numericalScheme == Foundation::NS_CRANK_NICOLSON)
-		calculateCrankNicolson();
-	else if (foundation.numericalScheme == Foundation::NS_STEADY_STATE)
-		calculateSteadyState();
-
-	// Calculate Heat Fluxes
-
-	// Slab
-	size_t j = 0;
-	for (size_t i = domain.slabImin; i <= domain.slabImax; i++)
+	switch(foundation.numericalScheme)
 	{
-		double Tair = foundation.indoorAirTemperature;
-		double h = getConvectionCoeff(TNew[i][j][domain.slabK],Tair,0.0,1.0,false,0.0);
-		double A = 2.0*PI*domain.meshX.deltas[i]*domain.meshX.centers[i]; // for cylindrical coordinates
-		//double A = domain.mesher.xDeltas[i];  // for cartesian coordinates
-		QSlab[i] = h*A*(Tair - TNew[i][j][domain.slabK]);
+	case Foundation::NS_ADE:
+		calculateADE();
+		break;
+	case Foundation::NS_EXPLICIT:
+		calculateExplicit();
+		break;
+	case Foundation::NS_ADI:
+		calculateADI(1);
+		if (foundation.coordinateSystem == Foundation::CS_3D)
+			calculateADI(2);
+		calculateADI(3);
+		break;
+	case Foundation::NS_IMPLICIT:
+		calculateMatrix(Foundation::NS_IMPLICIT);
+		break;
+	case Foundation::NS_CRANK_NICOLSON:
+		calculateMatrix(Foundation::NS_CRANK_NICOLSON);
+		break;
+	case Foundation::NS_STEADY_STATE:
+		calculateMatrix(Foundation::NS_STEADY_STATE);
+		break;
 	}
+	// Calculate Heat Fluxes
+	QSlabTotal = getSurfaceAverageHeatFlux("Slab Interior");
 
-	QSlabTotal = accumulate((QSlab).begin(),(QSlab).end(), 0.0)/(PI*pow(foundation.effectiveLength,2.0));  // for cylindrical coordinates
-	//QSlabTotal = accumulate((QSlab).begin(),(QSlab).end(), 0.0)/foundation.radius;  // for cartesian coordinates
-
-	if (makePlot)
-		plot();
+	plot();
 }
 
 void Ground::plot()
 {
-
-	if (tNow >= nextPlotTime)
+	for (std::size_t p = 0; p < plots.size(); p++)
 	{
-		for(size_t k = 0; k < nZ; k++)
+		if (plots[p].makeNewFrame(tNow))
 		{
-			for(size_t i = 0; i < nX; i++)
-			{
-				size_t j = 0;
-			    double TinF = (TNew[i][j][k] - 273.15)*9/5 + 32.0;
-				TDat.a[i+nX*k] = TinF;
-			}
-
+			boost::posix_time::ptime time(simulationControl.startDate,boost::posix_time::seconds(tNow));
+			std::string timeStamp = to_simple_string(time);
+			plots[p].createFrame(TNew, timeStamp);
 		}
-
-		int nX = rDat.GetNN();
-		double rmin = 0.0;
-		double rmax = rGrid.a[nX];
-		double rrange = rmax - rmin;
-		double length = foundation.effectiveLength;
-		mglData rTicks(2);
-		rTicks.a[0] = length;
-		rTicks.a[1] = rmax;
-
-		std::string sLength = str(boost::format("%0.2f") % length) + " m";
-		std::string sRmax = str(boost::format("%0.2f") % rmax) + " m";
-		std::string rTickString = sLength + "\n" + sRmax;
-
-		int nZ = zDat.GetNN();
-		double zmin = zGrid.a[0];
-		double zmax = zGrid.a[nZ];
-		double zrange = zmax - zmin;
-		mglData zTicks(2);
-		zTicks.a[0] = zmin;
-		zTicks.a[1] = 0.0;
-
-		std::string sZmin = str(boost::format("%0.2f") % zmin) + " m";
-		std::string zTickString = sZmin + "\n 0,0\n";
-
-		int nT = cDat.GetNN();
-		double Tmin = cDat.a[0];
-		double Tmax = cDat.a[nT - 1];
-		double Tstep = cDat.a[1] - cDat.a[0];
-
-		gr.NewFrame();
-
-		// Plot
-		//gr.MultiPlot(3,1,0,2,1,"_");
-		gr.LoadFont("none");
-		gr.SetFontSize(2.0);
-		gr.SetOrigin(0.0, zmax);
-		gr.SetRange('x', rGrid);
-		gr.SetRange('y', zGrid);
-		gr.SetRange('c', Tmin, Tmax);
-		gr.SetRange('z', Tmin, Tmax);
-		gr.SetTicks('c', Tstep, nT, Tmin);
-		gr.SetTicksVal('x', rTicks, rTickString.c_str());
-		gr.SetTicksVal('y', zTicks, zTickString.c_str());
-		gr.SetTickLen(-0.0001);
-		gr.Aspect(rrange, zrange);
-		gr.Axis("yU");
-		gr.Axis("x");
-		gr.Colorbar("_");
-		//gr.Puts(mglPoint(12.5,-10), "Temperature \\textdegree C", ":C");
-		gr.Box("k",false);
-		gr.Dens(rDat, zDat, TDat);
-		if (foundation.outputAnimation.contours)
-			gr.Cont(cDat, rDat, zDat, TDat,"H");
-		if (foundation.outputAnimation.gradients)
-			gr.Grad(rDat, zDat, TDat);
-		if (foundation.outputAnimation.grid)
-			gr.Grid(rGrid, zGrid, TGrid, "W");
-
-		// Draw blocks
-		for (size_t b = 0; b < foundation.blocks.size(); b++)
-		{
-			mglPoint bl = mglPoint(foundation.blocks[b].xMin,
-			         	 	 	   foundation.blocks[b].zMin,
-			         	 	 	   210.0);
-			mglPoint br = mglPoint(foundation.blocks[b].xMax,
-			         	 	 	   foundation.blocks[b].zMin,
-			         	 	 	   210.0);
-			mglPoint tr = mglPoint(foundation.blocks[b].xMax,
-			         	 	 	   foundation.blocks[b].zMax,
-			         	 	 	   210.0);
-			mglPoint tl = mglPoint(foundation.blocks[b].xMin,
-			         	 	 	   foundation.blocks[b].zMax,
-			         	 	 	   210.0);
-
-			gr.Line(bl, br, "k");
-			gr.Line(br, tr, "k");
-			gr.Line(tr, tl, "k");
-			gr.Line(tl, bl, "k");
-
-		}
-
-		// Timestamp
-		boost::posix_time::ptime tp(simulationControl.startDate,boost::posix_time::seconds(tNow));
-		gr.Puts(mglPoint(-0.10,0.40), to_simple_string(tp).c_str(), ":C");
-
-		/*
-		// Text
-		double y = 1.0;
-		double d = 0.05;
-		double x = -0.2;
-		gr.SubPlot(3,1,2,"");
-		gr.LoadFont("none");
-		gr.SetFontSizePT(10.0);
-		gr.SetRanges(0,1,0,1);
-
-		// Grid information
-		string nXs = boost::lexical_cast<string>(nX);
-		string nZs = boost::lexical_cast<string>(nZ);
-		string nCells = boost::lexical_cast<string>(nX*nZ);
-
-
-		string gridInfo = "Number of Cells:\n\n\t(" + nXs + " x " + nZs + ") = " +
-						  nCells + " Cells";
-
-		gr.Puts(mglPoint(x,y), gridInfo.c_str(), ":L");
-
-		// Location and time stamp
-		string location = weatherData.city + ", " + weatherData.state + ", " +
-				          weatherData.country;
-		ptime tp(simulationControl.startDate,seconds(tNow));
-
-		gr.SetFontSizePT(10.0);
-		gr.Puts(mglPoint(-1.25,0.05), location.c_str(), ":C");
-		gr.Puts(mglPoint(-1.25,0.05-d), to_simple_string(tp).c_str(), ":C");
-
-		// Footer
-		gr.SetFontSizePT(6.0);
-
-		gr.Puts(mglPoint(1.05, -0.05), "Copyright \\textcopyright{ }Big Ladder Software", ":R");
-		gr.Puts(mglPoint(1.05, -0.08), startString.c_str(), ":R");
-		*/
-
-		//gr.WriteFrame((foundation.outputAnimation.name + ".png").c_str());
-		gr.EndFrame();
-		nextPlotTime += plotFreq;
 	}
 }
 
@@ -1652,6 +1831,185 @@ double Ground::getLocalWindSpeed()
 	double vLocal = vWS*pow(deltaWS/zWS,alphaWS)*pow(zLocal/deltaLocal,alphaLocal);
 
 	return vLocal;
+}
+
+double Ground::getSurfaceAverageHeatFlux(std::string surfaceName)
+{
+	// Find surface
+	Surface surface;
+	for (size_t s = 0; s < foundation.surfaces.size(); s++)
+	{
+		if (foundation.surfaces[s].name == surfaceName)
+		{
+			surface = foundation.surfaces[s];
+		}
+	}
+
+	size_t iMin, iMax, jMin, jMax, kMin, kMax;
+	double tilt;
+	double totalArea;
+
+	// Find bounding indices
+	if (surface.orientation == Surface::X_POS ||
+		surface.orientation == Surface::X_NEG)
+	{
+		iMin = domain.meshX.getNearestIndex(surface.xMin);
+		iMax = domain.meshX.getNearestIndex(surface.xMax);
+		jMin = domain.meshY.getNextIndex(surface.yMin);
+		jMax = domain.meshY.getPreviousIndex(surface.yMax);
+		kMin = domain.meshZ.getNextIndex(surface.zMin);
+		kMax = domain.meshZ.getPreviousIndex(surface.zMax);
+	}
+	else if (surface.orientation == Surface::Y_POS ||
+		surface.orientation == Surface::Y_NEG)
+	{
+		iMin = domain.meshX.getNextIndex(surface.xMin);
+		iMax = domain.meshX.getPreviousIndex(surface.xMax);
+		jMin = domain.meshY.getNearestIndex(surface.yMin);
+		jMax = domain.meshY.getNearestIndex(surface.yMax);
+		kMin = domain.meshZ.getNextIndex(surface.zMin);
+		kMax = domain.meshZ.getPreviousIndex(surface.zMax);
+	}
+	else // if (surface.orientation == Surface::Z_POS ||
+		 // surface.orientation == Surface::Z_NEG)
+	{
+		iMin = domain.meshX.getNextIndex(surface.xMin);
+		iMax = domain.meshX.getPreviousIndex(surface.xMax);
+		jMin = domain.meshY.getNextIndex(surface.yMin);
+		jMax = domain.meshY.getPreviousIndex(surface.yMax);
+		kMin = domain.meshZ.getNearestIndex(surface.zMin);
+		kMax = domain.meshZ.getNearestIndex(surface.zMax);
+	}
+
+	// Find total area
+	if (foundation.coordinateSystem == Foundation::CS_2DAXIAL)
+	{
+		if (surface.orientation == Surface::X_POS ||
+			surface.orientation == Surface::X_NEG)
+		{
+			totalArea = 2.0*PI*surface.xMax*(surface.zMax - surface.zMin);
+		}
+		else // if (surface.orientation == Surface::Z_POS ||
+			 // surface.orientation == Surface::Z_NEG)
+		{
+			totalArea = PI*pow(surface.xMax,2.0) - PI*pow(surface.xMin,2.0);
+		}
+	}
+	else if (foundation.coordinateSystem == Foundation::CS_2DLINEAR)
+	{
+		if (surface.orientation == Surface::X_POS ||
+			surface.orientation == Surface::X_NEG)
+		{
+			totalArea = surface.zMax - surface.zMin;
+		}
+		else // if (surface.orientation == Surface::Z_POS ||
+			 // surface.orientation == Surface::Z_NEG)
+		{
+			totalArea = surface.xMax - surface.xMin;
+		}
+	}
+	else // if (foundation.coordinateSystem == Foundation::CS_3D)
+	{
+		if (surface.orientation == Surface::X_POS ||
+			surface.orientation == Surface::X_NEG)
+		{
+			totalArea = (surface.yMax - surface.yMin)*(surface.zMax - surface.zMin);
+		}
+		else if (surface.orientation == Surface::Y_POS ||
+			surface.orientation == Surface::Y_NEG)
+		{
+			totalArea = (surface.xMax - surface.xMin)*(surface.zMax - surface.zMin);
+		}
+		else // if (surface.orientation == Surface::Z_POS ||
+			 // surface.orientation == Surface::Z_NEG)
+		{
+			totalArea = (surface.xMax - surface.xMin)*(surface.yMax - surface.yMin);
+		}
+
+	}
+
+	// Find tilt
+	if (surface.orientation == Surface::Z_POS)
+		tilt = 0.0;
+	else if (surface.orientation == Surface::Z_NEG)
+		tilt = PI;
+	else
+		tilt = PI/2.0;
+
+	double Tair = foundation.indoorAirTemperature;
+
+	std::vector<double> heatFlux;
+
+	// Loop over cells and calculate heat loss from surface
+	for (size_t k = kMin; k <= kMax; ++k)
+	{
+		for (size_t j = jMin; j <= jMax; ++j)
+		{
+			for (size_t i = iMin; i <= iMax; ++i)
+			{
+				double h = getConvectionCoeff(TNew[i][j][k],Tair,0.0,1.0,false,tilt)
+						 + getSimpleInteriorIRCoeff(domain.cell[i][j][k].surface.emissivity,
+								 TNew[i][j][k],Tair);
+
+				// Calculate Area
+				double A;
+				if (foundation.coordinateSystem == Foundation::CS_2DAXIAL)
+				{
+					if (surface.orientation == Surface::X_POS ||
+						surface.orientation == Surface::X_NEG)
+					{
+						A = 2.0*PI*domain.meshX.centers[i]*domain.meshZ.deltas[k];
+					}
+					else // if (surface.orientation == Surface::Z_POS ||
+						 // surface.orientation == Surface::Z_NEG)
+					{
+						A = 2.0*PI*domain.meshX.deltas[i]*domain.meshX.centers[i];
+					}
+				}
+				else if (foundation.coordinateSystem == Foundation::CS_2DLINEAR)
+				{
+					if (surface.orientation == Surface::X_POS ||
+						surface.orientation == Surface::X_NEG)
+					{
+						A = domain.meshZ.deltas[k];
+					}
+					else // if (surface.orientation == Surface::Z_POS ||
+						 // surface.orientation == Surface::Z_NEG)
+					{
+						A = domain.meshX.deltas[i];
+					}
+				}
+				else  // if (foundation.coordinateSystem == Foundation::CS_3D)
+				{
+					if (surface.orientation == Surface::X_POS ||
+						surface.orientation == Surface::X_NEG)
+					{
+						A = domain.meshY.deltas[j]*domain.meshZ.deltas[k];
+					}
+					else if (surface.orientation == Surface::Y_POS ||
+						surface.orientation == Surface::Y_NEG)
+					{
+						A = domain.meshX.deltas[i]*domain.meshZ.deltas[k];
+					}
+					else // if (surface.orientation == Surface::Z_POS ||
+						 // surface.orientation == Surface::Z_NEG)
+					{
+						A = domain.meshX.deltas[i]*domain.meshY.deltas[j];
+					}
+				}
+				heatFlux.push_back(h*A*(Tair - TNew[i][j][k]));
+			}
+		}
+	}
+
+	double totalFlux = std::accumulate((heatFlux).begin(),(heatFlux).end(), 0.0);
+
+	return totalFlux/totalArea;
+}
+
+double getArrayValue(boost::multi_array<double, 3> Mat, std::size_t i, std::size_t j, std::size_t k)
+{
+	return Mat[i][j][k];
 }
 
 #endif
