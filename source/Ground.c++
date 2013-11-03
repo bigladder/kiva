@@ -33,15 +33,15 @@ Ground::Ground(WeatherData &weatherData, Foundation &foundation,
 	// Initial Conditions
 	initializeConditions();
 
-	makePlot = true;
-	if (foundation.outputAnimation.name == "") makePlot = false;
-
-	if (makePlot) initializePlot();
+	initializePlots();
 }
 
 Ground::~Ground()
 {
-	if (makePlot) gr.CloseGIF();
+	for (std::size_t p = 0; p < plots.size(); p++)
+	{
+		plots[p].gr.CloseGIF();
+	}
 }
 
 void Ground::buildDomain()
@@ -59,8 +59,7 @@ void Ground::buildDomain()
 	nY = domain.meshY.centers.size();
 	nZ = domain.meshZ.centers.size();
 
-	//cout << "Number of Cells: " << nX << " x " << nZ << " = " << nX*nZ << endl;
-	domain.printCellTypes();
+	//domain.printCellTypes();
 }
 
 void Ground::initializeConditions()
@@ -105,7 +104,7 @@ void Ground::initializeConditions()
 		Foundation initialFoundation = foundation;
 		initialFoundation.initializationMethod = Foundation::IM_STEADY_STATE;
 		initialFoundation.numericalScheme = Foundation::NS_IMPLICIT;
-		initialFoundation.outputAnimation.name = "";
+		initialFoundation.outputAnimations.clear();
 		SimulationControl initialSimControl;
 		initialSimControl.timestep = boost::posix_time::hours(foundation.implicitAccelTimestep);
 		initialSimControl.endDate = simulationControl.startDate;
@@ -148,72 +147,79 @@ void Ground::initializeConditions()
 	}
 }
 
-void Ground::initializePlot()
+void Ground::initializePlots()
 {
-	startString = boost::posix_time::to_simple_string(boost::posix_time::second_clock::local_time());
-
-	size_t contourLevels = 13;
-
-	mglData TRef(nX, nZ),
-			xRef(nX),
-			yRef(nZ),
-			xGridRef(nX + 1),
-			yGridRef(nZ + 1),
-			TGridRef(nX + 1, nZ + 1),
-			cRef(contourLevels);
-
-
-	TDat = TRef;
-	xDat = xRef;
-	yDat = yRef;
-	xGrid = xGridRef;
-	yGrid = yGridRef;
-	TGrid = TGridRef;
-	cDat = cRef;
-
-	nextPlotTime = 0.0;
-	plotFreq = foundation.outputAnimation.frequency.total_seconds();
-
-	double aspect = 1.0;
-	int height = foundation.outputAnimation.size;
-	int width = height*aspect;
-	gr.SetSize(width,height);
-
-	gr.StartGIF((foundation.outputAnimation.name + ".gif").c_str(),100);
-
-	xGrid.a[0] = domain.meshX.dividers[0];
-
-	for(size_t i = 0; i < nX; i++)
+	for (std::size_t p = 0; p < foundation.outputAnimations.size(); p++)
 	{
-		xDat.a[i] = domain.meshX.centers[i];
-		xGrid.a[i + 1] = domain.meshX.dividers[i + 1];
-	}
+		if (!foundation.outputAnimations[p].startDateSet)
+			foundation.outputAnimations[p].startDate = simulationControl.startDate;
 
-	yGrid.a[0] = domain.meshZ.dividers[0];
+		if (!foundation.outputAnimations[p].endDateSet)
+			foundation.outputAnimations[p].endDate = simulationControl.endDate;
 
-	for(size_t j = 0; j < nZ; j++)
-	{
-		yDat.a[j] = domain.meshZ.centers[j];
-		yGrid.a[j + 1] = domain.meshZ.dividers[j + 1];
-	}
-
-	for(size_t j = 0; j <= nZ; j++)
-	{
-		for(size_t i = 0; i <= nX; i++)
+		if (foundation.coordinateSystem == Foundation::CS_3D)
 		{
-			TGrid.a[i+nX*j] = 200.0;
+			if (!foundation.outputAnimations[p].xRangeSet)
+			{
+				foundation.outputAnimations[p].xRange.first = domain.meshX.dividers[0];
+				foundation.outputAnimations[p].xRange.second = domain.meshX.dividers[nX];
+			}
+
+			if (!foundation.outputAnimations[p].yRangeSet)
+			{
+				foundation.outputAnimations[p].yRange.first = domain.meshY.dividers[0];
+				foundation.outputAnimations[p].yRange.second = domain.meshY.dividers[nY];
+			}
+
+			if (!foundation.outputAnimations[p].zRangeSet)
+			{
+
+				if (!foundation.outputAnimations[p].xRangeSet && !foundation.outputAnimations[p].yRangeSet)
+				{
+					foundation.outputAnimations[p].zRange.first = 0;
+					foundation.outputAnimations[p].zRange.second = 0;
+				}
+				else
+				{
+					foundation.outputAnimations[p].zRange.first = domain.meshZ.dividers[0];
+					foundation.outputAnimations[p].zRange.second = domain.meshZ.dividers[nZ];
+				}
+			}
+
+
 		}
-	}
+		else
+		{
+			if (!foundation.outputAnimations[p].xRangeSet)
+			{
+				foundation.outputAnimations[p].xRange.first = domain.meshX.dividers[0];
+				foundation.outputAnimations[p].xRange.second = domain.meshX.dividers[nX];
+			}
 
-	for (size_t n = 0; n < contourLevels; n++)
-	{
-		double mid = 50.0;
-		double range = 120.0;
-		double step = range / (contourLevels - 1);
-		cDat.a[n] = mid - range/2 + double(n)*step;
-	}
+			if (!foundation.outputAnimations[p].yRangeSet)
+			{
+				foundation.outputAnimations[p].yRange.first = 0.5;
+				foundation.outputAnimations[p].yRange.second = 0.5;
+			}
 
-	plot();
+			if (!foundation.outputAnimations[p].zRangeSet)
+			{
+				foundation.outputAnimations[p].zRange.first = domain.meshZ.dividers[0];
+				foundation.outputAnimations[p].zRange.second = domain.meshZ.dividers[nZ];
+			}
+		}
+
+		plots.push_back(GroundPlot(foundation.outputAnimations[p],domain,foundation.blocks));
+
+		boost::posix_time::ptime simStart = simulationControl.startTime;
+		boost::posix_time::ptime startTime(foundation.outputAnimations[p].startDate,boost::posix_time::hours(0));;
+		boost::posix_time::ptime endTime(foundation.outputAnimations[p].endDate + boost::gregorian::days(1));
+		boost::posix_time::time_duration untilStart =  startTime - simStart;
+		boost::posix_time::time_duration untilEnd =  endTime - simStart;
+
+		plots[p].tStart = untilStart.total_seconds();
+		plots[p].tEnd = untilEnd.total_seconds();
+	}
 }
 
 void Ground::calculateADE()
@@ -1728,152 +1734,19 @@ void Ground::calculate(double t)
 	// Calculate Heat Fluxes
 	QSlabTotal = getSurfaceAverageHeatFlux("Slab Interior");
 
-	if (makePlot)
-		plot();
+	plot();
 }
 
 void Ground::plot()
 {
-
-	if (tNow >= nextPlotTime)
+	for (std::size_t p = 0; p < plots.size(); p++)
 	{
-		for(size_t k = 0; k < nZ; k++)
+		if (plots[p].makeNewFrame(tNow))
 		{
-			for(size_t i = 0; i < nX; i++)
-			{
-				size_t j = nY/2;
-			    double TinF = (TNew[i][j][k] - 273.15)*9/5 + 32.0;
-				TDat.a[i+nX*k] = TinF;
-			}
-
+			boost::posix_time::ptime time(simulationControl.startDate,boost::posix_time::seconds(tNow));
+			std::string timeStamp = to_simple_string(time);
+			plots[p].createFrame(TNew, timeStamp);
 		}
-
-		//int nX = xDat.GetNN();
-		//double xmin = 0.0;
-		//double xmax = xGrid.a[nX];
-		//double xrange = xmax - xmin;
-		//double length = foundation.effectiveLength;
-		//mglData xTicks(2);
-		//xTicks.a[0] = length;
-		//xTicks.a[1] = xmax;
-
-		//std::string sLength = str(boost::format("%0.2f") % length) + " m";
-		//std::string sRmax = str(boost::format("%0.2f") % xmax) + " m";
-		//std::string rTickString = sLength + "\n" + sRmax;
-
-		//int nY = yDat.GetNN();
-		//double ymin = yGrid.a[0];
-		//double ymax = yGrid.a[nY];
-		//double yrange = ymax - ymin;
-		//mglData yTicks(2);
-		//yTicks.a[0] = ymin;
-		//yTicks.a[1] = 0.0;
-
-		//std::string sYmin = str(boost::format("%0.2f") % ymin) + " m";
-		//std::string yTickString = sYmin + "\n 0,0\n";
-
-		int nT = cDat.GetNN();
-		double Tmin = cDat.a[0];
-		double Tmax = cDat.a[nT - 1];
-		double Tstep = cDat.a[1] - cDat.a[0];
-
-		gr.NewFrame();
-
-		// Plot
-		//gr.MultiPlot(3,1,0,2,1,"_");
-		gr.LoadFont("none");
-		gr.SetFontSize(2.0);
-		//gr.SetOrigin(0.0, ymax);
-		gr.SetRange('x', xGrid);
-		gr.SetRange('y', yGrid);
-		gr.SetRange('c', Tmin, Tmax);
-		gr.SetRange('z', Tmin, Tmax);
-		gr.SetTicks('c', Tstep, nT, Tmin);
-		//gr.SetTicksVal('x', rTicks, rTickString.c_str());
-		//gr.SetTicksVal('y', zTicks, zTickString.c_str());
-		//gr.SetTickLen(-0.0001);
-		//gr.Aspect(xrange, yrange);
-		gr.Axis("yU");
-		gr.Axis("x");
-		gr.Colorbar("_");
-		//gr.Puts(mglPoint(12.5,-10), "Temperature \\textdegree C", ":C");
-		gr.Box("k",false);
-		gr.Dens(xDat, yDat, TDat);
-		if (foundation.outputAnimation.contours)
-			gr.Cont(cDat, xDat, yDat, TDat,"H");
-		if (foundation.outputAnimation.gradients)
-			gr.Grad(xDat, yDat, TDat);
-		if (foundation.outputAnimation.grid)
-			gr.Grid(xGrid, yGrid, TGrid, "W");
-
-		// Draw blocks
-		if (false)
-		for (size_t b = 0; b < foundation.blocks.size(); b++)
-		{
-			mglPoint bl = mglPoint(foundation.blocks[b].xMin,
-			         	 	 	   foundation.blocks[b].zMin,
-			         	 	 	   210.0);
-			mglPoint br = mglPoint(foundation.blocks[b].xMax,
-			         	 	 	   foundation.blocks[b].zMin,
-			         	 	 	   210.0);
-			mglPoint tr = mglPoint(foundation.blocks[b].xMax,
-			         	 	 	   foundation.blocks[b].zMax,
-			         	 	 	   210.0);
-			mglPoint tl = mglPoint(foundation.blocks[b].xMin,
-			         	 	 	   foundation.blocks[b].zMax,
-			         	 	 	   210.0);
-
-			gr.Line(bl, br, "k");
-			gr.Line(br, tr, "k");
-			gr.Line(tr, tl, "k");
-			gr.Line(tl, bl, "k");
-
-		}
-
-		// Timestamp
-		boost::posix_time::ptime tp(simulationControl.startDate,boost::posix_time::seconds(tNow));
-		gr.Puts(mglPoint(-0.10,4.8), to_simple_string(tp).c_str(), ":C");
-
-		/*
-		// Text
-		double y = 1.0;
-		double d = 0.05;
-		double x = -0.2;
-		gr.SubPlot(3,1,2,"");
-		gr.LoadFont("none");
-		gr.SetFontSizePT(10.0);
-		gr.SetRanges(0,1,0,1);
-
-		// Grid information
-		string nXs = boost::lexical_cast<string>(nX);
-		string nZs = boost::lexical_cast<string>(nZ);
-		string nCells = boost::lexical_cast<string>(nX*nZ);
-
-
-		string gridInfo = "Number of Cells:\n\n\t(" + nXs + " x " + nZs + ") = " +
-						  nCells + " Cells";
-
-		gr.Puts(mglPoint(x,y), gridInfo.c_str(), ":L");
-
-		// Location and time stamp
-		string location = weatherData.city + ", " + weatherData.state + ", " +
-				          weatherData.country;
-		ptime tp(simulationControl.startDate,seconds(tNow));
-
-		gr.SetFontSizePT(10.0);
-		gr.Puts(mglPoint(-1.25,0.05), location.c_str(), ":C");
-		gr.Puts(mglPoint(-1.25,0.05-d), to_simple_string(tp).c_str(), ":C");
-
-		// Footer
-		gr.SetFontSizePT(6.0);
-
-		gr.Puts(mglPoint(1.05, -0.05), "Copyright \\textcopyright{ }Big Ladder Software", ":R");
-		gr.Puts(mglPoint(1.05, -0.08), startString.c_str(), ":R");
-		*/
-
-		//gr.WriteFrame((foundation.outputAnimation.name + ".png").c_str());
-		gr.EndFrame();
-		nextPlotTime += plotFreq;
 	}
 }
 

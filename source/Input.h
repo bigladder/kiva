@@ -143,6 +143,18 @@ public:
 	bool contours;
 	bool gradients;
 	int size;
+	boost::gregorian::date startDate;
+	boost::gregorian::date endDate;
+	std::pair<double, double> xRange;
+	std::pair<double, double> yRange;
+	std::pair<double, double> zRange;
+
+	bool startDateSet;
+	bool endDateSet;
+	bool xRangeSet;
+	bool yRangeSet;
+	bool zRangeSet;
+
 };
 
 class Block
@@ -371,10 +383,8 @@ public:
 
 	OutdoorTemperatureMethod outdoorTemperatureMethod;
 
-
 	// Output Animations
-	OutputAnimation outputAnimation;
-
+	std::vector<OutputAnimation> outputAnimations;
 
 	// Output Reports
 
@@ -389,8 +399,6 @@ public:
 	MeshData zMeshData;
 	std::vector<Block> blocks;
 	std::vector<Surface> surfaces;
-
-
 
 	void setMeshData()
 	{
@@ -982,9 +990,6 @@ public:
 		}
 		else if(coordinateSystem == CS_3D)
 		{
-			double xMin = 0.0;
-			double yMin = 0.0;
-
 			boost::geometry::model::box<Point> boundingBox;
 			boost::geometry::envelope(polygon, boundingBox);
 
@@ -995,6 +1000,7 @@ public:
 			double yMaxBB = boundingBox.max_corner().get<1>();
 
 			// Translate to domain coordinates (at far field distance)
+			if (false)
 			{
 				boost::geometry::strategy::transform::translate_transformer<Point, Point>
 				translate(farFieldWidth - xMinBB, farFieldWidth - yMinBB);
@@ -1006,8 +1012,11 @@ public:
 
 			std::size_t nV = polygon.outer().size();
 
-		    double xMax = 2*farFieldWidth + (xMaxBB - xMinBB);
-			double yMax = 2*farFieldWidth + (yMaxBB - yMinBB);
+			double xMin = xMinBB - farFieldWidth;
+			double yMin = yMinBB - farFieldWidth;
+
+		    double xMax = xMaxBB + farFieldWidth;
+			double yMax = yMaxBB + farFieldWidth;
 
 			if(excavationDepth > 0.0)
 			{
@@ -1321,9 +1330,6 @@ public:
 			if (hasSlab)
 			{
 				// Foundation Slab
-				Polygon poly;
-				poly = offset(polygon, xyWallInterior);
-
 				double zPosition = zSlabBottom;
 
 				for (size_t n = 0; n < slab.layers.size(); n++)
@@ -1331,7 +1337,7 @@ public:
 					Block block;
 					block.material = slab.layers[n].material;
 					block.blockType = Block::SOLID;
-					block.polygon = poly;
+					block.polygon = polygon;
 					block.zMin = zPosition;
 					block.zMax = zPosition + slab.layers[n].thickness;
 					blocks.push_back(block);

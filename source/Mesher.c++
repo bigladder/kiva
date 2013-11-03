@@ -288,11 +288,11 @@ std::size_t Mesher::getNextIndex(double position)
 		return this->centers.size() - 1;
 	else
 	{
-		for (std::size_t i = 1; i < this->centers.size(); i++)
+		for (std::size_t i = 0; i < this->centers.size() - 1; i++)
 		{
-			if (isGreaterOrEqual(position,this->centers[i-1]) &&
-				isLessThan(position,this->centers[i]))
-				return i;
+			if (isGreaterOrEqual(position,this->centers[i]) &&
+				isLessThan(position,this->centers[i+1]))
+				return i+1;
 		}
 		return -1;
 	}

@@ -16,7 +16,9 @@ set(kiva_src Main.c++
              Algorithms.c++
              Domain.c++
              Functions.c++
+             Geometry.c++
              Ground.c++
+             GroundPlot.c++
              InputParser.c++
              Mesher.c++
              WeatherData.c++)
@@ -24,7 +26,9 @@ set(kiva_src Main.c++
 set(kiva_hdr Algorithms.h
              Domain.h
              Functions.h
+             Geometry.h
              Ground.h
+             GroundPlot.h
              Input.h
              InputParser.h
              Mesher.h

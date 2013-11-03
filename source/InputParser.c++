@@ -320,12 +320,63 @@ Input inputParser(std::string inputFile)
 
 	// Output
 
-	foundation1.outputAnimation.name = yamlInput["Foundation"]["outputAnimation"]["name"].as<std::string>();
-	foundation1.outputAnimation.frequency = boost::posix_time::hours(yamlInput["Foundation"]["outputAnimation"]["frequency"].as<long>());
-	foundation1.outputAnimation.grid = yamlInput["Foundation"]["outputAnimation"]["grid"].as<bool>();
-	foundation1.outputAnimation.gradients = yamlInput["Foundation"]["outputAnimation"]["gradients"].as<bool>();
-	foundation1.outputAnimation.contours = yamlInput["Foundation"]["outputAnimation"]["contours"].as<bool>();
-	foundation1.outputAnimation.size = yamlInput["Foundation"]["outputAnimation"]["size"].as<int>();
+	for(size_t i=0;i<yamlInput["Foundation"]["outputAnimations"].size();i++)
+	{
+		OutputAnimation temp;
+		temp.name = yamlInput["Foundation"]["outputAnimations"][i]["name"].as<std::string>();
+		temp.frequency = boost::posix_time::hours(yamlInput["Foundation"]["outputAnimations"][i]["frequency"].as<long>());
+		temp.grid = yamlInput["Foundation"]["outputAnimations"][i]["grid"].as<bool>();
+		temp.gradients = yamlInput["Foundation"]["outputAnimations"][i]["gradients"].as<bool>();
+		temp.contours = yamlInput["Foundation"]["outputAnimations"][i]["contours"].as<bool>();
+		temp.size = yamlInput["Foundation"]["outputAnimations"][i]["size"].as<int>();
+
+		if (yamlInput["Foundation"]["outputAnimations"][i]["startDate"].IsDefined())
+		{
+			temp.startDate = boost::gregorian::from_string(yamlInput["Foundation"]["outputAnimations"][i]["startDate"].as<std::string>());
+			temp.startDateSet = true;
+		}
+		else
+			temp.startDateSet = false;
+
+		if (yamlInput["Foundation"]["outputAnimations"][i]["endDate"].IsDefined())
+		{
+			temp.endDate = boost::gregorian::from_string(yamlInput["Foundation"]["outputAnimations"][i]["endDate"].as<std::string>());
+			temp.endDateSet = true;
+		}
+		else
+			temp.endDateSet = false;
+
+		if (yamlInput["Foundation"]["outputAnimations"][i]["xRange"].IsDefined())
+		{
+			temp.xRange.first = yamlInput["Foundation"]["outputAnimations"][i]["xRange"][0].as<double>();
+			temp.xRange.second = yamlInput["Foundation"]["outputAnimations"][i]["xRange"][1].as<double>();
+			temp.xRangeSet = true;
+		}
+		else
+			temp.xRangeSet = false;
+
+		if (yamlInput["Foundation"]["outputAnimations"][i]["yRange"].IsDefined())
+		{
+			temp.yRange.first = yamlInput["Foundation"]["outputAnimations"][i]["yRange"][0].as<double>();
+			temp.yRange.second = yamlInput["Foundation"]["outputAnimations"][i]["yRange"][1].as<double>();
+			temp.yRangeSet = true;
+		}
+		else
+			temp.yRangeSet = false;
+
+		if (yamlInput["Foundation"]["outputAnimations"][i]["zRange"].IsDefined())
+		{
+
+			temp.zRange.first = yamlInput["Foundation"]["outputAnimations"][i]["zRange"][0].as<double>();
+			temp.zRange.second = yamlInput["Foundation"]["outputAnimations"][i]["zRange"][1].as<double>();
+			temp.zRangeSet = true;
+		}
+		else
+			temp.zRangeSet = false;
+
+		foundation1.outputAnimations.push_back(temp);
+	}
+
 
 	// Full Input
 	input.simulationControl = simulationControl;
