@@ -21,9 +21,6 @@
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/date_time/gregorian/gregorian.hpp>
-#include <boost/geometry/geometries/geometries.hpp>
-#include <boost/geometry/geometry.hpp>
-
 
 #include "Mesher.h"
 #include "Functions.h"
@@ -999,23 +996,12 @@ public:
 			double xMaxBB = boundingBox.max_corner().get<0>();
 			double yMaxBB = boundingBox.max_corner().get<1>();
 
-			// Translate to domain coordinates (at far field distance)
-			if (false)
-			{
-				boost::geometry::strategy::transform::translate_transformer<Point, Point>
-				translate(farFieldWidth - xMinBB, farFieldWidth - yMinBB);
-
-				Polygon tempPolygon;
-				boost::geometry::transform(polygon, tempPolygon, translate);
-				polygon = tempPolygon;
-			}
-
 			std::size_t nV = polygon.outer().size();
 
 			double xMin = xMinBB - farFieldWidth;
 			double yMin = yMinBB - farFieldWidth;
 
-		    double xMax = xMaxBB + farFieldWidth;
+			double xMax = xMaxBB + farFieldWidth;
 			double yMax = yMaxBB + farFieldWidth;
 
 			if(excavationDepth > 0.0)

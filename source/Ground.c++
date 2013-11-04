@@ -417,38 +417,40 @@ void Ground::calculateADEUpwardSweep()
 					double theta = timestep/
 						(domain.cell[i][j][k].density*domain.cell[i][j][k].specificHeat);
 
-					double A = 0;
-					double B = 0;
-					if (i != 0)
-					{
-						double r = domain.meshX.centers[i];
-						A = domain.cell[i][j][k].cxp_c*theta/r;
-						B = domain.cell[i][j][k].cxm_c*theta/r;
-					}
-					double C = domain.cell[i][j][k].cxp*theta;
-					double D = domain.cell[i][j][k].cxm*theta;
-					double E = domain.cell[i][j][k].czp*theta;
-					double F = domain.cell[i][j][k].czm*theta;
-					double G = domain.cell[i][j][k].cyp*theta;
-					double H = domain.cell[i][j][k].cym*theta;
+					double CXP = domain.cell[i][j][k].cxp*theta;
+					double CXM = domain.cell[i][j][k].cxm*theta;
+					double CZP = domain.cell[i][j][k].czp*theta;
+					double CZM = domain.cell[i][j][k].czm*theta;
+					double CYP = domain.cell[i][j][k].cyp*theta;
+					double CYM = domain.cell[i][j][k].cym*theta;
 
 					if (foundation.coordinateSystem == Foundation::CS_3D)
-						U[i][j][k] = (UOld[i][j][k]*(1.0 - A - C - E - G)
-								- U[i-1][j][k]*(B + D)
-								+ UOld[i+1][j][k]*(A + C)
-								- U[i][j][k-1]*F
-								+ UOld[i][j][k+1]*E
-								- U[i][j-1][k]*H
-								+ UOld[i][j+1][k]*G) /
-								(1.0 - B - D - F - H);
+						U[i][j][k] = (UOld[i][j][k]*(1.0 - CXP - CZP - CYP)
+								- U[i-1][j][k]*CXM
+								+ UOld[i+1][j][k]*CXP
+								- U[i][j][k-1]*CZM
+								+ UOld[i][j][k+1]*CZP
+								- U[i][j-1][k]*CYM
+								+ UOld[i][j+1][k]*CYP) /
+								(1.0 - CXM - CZM - CYM);
 					else
-						U[i][j][k] = (UOld[i][j][k]*(1.0 - A - C - E)
-								- U[i-1][j][k]*(B + D)
-								+ UOld[i+1][j][k]*(A + C)
-								- U[i][j][k-1]*F
-								+ UOld[i][j][k+1]*E) /
-								(1.0 - B - D - F);
+					{
+						double CXPC = 0;
+						double CXMC = 0;
 
+						if (i != 0)
+						{
+							double r = domain.meshX.centers[i];
+							CXPC = domain.cell[i][j][k].cxp_c*theta/r;
+							CXMC = domain.cell[i][j][k].cxm_c*theta/r;
+						}
+						U[i][j][k] = (UOld[i][j][k]*(1.0 - CXPC - CXP - CZP)
+								- U[i-1][j][k]*(CXMC + CXM)
+								+ UOld[i+1][j][k]*(CXPC + CXP)
+								- U[i][j][k-1]*CZM
+								+ UOld[i][j][k+1]*CZP) /
+								(1.0 - CXMC - CXM - CZM);
+					}
 					}
 					break;
 				}
@@ -615,37 +617,40 @@ void Ground::calculateADEDownwardSweep()
 					double theta = timestep/
 						(domain.cell[i][j][k].density*domain.cell[i][j][k].specificHeat);
 
-					double A = 0;
-					double B = 0;
-					if (i != 0)
-					{
-						double r = domain.meshX.centers[i];
-						A = domain.cell[i][j][k].cxp_c*theta/r;
-						B = domain.cell[i][j][k].cxm_c*theta/r;
-					}
-					double C = domain.cell[i][j][k].cxp*theta;
-					double D = domain.cell[i][j][k].cxm*theta;
-					double E = domain.cell[i][j][k].czp*theta;
-					double F = domain.cell[i][j][k].czm*theta;
-					double G = domain.cell[i][j][k].cyp*theta;
-					double H = domain.cell[i][j][k].cym*theta;
+					double CXP = domain.cell[i][j][k].cxp*theta;
+					double CXM = domain.cell[i][j][k].cxm*theta;
+					double CZP = domain.cell[i][j][k].czp*theta;
+					double CZM = domain.cell[i][j][k].czm*theta;
+					double CYP = domain.cell[i][j][k].cyp*theta;
+					double CYM = domain.cell[i][j][k].cym*theta;
 
 					if (foundation.coordinateSystem == Foundation::CS_3D)
-						V[i][j][k] = (VOld[i][j][k]*(1.0 + B + D + F + H)
-								- VOld[i-1][j][k]*(B + D)
-								+ V[i+1][j][k]*(A + C)
-								- VOld[i][j][k-1]*F
-								+ V[i][j][k+1]*E
-								- VOld[i][j-1][k]*H
-								+ V[i][j+1][k]*G) /
-								(1.0 + A + C + E + G);
+						V[i][j][k] = (VOld[i][j][k]*(1.0 + CXM + CZM + CYM)
+								- VOld[i-1][j][k]*CXM
+								+ V[i+1][j][k]*CXP
+								- VOld[i][j][k-1]*CZM
+								+ V[i][j][k+1]*CZP
+								- VOld[i][j-1][k]*CYM
+								+ V[i][j+1][k]*CYP) /
+								(1.0 + CXP + CZP + CYP);
 					else
-						V[i][j][k] = (VOld[i][j][k]*(1.0 + B + D + F)
-								- VOld[i-1][j][k]*(B + D)
-								+ V[i+1][j][k]*(A + C)
-								- VOld[i][j][k-1]*F
-								+ V[i][j][k+1]*E) /
-								(1.0 + A + C + E);
+					{
+						double CXPC = 0;
+						double CXMC = 0;
+
+						if (i != 0)
+						{
+							double r = domain.meshX.centers[i];
+							CXPC = domain.cell[i][j][k].cxp_c*theta/r;
+							CXMC = domain.cell[i][j][k].cxm_c*theta/r;
+						}
+						V[i][j][k] = (VOld[i][j][k]*(1.0 + CXMC + CXM + CZM)
+								- VOld[i-1][j][k]*(CXMC + CXM)
+								+ V[i+1][j][k]*(CXPC + CXP)
+								- VOld[i][j][k-1]*CZM
+								+ V[i][j][k+1]*CZP) /
+								(1.0 + CXPC + CXP + CZP);
+					}
 					}
 					break;
 				}
@@ -811,35 +816,39 @@ void Ground::calculateExplicit()
 					double theta = timestep/
 						(domain.cell[i][j][k].density*domain.cell[i][j][k].specificHeat);
 
-					double A = 0;
-					double B = 0;
-					if (i != 0)
-					{
-						double r = domain.meshX.centers[i];
-						A = domain.cell[i][j][k].cxp_c*theta/r;
-						B = domain.cell[i][j][k].cxm_c*theta/r;
-					}
-					double C = domain.cell[i][j][k].cxp*theta;
-					double D = domain.cell[i][j][k].cxm*theta;
-					double E = domain.cell[i][j][k].czp*theta;
-					double F = domain.cell[i][j][k].czm*theta;
-					double G = domain.cell[i][j][k].cyp*theta;
-					double H = domain.cell[i][j][k].cym*theta;
+					double CXP = domain.cell[i][j][k].cxp*theta;
+					double CXM = domain.cell[i][j][k].cxm*theta;
+					double CZP = domain.cell[i][j][k].czp*theta;
+					double CZM = domain.cell[i][j][k].czm*theta;
+					double CYP = domain.cell[i][j][k].cyp*theta;
+					double CYM = domain.cell[i][j][k].cym*theta;
 
 					if (foundation.coordinateSystem == Foundation::CS_3D)
-						TNew[i][j][k] = TOld[i][j][k]*(1.0 + B + D + F + H - A - C - E - G)
-								- TOld[i-1][j][k]*(B + D)
-								+ TOld[i+1][j][k]*(A + C)
-								- TOld[i][j][k-1]*F
-								+ TOld[i][j][k+1]*E
-								- TOld[i][j-1][k]*H
-								+ TOld[i][j+1][k]*G;
+						TNew[i][j][k] = TOld[i][j][k]*(1.0 + CXM + CZM + CYM - CXP - CZP - CYP)
+								- TOld[i-1][j][k]*CXM
+								+ TOld[i+1][j][k]*CXP
+								- TOld[i][j][k-1]*CZM
+								+ TOld[i][j][k+1]*CZP
+								- TOld[i][j-1][k]*CYM
+								+ TOld[i][j+1][k]*CYP;
 					else
-						TNew[i][j][k] = TOld[i][j][k]*(1.0 + B + D + F - A - C - E)
-								- TOld[i-1][j][k]*(B + D)
-								+ TOld[i+1][j][k]*(A + C)
-								- TOld[i][j][k-1]*F
-								+ TOld[i][j][k+1]*E;
+					{
+						double CXPC = 0;
+						double CXMC = 0;
+
+						if (i != 0)
+						{
+							double r = domain.meshX.centers[i];
+							CXPC = domain.cell[i][j][k].cxp_c*theta/r;
+							CXMC = domain.cell[i][j][k].cxm_c*theta/r;
+						}
+
+						TNew[i][j][k] = TOld[i][j][k]*(1.0 + CXMC + CXM + CZM - CXPC - CXP - CZP)
+								- TOld[i-1][j][k]*(CXMC + CXM)
+								+ TOld[i+1][j][k]*(CXPC + CXP)
+								- TOld[i][j][k-1]*CZM
+								+ TOld[i][j][k+1]*CZP;
+					}
 					}
 					break;
 				}
@@ -1093,40 +1102,41 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
 					{
 					if (scheme == Foundation::NS_STEADY_STATE)
 					{
-						double A = 0;
-						double B = 0;
-						if (i != 0)
-						{
-							double r = domain.meshX.centers[i];
-							A = domain.cell[i][j][k].cxp_c/r;
-							B = domain.cell[i][j][k].cxm_c/r;
-						}
-						double C = domain.cell[i][j][k].cxp;
-						double D = domain.cell[i][j][k].cxm;
-						double E = domain.cell[i][j][k].czp;
-						double F = domain.cell[i][j][k].czm;
-						double G = domain.cell[i][j][k].cyp;
-						double H = domain.cell[i][j][k].cym;
+						double CXP = domain.cell[i][j][k].cxp;
+						double CXM = domain.cell[i][j][k].cxm;
+						double CZP = domain.cell[i][j][k].czp;
+						double CZM = domain.cell[i][j][k].czm;
+						double CYP = domain.cell[i][j][k].cyp;
+						double CYM = domain.cell[i][j][k].cym;
 
 						if (foundation.coordinateSystem == Foundation::CS_3D)
 						{
-							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = (B + D + F + H - A - C - E - G);
-							Amat(i + nX*j + nX*nY*k, (i-1) + nX*j + nX*nY*k) = (-B - D);
-							Amat(i + nX*j + nX*nY*k, (i+1) + nX*j + nX*nY*k) = (A + C);
-							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*(k-1)) = -F;
-							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*(k+1)) = E;
-							Amat(i + nX*j + nX*nY*k, i + nX*(j-1) + nX*nY*k) = -H;
-							Amat(i + nX*j + nX*nY*k, i + nX*(j+1) + nX*nY*k) = G;
+							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = (CXM + CZM + CYM - CXP - CZP - CYP);
+							Amat(i + nX*j + nX*nY*k, (i-1) + nX*j + nX*nY*k) = -CXM;
+							Amat(i + nX*j + nX*nY*k, (i+1) + nX*j + nX*nY*k) = CXP;
+							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*(k-1)) = -CZM;
+							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*(k+1)) = CZP;
+							Amat(i + nX*j + nX*nY*k, i + nX*(j-1) + nX*nY*k) = -CYM;
+							Amat(i + nX*j + nX*nY*k, i + nX*(j+1) + nX*nY*k) = CYP;
 
 							b(i + nX*j + nX*nY*k) = 0;
 						}
 						else
 						{
-							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = (B + D + F - A - C - E);
-							Amat(i + nX*j + nX*nY*k, (i-1) + nX*j + nX*nY*k) = (-B - D);
-							Amat(i + nX*j + nX*nY*k, (i+1) + nX*j + nX*nY*k) = (A + C);
-							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*(k-1)) = -F;
-							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*(k+1)) = E;
+							double CXPC = 0;
+							double CXMC = 0;
+
+							if (i != 0)
+							{
+								double r = domain.meshX.centers[i];
+								CXPC = domain.cell[i][j][k].cxp_c/r;
+								CXMC = domain.cell[i][j][k].cxm_c/r;
+							}
+							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = (CXMC + CXM + CZM - CXPC - CXP - CZP);
+							Amat(i + nX*j + nX*nY*k, (i-1) + nX*j + nX*nY*k) = (-CXMC - CXM);
+							Amat(i + nX*j + nX*nY*k, (i+1) + nX*j + nX*nY*k) = (CXPC + CXP);
+							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*(k-1)) = -CZM;
+							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*(k+1)) = CZP;
 
 							b(i + nX*j + nX*nY*k) = 0;
 						}
@@ -1142,54 +1152,55 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
 						else
 							f = 0.5;
 
-						double A = 0;
-						double B = 0;
-						if (i != 0)
-						{
-							double r = domain.meshX.centers[i];
-							A = domain.cell[i][j][k].cxp_c*theta/r;
-							B = domain.cell[i][j][k].cxm_c*theta/r;
-						}
-						double C = domain.cell[i][j][k].cxp*theta;
-						double D = domain.cell[i][j][k].cxm*theta;
-						double E = domain.cell[i][j][k].czp*theta;
-						double F = domain.cell[i][j][k].czm*theta;
-						double G = domain.cell[i][j][k].cyp*theta;
-						double H = domain.cell[i][j][k].cym*theta;
+						double CXP = domain.cell[i][j][k].cxp*theta;
+						double CXM = domain.cell[i][j][k].cxm*theta;
+						double CZP = domain.cell[i][j][k].czp*theta;
+						double CZM = domain.cell[i][j][k].czm*theta;
+						double CYP = domain.cell[i][j][k].cyp*theta;
+						double CYM = domain.cell[i][j][k].cym*theta;
 
 						if (foundation.coordinateSystem == Foundation::CS_3D)
 						{
-							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = (1.0 + f*(A + C + E + G - B - D - F - H));
-							Amat(i + nX*j + nX*nY*k, (i-1) + nX*j + nX*nY*k) = f*(B + D);
-							Amat(i + nX*j + nX*nY*k, (i+1) + nX*j + nX*nY*k) = f*(-A - C);
-							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*(k-1)) = f*F;
-							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*(k+1)) = f*(-E);
-							Amat(i + nX*j + nX*nY*k, i + nX*(j-1) + nX*nY*k) = f*H;
-							Amat(i + nX*j + nX*nY*k, i + nX*(j+1) + nX*nY*k) = f*(-G);
+							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = (1.0 + f*(CXP + CZP + CYP - CXM - CZM - CYM));
+							Amat(i + nX*j + nX*nY*k, (i-1) + nX*j + nX*nY*k) = f*CXM;
+							Amat(i + nX*j + nX*nY*k, (i+1) + nX*j + nX*nY*k) = f*(-CXP);
+							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*(k-1)) = f*CZM;
+							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*(k+1)) = f*(-CZP);
+							Amat(i + nX*j + nX*nY*k, i + nX*(j-1) + nX*nY*k) = f*CYM;
+							Amat(i + nX*j + nX*nY*k, i + nX*(j+1) + nX*nY*k) = f*(-CYP);
 
 							b(i + nX*j + nX*nY*k)
-									= TOld[i][j][k]*(1.0 + (1-f)*(B + D + F + H - A - C - E - G))
-									- TOld[i-1][j][k]*(1-f)*(B + D)
-									+ TOld[i+1][j][k]*(1-f)*(A + C)
-									- TOld[i][j][k-1]*(1-f)*F
-									+ TOld[i][j][k+1]*(1-f)*E
-									- TOld[i][j-1][k]*(1-f)*H
-									+ TOld[i][j+1][k]*(1-f)*G;
+									= TOld[i][j][k]*(1.0 + (1-f)*(CXM + CZM + CYM - CXP - CZP - CYP))
+									- TOld[i-1][j][k]*(1-f)*CXM
+									+ TOld[i+1][j][k]*(1-f)*CXP
+									- TOld[i][j][k-1]*(1-f)*CZM
+									+ TOld[i][j][k+1]*(1-f)*CZP
+									- TOld[i][j-1][k]*(1-f)*CYM
+									+ TOld[i][j+1][k]*(1-f)*CYP;
 						}
 						else
 						{
-							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = (1.0 + f*(A + C + E - B - D - F));
-							Amat(i + nX*j + nX*nY*k, (i-1) + nX*j + nX*nY*k) = f*(B + D);
-							Amat(i + nX*j + nX*nY*k, (i+1) + nX*j + nX*nY*k) = f*(-A - C);
-							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*(k-1)) = f*F;
-							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*(k+1)) = f*(-E);
+							double CXPC = 0;
+							double CXMC = 0;
+
+							if (i != 0)
+							{
+								double r = domain.meshX.centers[i];
+								CXPC = domain.cell[i][j][k].cxp_c*theta/r;
+								CXMC = domain.cell[i][j][k].cxm_c*theta/r;
+							}
+							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = (1.0 + f*(CXPC + CXP + CZP - CXMC - CXM - CZM));
+							Amat(i + nX*j + nX*nY*k, (i-1) + nX*j + nX*nY*k) = f*(CXMC + CXM);
+							Amat(i + nX*j + nX*nY*k, (i+1) + nX*j + nX*nY*k) = f*(-CXPC - CXP);
+							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*(k-1)) = f*CZM;
+							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*(k+1)) = f*(-CZP);
 
 							b(i + nX*j + nX*nY*k)
-									= TOld[i][j][k]*(1.0 + (1-f)*(B + D + F - A - C - E))
-									- TOld[i-1][j][k]*(1-f)*(B + D)
-									+ TOld[i+1][j][k]*(1-f)*(A + C)
-									- TOld[i][j][k-1]*(1-f)*F
-									+ TOld[i][j][k+1]*(1-f)*E;
+									= TOld[i][j][k]*(1.0 + (1-f)*(CXMC + CXM + CZM - CXPC - CXP - CZP))
+									- TOld[i-1][j][k]*(1-f)*(CXMC + CXM)
+									+ TOld[i+1][j][k]*(1-f)*(CXPC + CXP)
+									- TOld[i][j][k-1]*(1-f)*CZM
+									+ TOld[i][j][k+1]*(1-f)*CZP;
 						}
 					}
 					}
@@ -1582,20 +1593,12 @@ void Ground::calculateADI(int dim)
 								(2*domain.cell[i][j][k].density*domain.cell[i][j][k].specificHeat);
 					}
 
-					double A = 0;
-					double B = 0;
-					if (i != 0)
-					{
-						double r = domain.meshX.centers[i];
-						A = domain.cell[i][j][k].cxp_c*theta/r;
-						B = domain.cell[i][j][k].cxm_c*theta/r;
-					}
-					double C = domain.cell[i][j][k].cxp*theta;
-					double D = domain.cell[i][j][k].cxm*theta;
-					double E = domain.cell[i][j][k].czp*theta;
-					double F = domain.cell[i][j][k].czm*theta;
-					double G = domain.cell[i][j][k].cyp*theta;
-					double H = domain.cell[i][j][k].cym*theta;
+					double CXP = domain.cell[i][j][k].cxp*theta;
+					double CXM = domain.cell[i][j][k].cxm*theta;
+					double CZP = domain.cell[i][j][k].czp*theta;
+					double CZM = domain.cell[i][j][k].czm*theta;
+					double CYP = domain.cell[i][j][k].cyp*theta;
+					double CYM = domain.cell[i][j][k].cym*theta;
 
 					double f = foundation.fADI;
 
@@ -1603,67 +1606,75 @@ void Ground::calculateADI(int dim)
 					{
 						if (dim == 1) // x
 						{
-							Amat(index, index) = 1.0 + (3 - 2*f)*(A + C - B - D);
-							Amat(index, index-1) = (3 - 2*f)*(B + D);
-							Amat(index, index+1) = (3 - 2*f)*(-A - C);
+							Amat(index, index) = 1.0 + (3 - 2*f)*(CXP - CXM);
+							Amat(index, index-1) = (3 - 2*f)*CXM;
+							Amat(index, index+1) = (3 - 2*f)*(-CXP);
 
 							b(index)
-									= TOld[i][j][k]*(1.0 + f*(F + H - E - G))
-									- TOld[i][j][k-1]*f*F
-									+ TOld[i][j][k+1]*f*E
-									- TOld[i][j-1][k]*f*H
-									+ TOld[i][j+1][k]*f*G;
+									= TOld[i][j][k]*(1.0 + f*(CZM + CYM - CZP - CYP))
+									- TOld[i][j][k-1]*f*CZM
+									+ TOld[i][j][k+1]*f*CZP
+									- TOld[i][j-1][k]*f*CYM
+									+ TOld[i][j+1][k]*f*CYP;
 						}
 						else if (dim == 2) // y
 						{
-							Amat(index, index) = (1.0 + (3 - 2*f)*(G - H));
-							Amat(index, index-1) = (3 - 2*f)*H;
-							Amat(index, index+1) = (3 - 2*f)*(-G);
+							Amat(index, index) = (1.0 + (3 - 2*f)*(CYP - CYM));
+							Amat(index, index-1) = (3 - 2*f)*CYM;
+							Amat(index, index+1) = (3 - 2*f)*(-CYP);
 
 							b(index)
-									= TOld[i][j][k]*(1.0 + f*(B + D + F - A - C - E))
-									- TOld[i-1][j][k]*f*(B + D)
-									+ TOld[i+1][j][k]*f*(A + C)
-									- TOld[i][j][k-1]*f*F
-									+ TOld[i][j][k+1]*f*E;
+									= TOld[i][j][k]*(1.0 + f*(CXM + CZM - CXP - CZP))
+									- TOld[i-1][j][k]*f*CXM
+									+ TOld[i+1][j][k]*f*CXP
+									- TOld[i][j][k-1]*f*CZM
+									+ TOld[i][j][k+1]*f*CZP;
 						}
 						else if (dim == 3) // z
 						{
-							Amat(index, index) = (1.0 + (3 - 2*f)*(E - F));
-							Amat(index, index-1) = (3 - 2*f)*F;
-							Amat(index, index+1) = (3 - 2*f)*(-E);
+							Amat(index, index) = (1.0 + (3 - 2*f)*(CZP - CZM));
+							Amat(index, index-1) = (3 - 2*f)*CZM;
+							Amat(index, index+1) = (3 - 2*f)*(-CZP);
 
 							b(index)
-									= TOld[i][j][k]*(1.0 + f*(B + D + H - A - C - G))
-									- TOld[i-1][j][k]*f*(B + D)
-									+ TOld[i+1][j][k]*f*(A + C)
-									- TOld[i][j-1][k]*f*H
-									+ TOld[i][j+1][k]*f*G;
+									= TOld[i][j][k]*(1.0 + f*(CXM + CYM - CXP - CYP))
+									- TOld[i-1][j][k]*f*CXM
+									+ TOld[i+1][j][k]*f*CXP
+									- TOld[i][j-1][k]*f*CYM
+									+ TOld[i][j+1][k]*f*CYP;
 						}
 					}
 					else
 					{
+						double CXPC = 0;
+						double CXMC = 0;
+						if (i != 0)
+						{
+							double r = domain.meshX.centers[i];
+							CXPC = domain.cell[i][j][k].cxp_c*theta/r;
+							CXMC = domain.cell[i][j][k].cxm_c*theta/r;
+						}
 						if (dim == 1) // x
 						{
-							Amat(index, index) = 1.0 + (2 - f)*(A + C - B - D);
-							Amat(index, index-1) = (2 - f)*(B + D);
-							Amat(index, index+1) = (2 - f)*(-A - C);
+							Amat(index, index) = 1.0 + (2 - f)*(CXPC + CXP - CXMC - CXM);
+							Amat(index, index-1) = (2 - f)*(CXMC + CXM);
+							Amat(index, index+1) = (2 - f)*(-CXPC - CXP);
 
 							b(index)
-									= TOld[i][j][k]*(1.0 + f*(F - E))
-									- TOld[i][j][k-1]*f*F
-									+ TOld[i][j][k+1]*f*E;
+									= TOld[i][j][k]*(1.0 + f*(CZM - CZP))
+									- TOld[i][j][k-1]*f*CZM
+									+ TOld[i][j][k+1]*f*CZP;
 						}
 						else if (dim == 3) // z
 						{
-							Amat(index, index) = 1.0 + (2 - f)*(E - F);
-							Amat(index, index-1) = (2 - f)*F;
-							Amat(index, index+1) = (2 - f)*(-E);
+							Amat(index, index) = 1.0 + (2 - f)*(CZP - CZM);
+							Amat(index, index-1) = (2 - f)*CZM;
+							Amat(index, index+1) = (2 - f)*(-CZP);
 
 							b(index)
-									= TOld[i][j][k]*(1.0 + f*(B + D - A - C))
-									- TOld[i-1][j][k]*f*(B + D)
-									+ TOld[i+1][j][k]*f*(A + C);
+									= TOld[i][j][k]*(1.0 + f*(CXMC + CXM - CXPC - CXP))
+									- TOld[i-1][j][k]*f*(CXMC + CXM)
+									+ TOld[i+1][j][k]*f*(CXPC + CXP);
 						}
 					}
 					}

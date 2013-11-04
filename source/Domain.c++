@@ -173,7 +173,9 @@ void Domain::setDomain(Foundation &foundation)
 					if (isEqual(meshZ.deltas[k], 0.0))
 						numZeroDims += 1;
 
-					if (numZeroDims > 0)
+					if (numZeroDims > 0
+							&& cell[i][j][k].cellType != Cell::INTERIOR_AIR
+							&& cell[i][j][k].cellType != Cell::EXTERIOR_AIR)
 					{
 						if (foundation.coordinateSystem == Foundation::CS_3D)
 						{
@@ -222,7 +224,7 @@ void Domain::setDomain(Foundation &foundation)
 					cell[i][j][k].cxm = -1*(2*getKXM(i,j,k))/
 							((getDXM(i) + getDXP(i))*getDXM(i));
 
-					// Cartesian Y terms
+					// Cartesian Z terms
 					cell[i][j][k].czp = (2*getKZP(i,j,k))/
 							((getDZM(k) + getDZP(k))*getDZP(k));
 					cell[i][j][k].czm = -1*(2*getKZM(i,j,k))/
@@ -609,7 +611,7 @@ void Domain::printCellTypes()
 		for (size_t i = 0; i < nX; i++)
 		{
 
-			output << ", " << cell[i][j][nZ/2].cellType;
+			output << ", " << cell[i][j][0].cellType;
 
 		}
 
