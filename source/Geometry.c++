@@ -51,6 +51,7 @@ bool isRectilinear(Polygon poly)
 	return true;
 }
 
+// TODO: Replace with boost geometry buffer algorithm for polygons when it becomes available
 Polygon offset(Polygon poly, double dist)
 {
 	if (!isRectilinear(poly))

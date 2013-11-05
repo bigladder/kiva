@@ -318,6 +318,21 @@ Input inputParser(std::string inputFile)
 		foundation1.outdoorTemperatureMethod = Foundation::OTM_WEATHER_FILE;
 	}
 
+	if  (yamlInput["Foundation"]["wallTopBoundary"].IsDefined())
+	{
+		if (yamlInput["Foundation"]["wallTopBoundary"].as<std::string>() == "ZERO-FLUX")
+			foundation1.wallTopBoundary = Foundation::WTB_ZERO_FLUX;
+		else if (yamlInput["Foundation"]["wallTopBoundary"].as<std::string>() == "LINEAR_DT")
+		{
+			foundation1.wallTopBoundary = Foundation::WTB_LINEAR_DT;
+			foundation1.wallTopTemperatureDifference = yamlInput["Foundation"]["wallTopTemperatureDifference"].as<double>();
+		}
+	}
+	else
+	{
+		foundation1.wallTopBoundary = Foundation::WTB_ZERO_FLUX;
+	}
+
 	// Output
 
 	for(size_t i=0;i<yamlInput["Foundation"]["outputAnimations"].size();i++)

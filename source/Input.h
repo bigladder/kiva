@@ -380,6 +380,15 @@ public:
 
 	OutdoorTemperatureMethod outdoorTemperatureMethod;
 
+	double wallTopTemperatureDifference;
+	enum WallTopBoundary
+	{
+		WTB_ZERO_FLUX,
+		WTB_LINEAR_DT
+	};
+
+	WallTopBoundary wallTopBoundary;
+
 	// Output Animations
 	std::vector<OutputAnimation> outputAnimations;
 
@@ -1266,28 +1275,72 @@ public:
 				surfaces.push_back(surface);
 			}
 
-			// Wall Top
-			if(hasWall)
+
+			if (wallTopBoundary == WTB_LINEAR_DT)
 			{
-				Polygon poly;
-				poly = offset(polygon, xyWallExterior);
+				// Wall Top
+				if(hasWall)
+				{
+					double position = 0.0;
+					double Tin = indoorAirTemperature;
+					double Tout = indoorAirTemperature - wallTopTemperatureDifference;
+					std::size_t N = xyWallExterior/mesh.minCellDim;
+					double temperature = Tin - (1.0/N)/2*wallTopTemperatureDifference;
 
-				Polygon temp;
-				temp = offset(polygon, xyWallInterior);
-				Ring ring;
-				boost::geometry::convert(temp, ring);
-				boost::geometry::reverse(ring);
+					for (std::size_t n = 1; n <= N; n++)
+					{
 
-				poly.inners().push_back(ring);
+						Polygon poly;
+						poly = offset(polygon, position + xyWallExterior/N);
 
-				Surface surface;
-				surface.name = "Wall Top";
-				surface.polygon = poly;
-				surface.zMin = zMax;
-				surface.zMax = zMax;
-				surface.boundaryConditionType = Surface::ZERO_FLUX;
-				surface.orientation = Surface::Z_POS;
-				surfaces.push_back(surface);
+						Polygon temp;
+						temp = offset(polygon, position);
+						Ring ring;
+						boost::geometry::convert(temp, ring);
+						boost::geometry::reverse(ring);
+
+						poly.inners().push_back(ring);
+
+						Surface surface;
+						surface.name = "Wall Top";
+						surface.polygon = poly;
+						surface.zMin = zMax;
+						surface.zMax = zMax;
+						surface.boundaryConditionType = Surface::CONSTANT_TEMPERATURE;
+						surface.orientation = Surface::Z_POS;
+						surface.temperature = temperature;
+						surfaces.push_back(surface);
+
+						position += xyWallExterior/N;
+						temperature -= (1.0/N)*wallTopTemperatureDifference;
+					}
+				}
+			}
+			else
+			{
+				// Wall Top
+				if(hasWall)
+				{
+					Polygon poly;
+					poly = offset(polygon, xyWallExterior);
+
+					Polygon temp;
+					temp = offset(polygon, xyWallInterior);
+					Ring ring;
+					boost::geometry::convert(temp, ring);
+					boost::geometry::reverse(ring);
+
+					poly.inners().push_back(ring);
+
+					Surface surface;
+					surface.name = "Wall Top";
+					surface.polygon = poly;
+					surface.zMin = zMax;
+					surface.zMax = zMax;
+					surface.boundaryConditionType = Surface::ZERO_FLUX;
+					surface.orientation = Surface::Z_POS;
+					surfaces.push_back(surface);
+				}
 			}
 
 			// Interior Horizontal Insulation

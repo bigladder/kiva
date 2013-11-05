@@ -146,7 +146,7 @@ int main(int argc, char *argv[])
 			std::cout << "100% (" << today << ")\n";
 
 			// process output
-			//cout << "Total Heat Flux: "<< ground.QSlabTotal << endl;
+			//std::cout << "Total Heat Flux: "<< ground.QSlabTotal << std::endl;
 
 
 			boost::posix_time::ptime finishCalc = boost::posix_time::second_clock::local_time();

@@ -95,52 +95,55 @@ void Ground::initializeConditions()
 	TNew.resize(boost::extents[nX][nY][nZ]);
 	TOld.resize(boost::extents[nX][nY][nZ]);
 
-	if (foundation.initializationMethod == Foundation::IM_STEADY_STATE)
+	if (foundation.numericalScheme != Foundation::NS_STEADY_STATE)
 	{
-		calculateMatrix(Foundation::NS_STEADY_STATE);
-	}
-	else if (foundation.initializationMethod == Foundation::IM_IMPLICIT_ACCELERATION)
-	{
-		Foundation initialFoundation = foundation;
-		initialFoundation.initializationMethod = Foundation::IM_STEADY_STATE;
-		initialFoundation.numericalScheme = Foundation::NS_IMPLICIT;
-		initialFoundation.outputAnimations.clear();
-		SimulationControl initialSimControl;
-		initialSimControl.timestep = boost::posix_time::hours(foundation.implicitAccelTimestep);
-		initialSimControl.endDate = simulationControl.startDate;
-		boost::posix_time::ptime endTime(initialSimControl.endDate);
-		endTime = endTime - simulationControl.timestep;
-		initialSimControl.startTime = endTime - boost::posix_time::hours(foundation.implicitAccelTimestep*foundation.implicitAccelPeriods);
-		initialSimControl.startDate = initialSimControl.startTime.date();
-
-		boost::posix_time::ptime simEnd(endTime);
-		boost::posix_time::ptime simStart(initialSimControl.startTime);
-		boost::posix_time::time_duration simDuration =  simEnd  - simStart;
-
-		double tstart = 0.0; // [s] Simulation start time
-		double tend = simDuration.total_seconds(); // [s] Simulation end time
-		double initialTimestep = initialSimControl.timestep.total_seconds();
-
-		Ground initialGround(weatherData,initialFoundation,initialSimControl);
-
-		for (double t = tstart; t <= tend; t = t + initialTimestep)
+		if (foundation.initializationMethod == Foundation::IM_STEADY_STATE)
 		{
-			initialGround.calculate(t);
+			calculateMatrix(Foundation::NS_STEADY_STATE);
 		}
-
-		TOld = initialGround.TNew;
-
-	}
-	else
-	{
-		for (size_t k = 0; k < nZ; ++k)
+		else if (foundation.initializationMethod == Foundation::IM_IMPLICIT_ACCELERATION)
 		{
-			for (size_t j = 0; j < nY; ++j)
+			Foundation initialFoundation = foundation;
+			initialFoundation.initializationMethod = Foundation::IM_STEADY_STATE;
+			initialFoundation.numericalScheme = Foundation::NS_IMPLICIT;
+			initialFoundation.outputAnimations.clear();
+			SimulationControl initialSimControl;
+			initialSimControl.timestep = boost::posix_time::hours(foundation.implicitAccelTimestep);
+			initialSimControl.endDate = simulationControl.startDate;
+			boost::posix_time::ptime endTime(initialSimControl.endDate);
+			endTime = endTime - simulationControl.timestep;
+			initialSimControl.startTime = endTime - boost::posix_time::hours(foundation.implicitAccelTimestep*foundation.implicitAccelPeriods);
+			initialSimControl.startDate = initialSimControl.startTime.date();
+
+			boost::posix_time::ptime simEnd(endTime);
+			boost::posix_time::ptime simStart(initialSimControl.startTime);
+			boost::posix_time::time_duration simDuration =  simEnd  - simStart;
+
+			double tstart = 0.0; // [s] Simulation start time
+			double tend = simDuration.total_seconds(); // [s] Simulation end time
+			double initialTimestep = initialSimControl.timestep.total_seconds();
+
+			Ground initialGround(weatherData,initialFoundation,initialSimControl);
+
+			for (double t = tstart; t <= tend; t = t + initialTimestep)
 			{
-				for (size_t i = 0; i < nX; ++i)
+				initialGround.calculate(t);
+			}
+
+			TOld = initialGround.TNew;
+
+		}
+		else
+		{
+			for (size_t k = 0; k < nZ; ++k)
+			{
+				for (size_t j = 0; j < nY; ++j)
 				{
-					TOld[i][j][k]= getInitialTemperature(tNow,
-							domain.meshZ.centers[k]);
+					for (size_t i = 0; i < nX; ++i)
+					{
+						TOld[i][j][k]= getInitialTemperature(tNow,
+								domain.meshZ.centers[k]);
+					}
 				}
 			}
 		}
@@ -1858,7 +1861,7 @@ double Ground::getSurfaceAverageHeatFlux(std::string surfaceName)
 
 	size_t iMin, iMax, jMin, jMax, kMin, kMax;
 	double tilt;
-	double totalArea;
+	double totalArea = 0.0;
 
 	// Find bounding indices
 	if (surface.orientation == Surface::X_POS ||
@@ -1884,59 +1887,12 @@ double Ground::getSurfaceAverageHeatFlux(std::string surfaceName)
 	else // if (surface.orientation == Surface::Z_POS ||
 		 // surface.orientation == Surface::Z_NEG)
 	{
-		iMin = domain.meshX.getNextIndex(surface.xMin);
-		iMax = domain.meshX.getPreviousIndex(surface.xMax);
-		jMin = domain.meshY.getNextIndex(surface.yMin);
-		jMax = domain.meshY.getPreviousIndex(surface.yMax);
+		iMin = 0;
+		iMax = nX-1;
+		jMin = 0;
+		jMax = nY-1;
 		kMin = domain.meshZ.getNearestIndex(surface.zMin);
 		kMax = domain.meshZ.getNearestIndex(surface.zMax);
-	}
-
-	// Find total area
-	if (foundation.coordinateSystem == Foundation::CS_2DAXIAL)
-	{
-		if (surface.orientation == Surface::X_POS ||
-			surface.orientation == Surface::X_NEG)
-		{
-			totalArea = 2.0*PI*surface.xMax*(surface.zMax - surface.zMin);
-		}
-		else // if (surface.orientation == Surface::Z_POS ||
-			 // surface.orientation == Surface::Z_NEG)
-		{
-			totalArea = PI*pow(surface.xMax,2.0) - PI*pow(surface.xMin,2.0);
-		}
-	}
-	else if (foundation.coordinateSystem == Foundation::CS_2DLINEAR)
-	{
-		if (surface.orientation == Surface::X_POS ||
-			surface.orientation == Surface::X_NEG)
-		{
-			totalArea = surface.zMax - surface.zMin;
-		}
-		else // if (surface.orientation == Surface::Z_POS ||
-			 // surface.orientation == Surface::Z_NEG)
-		{
-			totalArea = surface.xMax - surface.xMin;
-		}
-	}
-	else // if (foundation.coordinateSystem == Foundation::CS_3D)
-	{
-		if (surface.orientation == Surface::X_POS ||
-			surface.orientation == Surface::X_NEG)
-		{
-			totalArea = (surface.yMax - surface.yMin)*(surface.zMax - surface.zMin);
-		}
-		else if (surface.orientation == Surface::Y_POS ||
-			surface.orientation == Surface::Y_NEG)
-		{
-			totalArea = (surface.xMax - surface.xMin)*(surface.zMax - surface.zMin);
-		}
-		else // if (surface.orientation == Surface::Z_POS ||
-			 // surface.orientation == Surface::Z_NEG)
-		{
-			totalArea = (surface.xMax - surface.xMin)*(surface.yMax - surface.yMin);
-		}
-
 	}
 
 	// Find tilt
@@ -1958,64 +1914,75 @@ double Ground::getSurfaceAverageHeatFlux(std::string surfaceName)
 		{
 			for (size_t i = iMin; i <= iMax; ++i)
 			{
-				double h = getConvectionCoeff(TNew[i][j][k],Tair,0.0,1.0,false,tilt)
-						 + getSimpleInteriorIRCoeff(domain.cell[i][j][k].surface.emissivity,
-								 TNew[i][j][k],Tair);
+				if (surface.orientation == Surface::X_POS ||
+					surface.orientation == Surface::X_NEG ||
+					surface.orientation == Surface::Y_POS ||
+					surface.orientation == Surface::Y_NEG ||
+					boost::geometry::within(Point(domain.meshX.centers[i],domain.meshY.centers[j]),surface.polygon)
+				)
+				{
+					double h = getConvectionCoeff(TNew[i][j][k],Tair,0.0,1.0,false,tilt)
+							 + getSimpleInteriorIRCoeff(domain.cell[i][j][k].surface.emissivity,
+									 TNew[i][j][k],Tair);
 
-				// Calculate Area
-				double A;
-				if (foundation.coordinateSystem == Foundation::CS_2DAXIAL)
-				{
-					if (surface.orientation == Surface::X_POS ||
-						surface.orientation == Surface::X_NEG)
+					// Calculate Area
+					double A;
+					if (foundation.coordinateSystem == Foundation::CS_2DAXIAL)
 					{
-						A = 2.0*PI*domain.meshX.centers[i]*domain.meshZ.deltas[k];
+						if (surface.orientation == Surface::X_POS ||
+							surface.orientation == Surface::X_NEG)
+						{
+							A = 2.0*PI*domain.meshX.centers[i]*domain.meshZ.deltas[k];
+						}
+						else // if (surface.orientation == Surface::Z_POS ||
+							 // surface.orientation == Surface::Z_NEG)
+						{
+							A = 2.0*PI*domain.meshX.deltas[i]*domain.meshX.centers[i];
+						}
 					}
-					else // if (surface.orientation == Surface::Z_POS ||
-						 // surface.orientation == Surface::Z_NEG)
+					else if (foundation.coordinateSystem == Foundation::CS_2DLINEAR)
 					{
-						A = 2.0*PI*domain.meshX.deltas[i]*domain.meshX.centers[i];
+						if (surface.orientation == Surface::X_POS ||
+							surface.orientation == Surface::X_NEG)
+						{
+							A = domain.meshZ.deltas[k];
+						}
+						else // if (surface.orientation == Surface::Z_POS ||
+							 // surface.orientation == Surface::Z_NEG)
+						{
+							A = domain.meshX.deltas[i];
+						}
 					}
+					else  // if (foundation.coordinateSystem == Foundation::CS_3D)
+					{
+						if (surface.orientation == Surface::X_POS ||
+							surface.orientation == Surface::X_NEG)
+						{
+							A = domain.meshY.deltas[j]*domain.meshZ.deltas[k];
+						}
+						else if (surface.orientation == Surface::Y_POS ||
+							surface.orientation == Surface::Y_NEG)
+						{
+							A = domain.meshX.deltas[i]*domain.meshZ.deltas[k];
+						}
+						else // if (surface.orientation == Surface::Z_POS ||
+							 // surface.orientation == Surface::Z_NEG)
+						{
+							A = domain.meshX.deltas[i]*domain.meshY.deltas[j];
+						}
+					}
+					heatFlux.push_back(h*A*(Tair - TNew[i][j][k]));
+					totalArea += A;
 				}
-				else if (foundation.coordinateSystem == Foundation::CS_2DLINEAR)
-				{
-					if (surface.orientation == Surface::X_POS ||
-						surface.orientation == Surface::X_NEG)
-					{
-						A = domain.meshZ.deltas[k];
-					}
-					else // if (surface.orientation == Surface::Z_POS ||
-						 // surface.orientation == Surface::Z_NEG)
-					{
-						A = domain.meshX.deltas[i];
-					}
-				}
-				else  // if (foundation.coordinateSystem == Foundation::CS_3D)
-				{
-					if (surface.orientation == Surface::X_POS ||
-						surface.orientation == Surface::X_NEG)
-					{
-						A = domain.meshY.deltas[j]*domain.meshZ.deltas[k];
-					}
-					else if (surface.orientation == Surface::Y_POS ||
-						surface.orientation == Surface::Y_NEG)
-					{
-						A = domain.meshX.deltas[i]*domain.meshZ.deltas[k];
-					}
-					else // if (surface.orientation == Surface::Z_POS ||
-						 // surface.orientation == Surface::Z_NEG)
-					{
-						A = domain.meshX.deltas[i]*domain.meshY.deltas[j];
-					}
-				}
-				heatFlux.push_back(h*A*(Tair - TNew[i][j][k]));
 			}
 		}
 	}
 
 	double totalFlux = std::accumulate((heatFlux).begin(),(heatFlux).end(), 0.0);
 
-	return totalFlux/totalArea;
+
+
+	return totalFlux;//totalArea;
 }
 
 double getArrayValue(boost::multi_array<double, 3> Mat, std::size_t i, std::size_t j, std::size_t k)
