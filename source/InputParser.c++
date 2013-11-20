@@ -212,6 +212,8 @@ Input inputParser(std::string inputFile)
 		foundation1.coordinateSystem = Foundation::CS_2DLINEAR;
 	else if (yamlInput["Foundation"]["coordinateSystem"].as<std::string>() == "3D")
 		foundation1.coordinateSystem = Foundation::CS_3D;
+	else if (yamlInput["Foundation"]["coordinateSystem"].as<std::string>() == "3DSYMMETRY")
+		foundation1.coordinateSystem = Foundation::CS_3D_SYMMETRY;
 
 	for (size_t i=0;i<yamlInput["Foundation"]["polygon"].size();i++)
 	{
@@ -322,7 +324,7 @@ Input inputParser(std::string inputFile)
 	{
 		if (yamlInput["Foundation"]["wallTopBoundary"].as<std::string>() == "ZERO-FLUX")
 			foundation1.wallTopBoundary = Foundation::WTB_ZERO_FLUX;
-		else if (yamlInput["Foundation"]["wallTopBoundary"].as<std::string>() == "LINEAR_DT")
+		else if (yamlInput["Foundation"]["wallTopBoundary"].as<std::string>() == "LINEAR-DT")
 		{
 			foundation1.wallTopBoundary = Foundation::WTB_LINEAR_DT;
 			foundation1.wallTopTemperatureDifference = yamlInput["Foundation"]["wallTopTemperatureDifference"].as<double>();

@@ -69,7 +69,8 @@ void Domain::setDomain(Foundation &foundation)
 				cell[i][j][k].cellType = Cell::NORMAL;
 
 				// Next set interior zero-width cells
-				if (foundation.coordinateSystem == Foundation::CS_3D)
+				if (foundation.coordinateSystem == Foundation::CS_3D ||
+					foundation.coordinateSystem == Foundation::CS_3D_SYMMETRY)
 				{
 					if (isEqual(meshX.deltas[i], 0.0) ||
 						isEqual(meshZ.deltas[k], 0.0) ||
@@ -135,7 +136,8 @@ void Domain::setDomain(Foundation &foundation)
 							if (isEqual(meshZ.deltas[k], 0.0))
 								numZeroDims += 1;
 
-							if (foundation.coordinateSystem == Foundation::CS_3D)
+							if (foundation.coordinateSystem == Foundation::CS_3D ||
+								foundation.coordinateSystem == Foundation::CS_3D_SYMMETRY)
 							{
 								if ((numZeroDims > 1) &&
 									i != 0 && i != nX - 1 &&
@@ -177,7 +179,8 @@ void Domain::setDomain(Foundation &foundation)
 							&& cell[i][j][k].cellType != Cell::INTERIOR_AIR
 							&& cell[i][j][k].cellType != Cell::EXTERIOR_AIR)
 					{
-						if (foundation.coordinateSystem == Foundation::CS_3D)
+						if (foundation.coordinateSystem == Foundation::CS_3D ||
+							foundation.coordinateSystem == Foundation::CS_3D_SYMMETRY)
 						{
 							if (i != 0 && i != nX - 1 &&
 								j != 0 && j != nY - 1 &&
@@ -231,7 +234,8 @@ void Domain::setDomain(Foundation &foundation)
 							((getDZM(k) + getDZP(k))*getDZM(k));
 
 					// Cartesian Y terms
-					if (foundation.coordinateSystem == Foundation::CS_3D)
+					if (foundation.coordinateSystem == Foundation::CS_3D ||
+						foundation.coordinateSystem == Foundation::CS_3D_SYMMETRY)
 					{
 						cell[i][j][k].cyp = (2*getKYP(i,j,k))/
 								((getDYM(j) + getDYP(j))*getDYP(j));
@@ -611,7 +615,7 @@ void Domain::printCellTypes()
 		for (size_t i = 0; i < nX; i++)
 		{
 
-			output << ", " << cell[i][j][0].cellType;
+			output << ", " << cell[i][j][nZ-2].cellType;
 
 		}
 

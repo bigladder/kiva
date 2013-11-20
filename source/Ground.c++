@@ -160,7 +160,8 @@ void Ground::initializePlots()
 		if (!foundation.outputAnimations[p].endDateSet)
 			foundation.outputAnimations[p].endDate = simulationControl.endDate;
 
-		if (foundation.coordinateSystem == Foundation::CS_3D)
+		if (foundation.coordinateSystem == Foundation::CS_3D ||
+			foundation.coordinateSystem == Foundation::CS_3D_SYMMETRY)
 		{
 			if (!foundation.outputAnimations[p].xRangeSet)
 			{
@@ -427,7 +428,8 @@ void Ground::calculateADEUpwardSweep()
 					double CYP = domain.cell[i][j][k].cyp*theta;
 					double CYM = domain.cell[i][j][k].cym*theta;
 
-					if (foundation.coordinateSystem == Foundation::CS_3D)
+					if (foundation.coordinateSystem == Foundation::CS_3D ||
+						foundation.coordinateSystem == Foundation::CS_3D_SYMMETRY)
 						U[i][j][k] = (UOld[i][j][k]*(1.0 - CXP - CZP - CYP)
 								- U[i-1][j][k]*CXM
 								+ UOld[i+1][j][k]*CXP
@@ -627,7 +629,8 @@ void Ground::calculateADEDownwardSweep()
 					double CYP = domain.cell[i][j][k].cyp*theta;
 					double CYM = domain.cell[i][j][k].cym*theta;
 
-					if (foundation.coordinateSystem == Foundation::CS_3D)
+					if (foundation.coordinateSystem == Foundation::CS_3D ||
+						foundation.coordinateSystem == Foundation::CS_3D_SYMMETRY)
 						V[i][j][k] = (VOld[i][j][k]*(1.0 + CXM + CZM + CYM)
 								- VOld[i-1][j][k]*CXM
 								+ V[i+1][j][k]*CXP
@@ -826,7 +829,8 @@ void Ground::calculateExplicit()
 					double CYP = domain.cell[i][j][k].cyp*theta;
 					double CYM = domain.cell[i][j][k].cym*theta;
 
-					if (foundation.coordinateSystem == Foundation::CS_3D)
+					if (foundation.coordinateSystem == Foundation::CS_3D ||
+						foundation.coordinateSystem == Foundation::CS_3D_SYMMETRY)
 						TNew[i][j][k] = TOld[i][j][k]*(1.0 + CXM + CZM + CYM - CXP - CZP - CYP)
 								- TOld[i-1][j][k]*CXM
 								+ TOld[i+1][j][k]*CXP
@@ -1112,7 +1116,8 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
 						double CYP = domain.cell[i][j][k].cyp;
 						double CYM = domain.cell[i][j][k].cym;
 
-						if (foundation.coordinateSystem == Foundation::CS_3D)
+						if (foundation.coordinateSystem == Foundation::CS_3D ||
+							foundation.coordinateSystem == Foundation::CS_3D_SYMMETRY)
 						{
 							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = (CXM + CZM + CYM - CXP - CZP - CYP);
 							Amat(i + nX*j + nX*nY*k, (i-1) + nX*j + nX*nY*k) = -CXM;
@@ -1162,7 +1167,8 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
 						double CYP = domain.cell[i][j][k].cyp*theta;
 						double CYM = domain.cell[i][j][k].cym*theta;
 
-						if (foundation.coordinateSystem == Foundation::CS_3D)
+						if (foundation.coordinateSystem == Foundation::CS_3D ||
+							foundation.coordinateSystem == Foundation::CS_3D_SYMMETRY)
 						{
 							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = (1.0 + f*(CXP + CZP + CYP - CXM - CZM - CYM));
 							Amat(i + nX*j + nX*nY*k, (i-1) + nX*j + nX*nY*k) = f*CXM;
@@ -1585,7 +1591,8 @@ void Ground::calculateADI(int dim)
 				default:
 					{
 					double theta;
-					if (foundation.coordinateSystem == Foundation::CS_3D)
+					if (foundation.coordinateSystem == Foundation::CS_3D ||
+						foundation.coordinateSystem == Foundation::CS_3D_SYMMETRY)
 					{
 						theta = timestep/
 								(3*domain.cell[i][j][k].density*domain.cell[i][j][k].specificHeat);
@@ -1605,7 +1612,8 @@ void Ground::calculateADI(int dim)
 
 					double f = foundation.fADI;
 
-					if (foundation.coordinateSystem == Foundation::CS_3D)
+					if (foundation.coordinateSystem == Foundation::CS_3D ||
+						foundation.coordinateSystem == Foundation::CS_3D_SYMMETRY)
 					{
 						if (dim == 1) // x
 						{
@@ -1731,7 +1739,8 @@ void Ground::calculate(double t)
 		break;
 	case Foundation::NS_ADI:
 		calculateADI(1);
-		if (foundation.coordinateSystem == Foundation::CS_3D)
+		if (foundation.coordinateSystem == Foundation::CS_3D ||
+			foundation.coordinateSystem == Foundation::CS_3D_SYMMETRY)
 			calculateADI(2);
 		calculateADI(3);
 		break;
@@ -1907,6 +1916,7 @@ double Ground::getSurfaceAverageHeatFlux(std::string surfaceName)
 
 	std::vector<double> heatFlux;
 
+
 	// Loop over cells and calculate heat loss from surface
 	for (size_t k = kMin; k <= kMax; ++k)
 	{
@@ -1918,8 +1928,7 @@ double Ground::getSurfaceAverageHeatFlux(std::string surfaceName)
 					surface.orientation == Surface::X_NEG ||
 					surface.orientation == Surface::Y_POS ||
 					surface.orientation == Surface::Y_NEG ||
-					boost::geometry::within(Point(domain.meshX.centers[i],domain.meshY.centers[j]),surface.polygon)
-				)
+					boost::geometry::within(Point(domain.meshX.centers[i],domain.meshY.centers[j]),surface.polygon))
 				{
 					double h = getConvectionCoeff(TNew[i][j][k],Tair,0.0,1.0,false,tilt)
 							 + getSimpleInteriorIRCoeff(domain.cell[i][j][k].surface.emissivity,
@@ -1970,7 +1979,17 @@ double Ground::getSurfaceAverageHeatFlux(std::string surfaceName)
 						{
 							A = domain.meshX.deltas[i]*domain.meshY.deltas[j];
 						}
+
+						if (foundation.coordinateSystem == Foundation::CS_3D_SYMMETRY)
+						{
+							if (isXSymmetric(foundation.polygon))
+								A = 2*A;
+
+							if (isYSymmetric(foundation.polygon))
+								A = 2*A;
+						}
 					}
+
 					heatFlux.push_back(h*A*(Tair - TNew[i][j][k]));
 					totalArea += A;
 				}
@@ -1979,8 +1998,6 @@ double Ground::getSurfaceAverageHeatFlux(std::string surfaceName)
 	}
 
 	double totalFlux = std::accumulate((heatFlux).begin(),(heatFlux).end(), 0.0);
-
-
 
 	return totalFlux;//totalArea;
 }

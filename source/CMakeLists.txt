@@ -19,6 +19,7 @@ set(kiva_src Main.c++
              Geometry.c++
              Ground.c++
              GroundPlot.c++
+             Input.c++
              InputParser.c++
              Mesher.c++
              WeatherData.c++)

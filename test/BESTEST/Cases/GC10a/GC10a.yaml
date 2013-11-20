@@ -43,7 +43,7 @@ Foundation:
 
   indoorAirTemperature: 303.15  # [K]
 
-  coordinateSystem: 3D  # 2DAXIAL | 2DLINEAR | 3D
+  coordinateSystem: 3DSYMMETRY  # 2DAXIAL | 2DLINEAR | 3D | 3DSYMMETRY
   polygon:
     - [0, 0]
     - [0, 12]
@@ -51,10 +51,10 @@ Foundation:
     - [12, 0]
   
   mesh:
-    minCellDim: 0.02  # [m]
+    minCellDim: 0.017  # [m]
     maxDepthGrowthCoeff: 1.15
     maxInteriorGrowthCoeff: 1.15
-    maxExteriorGrowthCoeff: 1.495
+    maxExteriorGrowthCoeff: 1.45
 
   numericalScheme: STEADY-STATE  # ADE | EXPLICIT | ADI | IMPLICIT | CRANK-NICOLSON | STEADY-STATE
   #fADI: 1
@@ -63,29 +63,29 @@ Foundation:
   implicitAccelTimestep: 720  # hours
   implicitAccelPeriods: 24
   convectionCalculationMethod: CONSTANT # AUTO | CONSTANT
-  interiorConvectiveCoefficient: 999
-  exteriorConvectiveCoefficient: 999
+  interiorConvectiveCoefficient: 9999
+  exteriorConvectiveCoefficient: 9999
   outdoorTemperatureMethod: CONSTANT # WEATHER-FILE | CONSTANT
   outdoorDryBulbTemperature: 283.15
   wallTopBoundary: LINEAR-DT  # ZERO-FLUX | LINEAR-DT
   wallTopTemperatureDifference: 20  # [K]
 
-  #outputAnimations:
-    #-
-      #name: "Horizontal"
-      #frequency: 24  # [h]
-      #grid: yes
-      #gradients: no
-      #contours: no
-      #size: 800
-      #zRange: [0,0]
-    #-
-      #name: "Vertical"
-      #frequency: 24  # [h]
-      #grid: yes
-      #gradients: no
-      #contours: no
-      #size: 800
-      #yRange: [6,6]
-
-
+  outputAnimations:
+    -
+      name: "Horizontal"
+      frequency: 24  # [h]
+      grid: yes
+      gradients: no
+      contours: no
+      size: 800
+      zRange: [0,0]
+      xRange: [11.5,12.5]
+      yRange: [11.5,12.5]
+    -
+      name: "Vertical"
+      frequency: 24  # [h]
+      grid: yes
+      gradients: no
+      contours: no
+      size: 800
+      yRange: [6,6]
