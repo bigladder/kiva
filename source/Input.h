@@ -302,6 +302,14 @@ public:
 
 	double fADI;  // ADI modified f-factor
 
+	enum ImplicitSolverMethod
+	{
+		ISM_ITERATIVE,
+		ISM_DIRECT
+	};
+
+	ImplicitSolverMethod implicitSolverMethod;
+
 	double initialTemperature;
 	long implicitAccelTimestep;
 	long implicitAccelPeriods;
