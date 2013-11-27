@@ -38,11 +38,6 @@ Ground::Ground(WeatherData &weatherData, Foundation &foundation,
 
 Ground::~Ground()
 {
-	KSPDestroy(&ksp);
-	VecDestroy(&x);
-	MatDestroy(&Amat);
-	VecDestroy(&b);
-
 	for (std::size_t p = 0; p < plots.size(); p++)
 	{
 		plots[p].gr.CloseGIF();
@@ -89,32 +84,12 @@ void Ground::initializeConditions()
 			 foundation.numericalScheme == Foundation::NS_STEADY_STATE ||
 			 foundation.initializationMethod == Foundation::IM_STEADY_STATE)
 	{
-		int nnz = 7;
-
-		MatCreateAIJ(PETSC_COMM_WORLD,PETSC_DECIDE,PETSC_DECIDE,nX*nY*nZ,nX*nY*nZ,nnz,NULL,nnz,NULL,&Amat);
-
-		VecCreate(PETSC_COMM_WORLD,&x);
-		VecSetSizes(x,PETSC_DECIDE,nX*nY*nZ);
-		VecSetFromOptions(x);
-		VecDuplicate(x,&b);
-		KSPCreate(PETSC_COMM_WORLD,&ksp);
-
-		if (foundation.implicitSolverMethod == Foundation::ISM_ITERATIVE)
-		{
-			KSPSetType(ksp, KSPGMRES);
-			KSPGetPC(ksp, &pc);
-			PCSetType(pc, PCILU);
-		}
-		else if (foundation.implicitSolverMethod == Foundation::ISM_DIRECT)
-		{
-			KSPSetType(ksp, KSPPREONLY);
-			KSPGetPC(ksp, &pc);
-			PCSetType(pc, PCLU);
-		}
-
-		KSPSetFromOptions(ksp);
-		VecSet(x,283.15);
-
+		Amat = boost::numeric::ublas::compressed_matrix<double,
+		boost::numeric::ublas::column_major, 0,
+		boost::numeric::ublas::unbounded_array<int>,
+		boost::numeric::ublas::unbounded_array<double> >(nX*nY*nZ,nX*nY*nZ);  // Coefficient Matrix
+		b = boost::numeric::ublas::vector<double> (nX*nY*nZ);  // constant and unknown vectors
+		x = boost::numeric::ublas::vector<double> (nX*nY*nZ);  // constant and unknown vectors
 	}
 
 	TNew.resize(boost::extents[nX][nY][nZ]);
@@ -908,14 +883,6 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
 		{
 			for (size_t i = 0; i < nX; i++)
 			{
-				int index = i + nX*j + nX*nY*k;
-				int index_ip = (i+1) + nX*j + nX*nY*k;
-				int index_im = (i-1) + nX*j + nX*nY*k;
-				int index_jp = i + nX*(j+1) + nX*nY*k;
-				int index_jm = i + nX*(j-1) + nX*nY*k;
-				int index_kp = i + nX*j + nX*nY*(k+1);
-				int index_km = i + nX*j + nX*nY*(k-1);
-
 				switch (domain.cell[i][j][k].cellType)
 				{
 				case Cell::BOUNDARY:
@@ -935,40 +902,40 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
 						switch (domain.cell[i][j][k].surface.orientation)
 						{
 						case Surface::X_NEG:
-							MatSetValue(Amat,index,index,1.0,INSERT_VALUES);
-							MatSetValue(Amat,index,index_ip,-1.0,INSERT_VALUES);
+							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = 1.0;
+							Amat(i + nX*j + nX*nY*k, (i+1) + nX*j + nX*nY*k) = -1.0;
 
-							VecSetValue(b,index,0.0,INSERT_VALUES);
+							b(i + nX*j + nX*nY*k) = 0;
 							break;
 						case Surface::X_POS:
-							MatSetValue(Amat,index,index,1.0,INSERT_VALUES);
-							MatSetValue(Amat,index,index_im,-1.0,INSERT_VALUES);
+							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = 1.0;
+							Amat(i + nX*j + nX*nY*k, (i-1) + nX*j + nX*nY*k) = -1.0;
 
-							VecSetValue(b,index,0.0,INSERT_VALUES);
+							b(i + nX*j + nX*nY*k) = 0.0;
 							break;
 						case Surface::Y_NEG:
-							MatSetValue(Amat,index,index,1.0,INSERT_VALUES);
-							MatSetValue(Amat,index,index_jp,-1.0,INSERT_VALUES);
+							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = 1.0;
+							Amat(i + nX*j + nX*nY*k, i + nX*(j+1) + nX*nY*k) = -1.0;
 
-							VecSetValue(b,index,0.0,INSERT_VALUES);
+							b(i + nX*j + nX*nY*k) = 0;
 							break;
 						case Surface::Y_POS:
-							MatSetValue(Amat,index,index,1.0,INSERT_VALUES);
-							MatSetValue(Amat,index,index_jm,-1.0,INSERT_VALUES);
+							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = 1.0;
+							Amat(i + nX*j + nX*nY*k, i + nX*(j-1) + nX*nY*k) = -1.0;
 
-							VecSetValue(b,index,0.0,INSERT_VALUES);
+							b(i + nX*j + nX*nY*k) = 0.0;
 							break;
 						case Surface::Z_NEG:
-							MatSetValue(Amat,index,index,1.0,INSERT_VALUES);
-							MatSetValue(Amat,index,index_kp,-1.0,INSERT_VALUES);
+							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = 1.0;
+							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*(k+1)) = -1.0;
 
-							VecSetValue(b,index,0.0,INSERT_VALUES);
+							b(i + nX*j + nX*nY*k) = 0;
 							break;
 						case Surface::Z_POS:
-							MatSetValue(Amat,index,index,1.0,INSERT_VALUES);
-							MatSetValue(Amat,index,index_km,-1.0,INSERT_VALUES);
+							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = 1.0;
+							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*(k-1)) = -1.0;
 
-							VecSetValue(b,index,0.0,INSERT_VALUES);
+							b(i + nX*j + nX*nY*k) = 0;
 							break;
 						}
 						}
@@ -976,25 +943,25 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
 
 					case Surface::CONSTANT_TEMPERATURE:
 						{
-						MatSetValue(Amat,index,index,1.0,INSERT_VALUES);
+						Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = 1.0;
 
-						VecSetValue(b,index,domain.cell[i][j][k].surface.temperature,INSERT_VALUES);
+						b(i + nX*j + nX*nY*k) = domain.cell[i][j][k].surface.temperature;
 						}
 						break;
 
 					case Surface::INTERIOR_TEMPERATURE:
 						{
-						MatSetValue(Amat,index,index,1.0,INSERT_VALUES);
+						Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = 1.0;
 
-						VecSetValue(b,index,foundation.indoorAirTemperature,INSERT_VALUES);
+						b(i + nX*j + nX*nY*k) = foundation.indoorAirTemperature;
 						}
 						break;
 
 					case Surface::EXTERIOR_TEMPERATURE:
 						{
-						MatSetValue(Amat,index,index,1.0,INSERT_VALUES);
+						Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = 1.0;
 
-						VecSetValue(b,index,getOutdoorTemperature(),INSERT_VALUES);
+						b(i + nX*j + nX*nY*k) = getOutdoorTemperature();
 						}
 						break;
 
@@ -1012,50 +979,50 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
 						{
 						case Surface::X_NEG:
 							{
-							MatSetValue(Amat,index,index,domain.getKXP(i,j,k)/domain.getDXP(i) + (hc + hr),INSERT_VALUES);
-							MatSetValue(Amat,index,index_ip,-domain.getKXP(i,j,k)/domain.getDXP(i),INSERT_VALUES);
+							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = domain.getKXP(i,j,k)/domain.getDXP(i) + (hc + hr);
+							Amat(i + nX*j + nX*nY*k, (i+1) + nX*j + nX*nY*k) = -domain.getKXP(i,j,k)/domain.getDXP(i);
 
-							VecSetValue(b,index,(hc + hr)*Tair + q,INSERT_VALUES);
+							b(i + nX*j + nX*nY*k) = (hc + hr)*Tair + q;
 							}
 							break;
 						case Surface::X_POS:
 							{
-							MatSetValue(Amat,index,index,domain.getKXM(i,j,k)/domain.getDXM(i) + (hc + hr),INSERT_VALUES);
-							MatSetValue(Amat,index,index_im,-domain.getKXM(i,j,k)/domain.getDXM(i),INSERT_VALUES);
+							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = domain.getKXM(i,j,k)/domain.getDXM(i) + (hc + hr);
+							Amat(i + nX*j + nX*nY*k, (i-1) + nX*j + nX*nY*k) = -domain.getKXM(i,j,k)/domain.getDXM(i);
 
-							VecSetValue(b,index,(hc + hr)*Tair + q,INSERT_VALUES);
+							b(i + nX*j + nX*nY*k) = (hc + hr)*Tair + q;
 							}
 							break;
 						case Surface::Y_NEG:
 							{
-							MatSetValue(Amat,index,index,domain.getKYP(i,j,k)/domain.getDYP(j) + (hc + hr),INSERT_VALUES);
-							MatSetValue(Amat,index,index_jp,-domain.getKYP(i,j,k)/domain.getDYP(j),INSERT_VALUES);
+							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = domain.getKYP(i,j,k)/domain.getDYP(j) + (hc + hr);
+							Amat(i + nX*j + nX*nY*k, i + nX*(j+1) + nX*nY*k) = -domain.getKYP(i,j,k)/domain.getDYP(j);
 
-							VecSetValue(b,index,(hc + hr)*Tair + q,INSERT_VALUES);
+							b(i + nX*j + nX*nY*k) = (hc + hr)*Tair + q;
 							}
 							break;
 						case Surface::Y_POS:
 							{
-							MatSetValue(Amat,index,index,domain.getKYM(i,j,k)/domain.getDYM(j) + (hc + hr),INSERT_VALUES);
-							MatSetValue(Amat,index,index_jm,-domain.getKYM(i,j,k)/domain.getDYM(j),INSERT_VALUES);
+							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = domain.getKYM(i,j,k)/domain.getDYM(j) + (hc + hr);
+							Amat(i + nX*j + nX*nY*k, i + nX*(j-1) + nX*nY*k) = -domain.getKYM(i,j,k)/domain.getDYM(j);
 
-							VecSetValue(b,index,(hc + hr)*Tair + q,INSERT_VALUES);
+							b(i + nX*j + nX*nY*k) = (hc + hr)*Tair + q;
 							}
 							break;
 						case Surface::Z_NEG:
 							{
-							MatSetValue(Amat,index,index,domain.getKZP(i,j,k)/domain.getDZP(k) + (hc + hr),INSERT_VALUES);
-							MatSetValue(Amat,index,index_kp,-domain.getKZP(i,j,k)/domain.getDZP(k),INSERT_VALUES);
+							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = domain.getKZP(i,j,k)/domain.getDZP(k) + (hc + hr);
+							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*(k+1)) = -domain.getKZP(i,j,k)/domain.getDZP(k);
 
-							VecSetValue(b,index,(hc + hr)*Tair + q,INSERT_VALUES);
+							b(i + nX*j + nX*nY*k) = (hc + hr)*Tair + q;
 							}
 							break;
 						case Surface::Z_POS:
 							{
-							MatSetValue(Amat,index,index,domain.getKZM(i,j,k)/domain.getDZM(k) + (hc + hr),INSERT_VALUES);
-							MatSetValue(Amat,index,index_km,-domain.getKZM(i,j,k)/domain.getDZM(k),INSERT_VALUES);
+							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = domain.getKZM(i,j,k)/domain.getDZM(k) + (hc + hr);
+							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*(k-1)) = -domain.getKZM(i,j,k)/domain.getDZM(k);
 
-							VecSetValue(b,index,(hc + hr)*Tair + q,INSERT_VALUES);
+							b(i + nX*j + nX*nY*k) = (hc + hr)*Tair + q;
 							}
 							break;
 						}
@@ -1076,50 +1043,50 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
 						{
 						case Surface::X_NEG:
 							{
-							MatSetValue(Amat,index,index,domain.getKXP(i,j,k)/domain.getDXP(i) + (hc + hr),INSERT_VALUES);
-							MatSetValue(Amat,index,index_ip,-domain.getKXP(i,j,k)/domain.getDXP(i),INSERT_VALUES);
+							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = domain.getKXP(i,j,k)/domain.getDXP(i) + (hc + hr);
+							Amat(i + nX*j + nX*nY*k, (i+1) + nX*j + nX*nY*k) = -domain.getKXP(i,j,k)/domain.getDXP(i);
 
-							VecSetValue(b,index,(hc + hr*pow(F,0.25))*Tair + q,INSERT_VALUES);
+							b(i + nX*j + nX*nY*k) = (hc + hr*pow(F,0.25))*Tair + q;
 							}
 							break;
 						case Surface::X_POS:
 							{
-							MatSetValue(Amat,index,index,domain.getKXM(i,j,k)/domain.getDXM(i) + (hc + hr),INSERT_VALUES);
-							MatSetValue(Amat,index,index_im,-domain.getKXM(i,j,k)/domain.getDXM(i),INSERT_VALUES);
+							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = domain.getKXM(i,j,k)/domain.getDXM(i) + (hc + hr);
+							Amat(i + nX*j + nX*nY*k, (i-1) + nX*j + nX*nY*k) = -domain.getKXM(i,j,k)/domain.getDXM(i);
 
-							VecSetValue(b,index,(hc + hr*pow(F,0.25))*Tair + q,INSERT_VALUES);
+							b(i + nX*j + nX*nY*k) = (hc + hr*pow(F,0.25))*Tair + q;
 							}
 							break;
 						case Surface::Y_NEG:
 							{
-							MatSetValue(Amat,index,index,domain.getKYP(i,j,k)/domain.getDYP(j) + (hc + hr),INSERT_VALUES);
-							MatSetValue(Amat,index,index_jp,-domain.getKYP(i,j,k)/domain.getDYP(j),INSERT_VALUES);
+							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = domain.getKYP(i,j,k)/domain.getDYP(j) + (hc + hr);
+							Amat(i + nX*j + nX*nY*k, i + nX*(j+1) + nX*nY*k) = -domain.getKYP(i,j,k)/domain.getDYP(j);
 
-							VecSetValue(b,index,(hc + hr*pow(F,0.25))*Tair + q,INSERT_VALUES);
+							b(i + nX*j + nX*nY*k) = (hc + hr*pow(F,0.25))*Tair + q;
 							}
 							break;
 						case Surface::Y_POS:
 							{
-							MatSetValue(Amat,index,index,domain.getKYM(i,j,k)/domain.getDYM(j) + (hc + hr),INSERT_VALUES);
-							MatSetValue(Amat,index,index_jm,-domain.getKYM(i,j,k)/domain.getDYM(j),INSERT_VALUES);
+							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = domain.getKYM(i,j,k)/domain.getDYM(j) + (hc + hr);
+							Amat(i + nX*j + nX*nY*k, i + nX*(j-1) + nX*nY*k) = -domain.getKYM(i,j,k)/domain.getDYM(j);
 
-							VecSetValue(b,index,(hc + hr*pow(F,0.25))*Tair + q,INSERT_VALUES);
+							b(i + nX*j + nX*nY*k) = (hc + hr*pow(F,0.25))*Tair + q;
 							}
 							break;
 						case Surface::Z_NEG:
 							{
-							MatSetValue(Amat,index,index,domain.getKZP(i,j,k)/domain.getDZP(k) + (hc + hr),INSERT_VALUES);
-							MatSetValue(Amat,index,index_kp,-domain.getKZP(i,j,k)/domain.getDZP(k),INSERT_VALUES);
+							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = domain.getKZP(i,j,k)/domain.getDZP(k) + (hc + hr);
+							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*(k+1)) = -domain.getKZP(i,j,k)/domain.getDZP(k);
 
-							VecSetValue(b,index,(hc + hr*pow(F,0.25))*Tair + q,INSERT_VALUES);
+							b(i + nX*j + nX*nY*k) = (hc + hr*pow(F,0.25))*Tair + q;
 							}
 							break;
 						case Surface::Z_POS:
 							{
-							MatSetValue(Amat,index,index,domain.getKZM(i,j,k)/domain.getDZM(k) + (hc + hr),INSERT_VALUES);
-							MatSetValue(Amat,index,index_km,-domain.getKZM(i,j,k)/domain.getDZM(k),INSERT_VALUES);
+							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = domain.getKZM(i,j,k)/domain.getDZM(k) + (hc + hr);
+							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*(k-1)) = -domain.getKZM(i,j,k)/domain.getDZM(k);
 
-							VecSetValue(b,index,(hc + hr*pow(F,0.25))*Tair + q,INSERT_VALUES);
+							b(i + nX*j + nX*nY*k) = (hc + hr*pow(F,0.25))*Tair + q;
 							}
 							break;
 						}
@@ -1129,14 +1096,14 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
 					}
 					break;
 				case Cell::INTERIOR_AIR:
-					MatSetValue(Amat,index,index,1.0,INSERT_VALUES);
+					Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = 1.0;
 
-					VecSetValue(b,index,foundation.indoorAirTemperature,INSERT_VALUES);
+					b(i + nX*j + nX*nY*k) = foundation.indoorAirTemperature;
 					break;
 				case Cell::EXTERIOR_AIR:
-					MatSetValue(Amat,index,index,1.0,INSERT_VALUES);
+					Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = 1.0;
 
-					VecSetValue(b,index,getOutdoorTemperature(),INSERT_VALUES);
+					b(i + nX*j + nX*nY*k) = getOutdoorTemperature();
 					break;
 				default:
 					{
@@ -1152,15 +1119,15 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
 						if (foundation.coordinateSystem == Foundation::CS_3D ||
 							foundation.coordinateSystem == Foundation::CS_3D_SYMMETRY)
 						{
-							MatSetValue(Amat,index,index,(CXM + CZM + CYM - CXP - CZP - CYP),INSERT_VALUES);
-							MatSetValue(Amat,index,index_im,-CXM,INSERT_VALUES);
-							MatSetValue(Amat,index,index_ip,CXP,INSERT_VALUES);
-							MatSetValue(Amat,index,index_km,-CZM,INSERT_VALUES);
-							MatSetValue(Amat,index,index_kp,CZP,INSERT_VALUES);
-							MatSetValue(Amat,index,index_jm,-CYM,INSERT_VALUES);
-							MatSetValue(Amat,index,index_jp,CYP,INSERT_VALUES);
+							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = (CXM + CZM + CYM - CXP - CZP - CYP);
+							Amat(i + nX*j + nX*nY*k, (i-1) + nX*j + nX*nY*k) = -CXM;
+							Amat(i + nX*j + nX*nY*k, (i+1) + nX*j + nX*nY*k) = CXP;
+							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*(k-1)) = -CZM;
+							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*(k+1)) = CZP;
+							Amat(i + nX*j + nX*nY*k, i + nX*(j-1) + nX*nY*k) = -CYM;
+							Amat(i + nX*j + nX*nY*k, i + nX*(j+1) + nX*nY*k) = CYP;
 
-							VecSetValue(b,index,0.0,INSERT_VALUES);
+							b(i + nX*j + nX*nY*k) = 0;
 						}
 						else
 						{
@@ -1173,14 +1140,13 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
 								CXPC = domain.cell[i][j][k].cxp_c/r;
 								CXMC = domain.cell[i][j][k].cxm_c/r;
 							}
+							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = (CXMC + CXM + CZM - CXPC - CXP - CZP);
+							Amat(i + nX*j + nX*nY*k, (i-1) + nX*j + nX*nY*k) = (-CXMC - CXM);
+							Amat(i + nX*j + nX*nY*k, (i+1) + nX*j + nX*nY*k) = (CXPC + CXP);
+							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*(k-1)) = -CZM;
+							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*(k+1)) = CZP;
 
-							MatSetValue(Amat,index,index,(CXMC + CXM + CZM - CXPC - CXP - CZP),INSERT_VALUES);
-							MatSetValue(Amat,index,index_im,(-CXMC - CXM),INSERT_VALUES);
-							MatSetValue(Amat,index,index_ip,(CXPC + CXP),INSERT_VALUES);
-							MatSetValue(Amat,index,index_km,-CZM,INSERT_VALUES);
-							MatSetValue(Amat,index,index_kp,CZP,INSERT_VALUES);
-
-							VecSetValue(b,index,0.0,INSERT_VALUES);
+							b(i + nX*j + nX*nY*k) = 0;
 						}
 					}
 					else
@@ -1204,15 +1170,15 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
 						if (foundation.coordinateSystem == Foundation::CS_3D ||
 							foundation.coordinateSystem == Foundation::CS_3D_SYMMETRY)
 						{
-							MatSetValue(Amat,index,index,(1.0 + f*(CXP + CZP + CYP - CXM - CZM - CYM)),INSERT_VALUES);
-							MatSetValue(Amat,index,index_im,f*CXM,INSERT_VALUES);
-							MatSetValue(Amat,index,index_ip,f*(-CXP),INSERT_VALUES);
-							MatSetValue(Amat,index,index_km,f*CZM,INSERT_VALUES);
-							MatSetValue(Amat,index,index_kp,f*(-CZP),INSERT_VALUES);
-							MatSetValue(Amat,index,index_jm,f*CYM,INSERT_VALUES);
-							MatSetValue(Amat,index,index_jp,f*(-CYP),INSERT_VALUES);
+							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = (1.0 + f*(CXP + CZP + CYP - CXM - CZM - CYM));
+							Amat(i + nX*j + nX*nY*k, (i-1) + nX*j + nX*nY*k) = f*CXM;
+							Amat(i + nX*j + nX*nY*k, (i+1) + nX*j + nX*nY*k) = f*(-CXP);
+							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*(k-1)) = f*CZM;
+							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*(k+1)) = f*(-CZP);
+							Amat(i + nX*j + nX*nY*k, i + nX*(j-1) + nX*nY*k) = f*CYM;
+							Amat(i + nX*j + nX*nY*k, i + nX*(j+1) + nX*nY*k) = f*(-CYP);
 
-							double v
+							b(i + nX*j + nX*nY*k)
 									= TOld[i][j][k]*(1.0 + (1-f)*(CXM + CZM + CYM - CXP - CZP - CYP))
 									- TOld[i-1][j][k]*(1-f)*CXM
 									+ TOld[i+1][j][k]*(1-f)*CXP
@@ -1220,9 +1186,6 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
 									+ TOld[i][j][k+1]*(1-f)*CZP
 									- TOld[i][j-1][k]*(1-f)*CYM
 									+ TOld[i][j+1][k]*(1-f)*CYP;
-
-							VecSetValue(b,index,v,INSERT_VALUES);
-
 						}
 						else
 						{
@@ -1235,22 +1198,18 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
 								CXPC = domain.cell[i][j][k].cxp_c*theta/r;
 								CXMC = domain.cell[i][j][k].cxm_c*theta/r;
 							}
+							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = (1.0 + f*(CXPC + CXP + CZP - CXMC - CXM - CZM));
+							Amat(i + nX*j + nX*nY*k, (i-1) + nX*j + nX*nY*k) = f*(CXMC + CXM);
+							Amat(i + nX*j + nX*nY*k, (i+1) + nX*j + nX*nY*k) = f*(-CXPC - CXP);
+							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*(k-1)) = f*CZM;
+							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*(k+1)) = f*(-CZP);
 
-							MatSetValue(Amat,index,index,(1.0 + f*(CXPC + CXP + CZP - CXMC - CXM - CZM)),INSERT_VALUES);
-							MatSetValue(Amat,index,index_im,f*(CXMC + CXM),INSERT_VALUES);
-							MatSetValue(Amat,index,index_ip,f*(-CXPC - CXP),INSERT_VALUES);
-							MatSetValue(Amat,index,index_km,f*CZM,INSERT_VALUES);
-							MatSetValue(Amat,index,index_kp,f*(-CZP),INSERT_VALUES);
-
-							double v
+							b(i + nX*j + nX*nY*k)
 									= TOld[i][j][k]*(1.0 + (1-f)*(CXMC + CXM + CZM - CXPC - CXP - CZP))
 									- TOld[i-1][j][k]*(1-f)*(CXMC + CXM)
 									+ TOld[i+1][j][k]*(1-f)*(CXPC + CXP)
 									- TOld[i][j][k-1]*(1-f)*CZM
 									+ TOld[i][j][k+1]*(1-f)*CZP;
-
-							VecSetValue(b,index,v,INSERT_VALUES);
-
 						}
 					}
 					}
@@ -1260,18 +1219,7 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
 		}
 	}
 
-	MatAssemblyBegin(Amat,MAT_FINAL_ASSEMBLY);
-	MatAssemblyEnd(Amat,MAT_FINAL_ASSEMBLY);
-	VecAssemblyBegin(b);
-	VecAssemblyEnd(b);
-
-	KSPSetOperators(ksp, Amat, Amat, DIFFERENT_NONZERO_PATTERN);
-
-	KSPSetUp(ksp);
-
-	KSPSolve(ksp,b,x);
-
-	double xVal;
+	umf::umf_solve(Amat,x,b);
 
 	for (size_t k = 0; k < nZ; ++k)
 	{
@@ -1279,24 +1227,22 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
 		{
 			for (size_t i = 0; i < nX; ++i)
 			{
-				int index = i + nX*j + nX*nY*k;
 				// Read solution into temperature matrix
-				VecGetValues(x, 1, &index, &xVal);
-				TNew[i][j][k] = xVal;
+				TNew[i][j][k] = x(i + nX*j + nX*nY*k);
 
 				// Update old values for next timestep
 				TOld[i][j][k] = TNew[i][j][k];
 			}
 		}
 	}
-	MatZeroEntries(Amat);
+	Amat.clear();
+	b.clear();
+	x.clear();
+
 }
 
 void Ground::calculateADI(int dim)
 {
-	MatDestroy(&Amat);
-	MatCreateAIJ(PETSC_COMM_WORLD,PETSC_DECIDE,PETSC_DECIDE,nX*nY*nZ,nX*nY*nZ,3,NULL,3,NULL,&Amat);
-
 	for (size_t k = 0; k < nZ; k++)
 	{
 		for (size_t j = 0; j < nY; j++)
@@ -1304,16 +1250,13 @@ void Ground::calculateADI(int dim)
 			for (size_t i = 0; i < nX; i++)
 			{
 
-				int index;
+				std::size_t index;
 				if (dim == 1)
 					index = i + nX*j + nX*nY*k;
 				else if (dim == 2)
 					index = j + nY*i + nY*nX*k;
 				else if (dim == 3)
 					index = k + nZ*i + nZ*nX*j;
-
-				int index_p = index+1;
-				int index_m = index-1;
 
 				switch (domain.cell[i][j][k].cellType)
 				{
@@ -1334,75 +1277,75 @@ void Ground::calculateADI(int dim)
 						switch (domain.cell[i][j][k].surface.orientation)
 						{
 						case Surface::X_NEG:
-							MatSetValue(Amat,index,index,1.0,INSERT_VALUES);
+							Amat(index, index) = 1.0;
 							if (dim == 1)
 							{
-								MatSetValue(Amat,index,index_p,-1.0,INSERT_VALUES);
-								VecSetValue(b,index,0.0,INSERT_VALUES);
+								Amat(index, index+1) = -1.0;
+								b(index) = 0;
 							}
 							else
 							{
-								VecSetValue(b,index,TOld[i+1][j][k],INSERT_VALUES);
+								b(index) = TOld[i+1][j][k];
 							}
 							break;
 						case Surface::X_POS:
-							MatSetValue(Amat,index,index,1.0,INSERT_VALUES);
+							Amat(index, index) = 1.0;
 							if (dim == 1)
 							{
-								MatSetValue(Amat,index,index_m,-1.0,INSERT_VALUES);
-								VecSetValue(b,index,0.0,INSERT_VALUES);
+								Amat(index, index-1) = -1.0;
+								b(index) = 0;
 							}
 							else
 							{
-								VecSetValue(b,index,TOld[i-1][j][k],INSERT_VALUES);
+								b(index) = TOld[i-1][j][k];
 							}
 							break;
 						case Surface::Y_NEG:
-							MatSetValue(Amat,index,index,1.0,INSERT_VALUES);
+							Amat(index, index) = 1.0;
 							if (dim == 2)
 							{
-								MatSetValue(Amat,index,index_p,-1.0,INSERT_VALUES);
-								VecSetValue(b,index,0.0,INSERT_VALUES);
+								Amat(index, index+1) = -1.0;
+								b(index) = 0;
 							}
 							else
 							{
-								VecSetValue(b,index,TOld[i][j+1][k],INSERT_VALUES);
+								b(index) = TOld[i][j+1][k];
 							}
 							break;
 						case Surface::Y_POS:
-							MatSetValue(Amat,index,index,1.0,INSERT_VALUES);
+							Amat(index, index) = 1.0;
 							if (dim == 2)
 							{
-								MatSetValue(Amat,index,index_m,-1.0,INSERT_VALUES);
-								VecSetValue(b,index,0.0,INSERT_VALUES);
+								Amat(index, index-1) = -1.0;
+								b(index) = 0;
 							}
 							else
 							{
-								VecSetValue(b,index,TOld[i][j-1][k],INSERT_VALUES);
+								b(index) = TOld[i][j-1][k];
 							}
 							break;
 						case Surface::Z_NEG:
-							MatSetValue(Amat,index,index,1.0,INSERT_VALUES);
+							Amat(index, index) = 1.0;
 							if (dim == 3)
 							{
-								MatSetValue(Amat,index,index_p,-1.0,INSERT_VALUES);
-								VecSetValue(b,index,0.0,INSERT_VALUES);
+								Amat(index, index+1) = -1.0;
+								b(index) = 0;
 							}
 							else
 							{
-								VecSetValue(b,index,TOld[i][j][k+1],INSERT_VALUES);
+								b(index) = TOld[i][j][k+1];
 							}
 							break;
 						case Surface::Z_POS:
-							MatSetValue(Amat,index,index,1.0,INSERT_VALUES);
+							Amat(index, index) = 1.0;
 							if (dim == 3)
 							{
-								MatSetValue(Amat,index,index_m,-1.0,INSERT_VALUES);
-								VecSetValue(b,index,0.0,INSERT_VALUES);
+								Amat(index, index-1) = -1.0;
+								b(index) = 0;
 							}
 							else
 							{
-								VecSetValue(b,index,TOld[i][j][k-1],INSERT_VALUES);
+								b(index) = TOld[i][j][k-1];
 							}
 							break;
 						}
@@ -1411,25 +1354,25 @@ void Ground::calculateADI(int dim)
 
 					case Surface::CONSTANT_TEMPERATURE:
 						{
-						MatSetValue(Amat,index,index,1.0,INSERT_VALUES);
+						Amat(index, index) = 1.0;
 
-						VecSetValue(b,index,domain.cell[i][j][k].surface.temperature,INSERT_VALUES);
+						b(index) = domain.cell[i][j][k].surface.temperature;
 						}
 						break;
 
 					case Surface::INTERIOR_TEMPERATURE:
 						{
-						MatSetValue(Amat,index,index,1.0,INSERT_VALUES);
+						Amat(index, index) = 1.0;
 
-						VecSetValue(b,index,foundation.indoorAirTemperature,INSERT_VALUES);
+						b(index) = foundation.indoorAirTemperature;
 						}
 						break;
 
 					case Surface::EXTERIOR_TEMPERATURE:
 						{
-						MatSetValue(Amat,index,index,1.0,INSERT_VALUES);
+						Amat(index, index) = 1.0;
 
-						VecSetValue(b,index,getOutdoorTemperature(),INSERT_VALUES);
+						b(index) = getOutdoorTemperature();
 						}
 						break;
 
@@ -1447,91 +1390,85 @@ void Ground::calculateADI(int dim)
 						{
 						case Surface::X_NEG:
 							{
-							MatSetValue(Amat,index,index,domain.getKXP(i,j,k)/domain.getDXP(i) + (hc + hr),INSERT_VALUES);
+							Amat(index, index) = domain.getKXP(i,j,k)/domain.getDXP(i) + (hc + hr);
 							if (dim == 1)
 							{
-								MatSetValue(Amat,index,index_p,-domain.getKXP(i,j,k)/domain.getDXP(i),INSERT_VALUES);
-								VecSetValue(b,index,(hc + hr)*Tair + q,INSERT_VALUES);
+								Amat(index, index+1) = -domain.getKXP(i,j,k)/domain.getDXP(i);
+								b(index) = (hc + hr)*Tair + q;
 							}
 							else
 							{
-								double v = TOld[i+1][j][k]*domain.getKXP(i,j,k)/domain.getDXP(i) + (hc + hr)*Tair + q;
-								VecSetValue(b,index,v,INSERT_VALUES);
+								b(index) = TOld[i+1][j][k]*domain.getKXP(i,j,k)/domain.getDXP(i) + (hc + hr)*Tair + q;
 							}
 							}
 							break;
 						case Surface::X_POS:
 							{
-							MatSetValue(Amat,index,index,domain.getKXM(i,j,k)/domain.getDXM(i) + (hc + hr),INSERT_VALUES);
+							Amat(index, index) = domain.getKXM(i,j,k)/domain.getDXM(i) + (hc + hr);
 							if (dim == 1)
 							{
-								MatSetValue(Amat,index,index_m,-domain.getKXM(i,j,k)/domain.getDXM(i),INSERT_VALUES);
-								VecSetValue(b,index,(hc + hr)*Tair + q,INSERT_VALUES);
+								Amat(index, index-1) = -domain.getKXM(i,j,k)/domain.getDXM(i);
+								b(index) = (hc + hr)*Tair + q;
 							}
 							else
 							{
-								double v = TOld[i-1][j][k]*domain.getKXM(i,j,k)/domain.getDXM(i) + (hc + hr)*Tair + q;
-								VecSetValue(b,index,v,INSERT_VALUES);
+								b(index) = TOld[i-1][j][k]*domain.getKXM(i,j,k)/domain.getDXM(i) + (hc + hr)*Tair + q;
 							}
 							}
 							break;
 						case Surface::Y_NEG:
 							{
-							MatSetValue(Amat,index,index,domain.getKYP(i,j,k)/domain.getDYP(j) + (hc + hr),INSERT_VALUES);
+							Amat(index, index) = domain.getKYP(i,j,k)/domain.getDYP(j) + (hc + hr);
 							if (dim == 2)
 							{
-								MatSetValue(Amat,index,index_p,-domain.getKYP(i,j,k)/domain.getDYP(j),INSERT_VALUES);
-								VecSetValue(b,index,(hc + hr)*Tair + q,INSERT_VALUES);
+								Amat(index, index+1) = -domain.getKYP(i,j,k)/domain.getDYP(j);
+								b(index) = (hc + hr)*Tair + q;
 							}
 							else
 							{
-								double v = TOld[i][j+1][k]*domain.getKYP(i,j,k)/domain.getDYP(j) + (hc + hr)*Tair + q;
-								VecSetValue(b,index,v,INSERT_VALUES);
+								b(index) = TOld[i][j+1][k]*domain.getKYP(i,j,k)/domain.getDYP(j) + (hc + hr)*Tair + q;
 							}
 							}
 							break;
 						case Surface::Y_POS:
 							{
-							MatSetValue(Amat,index,index,domain.getKYM(i,j,k)/domain.getDYM(j) + (hc + hr),INSERT_VALUES);
+							Amat(index, index) = domain.getKYM(i,j,k)/domain.getDYM(j) + (hc + hr);
 							if (dim == 2)
 							{
-								MatSetValue(Amat,index,index_m,-domain.getKYM(i,j,k)/domain.getDYM(j),INSERT_VALUES);
-								VecSetValue(b,index,(hc + hr)*Tair + q,INSERT_VALUES);
+								Amat(index, index-1) = -domain.getKYM(i,j,k)/domain.getDYM(j);
+								b(index) = (hc + hr)*Tair + q;
 							}
 							else
 							{
-								double v = TOld[i][j-1][k]*domain.getKYM(i,j,k)/domain.getDYM(j) + (hc + hr)*Tair + q;
-								VecSetValue(b,index,v,INSERT_VALUES);
+								b(index) = TOld[i][j-1][k]*domain.getKYM(i,j,k)/domain.getDYM(j) + (hc + hr)*Tair + q;
 							}
 							}
 							break;
 						case Surface::Z_NEG:
 							{
-							MatSetValue(Amat,index,index,domain.getKZP(i,j,k)/domain.getDZP(k) + (hc + hr),INSERT_VALUES);
+							Amat(index, index) = domain.getKZP(i,j,k)/domain.getDZP(k) + (hc + hr);
 							if (dim == 3)
 							{
-								MatSetValue(Amat,index,index_p,-domain.getKZP(i,j,k)/domain.getDZP(k),INSERT_VALUES);
-								VecSetValue(b,index,(hc + hr)*Tair + q,INSERT_VALUES);
+								Amat(index, index+1) = -domain.getKZP(i,j,k)/domain.getDZP(k);
+								b(index) = (hc + hr)*Tair + q;
 							}
 							else
 							{
-								double v = TOld[i][j][k+1]*domain.getKZP(i,j,k)/domain.getDZP(k) + (hc + hr)*Tair + q;
-								VecSetValue(b,index,v,INSERT_VALUES);
+								b(index) = TOld[i][j][k+1]*domain.getKZP(i,j,k)/domain.getDZP(k) + (hc + hr)*Tair + q;
 							}
 							}
 							break;
 						case Surface::Z_POS:
 							{
-							MatSetValue(Amat,index,index,domain.getKZM(i,j,k)/domain.getDZM(k) + (hc + hr),INSERT_VALUES);
+							Amat(index, index) = domain.getKZM(i,j,k)/domain.getDZM(k) + (hc + hr);
 							if (dim == 3)
 							{
-								MatSetValue(Amat,index,index_m,-domain.getKZM(i,j,k)/domain.getDZM(k),INSERT_VALUES);
-								VecSetValue(b,index,(hc + hr)*Tair + q,INSERT_VALUES);
+								Amat(index, index-1) = -domain.getKZM(i,j,k)/domain.getDZM(k);
+								b(index) = (hc + hr)*Tair + q;
 							}
 							else
 							{
-								double v = TOld[i][j][k-1]*domain.getKZM(i,j,k)/domain.getDZM(k) + (hc + hr)*Tair + q;
-								VecSetValue(b,index,v,INSERT_VALUES);
+								b(index) = TOld[i][j][k-1]*domain.getKZM(i,j,k)/domain.getDZM(k) + (hc + hr)*Tair + q;
 							}
 							}
 							break;
@@ -1553,91 +1490,85 @@ void Ground::calculateADI(int dim)
 						{
 						case Surface::X_NEG:
 							{
-							MatSetValue(Amat,index,index,domain.getKXP(i,j,k)/domain.getDXP(i) + (hc + hr),INSERT_VALUES);
+							Amat(index, index) = domain.getKXP(i,j,k)/domain.getDXP(i) + (hc + hr);
 							if (dim == 1)
 							{
-								MatSetValue(Amat,index,index_p,-domain.getKXP(i,j,k)/domain.getDXP(i),INSERT_VALUES);
-								VecSetValue(b,index,(hc + hr*pow(F,0.25))*Tair + q,INSERT_VALUES);
+								Amat(index, index+1) = -domain.getKXP(i,j,k)/domain.getDXP(i);
+								b(index) = (hc + hr*pow(F,0.25))*Tair + q;
 							}
 							else
 							{
-								double val = TOld[i+1][j][k]*domain.getKXP(i,j,k)/domain.getDXP(i) + (hc + hr*pow(F,0.25))*Tair + q;
-								VecSetValue(b,index,val,INSERT_VALUES);
+								b(index) = TOld[i+1][j][k]*domain.getKXP(i,j,k)/domain.getDXP(i) + (hc + hr*pow(F,0.25))*Tair + q;
 							}
 							}
 							break;
 						case Surface::X_POS:
 							{
-							MatSetValue(Amat,index,index,domain.getKXM(i,j,k)/domain.getDXM(i) + (hc + hr),INSERT_VALUES);
+							Amat(index, index) = domain.getKXM(i,j,k)/domain.getDXM(i) + (hc + hr);
 							if (dim == 1)
 							{
-								MatSetValue(Amat,index,index_m,-domain.getKXM(i,j,k)/domain.getDXM(i),INSERT_VALUES);
-								VecSetValue(b,index,(hc + hr*pow(F,0.25))*Tair + q,INSERT_VALUES);
+								Amat(index, index-1) = -domain.getKXM(i,j,k)/domain.getDXM(i);
+								b(index) = (hc + hr*pow(F,0.25))*Tair + q;
 							}
 							else
 							{
-								double val = TOld[i-1][j][k]*domain.getKXM(i,j,k)/domain.getDXM(i) + (hc + hr*pow(F,0.25))*Tair + q;
-								VecSetValue(b,index,val,INSERT_VALUES);
+								b(index) = TOld[i-1][j][k]*domain.getKXM(i,j,k)/domain.getDXM(i) + (hc + hr*pow(F,0.25))*Tair + q;
 							}
 							}
 							break;
 						case Surface::Y_NEG:
 							{
-							MatSetValue(Amat,index,index,domain.getKYP(i,j,k)/domain.getDYP(j) + (hc + hr),INSERT_VALUES);
+							Amat(index, index) = domain.getKYP(i,j,k)/domain.getDYP(j) + (hc + hr);
 							if (dim == 2)
 							{
-								MatSetValue(Amat,index,index_p,-domain.getKYP(i,j,k)/domain.getDYP(j),INSERT_VALUES);
-								VecSetValue(b,index,(hc + hr*pow(F,0.25))*Tair + q,INSERT_VALUES);
+								Amat(index, index+1) = -domain.getKYP(i,j,k)/domain.getDYP(j);
+								b(index) = (hc + hr*pow(F,0.25))*Tair + q;
 							}
 							else
 							{
-								double val = TOld[i][j+1][k]*domain.getKYP(i,j,k)/domain.getDYP(j) + (hc + hr*pow(F,0.25))*Tair + q;
-								VecSetValue(b,index,val,INSERT_VALUES);
+								b(index) = TOld[i][j+1][k]*domain.getKYP(i,j,k)/domain.getDYP(j) + (hc + hr*pow(F,0.25))*Tair + q;
 							}
 							}
 							break;
 						case Surface::Y_POS:
 							{
-							MatSetValue(Amat,index,index,domain.getKYM(i,j,k)/domain.getDYM(j) + (hc + hr),INSERT_VALUES);
+							Amat(index, index) = domain.getKYM(i,j,k)/domain.getDYM(j) + (hc + hr);
 							if (dim == 2)
 							{
-								MatSetValue(Amat,index,index_m,-domain.getKYM(i,j,k)/domain.getDYM(j),INSERT_VALUES);
-								VecSetValue(b,index,(hc + hr*pow(F,0.25))*Tair + q,INSERT_VALUES);
+								Amat(index, index-1) = -domain.getKYM(i,j,k)/domain.getDYM(j);
+								b(index) = (hc + hr*pow(F,0.25))*Tair + q;
 							}
 							else
 							{
-								double val = TOld[i][j-1][k]*domain.getKYM(i,j,k)/domain.getDYM(j) + (hc + hr*pow(F,0.25))*Tair + q;
-								VecSetValue(b,index,val,INSERT_VALUES);
+								b(index) = TOld[i][j-1][k]*domain.getKYM(i,j,k)/domain.getDYM(j) + (hc + hr*pow(F,0.25))*Tair + q;
 							}
 							}
 							break;
 						case Surface::Z_NEG:
 							{
-							MatSetValue(Amat,index,index,domain.getKZP(i,j,k)/domain.getDZP(k) + (hc + hr),INSERT_VALUES);
+							Amat(index, index) = domain.getKZP(i,j,k)/domain.getDZP(k) + (hc + hr);
 							if (dim == 3)
 							{
-								MatSetValue(Amat,index,index_p,-domain.getKZP(i,j,k)/domain.getDZP(k),INSERT_VALUES);
-								VecSetValue(b,index,(hc + hr*pow(F,0.25))*Tair + q,INSERT_VALUES);
+								Amat(index, index+1) = -domain.getKZP(i,j,k)/domain.getDZP(k);
+								b(index) = (hc + hr*pow(F,0.25))*Tair + q;
 							}
 							else
 							{
-								double val = TOld[i][j][k+1]*domain.getKZP(i,j,k)/domain.getDZP(k) + (hc + hr*pow(F,0.25))*Tair + q;
-								VecSetValue(b,index,val,INSERT_VALUES);
+								b(index) = TOld[i][j][k+1]*domain.getKZP(i,j,k)/domain.getDZP(k) + (hc + hr*pow(F,0.25))*Tair + q;
 							}
 							}
 							break;
 						case Surface::Z_POS:
 							{
-							MatSetValue(Amat,index,index,domain.getKZM(i,j,k)/domain.getDZM(k) + (hc + hr),INSERT_VALUES);
+							Amat(index, index) = domain.getKZM(i,j,k)/domain.getDZM(k) + (hc + hr);
 							if (dim == 3)
 							{
-								MatSetValue(Amat,index,index_m,-domain.getKZM(i,j,k)/domain.getDZM(k),INSERT_VALUES);
-								VecSetValue(b,index,(hc + hr*pow(F,0.25))*Tair + q,INSERT_VALUES);
+								Amat(index, index-1) = -domain.getKZM(i,j,k)/domain.getDZM(k);
+								b(index) = (hc + hr*pow(F,0.25))*Tair + q;
 							}
 							else
 							{
-								double val = TOld[i][j][k-1]*domain.getKZM(i,j,k)/domain.getDZM(k) + (hc + hr*pow(F,0.25))*Tair + q;
-								VecSetValue(b,index,val,INSERT_VALUES);
+								b(index) = TOld[i][j][k-1]*domain.getKZM(i,j,k)/domain.getDZM(k) + (hc + hr*pow(F,0.25))*Tair + q;
 							}
 							}
 							break;
@@ -1648,14 +1579,14 @@ void Ground::calculateADI(int dim)
 					}
 					break;
 				case Cell::INTERIOR_AIR:
-					MatSetValue(Amat,index,index,1.0,INSERT_VALUES);
+					Amat(index, index) = 1.0;
 
-					VecSetValue(b,index,foundation.indoorAirTemperature,INSERT_VALUES);
+					b(index) = foundation.indoorAirTemperature;
 					break;
 				case Cell::EXTERIOR_AIR:
-					MatSetValue(Amat,index,index,1.0,INSERT_VALUES);
+					Amat(index, index) = 1.0;
 
-					VecSetValue(b,index,getOutdoorTemperature(),INSERT_VALUES);
+					b(index) = getOutdoorTemperature();
 					break;
 				default:
 					{
@@ -1686,45 +1617,42 @@ void Ground::calculateADI(int dim)
 					{
 						if (dim == 1) // x
 						{
-							MatSetValue(Amat,index,index,1.0 + (3 - 2*f)*(CXP - CXM),INSERT_VALUES);
-							MatSetValue(Amat,index,index_m,(3 - 2*f)*CXM,INSERT_VALUES);
-							MatSetValue(Amat,index,index_p,(3 - 2*f)*(-CXP),INSERT_VALUES);
+							Amat(index, index) = 1.0 + (3 - 2*f)*(CXP - CXM);
+							Amat(index, index-1) = (3 - 2*f)*CXM;
+							Amat(index, index+1) = (3 - 2*f)*(-CXP);
 
-							double val
+							b(index)
 									= TOld[i][j][k]*(1.0 + f*(CZM + CYM - CZP - CYP))
 									- TOld[i][j][k-1]*f*CZM
 									+ TOld[i][j][k+1]*f*CZP
 									- TOld[i][j-1][k]*f*CYM
 									+ TOld[i][j+1][k]*f*CYP;
-							VecSetValue(b,index,val,INSERT_VALUES);
 						}
 						else if (dim == 2) // y
 						{
-							MatSetValue(Amat,index,index,(1.0 + (3 - 2*f)*(CYP - CYM)),INSERT_VALUES);
-							MatSetValue(Amat,index,index_m,(3 - 2*f)*CYM,INSERT_VALUES);
-							MatSetValue(Amat,index,index_p,(3 - 2*f)*(-CYP),INSERT_VALUES);
+							Amat(index, index) = (1.0 + (3 - 2*f)*(CYP - CYM));
+							Amat(index, index-1) = (3 - 2*f)*CYM;
+							Amat(index, index+1) = (3 - 2*f)*(-CYP);
 
-							double val
+							b(index)
 									= TOld[i][j][k]*(1.0 + f*(CXM + CZM - CXP - CZP))
 									- TOld[i-1][j][k]*f*CXM
 									+ TOld[i+1][j][k]*f*CXP
 									- TOld[i][j][k-1]*f*CZM
 									+ TOld[i][j][k+1]*f*CZP;
-							VecSetValue(b,index,val,INSERT_VALUES);
 						}
 						else if (dim == 3) // z
 						{
-							MatSetValue(Amat,index,index,(1.0 + (3 - 2*f)*(CZP - CZM)),INSERT_VALUES);
-							MatSetValue(Amat,index,index_m,(3 - 2*f)*CZM,INSERT_VALUES);
-							MatSetValue(Amat,index,index_p,(3 - 2*f)*(-CZP),INSERT_VALUES);
+							Amat(index, index) = (1.0 + (3 - 2*f)*(CZP - CZM));
+							Amat(index, index-1) = (3 - 2*f)*CZM;
+							Amat(index, index+1) = (3 - 2*f)*(-CZP);
 
-							double val
+							b(index)
 									= TOld[i][j][k]*(1.0 + f*(CXM + CYM - CXP - CYP))
 									- TOld[i-1][j][k]*f*CXM
 									+ TOld[i+1][j][k]*f*CXP
 									- TOld[i][j-1][k]*f*CYM
 									+ TOld[i][j+1][k]*f*CYP;
-							VecSetValue(b,index,val,INSERT_VALUES);
 						}
 					}
 					else
@@ -1739,27 +1667,25 @@ void Ground::calculateADI(int dim)
 						}
 						if (dim == 1) // x
 						{
-							MatSetValue(Amat,index,index,1.0 + (2 - f)*(CXPC + CXP - CXMC - CXM),INSERT_VALUES);
-							MatSetValue(Amat,index,index_m,(2 - f)*(CXMC + CXM),INSERT_VALUES);
-							MatSetValue(Amat,index,index_p,(2 - f)*(-CXPC - CXP),INSERT_VALUES);
+							Amat(index, index) = 1.0 + (2 - f)*(CXPC + CXP - CXMC - CXM);
+							Amat(index, index-1) = (2 - f)*(CXMC + CXM);
+							Amat(index, index+1) = (2 - f)*(-CXPC - CXP);
 
-							double val
+							b(index)
 									= TOld[i][j][k]*(1.0 + f*(CZM - CZP))
 									- TOld[i][j][k-1]*f*CZM
 									+ TOld[i][j][k+1]*f*CZP;
-							VecSetValue(b,index,val,INSERT_VALUES);
 						}
 						else if (dim == 3) // z
 						{
-							MatSetValue(Amat,index,index,1.0 + (2 - f)*(CZP - CZM),INSERT_VALUES);
-							MatSetValue(Amat,index,index_m,(2 - f)*CZM,INSERT_VALUES);
-							MatSetValue(Amat,index,index_p,(2 - f)*(-CZP),INSERT_VALUES);
+							Amat(index, index) = 1.0 + (2 - f)*(CZP - CZM);
+							Amat(index, index-1) = (2 - f)*CZM;
+							Amat(index, index+1) = (2 - f)*(-CZP);
 
-							double val
+							b(index)
 									= TOld[i][j][k]*(1.0 + f*(CXMC + CXM - CXPC - CXP))
 									- TOld[i-1][j][k]*f*(CXMC + CXM)
 									+ TOld[i+1][j][k]*f*(CXPC + CXP);
-							VecSetValue(b,index,val,INSERT_VALUES);
 						}
 					}
 					}
@@ -1769,18 +1695,7 @@ void Ground::calculateADI(int dim)
 		}
 	}
 
-	MatAssemblyBegin(Amat,MAT_FINAL_ASSEMBLY);
-	MatAssemblyEnd(Amat,MAT_FINAL_ASSEMBLY);
-	VecAssemblyBegin(b);
-	VecAssemblyEnd(b);
-
-	KSPSetOperators(ksp, Amat, Amat, DIFFERENT_NONZERO_PATTERN);
-
-	KSPSetUp(ksp);
-
-	KSPSolve(ksp,b,x);
-
-	double xVal;
+	umf::umf_solve(Amat,x,b);
 
 	for (size_t k = 0; k < nZ; ++k)
 	{
@@ -1788,7 +1703,7 @@ void Ground::calculateADI(int dim)
 		{
 			for (size_t i = 0; i < nX; ++i)
 			{
-				int index;
+				std::size_t index;
 				if (dim == 1)
 					index = i + nX*j + nX*nY*k;
 				else if (dim == 2)
@@ -1797,14 +1712,16 @@ void Ground::calculateADI(int dim)
 					index = k + nZ*i + nZ*nX*j;
 
 				// Read solution into temperature matrix
-				VecGetValues(x, 1, &index, &xVal);
-				TNew[i][j][k] = xVal;
-
+				TNew[i][j][k] = x(index);
 				// Update old values for next timestep
 				TOld[i][j][k] = TNew[i][j][k];
 			}
 		}
 	}
+	Amat.clear();
+	b.clear();
+	x.clear();
+
 }
 
 void Ground::calculate(double t)

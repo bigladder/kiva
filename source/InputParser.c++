@@ -265,17 +265,6 @@ Input inputParser(std::string inputFile)
 		foundation1.numericalScheme = Foundation::NS_ADE;
 	}
 
-	if  (yamlInput["Foundation"]["implicitSolverMethod"].IsDefined())
-	{
-		if (yamlInput["Foundation"]["implicitSolverMethod"].as<std::string>() == "ITERATIVE")
-			foundation1.implicitSolverMethod = Foundation::ISM_ITERATIVE;
-		else if (yamlInput["Foundation"]["implicitSolverMethod"].as<std::string>() == "DIRECT")
-			foundation1.implicitSolverMethod = Foundation::ISM_DIRECT;
-	}
-	else
-	{
-		foundation1.implicitSolverMethod = Foundation::ISM_ITERATIVE;
-	}
 
 	if  (yamlInput["Foundation"]["initializationMethod"].IsDefined())
 	{

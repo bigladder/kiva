@@ -18,28 +18,19 @@
 
 #include <iostream>
 #include <fstream>
-#include <cmath>
-
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/date_time/gregorian/gregorian.hpp>
-#include <boost/program_options.hpp>
-
-#include "petscsys.h"
-
 #include "InputParser.h"
 #include "WeatherData.h"
 #include "Input.h"
 #include "Ground.h"
+#include <cmath>
+#include <boost/program_options.hpp>
 
 namespace po = boost::program_options;
 
 int main(int argc, char *argv[])
 {
-    PetscMPIInt rank, size;
-
-	PetscInitialize(&argc, &argv, NULL, NULL);
-	MPI_Comm_rank(PETSC_COMM_WORLD, &rank);
-	MPI_Comm_size(PETSC_COMM_WORLD, &size);
 
 	std::string versionInfo = "kiva 0.0.1";
 	std::string copyrightInfo = "Copyright (C) 2012-2013 Big Ladder Software\n"
@@ -74,6 +65,7 @@ int main(int argc, char *argv[])
 			std::cout << "Usage: kiva [Input File]\n"
 					"   Input format: yaml\n";
 			std::cout << generic;
+			return 0;
 		}
 		if (vm.count("help"))
 		{
@@ -82,11 +74,13 @@ int main(int argc, char *argv[])
 			std::cout << "Usage: kiva [Input File]\n"
 					"   Input format: yaml\n";
 			std::cout << generic;
+			return 0;
 		}
 		if (vm.count("version"))
 		{
 			std::cout << versionInfo << "\n";
 			std::cout << copyrightInfo << "\n";
+			return 0;
 		}
 		if (vm.count("input-file"))
 		{
@@ -161,15 +155,14 @@ int main(int argc, char *argv[])
 			boost::posix_time::time_duration totalCalc = finishCalc - beginCalc;
 			std::cout << "Elapsed Time: " << totalCalc << std::endl;
 
+			return 0;
+
 		}
-		PetscFinalize();
-		return 0;
 
 	}
     catch(std::exception& e)
     {
     	std::cout << e.what() << std::endl;
-		PetscFinalize();
         return 1;
     }
 

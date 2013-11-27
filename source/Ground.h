@@ -36,7 +36,14 @@
 
 #include <boost/multi_array.hpp>
 
-#include <petscksp.h>
+#include <boost/numeric/ublas/matrix.hpp>
+#include <boost/numeric/ublas/matrix_sparse.hpp>
+
+#include <boost/numeric/bindings/traits/ublas_vector.hpp>
+#include <boost/numeric/bindings/traits/ublas_sparse.hpp>
+#include <boost/numeric/bindings/umfpack/umfpack.hpp>
+
+namespace umf = boost::numeric::bindings::umfpack;
 
 class Ground
 {
@@ -59,12 +66,12 @@ private:
 	boost::multi_array<double, 3> V; // ADE lower sweep, n+1
 	boost::multi_array<double, 3> VOld; // ADE lower sweep, n
 
-	Mat Amat;
-	Vec b, x;
-	KSP ksp;
-	PC pc;
-	PetscErrorCode ierr;
+	boost::numeric::ublas::compressed_matrix<double,
+			boost::numeric::ublas::column_major, 0,
+			boost::numeric::ublas::unbounded_array<int>,
+			boost::numeric::ublas::unbounded_array<double> > Amat;
 
+	boost::numeric::ublas::vector<double> b, x;
 
 	boost::multi_array<double, 3> TOld; // solution, n
 

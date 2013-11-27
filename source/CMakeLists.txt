@@ -7,11 +7,8 @@ if(NOT CMAKE_BUILD_TYPE)
 endif(NOT CMAKE_BUILD_TYPE)
 
 if(NOT CMAKE_PREFIX_PATH)
-  set(CMAKE_PREFIX_PATH "/usr/local" CACHE FILEPATH "Primary prefix path for bin, lib, include directories." FORCE)
+  set(CMAKE_PREFIX_PATH "/usr/local" CACHE STRING "Primary prefix path for bin, lib, include directories." FORCE)
 endif(NOT CMAKE_PREFIX_PATH)
-
-set(PETSC_DIR "" CACHE FILEPATH "Location of the PETSc root directory")
-set(PETSC_ARCH "" CACHE FILEPATH "Location of the PETSc installed architecture")
 
 message(${CMAKE_PREFIX_PATH})
 
@@ -38,8 +35,8 @@ set(kiva_hdr Algorithms.h
              Mesher.h
              WeatherData.h)
 
-link_directories(${CMAKE_PREFIX_PATH}/lib ${PETSC_DIR}/${PETSC_ARCH}/lib)
-include_directories(${CMAKE_PREFIX_PATH}/include ${PETSC_DIR}/include ${PETSC_DIR}/${PETSC_ARCH}/include)
+link_directories(${CMAKE_PREFIX_PATH}/lib)
+include_directories(${CMAKE_PREFIX_PATH}/include ${CMAKE_PREFIX_PATH}/include/boost-numeric-bindings)
 
 add_executable(Kiva ${kiva_src} ${kiva_hdr})
 
@@ -48,8 +45,12 @@ set(kiva_lib boost_date_time
              boost_thread
              boost_system
              boost_program_options
-             petsc
-             mpich
+             umfpack
+             amd
+             cholmod
+             openblas
+             colamd
+             suitesparseconfig
              mgl
              yaml-cpp)
 
