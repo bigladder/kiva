@@ -265,7 +265,7 @@ geom::Turn getTurn(Polygon poly, std::size_t vertex)
 
 MultiPolygon mirrorX(MultiPolygon poly, double x)
 {
-	boost::geometry::strategy::transform::ublas_transformer<Point,Point,2,2>
+	boost::geometry::strategy::transform::ublas_transformer<double,2,2>
 	transform(-1, 0, 2*x,
 			   0, 1,   0,
 			   0, 0,   1);
@@ -282,7 +282,7 @@ MultiPolygon mirrorX(MultiPolygon poly, double x)
 
 MultiPolygon mirrorY(MultiPolygon poly, double y)
 {
-	boost::geometry::strategy::transform::ublas_transformer<Point,Point,2,2>
+	boost::geometry::strategy::transform::ublas_transformer<double,2,2>
 	transform(1,  0,   0,
 			  0, -1, 2*y,
 			  0,  0,   1);
