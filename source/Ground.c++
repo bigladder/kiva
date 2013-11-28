@@ -49,6 +49,8 @@ void Ground::buildDomain()
 	timestep = simulationControl.timestep.total_seconds();
 
 	// Create mesh
+	if (foundation.deepGroundBoundary == Foundation::DGB_AUTO)
+		foundation.deepGroundTemperature = weatherData.dryBulbTemp.getAverage();
 
 	foundation.setMeshData();
 

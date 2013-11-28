@@ -30,9 +30,6 @@ Input inputParser(std::string inputFile)
 
 	YAML::Node yamlInput = YAML::LoadFile(inputFile);
 
-
-	simulationControl.weatherFile =
-			yamlInput["Simulation Control"]["weatherFile"].as<std::string>();
 	simulationControl.startDate =
 			boost::gregorian::from_string(yamlInput["Simulation Control"]["startDate"].as<std::string>());
 	simulationControl.endDate =
@@ -189,8 +186,6 @@ Input inputParser(std::string inputFile)
 	if (yamlInput["Foundation"]["deepGroundBoundary"].as<std::string>() == "AUTO")
 	{
 		foundation1.deepGroundBoundary = Foundation::DGB_AUTO;
-		WeatherData tempWeather(simulationControl.weatherFile);
-		foundation1.deepGroundTemperature = tempWeather.dryBulbTemp.getAverage();
 	}
 	else if (yamlInput["Foundation"]["deepGroundBoundary"].as<std::string>() == "CONSTANT-TEMP")
 	{

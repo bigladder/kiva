@@ -34,7 +34,10 @@ int main(int argc, char *argv[])
 
 	std::string versionInfo = "kiva 0.0.1";
 	std::string copyrightInfo = "Copyright (C) 2012-2013 Big Ladder Software\n"
-			               "Web: www.bigladdersoftware.com";
+			               	    "Web: www.bigladdersoftware.com";
+	std::string usageInfo = "Usage: kiva [Input File] [Weather File]\n"
+			                "   Input format: yaml\n"
+							"   Weather format: epw";
 
 	try {
 
@@ -45,13 +48,14 @@ int main(int argc, char *argv[])
 
         po::options_description hidden("Hidden options");
         hidden.add_options()
-            ("input-file", po::value<std::string>(), "input file");
+            ("input-file", po::value<std::string>(), "input file")
+            ("weather-file", po::value<std::string>(), "weather file");
 
         po::options_description cmdLine;
         cmdLine.add(generic).add(hidden);
 
 		po::positional_options_description p;
-		p.add("input-file", -1);
+		p.add("input-file", 1).add("weather-file", 1);
 
 		po::variables_map vm;
 		po::store(po::command_line_parser(argc, argv).
@@ -61,18 +65,16 @@ int main(int argc, char *argv[])
 		if (vm.empty())
 		{
 			std::cout << versionInfo << "\n";
-			std::cout << copyrightInfo << "\n";
-			std::cout << "Usage: kiva [Input File]\n"
-					"   Input format: yaml\n";
+			std::cout << copyrightInfo << "\n\n";
+			std::cout << usageInfo << "\n";
 			std::cout << generic;
 			return 0;
 		}
 		if (vm.count("help"))
 		{
 			std::cout << versionInfo << "\n";
-			std::cout << copyrightInfo << "\n";
-			std::cout << "Usage: kiva [Input File]\n"
-					"   Input format: yaml\n";
+			std::cout << copyrightInfo << "\n\n";
+			std::cout << usageInfo << "\n";
 			std::cout << generic;
 			return 0;
 		}
@@ -82,7 +84,7 @@ int main(int argc, char *argv[])
 			std::cout << copyrightInfo << "\n";
 			return 0;
 		}
-		if (vm.count("input-file"))
+		if (vm.count("input-file") && vm.count("weather-file"))
 		{
 			boost::posix_time::ptime beginCalc = boost::posix_time::second_clock::local_time();
 			std::cout << "Starting Program: " << beginCalc << std::endl;
@@ -91,7 +93,7 @@ int main(int argc, char *argv[])
 			Input input = inputParser(vm["input-file"].as<std::string>());
 
 			// parse weather
-			WeatherData weather(input.simulationControl.weatherFile);
+			WeatherData weather(vm["weather-file"].as<std::string>());
 
 			// simulation
 			input.simulationControl.setStartTime();
@@ -158,7 +160,14 @@ int main(int argc, char *argv[])
 			return 0;
 
 		}
+		else
+		{
+			std::cout << "ERROR: Incorrect number of arguments\n\n";
 
+			std::cout << usageInfo << "\n";
+			std::cout << generic;
+			return 0;
+		}
 	}
     catch(std::exception& e)
     {
