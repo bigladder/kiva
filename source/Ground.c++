@@ -1756,8 +1756,6 @@ void Ground::calculate(double t)
 		calculateMatrix(Foundation::NS_STEADY_STATE);
 		break;
 	}
-	// Calculate Heat Fluxes
-	QSlabTotal = getSurfaceAverageHeatFlux("Slab Interior");
 
 	plot();
 }
@@ -1918,7 +1916,6 @@ double Ground::getSurfaceAverageHeatFlux(std::string surfaceName)
 
 	std::vector<double> heatFlux;
 
-
 	// Loop over cells and calculate heat loss from surface
 	for (size_t k = kMin; k <= kMax; ++k)
 	{
@@ -2001,7 +1998,163 @@ double Ground::getSurfaceAverageHeatFlux(std::string surfaceName)
 
 	double totalFlux = std::accumulate((heatFlux).begin(),(heatFlux).end(), 0.0);
 
-	return totalFlux;//totalArea;
+	double averageFlux = totalFlux/totalArea;
+
+
+	return averageFlux;
+}
+
+double Ground::getBelowSlabTemperature(std::string surfaceName)
+{
+	// Find surface
+	Surface surface;
+	for (size_t s = 0; s < foundation.surfaces.size(); s++)
+	{
+		if (foundation.surfaces[s].name == surfaceName)
+		{
+			surface = foundation.surfaces[s];
+		}
+	}
+
+	size_t iMin, iMax, jMin, jMax, kMin, kMax;
+	double tilt;
+	double totalArea = 0.0;
+
+	// Find bounding indices
+	if (surface.orientation == Surface::X_POS ||
+		surface.orientation == Surface::X_NEG)
+	{
+		iMin = domain.meshX.getNearestIndex(surface.xMin);
+		iMax = domain.meshX.getNearestIndex(surface.xMax);
+		jMin = domain.meshY.getNextIndex(surface.yMin);
+		jMax = domain.meshY.getPreviousIndex(surface.yMax);
+		kMin = domain.meshZ.getNextIndex(surface.zMin);
+		kMax = domain.meshZ.getPreviousIndex(surface.zMax);
+	}
+	else if (surface.orientation == Surface::Y_POS ||
+		surface.orientation == Surface::Y_NEG)
+	{
+		iMin = domain.meshX.getNextIndex(surface.xMin);
+		iMax = domain.meshX.getPreviousIndex(surface.xMax);
+		jMin = domain.meshY.getNearestIndex(surface.yMin);
+		jMax = domain.meshY.getNearestIndex(surface.yMax);
+		kMin = domain.meshZ.getNextIndex(surface.zMin);
+		kMax = domain.meshZ.getPreviousIndex(surface.zMax);
+	}
+	else // if (surface.orientation == Surface::Z_POS ||
+		 // surface.orientation == Surface::Z_NEG)
+	{
+		iMin = 0;
+		iMax = nX-1;
+		jMin = 0;
+		jMax = nY-1;
+		kMin = domain.meshZ.getNearestIndex(surface.zMin);
+		kMax = domain.meshZ.getNearestIndex(surface.zMax);
+	}
+
+	// Find tilt
+	if (surface.orientation == Surface::Z_POS)
+		tilt = 0.0;
+	else if (surface.orientation == Surface::Z_NEG)
+		tilt = PI;
+	else
+		tilt = PI/2.0;
+
+	double Tair = foundation.indoorAirTemperature;
+
+	std::vector<double> heatFlux;
+	std::vector<double> TA;
+
+
+	// Loop over cells and calculate heat loss from surface
+	for (size_t k = kMin; k <= kMax; ++k)
+	{
+		for (size_t j = jMin; j <= jMax; ++j)
+		{
+			for (size_t i = iMin; i <= iMax; ++i)
+			{
+				if (surface.orientation == Surface::X_POS ||
+					surface.orientation == Surface::X_NEG ||
+					surface.orientation == Surface::Y_POS ||
+					surface.orientation == Surface::Y_NEG ||
+					boost::geometry::within(Point(domain.meshX.centers[i],domain.meshY.centers[j]),surface.polygon))
+				{
+					double h = getConvectionCoeff(TNew[i][j][k],Tair,0.0,1.0,false,tilt)
+							 + getSimpleInteriorIRCoeff(domain.cell[i][j][k].surface.emissivity,
+									 TNew[i][j][k],Tair);
+
+					// Calculate Area
+					double A;
+					if (foundation.coordinateSystem == Foundation::CS_2DAXIAL)
+					{
+						if (surface.orientation == Surface::X_POS ||
+							surface.orientation == Surface::X_NEG)
+						{
+							A = 2.0*PI*domain.meshX.centers[i]*domain.meshZ.deltas[k];
+						}
+						else // if (surface.orientation == Surface::Z_POS ||
+							 // surface.orientation == Surface::Z_NEG)
+						{
+							A = 2.0*PI*domain.meshX.deltas[i]*domain.meshX.centers[i];
+						}
+					}
+					else if (foundation.coordinateSystem == Foundation::CS_2DLINEAR)
+					{
+						if (surface.orientation == Surface::X_POS ||
+							surface.orientation == Surface::X_NEG)
+						{
+							A = domain.meshZ.deltas[k];
+						}
+						else // if (surface.orientation == Surface::Z_POS ||
+							 // surface.orientation == Surface::Z_NEG)
+						{
+							A = domain.meshX.deltas[i];
+						}
+					}
+					else  // if (foundation.coordinateSystem == Foundation::CS_3D)
+					{
+						if (surface.orientation == Surface::X_POS ||
+							surface.orientation == Surface::X_NEG)
+						{
+							A = domain.meshY.deltas[j]*domain.meshZ.deltas[k];
+						}
+						else if (surface.orientation == Surface::Y_POS ||
+							surface.orientation == Surface::Y_NEG)
+						{
+							A = domain.meshX.deltas[i]*domain.meshZ.deltas[k];
+						}
+						else // if (surface.orientation == Surface::Z_POS ||
+							 // surface.orientation == Surface::Z_NEG)
+						{
+							A = domain.meshX.deltas[i]*domain.meshY.deltas[j];
+						}
+
+						if (foundation.coordinateSystem == Foundation::CS_3D_SYMMETRY)
+						{
+							if (isXSymmetric(foundation.polygon))
+								A = 2*A;
+
+							if (isYSymmetric(foundation.polygon))
+								A = 2*A;
+						}
+					}
+
+					TA.push_back(TNew[i][j][k]*A);
+					heatFlux.push_back(h*A*(Tair - TNew[i][j][k]));
+					totalArea += A;
+				}
+			}
+		}
+	}
+
+	double Tavg = std::accumulate((TA).begin(),(TA).end(), 0.0)/totalArea;
+	double totalFlux = std::accumulate((heatFlux).begin(),(heatFlux).end(), 0.0);
+
+	double averageFlux = totalFlux/totalArea;
+
+	double hAvg = averageFlux*totalArea/(Tair - Tavg);
+
+	return Tair - averageFlux*(foundation.slab.totalResistance()+1/hAvg) - 273.15;;
 }
 
 double getArrayValue(boost::multi_array<double, 3> Mat, std::size_t i, std::size_t j, std::size_t k)

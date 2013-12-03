@@ -37,6 +37,15 @@ double Wall::totalWidth()
 	return width;
 }
 
+double Wall::totalResistance()
+{
+	double R = 0.0;
+
+	for (size_t n = 0; n < layers.size(); n++) R += (layers[n].thickness/layers[n].material.conductivity);
+
+	return R;
+}
+
 
 double Slab::totalWidth()
 {
@@ -45,6 +54,15 @@ double Slab::totalWidth()
 	for (size_t n = 0; n < layers.size(); n++) width += layers[n].thickness;
 
 	return width;
+}
+
+double Slab::totalResistance()
+{
+	double R = 0.0;
+
+	for (size_t n = 0; n < layers.size(); n++) R += (layers[n].thickness/layers[n].material.conductivity);
+
+	return R;
 }
 
 void Block::setSquarePolygon()
@@ -198,6 +216,19 @@ void Foundation::setMeshData()
 		}
 
 	}
+
+	double xyPerimeterSurface;
+	if (hasPerimeterSurface)
+	{
+		xyPerimeterSurface = -perimeterSurfaceWidth;
+		if(xyPerimeterSurface < xyNearInt)
+		{
+			xyNearInt = xyPerimeterSurface;
+		}
+	}
+	else
+		xyPerimeterSurface = 0.0;
+
 
 	double zSlabBottom = zSlab;
 	if (hasSlab)
@@ -432,6 +463,22 @@ void Foundation::setMeshData()
 			Surface surface;
 			surface.name = "Slab Interior";
 			surface.xMin = xMin;
+			surface.xMax = xRef + xyPerimeterSurface;
+			surface.yMin = 0.0;
+			surface.yMax = 1.0;
+			surface.setSquarePolygon();
+			surface.zMin = zSlab;
+			surface.zMax = zSlab;
+			surface.boundaryConditionType = Surface::INTERIOR_FLUX;
+			surface.orientation = Surface::Z_POS;
+			surface.emissivity = wall.interiorEmissivity;
+			surfaces.push_back(surface);
+		}
+		if (hasPerimeterSurface)
+		{
+			Surface surface;
+			surface.name = "Slab Perimeter";
+			surface.xMin = xRef + xyPerimeterSurface;
 			surface.xMax = xRef + xyWallInterior;
 			surface.yMin = 0.0;
 			surface.yMax = 1.0;
@@ -910,10 +957,33 @@ void Foundation::setMeshData()
 		// Slab
 		{
 			Polygon poly;
-			poly = offset(polygon, xyWallInterior);
+			poly = offset(polygon, xyPerimeterSurface);
 
 			Surface surface;
 			surface.name = "Slab Interior";
+			surface.polygon = poly;
+			surface.zMin = zSlab;
+			surface.zMax = zSlab;
+			surface.boundaryConditionType = Surface::INTERIOR_FLUX;
+			surface.orientation = Surface::Z_POS;
+			surface.emissivity = wall.interiorEmissivity;
+			surfaces.push_back(surface);
+		}
+		if (hasPerimeterSurface)
+		{
+			Polygon poly;
+			poly = offset(polygon, xyWallInterior);
+
+			Polygon temp;
+			temp = offset(polygon, xyPerimeterSurface);
+			Ring ring;
+			boost::geometry::convert(temp, ring);
+			boost::geometry::reverse(ring);
+
+			poly.inners().push_back(ring);
+
+			Surface surface;
+			surface.name = "Slab Perimeter";
 			surface.polygon = poly;
 			surface.zMin = zSlab;
 			surface.zMax = zSlab;
@@ -1623,12 +1693,38 @@ void Foundation::setMeshData()
 		// Slab
 		{
 			Polygon tempPoly;
-			tempPoly = offset(polygon, xyWallInterior);
+			tempPoly = offset(polygon, xyPerimeterSurface);
 			MultiPolygon poly;
 			boost::geometry::intersection(domainBox,tempPoly,poly);
 
 			Surface surface;
 			surface.name = "Slab Interior";
+			surface.polygon = poly[0];
+			surface.zMin = zSlab;
+			surface.zMax = zSlab;
+			surface.boundaryConditionType = Surface::INTERIOR_FLUX;
+			surface.orientation = Surface::Z_POS;
+			surface.emissivity = wall.interiorEmissivity;
+			surfaces.push_back(surface);
+		}
+		if (hasPerimeterSurface)
+		{
+			Polygon tempPoly;
+			tempPoly = offset(polygon, xyWallInterior);
+
+			Polygon temp;
+			temp = offset(polygon, xyPerimeterSurface);
+			Ring ring;
+			boost::geometry::convert(temp, ring);
+			boost::geometry::reverse(ring);
+
+			tempPoly.inners().push_back(ring);
+
+			MultiPolygon poly;
+			boost::geometry::intersection(domainBox,tempPoly,poly);
+
+			Surface surface;
+			surface.name = "Slab Perimeter";
 			surface.polygon = poly[0];
 			surface.zMin = zSlab;
 			surface.zMax = zSlab;

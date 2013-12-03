@@ -217,6 +217,16 @@ Input inputParser(std::string inputFile)
 				yamlInput["Foundation"]["polygon"][i][1].as<double>()));
 	}
 
+	if  (yamlInput["Foundation"]["perimeterSurfaceWidth"].IsDefined())
+	{
+		foundation1.hasPerimeterSurface = true;
+		foundation1.perimeterSurfaceWidth = yamlInput["Foundation"]["perimeterSurfaceWidth"].as<double>();
+	}
+	else
+	{
+		foundation1.hasPerimeterSurface = false;
+	}
+
 	// Meshing
 	if  (yamlInput["Foundation"]["mesh"].IsDefined())
 	{

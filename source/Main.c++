@@ -108,8 +108,8 @@ int main(int argc, char *argv[])
 
 			// set up output file
 			std::ofstream output;
-			output.open("Output.csv");
-			output << "Time Stamp, Heat Flux [W/m2]" << std::endl;
+			output.open("GroundTemps.csv");
+			output << "Time Stamp, Ground Core Temperature [C], Ground Perimeter Temperature [C]" << std::endl;
 
 			// initialize
 			Ground ground(weather,input.foundations[0],input.simulationControl);
@@ -137,7 +137,8 @@ int main(int argc, char *argv[])
 				}
 
 				output << to_simple_string(simTime) << ", " <<
-						  ground.QSlabTotal << std::endl;
+						  ground.getBelowSlabTemperature("Slab Interior") << ", " <<
+						  ground.getBelowSlabTemperature("Slab Perimeter") << std::endl;
 
 			}
 
@@ -146,10 +147,6 @@ int main(int argc, char *argv[])
 			boost::posix_time::ptime simTime(input.simulationControl.startDate,boost::posix_time::seconds(tend));
 			boost::gregorian::date today = simTime.date();
 			std::cout << "100% (" << today << ")\n";
-
-			// process output
-			//std::cout << "Total Heat Flux: "<< ground.QSlabTotal << std::endl;
-
 
 			boost::posix_time::ptime finishCalc = boost::posix_time::second_clock::local_time();
 			std::cout << "Finished Program: " << finishCalc << std::endl;

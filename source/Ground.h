@@ -79,7 +79,6 @@ private:
 
 public:
 
-	double QSlabTotal;
 	boost::multi_array<double, 3> TNew; // solution, n+1
 
 	// Constructor
@@ -90,6 +89,10 @@ public:
 
 	// Calculator
 	void calculate(double t);
+
+	double getSurfaceAverageHeatFlux(std::string surfaceName);
+
+	double getBelowSlabTemperature(std::string surfaceName);
 
 private:
 
@@ -132,8 +135,6 @@ private:
 	double getOutdoorTemperature();
 
 	double getLocalWindSpeed();
-
-	double getSurfaceAverageHeatFlux(std::string surfaceName);
 };
 
 

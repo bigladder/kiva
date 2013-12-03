@@ -88,6 +88,7 @@ public:
 	std::vector <Layer> layers;
 
 	double totalWidth();
+	double totalResistance();
 };
 
 class Slab
@@ -98,7 +99,7 @@ public:
 	std::vector <Layer> layers;
 
 	double totalWidth();
-
+	double totalResistance();
 };
 
 class Mesh
@@ -282,6 +283,8 @@ public:
 	VerticalInsulation exteriorVerticalInsulation;
 	bool hasExteriorVerticalInsulation;
 
+	double perimeterSurfaceWidth;
+	bool hasPerimeterSurface;
 
 	// Meshing
 	Mesh mesh;
