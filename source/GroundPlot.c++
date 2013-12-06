@@ -24,7 +24,12 @@
 GroundPlot::GroundPlot(OutputAnimation &outputAnimation, Domain &domain, std::vector<Block> &blocks) :
 	outputAnimation(outputAnimation), blocks(blocks)
 {
+
+	boost::filesystem::remove_all(outputAnimation.name + "_frames");
+	boost::filesystem::create_directory(outputAnimation.name + "_frames");
+
 	nextPlotTime = 0.0;
+	frameNumber = 0;
 
 	std::size_t contourLevels = 13;
 
@@ -158,13 +163,6 @@ GroundPlot::GroundPlot(OutputAnimation &outputAnimation, Domain &domain, std::ve
 	TGrid = TGridRef;
 	cDat = cDatRef;
 
-	double aspect = 1.0;
-	int height = outputAnimation.size;
-	int width = height*aspect;
-	gr.SetSize(width,height);
-
-	gr.StartGIF((outputAnimation.name + ".gif").c_str(),100);
-
 	hGrid.a[0] = hAxis.mesh.centers[hAxis.nMin];
 
 	for(size_t i = 0; i < hAxis.nN - 1; i++)
@@ -243,9 +241,16 @@ void GroundPlot::createFrame(boost::multi_array<double, 3> &T, std::string timeS
 
 	double vTextSpacing = 0.05;
 
-	gr.NewFrame();
+	mglGraph gr;
 
 	// Plot
+	gr.Clf(1,1,1);
+	double aspect = 1.0;
+	int height = outputAnimation.size;
+	int width = height*aspect;
+
+	gr.SetSize(width,height);
+
 	gr.LoadFont("none");
 	gr.SetFontSize(2.0);
 	gr.SetRange('x', hGrid);
@@ -425,8 +430,10 @@ void GroundPlot::createFrame(boost::multi_array<double, 3> &T, std::string timeS
 	// Timestamp
 	gr.Puts(hText, vText, timeStamp.c_str(), ":AL");
 
-	//gr.WriteFrame((outputAnimation.name + ".png").c_str());
-	gr.EndFrame();
+
+	gr.WritePNG((outputAnimation.name + "_frames/" + outputAnimation.name + str(boost::format("%04d") % frameNumber) + ".png").c_str(),"",false);
+
+	frameNumber += 1;
 	nextPlotTime += outputAnimation.frequency.total_seconds();
 }
 

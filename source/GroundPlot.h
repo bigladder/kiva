@@ -23,6 +23,7 @@
 
 #include <boost/lexical_cast.hpp>
 #include <boost/format.hpp>
+#include <boost/filesystem/operations.hpp>
 
 #include "Input.h"
 #include "Domain.h"
@@ -58,12 +59,13 @@ private:
 	Axis hAxis;
 	Axis vAxis;
 
+	int frameNumber;
 
 	double nextPlotTime;
 
 public:
 
-	mglGraph gr;
+	//mglGraph gr;
 	OutputAnimation outputAnimation;
 	std::vector<Block> blocks;
 	SliceType sliceType;

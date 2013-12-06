@@ -40,7 +40,7 @@ Ground::~Ground()
 {
 	for (std::size_t p = 0; p < plots.size(); p++)
 	{
-		plots[p].gr.CloseGIF();
+		//plots[p].gr.CloseGIF();
 	}
 }
 

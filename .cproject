@@ -22,10 +22,11 @@
 							<tool id="cdt.managedbuild.tool.macosx.c.linker.macosx.exe.debug.1377319793" name="MacOS X C Linker" superClass="cdt.managedbuild.tool.macosx.c.linker.macosx.exe.debug"/>
 							<tool id="cdt.managedbuild.tool.macosx.cpp.linker.macosx.exe.debug.1177656544" name="MacOS X C++ Linker" superClass="cdt.managedbuild.tool.macosx.cpp.linker.macosx.exe.debug">
 								<option id="macosx.cpp.link.option.libs.470091723" name="Libraries (-l)" superClass="macosx.cpp.link.option.libs" valueType="libs">
-									<listOptionValue builtIn="false" value="mgl"/>
 									<listOptionValue builtIn="false" value="boost_date_time"/>
+									<listOptionValue builtIn="false" value="boost_filesystem"/>
 									<listOptionValue builtIn="false" value="boost_thread"/>
 									<listOptionValue builtIn="false" value="boost_system"/>
+									<listOptionValue builtIn="false" value="mgl"/>
 									<listOptionValue builtIn="false" value="umfpack"/>
 									<listOptionValue builtIn="false" value="amd"/>
 									<listOptionValue builtIn="false" value="suitesparseconfig"/>
@@ -106,20 +107,21 @@
 							<targetPlatform id="cdt.managedbuild.target.gnu.platform.macosx.exe.release.885048524" name="Debug Platform" superClass="cdt.managedbuild.target.gnu.platform.macosx.exe.release"/>
 							<builder buildPath="${workspace_loc:/Longshot/Release}" id="cdt.managedbuild.target.gnu.builder.macosx.exe.release.841093121" keepEnvironmentInBuildfile="false" managedBuildOn="true" name="Gnu Make Builder" parallelBuildOn="true" parallelizationNumber="unlimited" superClass="cdt.managedbuild.target.gnu.builder.macosx.exe.release"/>
 							<tool id="cdt.managedbuild.tool.macosx.c.linker.macosx.exe.release.500052539" name="MacOS X C Linker" superClass="cdt.managedbuild.tool.macosx.c.linker.macosx.exe.release"/>
-							<tool command="g++" id="cdt.managedbuild.tool.macosx.cpp.linker.macosx.exe.release.505294165" name="MacOS X C++ Linker" superClass="cdt.managedbuild.tool.macosx.cpp.linker.macosx.exe.release">
+							<tool command="g++" commandLinePattern="${COMMAND} ${FLAGS} ${OUTPUT_FLAG} ${OUTPUT_PREFIX}${OUTPUT} ${INPUTS}" id="cdt.managedbuild.tool.macosx.cpp.linker.macosx.exe.release.505294165" name="MacOS X C++ Linker" superClass="cdt.managedbuild.tool.macosx.cpp.linker.macosx.exe.release">
 								<option id="macosx.cpp.link.option.libs.221585406" name="Libraries (-l)" superClass="macosx.cpp.link.option.libs" valueType="libs">
 									<listOptionValue builtIn="false" value="boost_date_time"/>
+									<listOptionValue builtIn="false" value="boost_filesystem"/>
 									<listOptionValue builtIn="false" value="boost_thread"/>
 									<listOptionValue builtIn="false" value="boost_system"/>
 									<listOptionValue builtIn="false" value="mgl"/>
-									<listOptionValue builtIn="false" srcPrefixMapping="" srcRootPath="" value="umfpack"/>
-									<listOptionValue builtIn="false" srcPrefixMapping="" srcRootPath="" value="amd"/>
-									<listOptionValue builtIn="false" srcPrefixMapping="" srcRootPath="" value="suitesparseconfig"/>
-									<listOptionValue builtIn="false" srcPrefixMapping="" srcRootPath="" value="boost_program_options"/>
-									<listOptionValue builtIn="false" srcPrefixMapping="" srcRootPath="" value="yaml-cpp"/>
-									<listOptionValue builtIn="false" srcPrefixMapping="" srcRootPath="" value="cholmod"/>
-									<listOptionValue builtIn="false" srcPrefixMapping="" srcRootPath="" value="openblas"/>
-									<listOptionValue builtIn="false" srcPrefixMapping="" srcRootPath="" value="colamd"/>
+									<listOptionValue builtIn="false" value="umfpack"/>
+									<listOptionValue builtIn="false" value="amd"/>
+									<listOptionValue builtIn="false" value="suitesparseconfig"/>
+									<listOptionValue builtIn="false" value="boost_program_options"/>
+									<listOptionValue builtIn="false" value="yaml-cpp"/>
+									<listOptionValue builtIn="false" value="cholmod"/>
+									<listOptionValue builtIn="false" value="openblas"/>
+									<listOptionValue builtIn="false" value="colamd"/>
 								</option>
 								<option id="macosx.cpp.link.option.paths.2076752738" name="Library search path (-L)" superClass="macosx.cpp.link.option.paths"/>
 								<inputType id="cdt.managedbuild.tool.macosx.cpp.linker.input.521111172" superClass="cdt.managedbuild.tool.macosx.cpp.linker.input">
