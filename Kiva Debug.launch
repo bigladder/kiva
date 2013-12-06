@@ -41,11 +41,12 @@
 <stringAttribute key="org.eclipse.cdt.launch.FORMAT" value="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot; standalone=&quot;no&quot;?&gt;&lt;contentList&gt;&lt;content id=&quot;data_-data_-cellType-null-Ground::calculateSteadyState-(cast_to_array)&quot; val=&quot;0:4769&quot;/&gt;&lt;content id=&quot;data_-data_-null-Ground::buildDomain-(cast_to_array)&quot; val=&quot;0:13&quot;/&gt;&lt;content id=&quot;data_-data_-null-Ground::calculate-(cast_to_array)&quot; val=&quot;0:26&quot;/&gt;&lt;content id=&quot;data_-data_-xDeltas-null-Ground::buildDomain-(cast_to_array)&quot; val=&quot;0:13&quot;/&gt;&lt;content id=&quot;data_-data_-yDeltas-mesher-null-Ground::buildDomain-(cast_to_array)&quot; val=&quot;0:7&quot;/&gt;&lt;content id=&quot;data_-data_-yCenters-mesher-null-Ground::buildDomain-(cast_to_array)&quot; val=&quot;0:7&quot;/&gt;&lt;content id=&quot;data_-data_-yDividers-mesher-null-Ground::buildDomain-(cast_to_array)&quot; val=&quot;0:9&quot;/&gt;&lt;content id=&quot;data_-data_-cellType-null-Ground::buildDomain-(cast_to_array)&quot; val=&quot;0:97&quot;/&gt;&lt;content id=&quot;data_-data_-TOld-this-Ground::calculateSteadyState-(cast_to_array)&quot; val=&quot;0:712&quot;/&gt;&lt;content id=&quot;data_-data_-TOld-this-Ground::calculate-(cast_to_array)&quot; val=&quot;0:712&quot;/&gt;&lt;content id=&quot;data_-data_-k-domain-this-Ground::calculate-(cast_to_array)&quot; val=&quot;0:1121&quot;/&gt;&lt;/contentList&gt;"/>
 <stringAttribute key="org.eclipse.cdt.launch.GLOBAL_VARIABLES" value="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot; standalone=&quot;no&quot;?&gt;&#10;&lt;globalVariableList/&gt;&#10;"/>
 <stringAttribute key="org.eclipse.cdt.launch.MEMORY_BLOCKS" value="&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot; standalone=&quot;no&quot;?&gt;&#10;&lt;memoryBlockExpressionList/&gt;&#10;"/>
-<stringAttribute key="org.eclipse.cdt.launch.PROGRAM_ARGUMENTS" value="in.yaml Chicago.epw"/>
+<stringAttribute key="org.eclipse.cdt.launch.PROGRAM_ARGUMENTS" value="test.yaml ../../weather/USA_IL_Chicago.epw"/>
 <stringAttribute key="org.eclipse.cdt.launch.PROGRAM_NAME" value="Debug/Kiva"/>
 <stringAttribute key="org.eclipse.cdt.launch.PROJECT_ATTR" value="Kiva"/>
 <booleanAttribute key="org.eclipse.cdt.launch.PROJECT_BUILD_CONFIG_AUTO_ATTR" value="true"/>
-<stringAttribute key="org.eclipse.cdt.launch.PROJECT_BUILD_CONFIG_ID_ATTR" value="cdt.managedbuild.config.gnu.macosx.exe.debug.1819893918"/>
+<stringAttribute key="org.eclipse.cdt.launch.PROJECT_BUILD_CONFIG_ID_ATTR" value=""/>
+<stringAttribute key="org.eclipse.cdt.launch.WORKING_DIRECTORY" value="${workspace_loc:Kiva}/test/sandbox"/>
 <booleanAttribute key="org.eclipse.cdt.launch.ui.ApplicationCDebuggerTab.DEFAULTS_SET" value="true"/>
 <booleanAttribute key="org.eclipse.cdt.launch.use_terminal" value="true"/>
 <listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_PATHS">
