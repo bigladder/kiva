@@ -51,6 +51,7 @@ bool isRectilinear(Polygon poly)
 	return true;
 }
 
+// TODO: Replace with boost geometry buffer algorithm for polygons when it becomes available
 Polygon offset(Polygon poly, double dist)
 {
 	if (!isRectilinear(poly))
@@ -260,6 +261,144 @@ geom::Turn getTurn(Polygon poly, std::size_t vertex)
 		}
 		break;
 	}
+}
+
+MultiPolygon mirrorX(MultiPolygon poly, double x)
+{
+	boost::geometry::strategy::transform::ublas_transformer<double,2,2>
+	transform(-1, 0, 2*x,
+			   0, 1,   0,
+			   0, 0,   1);
+
+	MultiPolygon mirror;
+
+	boost::geometry::transform(poly, mirror, transform);
+
+	boost::geometry::reverse(mirror);
+
+
+	return mirror;
+}
+
+MultiPolygon mirrorY(MultiPolygon poly, double y)
+{
+	boost::geometry::strategy::transform::ublas_transformer<double,2,2>
+	transform(1,  0,   0,
+			  0, -1, 2*y,
+			  0,  0,   1);
+
+	MultiPolygon mirror;
+
+	boost::geometry::transform(poly, mirror, transform);
+
+	boost::geometry::reverse(mirror);
+
+
+	return mirror;
+}
+
+
+bool isXSymmetric(Polygon poly)
+{
+
+	// Find centroid
+	Point centroid;
+	boost::geometry::centroid(poly, centroid);
+	double centroidX = centroid.get<0>();
+
+	// Create Left and Right bounding boxes
+	Box bb;
+	boost::geometry::envelope(poly,bb);
+
+	Box bbLeft(bb.min_corner(),Point(centroidX,bb.max_corner().get<1>()));
+	Box bbRight(Point(centroidX,bb.min_corner().get<1>()),bb.max_corner());
+
+	// Create Left and Right polygons
+	MultiPolygon left;
+	MultiPolygon right;
+
+	boost::geometry::intersection(poly,bbLeft,left);
+	boost::geometry::intersection(poly,bbRight,right);
+
+	// Mirror right polygon across the centroid
+	right = mirrorX(right,centroidX);
+
+	return boost::geometry::equals(left,right);
+}
+
+bool isYSymmetric(Polygon poly)
+{
+
+	// Find centroid
+	Point centroid;
+	boost::geometry::centroid(poly, centroid);
+	double centroidY = centroid.get<1>();
+
+	// Create Bottom and Top bounding boxes
+	Box bb;
+	boost::geometry::envelope(poly,bb);
+
+	Box bbBottom(bb.min_corner(),Point(bb.max_corner().get<0>(),centroidY));
+	Box bbTop(Point(bb.min_corner().get<0>(),centroidY),bb.max_corner());
+
+	// Create Bottom and Top polygons
+	MultiPolygon bottom;
+	MultiPolygon top;
+
+	boost::geometry::intersection(poly,bbTop,top);
+	boost::geometry::intersection(poly,bbBottom,bottom);
+
+	// Mirror top polygon across the centroid
+	top = mirrorY(top,centroidY);
+
+	return boost::geometry::equals(top,bottom);
+}
+
+Polygon symmetricUnit(Polygon poly)
+{
+	MultiPolygon symPolys;
+
+	Box bb;
+	boost::geometry::envelope(poly,bb);
+
+	if (isXSymmetric(poly))
+	{
+		// Find centroid
+		Point centroid;
+		boost::geometry::centroid(poly, centroid);
+		double centroidX = centroid.get<0>();
+
+		// Create Right bounding box
+		Box bbRight(Point(centroidX,bb.min_corner().get<1>()),bb.max_corner());
+
+		// Create Right polygon
+		MultiPolygon xSymPolys;
+		Polygon right;
+		boost::geometry::convert(bbRight,right);
+		boost::geometry::intersection(poly,right,xSymPolys);
+		symPolys = xSymPolys;
+	}
+
+	if (isYSymmetric(poly))
+	{
+		// Find centroid
+		Point centroid;
+		boost::geometry::centroid(poly, centroid);
+		double centroidY = centroid.get<1>();
+
+		// Create Top bounding box
+		Box bbTop(Point(bb.min_corner().get<0>(),centroidY),bb.max_corner());
+
+		// Create Top polygon
+		MultiPolygon ySymPolys;
+		Polygon top;
+		boost::geometry::convert(bbTop,top);
+		boost::geometry::intersection(symPolys[0],top,ySymPolys);
+		symPolys = ySymPolys;
+	}
+
+
+	return symPolys[0];
 }
 
 double getXmax(Polygon poly, std::size_t vertex)

@@ -19,6 +19,7 @@ set(kiva_src Main.c++
              Geometry.c++
              Ground.c++
              GroundPlot.c++
+             Input.c++
              InputParser.c++
              Mesher.c++
              WeatherData.c++)
@@ -42,6 +43,7 @@ add_executable(Kiva ${kiva_src} ${kiva_hdr})
 
 set(kiva_lib boost_date_time
              boost_thread
+             boost_filesystem
              boost_system
              boost_program_options
              umfpack

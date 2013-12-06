@@ -33,6 +33,7 @@ typedef boost::geometry::model::ring<Point, true, false> Ring;
 typedef boost::geometry::model::multi_polygon<Polygon> MultiPolygon;
 typedef boost::geometry::model::multi_point<Point> MultiPoint;
 typedef boost::geometry::model::linestring<Point> Line;
+typedef boost::geometry::model::box<Point> Box;
 
 namespace geom
 {
@@ -56,6 +57,11 @@ Polygon offset(Polygon poly, double dist);
 geom::Direction getDirectionIn(Polygon poly, std::size_t vertex);
 geom::Direction getDirectionOut(Polygon poly, std::size_t vertex);
 geom::Turn getTurn(Polygon poly, std::size_t vertex);
+MultiPolygon mirrorX(MultiPolygon poly, double x);
+MultiPolygon mirrorY(MultiPolygon poly, double y);
+Polygon symmetricUnit(Polygon poly);
+bool isXSymmetric(Polygon poly);
+bool isYSymmetric(Polygon poly);
 double getXmin(Polygon poly, std::size_t vertex);
 double getYmin(Polygon poly, std::size_t vertex);
 double getXmax(Polygon poly, std::size_t vertex);

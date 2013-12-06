@@ -30,9 +30,6 @@ Input inputParser(std::string inputFile)
 
 	YAML::Node yamlInput = YAML::LoadFile(inputFile);
 
-
-	simulationControl.weatherFile =
-			yamlInput["Simulation Control"]["weatherFile"].as<std::string>();
 	simulationControl.startDate =
 			boost::gregorian::from_string(yamlInput["Simulation Control"]["startDate"].as<std::string>());
 	simulationControl.endDate =
@@ -189,8 +186,6 @@ Input inputParser(std::string inputFile)
 	if (yamlInput["Foundation"]["deepGroundBoundary"].as<std::string>() == "AUTO")
 	{
 		foundation1.deepGroundBoundary = Foundation::DGB_AUTO;
-		WeatherData tempWeather(simulationControl.weatherFile);
-		foundation1.deepGroundTemperature = tempWeather.dryBulbTemp.getAverage();
 	}
 	else if (yamlInput["Foundation"]["deepGroundBoundary"].as<std::string>() == "CONSTANT-TEMP")
 	{
@@ -212,12 +207,24 @@ Input inputParser(std::string inputFile)
 		foundation1.coordinateSystem = Foundation::CS_2DLINEAR;
 	else if (yamlInput["Foundation"]["coordinateSystem"].as<std::string>() == "3D")
 		foundation1.coordinateSystem = Foundation::CS_3D;
+	else if (yamlInput["Foundation"]["coordinateSystem"].as<std::string>() == "3DSYMMETRY")
+		foundation1.coordinateSystem = Foundation::CS_3D_SYMMETRY;
 
 	for (size_t i=0;i<yamlInput["Foundation"]["polygon"].size();i++)
 	{
 		foundation1.polygon.outer().push_back(Point(
 				yamlInput["Foundation"]["polygon"][i][0].as<double>(),
 				yamlInput["Foundation"]["polygon"][i][1].as<double>()));
+	}
+
+	if  (yamlInput["Foundation"]["perimeterSurfaceWidth"].IsDefined())
+	{
+		foundation1.hasPerimeterSurface = true;
+		foundation1.perimeterSurfaceWidth = yamlInput["Foundation"]["perimeterSurfaceWidth"].as<double>();
+	}
+	else
+	{
+		foundation1.hasPerimeterSurface = false;
 	}
 
 	// Meshing
@@ -316,6 +323,21 @@ Input inputParser(std::string inputFile)
 	else
 	{
 		foundation1.outdoorTemperatureMethod = Foundation::OTM_WEATHER_FILE;
+	}
+
+	if  (yamlInput["Foundation"]["wallTopBoundary"].IsDefined())
+	{
+		if (yamlInput["Foundation"]["wallTopBoundary"].as<std::string>() == "ZERO-FLUX")
+			foundation1.wallTopBoundary = Foundation::WTB_ZERO_FLUX;
+		else if (yamlInput["Foundation"]["wallTopBoundary"].as<std::string>() == "LINEAR-DT")
+		{
+			foundation1.wallTopBoundary = Foundation::WTB_LINEAR_DT;
+			foundation1.wallTopTemperatureDifference = yamlInput["Foundation"]["wallTopTemperatureDifference"].as<double>();
+		}
+	}
+	else
+	{
+		foundation1.wallTopBoundary = Foundation::WTB_ZERO_FLUX;
 	}
 
 	// Output

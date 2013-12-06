@@ -40,7 +40,7 @@ Ground::~Ground()
 {
 	for (std::size_t p = 0; p < plots.size(); p++)
 	{
-		plots[p].gr.CloseGIF();
+		//plots[p].gr.CloseGIF();
 	}
 }
 
@@ -49,6 +49,8 @@ void Ground::buildDomain()
 	timestep = simulationControl.timestep.total_seconds();
 
 	// Create mesh
+	if (foundation.deepGroundBoundary == Foundation::DGB_AUTO)
+		foundation.deepGroundTemperature = weatherData.dryBulbTemp.getAverage();
 
 	foundation.setMeshData();
 
@@ -95,52 +97,55 @@ void Ground::initializeConditions()
 	TNew.resize(boost::extents[nX][nY][nZ]);
 	TOld.resize(boost::extents[nX][nY][nZ]);
 
-	if (foundation.initializationMethod == Foundation::IM_STEADY_STATE)
+	if (foundation.numericalScheme != Foundation::NS_STEADY_STATE)
 	{
-		calculateMatrix(Foundation::NS_STEADY_STATE);
-	}
-	else if (foundation.initializationMethod == Foundation::IM_IMPLICIT_ACCELERATION)
-	{
-		Foundation initialFoundation = foundation;
-		initialFoundation.initializationMethod = Foundation::IM_STEADY_STATE;
-		initialFoundation.numericalScheme = Foundation::NS_IMPLICIT;
-		initialFoundation.outputAnimations.clear();
-		SimulationControl initialSimControl;
-		initialSimControl.timestep = boost::posix_time::hours(foundation.implicitAccelTimestep);
-		initialSimControl.endDate = simulationControl.startDate;
-		boost::posix_time::ptime endTime(initialSimControl.endDate);
-		endTime = endTime - simulationControl.timestep;
-		initialSimControl.startTime = endTime - boost::posix_time::hours(foundation.implicitAccelTimestep*foundation.implicitAccelPeriods);
-		initialSimControl.startDate = initialSimControl.startTime.date();
-
-		boost::posix_time::ptime simEnd(endTime);
-		boost::posix_time::ptime simStart(initialSimControl.startTime);
-		boost::posix_time::time_duration simDuration =  simEnd  - simStart;
-
-		double tstart = 0.0; // [s] Simulation start time
-		double tend = simDuration.total_seconds(); // [s] Simulation end time
-		double initialTimestep = initialSimControl.timestep.total_seconds();
-
-		Ground initialGround(weatherData,initialFoundation,initialSimControl);
-
-		for (double t = tstart; t <= tend; t = t + initialTimestep)
+		if (foundation.initializationMethod == Foundation::IM_STEADY_STATE)
 		{
-			initialGround.calculate(t);
+			calculateMatrix(Foundation::NS_STEADY_STATE);
 		}
-
-		TOld = initialGround.TNew;
-
-	}
-	else
-	{
-		for (size_t k = 0; k < nZ; ++k)
+		else if (foundation.initializationMethod == Foundation::IM_IMPLICIT_ACCELERATION)
 		{
-			for (size_t j = 0; j < nY; ++j)
+			Foundation initialFoundation = foundation;
+			initialFoundation.initializationMethod = Foundation::IM_STEADY_STATE;
+			initialFoundation.numericalScheme = Foundation::NS_IMPLICIT;
+			initialFoundation.outputAnimations.clear();
+			SimulationControl initialSimControl;
+			initialSimControl.timestep = boost::posix_time::hours(foundation.implicitAccelTimestep);
+			initialSimControl.endDate = simulationControl.startDate;
+			boost::posix_time::ptime endTime(initialSimControl.endDate);
+			endTime = endTime - simulationControl.timestep;
+			initialSimControl.startTime = endTime - boost::posix_time::hours(foundation.implicitAccelTimestep*foundation.implicitAccelPeriods);
+			initialSimControl.startDate = initialSimControl.startTime.date();
+
+			boost::posix_time::ptime simEnd(endTime);
+			boost::posix_time::ptime simStart(initialSimControl.startTime);
+			boost::posix_time::time_duration simDuration =  simEnd  - simStart;
+
+			double tstart = 0.0; // [s] Simulation start time
+			double tend = simDuration.total_seconds(); // [s] Simulation end time
+			double initialTimestep = initialSimControl.timestep.total_seconds();
+
+			Ground initialGround(weatherData,initialFoundation,initialSimControl);
+
+			for (double t = tstart; t <= tend; t = t + initialTimestep)
 			{
-				for (size_t i = 0; i < nX; ++i)
+				initialGround.calculate(t);
+			}
+
+			TOld = initialGround.TNew;
+
+		}
+		else
+		{
+			for (size_t k = 0; k < nZ; ++k)
+			{
+				for (size_t j = 0; j < nY; ++j)
 				{
-					TOld[i][j][k]= getInitialTemperature(tNow,
-							domain.meshZ.centers[k]);
+					for (size_t i = 0; i < nX; ++i)
+					{
+						TOld[i][j][k]= getInitialTemperature(tNow,
+								domain.meshZ.centers[k]);
+					}
 				}
 			}
 		}
@@ -157,7 +162,8 @@ void Ground::initializePlots()
 		if (!foundation.outputAnimations[p].endDateSet)
 			foundation.outputAnimations[p].endDate = simulationControl.endDate;
 
-		if (foundation.coordinateSystem == Foundation::CS_3D)
+		if (foundation.coordinateSystem == Foundation::CS_3D ||
+			foundation.coordinateSystem == Foundation::CS_3D_SYMMETRY)
 		{
 			if (!foundation.outputAnimations[p].xRangeSet)
 			{
@@ -424,7 +430,8 @@ void Ground::calculateADEUpwardSweep()
 					double CYP = domain.cell[i][j][k].cyp*theta;
 					double CYM = domain.cell[i][j][k].cym*theta;
 
-					if (foundation.coordinateSystem == Foundation::CS_3D)
+					if (foundation.coordinateSystem == Foundation::CS_3D ||
+						foundation.coordinateSystem == Foundation::CS_3D_SYMMETRY)
 						U[i][j][k] = (UOld[i][j][k]*(1.0 - CXP - CZP - CYP)
 								- U[i-1][j][k]*CXM
 								+ UOld[i+1][j][k]*CXP
@@ -624,7 +631,8 @@ void Ground::calculateADEDownwardSweep()
 					double CYP = domain.cell[i][j][k].cyp*theta;
 					double CYM = domain.cell[i][j][k].cym*theta;
 
-					if (foundation.coordinateSystem == Foundation::CS_3D)
+					if (foundation.coordinateSystem == Foundation::CS_3D ||
+						foundation.coordinateSystem == Foundation::CS_3D_SYMMETRY)
 						V[i][j][k] = (VOld[i][j][k]*(1.0 + CXM + CZM + CYM)
 								- VOld[i-1][j][k]*CXM
 								+ V[i+1][j][k]*CXP
@@ -823,7 +831,8 @@ void Ground::calculateExplicit()
 					double CYP = domain.cell[i][j][k].cyp*theta;
 					double CYM = domain.cell[i][j][k].cym*theta;
 
-					if (foundation.coordinateSystem == Foundation::CS_3D)
+					if (foundation.coordinateSystem == Foundation::CS_3D ||
+						foundation.coordinateSystem == Foundation::CS_3D_SYMMETRY)
 						TNew[i][j][k] = TOld[i][j][k]*(1.0 + CXM + CZM + CYM - CXP - CZP - CYP)
 								- TOld[i-1][j][k]*CXM
 								+ TOld[i+1][j][k]*CXP
@@ -1109,7 +1118,8 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
 						double CYP = domain.cell[i][j][k].cyp;
 						double CYM = domain.cell[i][j][k].cym;
 
-						if (foundation.coordinateSystem == Foundation::CS_3D)
+						if (foundation.coordinateSystem == Foundation::CS_3D ||
+							foundation.coordinateSystem == Foundation::CS_3D_SYMMETRY)
 						{
 							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = (CXM + CZM + CYM - CXP - CZP - CYP);
 							Amat(i + nX*j + nX*nY*k, (i-1) + nX*j + nX*nY*k) = -CXM;
@@ -1159,7 +1169,8 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
 						double CYP = domain.cell[i][j][k].cyp*theta;
 						double CYM = domain.cell[i][j][k].cym*theta;
 
-						if (foundation.coordinateSystem == Foundation::CS_3D)
+						if (foundation.coordinateSystem == Foundation::CS_3D ||
+							foundation.coordinateSystem == Foundation::CS_3D_SYMMETRY)
 						{
 							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = (1.0 + f*(CXP + CZP + CYP - CXM - CZM - CYM));
 							Amat(i + nX*j + nX*nY*k, (i-1) + nX*j + nX*nY*k) = f*CXM;
@@ -1582,7 +1593,8 @@ void Ground::calculateADI(int dim)
 				default:
 					{
 					double theta;
-					if (foundation.coordinateSystem == Foundation::CS_3D)
+					if (foundation.coordinateSystem == Foundation::CS_3D ||
+						foundation.coordinateSystem == Foundation::CS_3D_SYMMETRY)
 					{
 						theta = timestep/
 								(3*domain.cell[i][j][k].density*domain.cell[i][j][k].specificHeat);
@@ -1602,7 +1614,8 @@ void Ground::calculateADI(int dim)
 
 					double f = foundation.fADI;
 
-					if (foundation.coordinateSystem == Foundation::CS_3D)
+					if (foundation.coordinateSystem == Foundation::CS_3D ||
+						foundation.coordinateSystem == Foundation::CS_3D_SYMMETRY)
 					{
 						if (dim == 1) // x
 						{
@@ -1728,7 +1741,8 @@ void Ground::calculate(double t)
 		break;
 	case Foundation::NS_ADI:
 		calculateADI(1);
-		if (foundation.coordinateSystem == Foundation::CS_3D)
+		if (foundation.coordinateSystem == Foundation::CS_3D ||
+			foundation.coordinateSystem == Foundation::CS_3D_SYMMETRY)
 			calculateADI(2);
 		calculateADI(3);
 		break;
@@ -1742,8 +1756,6 @@ void Ground::calculate(double t)
 		calculateMatrix(Foundation::NS_STEADY_STATE);
 		break;
 	}
-	// Calculate Heat Fluxes
-	QSlabTotal = getSurfaceAverageHeatFlux("Slab Interior");
 
 	plot();
 }
@@ -1858,7 +1870,7 @@ double Ground::getSurfaceAverageHeatFlux(std::string surfaceName)
 
 	size_t iMin, iMax, jMin, jMax, kMin, kMax;
 	double tilt;
-	double totalArea;
+	double totalArea = 0.0;
 
 	// Find bounding indices
 	if (surface.orientation == Surface::X_POS ||
@@ -1884,59 +1896,12 @@ double Ground::getSurfaceAverageHeatFlux(std::string surfaceName)
 	else // if (surface.orientation == Surface::Z_POS ||
 		 // surface.orientation == Surface::Z_NEG)
 	{
-		iMin = domain.meshX.getNextIndex(surface.xMin);
-		iMax = domain.meshX.getPreviousIndex(surface.xMax);
-		jMin = domain.meshY.getNextIndex(surface.yMin);
-		jMax = domain.meshY.getPreviousIndex(surface.yMax);
+		iMin = 0;
+		iMax = nX-1;
+		jMin = 0;
+		jMax = nY-1;
 		kMin = domain.meshZ.getNearestIndex(surface.zMin);
 		kMax = domain.meshZ.getNearestIndex(surface.zMax);
-	}
-
-	// Find total area
-	if (foundation.coordinateSystem == Foundation::CS_2DAXIAL)
-	{
-		if (surface.orientation == Surface::X_POS ||
-			surface.orientation == Surface::X_NEG)
-		{
-			totalArea = 2.0*PI*surface.xMax*(surface.zMax - surface.zMin);
-		}
-		else // if (surface.orientation == Surface::Z_POS ||
-			 // surface.orientation == Surface::Z_NEG)
-		{
-			totalArea = PI*pow(surface.xMax,2.0) - PI*pow(surface.xMin,2.0);
-		}
-	}
-	else if (foundation.coordinateSystem == Foundation::CS_2DLINEAR)
-	{
-		if (surface.orientation == Surface::X_POS ||
-			surface.orientation == Surface::X_NEG)
-		{
-			totalArea = surface.zMax - surface.zMin;
-		}
-		else // if (surface.orientation == Surface::Z_POS ||
-			 // surface.orientation == Surface::Z_NEG)
-		{
-			totalArea = surface.xMax - surface.xMin;
-		}
-	}
-	else // if (foundation.coordinateSystem == Foundation::CS_3D)
-	{
-		if (surface.orientation == Surface::X_POS ||
-			surface.orientation == Surface::X_NEG)
-		{
-			totalArea = (surface.yMax - surface.yMin)*(surface.zMax - surface.zMin);
-		}
-		else if (surface.orientation == Surface::Y_POS ||
-			surface.orientation == Surface::Y_NEG)
-		{
-			totalArea = (surface.xMax - surface.xMin)*(surface.zMax - surface.zMin);
-		}
-		else // if (surface.orientation == Surface::Z_POS ||
-			 // surface.orientation == Surface::Z_NEG)
-		{
-			totalArea = (surface.xMax - surface.xMin)*(surface.yMax - surface.yMin);
-		}
-
 	}
 
 	// Find tilt
@@ -1958,64 +1923,238 @@ double Ground::getSurfaceAverageHeatFlux(std::string surfaceName)
 		{
 			for (size_t i = iMin; i <= iMax; ++i)
 			{
-				double h = getConvectionCoeff(TNew[i][j][k],Tair,0.0,1.0,false,tilt)
-						 + getSimpleInteriorIRCoeff(domain.cell[i][j][k].surface.emissivity,
-								 TNew[i][j][k],Tair);
+				if (surface.orientation == Surface::X_POS ||
+					surface.orientation == Surface::X_NEG ||
+					surface.orientation == Surface::Y_POS ||
+					surface.orientation == Surface::Y_NEG ||
+					boost::geometry::within(Point(domain.meshX.centers[i],domain.meshY.centers[j]),surface.polygon))
+				{
+					double h = getConvectionCoeff(TNew[i][j][k],Tair,0.0,1.0,false,tilt)
+							 + getSimpleInteriorIRCoeff(domain.cell[i][j][k].surface.emissivity,
+									 TNew[i][j][k],Tair);
 
-				// Calculate Area
-				double A;
-				if (foundation.coordinateSystem == Foundation::CS_2DAXIAL)
-				{
-					if (surface.orientation == Surface::X_POS ||
-						surface.orientation == Surface::X_NEG)
+					// Calculate Area
+					double A;
+					if (foundation.coordinateSystem == Foundation::CS_2DAXIAL)
 					{
-						A = 2.0*PI*domain.meshX.centers[i]*domain.meshZ.deltas[k];
+						if (surface.orientation == Surface::X_POS ||
+							surface.orientation == Surface::X_NEG)
+						{
+							A = 2.0*PI*domain.meshX.centers[i]*domain.meshZ.deltas[k];
+						}
+						else // if (surface.orientation == Surface::Z_POS ||
+							 // surface.orientation == Surface::Z_NEG)
+						{
+							A = 2.0*PI*domain.meshX.deltas[i]*domain.meshX.centers[i];
+						}
 					}
-					else // if (surface.orientation == Surface::Z_POS ||
-						 // surface.orientation == Surface::Z_NEG)
+					else if (foundation.coordinateSystem == Foundation::CS_2DLINEAR)
 					{
-						A = 2.0*PI*domain.meshX.deltas[i]*domain.meshX.centers[i];
+						if (surface.orientation == Surface::X_POS ||
+							surface.orientation == Surface::X_NEG)
+						{
+							A = domain.meshZ.deltas[k];
+						}
+						else // if (surface.orientation == Surface::Z_POS ||
+							 // surface.orientation == Surface::Z_NEG)
+						{
+							A = domain.meshX.deltas[i];
+						}
 					}
+					else  // if (foundation.coordinateSystem == Foundation::CS_3D)
+					{
+						if (surface.orientation == Surface::X_POS ||
+							surface.orientation == Surface::X_NEG)
+						{
+							A = domain.meshY.deltas[j]*domain.meshZ.deltas[k];
+						}
+						else if (surface.orientation == Surface::Y_POS ||
+							surface.orientation == Surface::Y_NEG)
+						{
+							A = domain.meshX.deltas[i]*domain.meshZ.deltas[k];
+						}
+						else // if (surface.orientation == Surface::Z_POS ||
+							 // surface.orientation == Surface::Z_NEG)
+						{
+							A = domain.meshX.deltas[i]*domain.meshY.deltas[j];
+						}
+
+						if (foundation.coordinateSystem == Foundation::CS_3D_SYMMETRY)
+						{
+							if (isXSymmetric(foundation.polygon))
+								A = 2*A;
+
+							if (isYSymmetric(foundation.polygon))
+								A = 2*A;
+						}
+					}
+
+					heatFlux.push_back(h*A*(Tair - TNew[i][j][k]));
+					totalArea += A;
 				}
-				else if (foundation.coordinateSystem == Foundation::CS_2DLINEAR)
-				{
-					if (surface.orientation == Surface::X_POS ||
-						surface.orientation == Surface::X_NEG)
-					{
-						A = domain.meshZ.deltas[k];
-					}
-					else // if (surface.orientation == Surface::Z_POS ||
-						 // surface.orientation == Surface::Z_NEG)
-					{
-						A = domain.meshX.deltas[i];
-					}
-				}
-				else  // if (foundation.coordinateSystem == Foundation::CS_3D)
-				{
-					if (surface.orientation == Surface::X_POS ||
-						surface.orientation == Surface::X_NEG)
-					{
-						A = domain.meshY.deltas[j]*domain.meshZ.deltas[k];
-					}
-					else if (surface.orientation == Surface::Y_POS ||
-						surface.orientation == Surface::Y_NEG)
-					{
-						A = domain.meshX.deltas[i]*domain.meshZ.deltas[k];
-					}
-					else // if (surface.orientation == Surface::Z_POS ||
-						 // surface.orientation == Surface::Z_NEG)
-					{
-						A = domain.meshX.deltas[i]*domain.meshY.deltas[j];
-					}
-				}
-				heatFlux.push_back(h*A*(Tair - TNew[i][j][k]));
 			}
 		}
 	}
 
 	double totalFlux = std::accumulate((heatFlux).begin(),(heatFlux).end(), 0.0);
 
-	return totalFlux/totalArea;
+	double averageFlux = totalFlux/totalArea;
+
+
+	return averageFlux;
+}
+
+double Ground::getBelowSlabTemperature(std::string surfaceName)
+{
+	// Find surface
+	Surface surface;
+	for (size_t s = 0; s < foundation.surfaces.size(); s++)
+	{
+		if (foundation.surfaces[s].name == surfaceName)
+		{
+			surface = foundation.surfaces[s];
+		}
+	}
+
+	size_t iMin, iMax, jMin, jMax, kMin, kMax;
+	double tilt;
+	double totalArea = 0.0;
+
+	// Find bounding indices
+	if (surface.orientation == Surface::X_POS ||
+		surface.orientation == Surface::X_NEG)
+	{
+		iMin = domain.meshX.getNearestIndex(surface.xMin);
+		iMax = domain.meshX.getNearestIndex(surface.xMax);
+		jMin = domain.meshY.getNextIndex(surface.yMin);
+		jMax = domain.meshY.getPreviousIndex(surface.yMax);
+		kMin = domain.meshZ.getNextIndex(surface.zMin);
+		kMax = domain.meshZ.getPreviousIndex(surface.zMax);
+	}
+	else if (surface.orientation == Surface::Y_POS ||
+		surface.orientation == Surface::Y_NEG)
+	{
+		iMin = domain.meshX.getNextIndex(surface.xMin);
+		iMax = domain.meshX.getPreviousIndex(surface.xMax);
+		jMin = domain.meshY.getNearestIndex(surface.yMin);
+		jMax = domain.meshY.getNearestIndex(surface.yMax);
+		kMin = domain.meshZ.getNextIndex(surface.zMin);
+		kMax = domain.meshZ.getPreviousIndex(surface.zMax);
+	}
+	else // if (surface.orientation == Surface::Z_POS ||
+		 // surface.orientation == Surface::Z_NEG)
+	{
+		iMin = 0;
+		iMax = nX-1;
+		jMin = 0;
+		jMax = nY-1;
+		kMin = domain.meshZ.getNearestIndex(surface.zMin);
+		kMax = domain.meshZ.getNearestIndex(surface.zMax);
+	}
+
+	// Find tilt
+	if (surface.orientation == Surface::Z_POS)
+		tilt = 0.0;
+	else if (surface.orientation == Surface::Z_NEG)
+		tilt = PI;
+	else
+		tilt = PI/2.0;
+
+	double Tair = foundation.indoorAirTemperature;
+
+	std::vector<double> heatFlux;
+	std::vector<double> TA;
+
+
+	// Loop over cells and calculate heat loss from surface
+	for (size_t k = kMin; k <= kMax; ++k)
+	{
+		for (size_t j = jMin; j <= jMax; ++j)
+		{
+			for (size_t i = iMin; i <= iMax; ++i)
+			{
+				if (surface.orientation == Surface::X_POS ||
+					surface.orientation == Surface::X_NEG ||
+					surface.orientation == Surface::Y_POS ||
+					surface.orientation == Surface::Y_NEG ||
+					boost::geometry::within(Point(domain.meshX.centers[i],domain.meshY.centers[j]),surface.polygon))
+				{
+					double h = getConvectionCoeff(TNew[i][j][k],Tair,0.0,1.0,false,tilt)
+							 + getSimpleInteriorIRCoeff(domain.cell[i][j][k].surface.emissivity,
+									 TNew[i][j][k],Tair);
+
+					// Calculate Area
+					double A;
+					if (foundation.coordinateSystem == Foundation::CS_2DAXIAL)
+					{
+						if (surface.orientation == Surface::X_POS ||
+							surface.orientation == Surface::X_NEG)
+						{
+							A = 2.0*PI*domain.meshX.centers[i]*domain.meshZ.deltas[k];
+						}
+						else // if (surface.orientation == Surface::Z_POS ||
+							 // surface.orientation == Surface::Z_NEG)
+						{
+							A = 2.0*PI*domain.meshX.deltas[i]*domain.meshX.centers[i];
+						}
+					}
+					else if (foundation.coordinateSystem == Foundation::CS_2DLINEAR)
+					{
+						if (surface.orientation == Surface::X_POS ||
+							surface.orientation == Surface::X_NEG)
+						{
+							A = domain.meshZ.deltas[k];
+						}
+						else // if (surface.orientation == Surface::Z_POS ||
+							 // surface.orientation == Surface::Z_NEG)
+						{
+							A = domain.meshX.deltas[i];
+						}
+					}
+					else  // if (foundation.coordinateSystem == Foundation::CS_3D)
+					{
+						if (surface.orientation == Surface::X_POS ||
+							surface.orientation == Surface::X_NEG)
+						{
+							A = domain.meshY.deltas[j]*domain.meshZ.deltas[k];
+						}
+						else if (surface.orientation == Surface::Y_POS ||
+							surface.orientation == Surface::Y_NEG)
+						{
+							A = domain.meshX.deltas[i]*domain.meshZ.deltas[k];
+						}
+						else // if (surface.orientation == Surface::Z_POS ||
+							 // surface.orientation == Surface::Z_NEG)
+						{
+							A = domain.meshX.deltas[i]*domain.meshY.deltas[j];
+						}
+
+						if (foundation.coordinateSystem == Foundation::CS_3D_SYMMETRY)
+						{
+							if (isXSymmetric(foundation.polygon))
+								A = 2*A;
+
+							if (isYSymmetric(foundation.polygon))
+								A = 2*A;
+						}
+					}
+
+					TA.push_back(TNew[i][j][k]*A);
+					heatFlux.push_back(h*A*(Tair - TNew[i][j][k]));
+					totalArea += A;
+				}
+			}
+		}
+	}
+
+	double Tavg = std::accumulate((TA).begin(),(TA).end(), 0.0)/totalArea;
+	double totalFlux = std::accumulate((heatFlux).begin(),(heatFlux).end(), 0.0);
+
+	double averageFlux = totalFlux/totalArea;
+
+	double hAvg = averageFlux*totalArea/(Tair - Tavg);
+
+	return Tair - averageFlux*(foundation.slab.totalResistance()+1/hAvg) - 273.15;;
 }
 
 double getArrayValue(boost::multi_array<double, 3> Mat, std::size_t i, std::size_t j, std::size_t k)
