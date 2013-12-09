@@ -35,9 +35,10 @@ int main(int argc, char *argv[])
 	std::string versionInfo = "kiva 0.1.0";
 	std::string copyrightInfo = "Copyright (C) 2012-2013 Big Ladder Software\n"
 			               	    "Web: www.bigladdersoftware.com";
-	std::string usageInfo = "Usage: kiva [Input File] [Weather File]\n"
+	std::string usageInfo = "Usage: kiva [Input File] [Weather File] [Output File]\n"
 			                "   Input format: yaml\n"
-							"   Weather format: epw";
+							"   Weather format: epw\n"
+							"   Output format: csv";
 
 	try {
 
@@ -49,13 +50,14 @@ int main(int argc, char *argv[])
         po::options_description hidden("Hidden options");
         hidden.add_options()
             ("input-file", po::value<std::string>(), "input file")
-            ("weather-file", po::value<std::string>(), "weather file");
+            ("weather-file", po::value<std::string>(), "weather file")
+            ("output-file", po::value<std::string>(), "output file");
 
         po::options_description cmdLine;
         cmdLine.add(generic).add(hidden);
 
 		po::positional_options_description p;
-		p.add("input-file", 1).add("weather-file", 1);
+		p.add("input-file", 1).add("weather-file", 1).add("output-file", 1);
 
 		po::variables_map vm;
 		po::store(po::command_line_parser(argc, argv).
@@ -84,7 +86,7 @@ int main(int argc, char *argv[])
 			std::cout << copyrightInfo << "\n";
 			return 0;
 		}
-		if (vm.count("input-file") && vm.count("weather-file"))
+		if (vm.count("input-file") && vm.count("weather-file") && vm.count("output-file"))
 		{
 			boost::posix_time::ptime beginCalc = boost::posix_time::second_clock::local_time();
 			std::cout << "Starting Program: " << beginCalc << std::endl;
@@ -108,7 +110,7 @@ int main(int argc, char *argv[])
 
 			// set up output file
 			std::ofstream output;
-			output.open("GroundTemps.csv");
+			output.open(vm["output-file"].as<std::string>().c_str());
 			output << "Time Stamp, Ground Core Temperature [C], Ground Perimeter Temperature [C]" << std::endl;
 
 			// initialize
