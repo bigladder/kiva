@@ -19,6 +19,8 @@
 #ifndef Ground_CPP
 #define Ground_CPP
 
+#define USE_LIS_SOLVER
+
 #include "Ground.h"
 
 static const double PI = 4.0*atan(1.0);
@@ -38,10 +40,14 @@ Ground::Ground(WeatherData &weatherData, Foundation &foundation,
 
 Ground::~Ground()
 {
-	for (std::size_t p = 0; p < plots.size(); p++)
-	{
-		//plots[p].gr.CloseGIF();
-	}
+
+#if defined(USE_LIS_SOLVER)
+	lis_matrix_destroy(Amat);
+	lis_vector_destroy(x);
+	lis_vector_destroy(b);
+	lis_solver_destroy(solver);
+#endif
+
 }
 
 void Ground::buildDomain()
@@ -86,12 +92,28 @@ void Ground::initializeConditions()
 			 foundation.numericalScheme == Foundation::NS_STEADY_STATE ||
 			 foundation.initializationMethod == Foundation::IM_STEADY_STATE)
 	{
-		Amat = boost::numeric::ublas::compressed_matrix<double,
-		boost::numeric::ublas::column_major, 0,
-		boost::numeric::ublas::unbounded_array<int>,
-		boost::numeric::ublas::unbounded_array<double> >(nX*nY*nZ,nX*nY*nZ);  // Coefficient Matrix
-		b = boost::numeric::ublas::vector<double> (nX*nY*nZ);  // constant and unknown vectors
-		x = boost::numeric::ublas::vector<double> (nX*nY*nZ);  // constant and unknown vectors
+
+#if defined(USE_LIS_SOLVER)
+		lis_matrix_create(LIS_COMM_WORLD,&Amat);
+		lis_matrix_set_size(Amat,nX*nY*nZ,nX*nY*nZ);
+
+		lis_vector_create(LIS_COMM_WORLD,&b);
+		lis_vector_set_size(b,0,nX*nY*nZ);
+
+		lis_vector_duplicate(b,&x);
+
+		lis_vector_set_all(300,x);
+	    lis_solver_create(&solver);
+	    lis_solver_set_option("-i gmres -p ilu -initx_zeros false -tol 1.0e-5",solver);
+#else
+        Amat = boost::numeric::ublas::compressed_matrix<double,
+        boost::numeric::ublas::column_major, 0,
+        boost::numeric::ublas::unbounded_array<int>,
+        boost::numeric::ublas::unbounded_array<double> >(nX*nY*nZ,nX*nY*nZ);  // Coefficient Matrix
+        b = boost::numeric::ublas::vector<double> (nX*nY*nZ);  // constant and unknown vectors
+        x = boost::numeric::ublas::vector<double> (nX*nY*nZ);  // constant and unknown vectors
+#endif
+
 	}
 
 	TNew.resize(boost::extents[nX][nY][nZ]);
@@ -885,6 +907,16 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
 		{
 			for (size_t i = 0; i < nX; i++)
 			{
+				int index = i + nX*j + nX*nY*k;
+				int index_ip = (i+1) + nX*j + nX*nY*k;
+				int index_im = (i-1) + nX*j + nX*nY*k;
+				int index_jp = i + nX*(j+1) + nX*nY*k;
+				int index_jm = i + nX*(j-1) + nX*nY*k;
+				int index_kp = i + nX*j + nX*nY*(k+1);
+				int index_km = i + nX*j + nX*nY*(k-1);
+
+				double A, Aip, Aim, Ajp, Ajm, Akp, Akm, bVal = 0.0;
+
 				switch (domain.cell[i][j][k].cellType)
 				{
 				case Cell::BOUNDARY:
@@ -904,69 +936,83 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
 						switch (domain.cell[i][j][k].surface.orientation)
 						{
 						case Surface::X_NEG:
-							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = 1.0;
-							Amat(i + nX*j + nX*nY*k, (i+1) + nX*j + nX*nY*k) = -1.0;
+							A = 1.0;
+							Aip = -1.0;
+							bVal = 0.0;
 
-							b(i + nX*j + nX*nY*k) = 0;
+							setAmatValue(index,index,A);
+							setAmatValue(index,index_ip,Aip);
+							setbValue(index,bVal);
 							break;
 						case Surface::X_POS:
-							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = 1.0;
-							Amat(i + nX*j + nX*nY*k, (i-1) + nX*j + nX*nY*k) = -1.0;
+							A = 1.0;
+							Aim = -1.0;
+							bVal = 0.0;
 
-							b(i + nX*j + nX*nY*k) = 0.0;
+							setAmatValue(index,index,A);
+							setAmatValue(index,index_im,Aim);
+							setbValue(index,bVal);
 							break;
 						case Surface::Y_NEG:
-							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = 1.0;
-							Amat(i + nX*j + nX*nY*k, i + nX*(j+1) + nX*nY*k) = -1.0;
+							A = 1.0;
+							Ajp = -1.0;
+							bVal = 0.0;
 
-							b(i + nX*j + nX*nY*k) = 0;
+							setAmatValue(index,index,A);
+							setAmatValue(index,index_jp,Ajp);
+							setbValue(index,bVal);
 							break;
 						case Surface::Y_POS:
-							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = 1.0;
-							Amat(i + nX*j + nX*nY*k, i + nX*(j-1) + nX*nY*k) = -1.0;
+							A = 1.0;
+							Ajm = -1.0;
+							bVal = 0.0;
 
-							b(i + nX*j + nX*nY*k) = 0.0;
+							setAmatValue(index,index,A);
+							setAmatValue(index,index_jm,Ajm);
+							setbValue(index,bVal);
 							break;
 						case Surface::Z_NEG:
-							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = 1.0;
-							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*(k+1)) = -1.0;
+							A = 1.0;
+							Akp = -1.0;
+							bVal = 0.0;
 
-							b(i + nX*j + nX*nY*k) = 0;
+							setAmatValue(index,index,A);
+							setAmatValue(index,index_kp,Akp);
+							setbValue(index,bVal);
 							break;
 						case Surface::Z_POS:
-							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = 1.0;
-							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*(k-1)) = -1.0;
+							A = 1.0;
+							Akm = -1.0;
+							bVal = 0.0;
 
-							b(i + nX*j + nX*nY*k) = 0;
+							setAmatValue(index,index,A);
+							setAmatValue(index,index_km,Akm);
+							setbValue(index,bVal);
 							break;
 						}
 						}
 						break;
-
 					case Surface::CONSTANT_TEMPERATURE:
-						{
-						Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = 1.0;
+						A = 1.0;
+						bVal = domain.cell[i][j][k].surface.temperature;
 
-						b(i + nX*j + nX*nY*k) = domain.cell[i][j][k].surface.temperature;
-						}
+						setAmatValue(index,index,A);
+						setbValue(index,bVal);
 						break;
-
 					case Surface::INTERIOR_TEMPERATURE:
-						{
-						Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = 1.0;
+						A = 1.0;
+						bVal = foundation.indoorAirTemperature;
 
-						b(i + nX*j + nX*nY*k) = foundation.indoorAirTemperature;
-						}
+						setAmatValue(index,index,A);
+						setbValue(index,bVal);
 						break;
-
 					case Surface::EXTERIOR_TEMPERATURE:
-						{
-						Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = 1.0;
+						A = 1.0;
+						bVal = getOutdoorTemperature();
 
-						b(i + nX*j + nX*nY*k) = getOutdoorTemperature();
-						}
+						setAmatValue(index,index,A);
+						setbValue(index,bVal);
 						break;
-
 					case Surface::INTERIOR_FLUX:
 						{
 						double Tair = foundation.indoorAirTemperature;
@@ -980,52 +1026,58 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
 						switch (domain.cell[i][j][k].surface.orientation)
 						{
 						case Surface::X_NEG:
-							{
-							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = domain.getKXP(i,j,k)/domain.getDXP(i) + (hc + hr);
-							Amat(i + nX*j + nX*nY*k, (i+1) + nX*j + nX*nY*k) = -domain.getKXP(i,j,k)/domain.getDXP(i);
+							A = domain.getKXP(i,j,k)/domain.getDXP(i) + (hc + hr);
+							Aip = -domain.getKXP(i,j,k)/domain.getDXP(i);
+							bVal = (hc + hr)*Tair + q;
 
-							b(i + nX*j + nX*nY*k) = (hc + hr)*Tair + q;
-							}
+							setAmatValue(index,index,A);
+							setAmatValue(index,index_ip,Aip);
+							setbValue(index,bVal);
 							break;
 						case Surface::X_POS:
-							{
-							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = domain.getKXM(i,j,k)/domain.getDXM(i) + (hc + hr);
-							Amat(i + nX*j + nX*nY*k, (i-1) + nX*j + nX*nY*k) = -domain.getKXM(i,j,k)/domain.getDXM(i);
+							A = domain.getKXM(i,j,k)/domain.getDXM(i) + (hc + hr);
+							Aim = -domain.getKXM(i,j,k)/domain.getDXM(i);
+							bVal = (hc + hr)*Tair + q;
 
-							b(i + nX*j + nX*nY*k) = (hc + hr)*Tair + q;
-							}
+							setAmatValue(index,index,A);
+							setAmatValue(index,index_im,Aim);
+							setbValue(index,bVal);
 							break;
 						case Surface::Y_NEG:
-							{
-							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = domain.getKYP(i,j,k)/domain.getDYP(j) + (hc + hr);
-							Amat(i + nX*j + nX*nY*k, i + nX*(j+1) + nX*nY*k) = -domain.getKYP(i,j,k)/domain.getDYP(j);
+							A = domain.getKYP(i,j,k)/domain.getDYP(j) + (hc + hr);
+							Ajp = -domain.getKYP(i,j,k)/domain.getDYP(j);
+							bVal = (hc + hr)*Tair + q;
 
-							b(i + nX*j + nX*nY*k) = (hc + hr)*Tair + q;
-							}
+							setAmatValue(index,index,A);
+							setAmatValue(index,index_jp,Ajp);
+							setbValue(index,bVal);
 							break;
 						case Surface::Y_POS:
-							{
-							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = domain.getKYM(i,j,k)/domain.getDYM(j) + (hc + hr);
-							Amat(i + nX*j + nX*nY*k, i + nX*(j-1) + nX*nY*k) = -domain.getKYM(i,j,k)/domain.getDYM(j);
+							A = domain.getKYM(i,j,k)/domain.getDYM(j) + (hc + hr);
+							Ajm = -domain.getKYM(i,j,k)/domain.getDYM(j);
+							bVal = (hc + hr)*Tair + q;
 
-							b(i + nX*j + nX*nY*k) = (hc + hr)*Tair + q;
-							}
+							setAmatValue(index,index,A);
+							setAmatValue(index,index_jm,Ajm);
+							setbValue(index,bVal);
 							break;
 						case Surface::Z_NEG:
-							{
-							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = domain.getKZP(i,j,k)/domain.getDZP(k) + (hc + hr);
-							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*(k+1)) = -domain.getKZP(i,j,k)/domain.getDZP(k);
+							A = domain.getKZP(i,j,k)/domain.getDZP(k) + (hc + hr);
+							Akp = -domain.getKZP(i,j,k)/domain.getDZP(k);
+							bVal = (hc + hr)*Tair + q;
 
-							b(i + nX*j + nX*nY*k) = (hc + hr)*Tair + q;
-							}
+							setAmatValue(index,index,A);
+							setAmatValue(index,index_kp,Akp);
+							setbValue(index,bVal);
 							break;
 						case Surface::Z_POS:
-							{
-							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = domain.getKZM(i,j,k)/domain.getDZM(k) + (hc + hr);
-							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*(k-1)) = -domain.getKZM(i,j,k)/domain.getDZM(k);
+							A = domain.getKZM(i,j,k)/domain.getDZM(k) + (hc + hr);
+							Akm = -domain.getKZM(i,j,k)/domain.getDZM(k);
+							bVal = (hc + hr)*Tair + q;
 
-							b(i + nX*j + nX*nY*k) = (hc + hr)*Tair + q;
-							}
+							setAmatValue(index,index,A);
+							setAmatValue(index,index_km,Akm);
+							setbValue(index,bVal);
 							break;
 						}
 						}
@@ -1044,52 +1096,58 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
 						switch (domain.cell[i][j][k].surface.orientation)
 						{
 						case Surface::X_NEG:
-							{
-							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = domain.getKXP(i,j,k)/domain.getDXP(i) + (hc + hr);
-							Amat(i + nX*j + nX*nY*k, (i+1) + nX*j + nX*nY*k) = -domain.getKXP(i,j,k)/domain.getDXP(i);
+							A = domain.getKXP(i,j,k)/domain.getDXP(i) + (hc + hr);
+							Aip = -domain.getKXP(i,j,k)/domain.getDXP(i);
+							bVal = (hc + hr*pow(F,0.25))*Tair + q;
 
-							b(i + nX*j + nX*nY*k) = (hc + hr*pow(F,0.25))*Tair + q;
-							}
+							setAmatValue(index,index,A);
+							setAmatValue(index,index_ip,Aip);
+							setbValue(index,bVal);
 							break;
 						case Surface::X_POS:
-							{
-							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = domain.getKXM(i,j,k)/domain.getDXM(i) + (hc + hr);
-							Amat(i + nX*j + nX*nY*k, (i-1) + nX*j + nX*nY*k) = -domain.getKXM(i,j,k)/domain.getDXM(i);
+							A = domain.getKXM(i,j,k)/domain.getDXM(i) + (hc + hr);
+							Aim = -domain.getKXM(i,j,k)/domain.getDXM(i);
+							bVal = (hc + hr*pow(F,0.25))*Tair + q;
 
-							b(i + nX*j + nX*nY*k) = (hc + hr*pow(F,0.25))*Tair + q;
-							}
+							setAmatValue(index,index,A);
+							setAmatValue(index,index_im,Aim);
+							setbValue(index,bVal);
 							break;
 						case Surface::Y_NEG:
-							{
-							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = domain.getKYP(i,j,k)/domain.getDYP(j) + (hc + hr);
-							Amat(i + nX*j + nX*nY*k, i + nX*(j+1) + nX*nY*k) = -domain.getKYP(i,j,k)/domain.getDYP(j);
+							A = domain.getKYP(i,j,k)/domain.getDYP(j) + (hc + hr);
+							Ajp = -domain.getKYP(i,j,k)/domain.getDYP(j);
+							bVal = (hc + hr*pow(F,0.25))*Tair + q;
 
-							b(i + nX*j + nX*nY*k) = (hc + hr*pow(F,0.25))*Tair + q;
-							}
+							setAmatValue(index,index,A);
+							setAmatValue(index,index_jp,Ajp);
+							setbValue(index,bVal);
 							break;
 						case Surface::Y_POS:
-							{
-							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = domain.getKYM(i,j,k)/domain.getDYM(j) + (hc + hr);
-							Amat(i + nX*j + nX*nY*k, i + nX*(j-1) + nX*nY*k) = -domain.getKYM(i,j,k)/domain.getDYM(j);
+							A = domain.getKYM(i,j,k)/domain.getDYM(j) + (hc + hr);
+							Ajm = -domain.getKYM(i,j,k)/domain.getDYM(j);
+							bVal = (hc + hr*pow(F,0.25))*Tair + q;
 
-							b(i + nX*j + nX*nY*k) = (hc + hr*pow(F,0.25))*Tair + q;
-							}
+							setAmatValue(index,index,A);
+							setAmatValue(index,index_jm,Ajm);
+							setbValue(index,bVal);
 							break;
 						case Surface::Z_NEG:
-							{
-							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = domain.getKZP(i,j,k)/domain.getDZP(k) + (hc + hr);
-							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*(k+1)) = -domain.getKZP(i,j,k)/domain.getDZP(k);
+							A = domain.getKZP(i,j,k)/domain.getDZP(k) + (hc + hr);
+							Akp = -domain.getKZP(i,j,k)/domain.getDZP(k);
+							bVal = (hc + hr*pow(F,0.25))*Tair + q;
 
-							b(i + nX*j + nX*nY*k) = (hc + hr*pow(F,0.25))*Tair + q;
-							}
+							setAmatValue(index,index,A);
+							setAmatValue(index,index_kp,Akp);
+							setbValue(index,bVal);
 							break;
 						case Surface::Z_POS:
-							{
-							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = domain.getKZM(i,j,k)/domain.getDZM(k) + (hc + hr);
-							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*(k-1)) = -domain.getKZM(i,j,k)/domain.getDZM(k);
+							A = domain.getKZM(i,j,k)/domain.getDZM(k) + (hc + hr);
+							Akm = -domain.getKZM(i,j,k)/domain.getDZM(k);
+							bVal = (hc + hr*pow(F,0.25))*Tair + q;
 
-							b(i + nX*j + nX*nY*k) = (hc + hr*pow(F,0.25))*Tair + q;
-							}
+							setAmatValue(index,index,A);
+							setAmatValue(index,index_km,Akm);
+							setbValue(index,bVal);
 							break;
 						}
 						}
@@ -1098,14 +1156,18 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
 					}
 					break;
 				case Cell::INTERIOR_AIR:
-					Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = 1.0;
+					A = 1.0;
+					bVal = foundation.indoorAirTemperature;
 
-					b(i + nX*j + nX*nY*k) = foundation.indoorAirTemperature;
+					setAmatValue(index,index,A);
+					setbValue(index,bVal);
 					break;
 				case Cell::EXTERIOR_AIR:
-					Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = 1.0;
+					A = 1.0;
+					bVal = getOutdoorTemperature();
 
-					b(i + nX*j + nX*nY*k) = getOutdoorTemperature();
+					setAmatValue(index,index,A);
+					setbValue(index,bVal);
 					break;
 				default:
 					{
@@ -1121,15 +1183,24 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
 						if (foundation.coordinateSystem == Foundation::CS_3D ||
 							foundation.coordinateSystem == Foundation::CS_3D_SYMMETRY)
 						{
-							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = (CXM + CZM + CYM - CXP - CZP - CYP);
-							Amat(i + nX*j + nX*nY*k, (i-1) + nX*j + nX*nY*k) = -CXM;
-							Amat(i + nX*j + nX*nY*k, (i+1) + nX*j + nX*nY*k) = CXP;
-							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*(k-1)) = -CZM;
-							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*(k+1)) = CZP;
-							Amat(i + nX*j + nX*nY*k, i + nX*(j-1) + nX*nY*k) = -CYM;
-							Amat(i + nX*j + nX*nY*k, i + nX*(j+1) + nX*nY*k) = CYP;
+							A = (CXM + CZM + CYM - CXP - CZP - CYP);
+							Aim = -CXM;
+							Aip = CXP;
+							Akm = -CZM;
+							Akp = CZP;
+							Ajm = -CYM;
+							Ajp = CYP;
 
-							b(i + nX*j + nX*nY*k) = 0;
+							bVal = 0;
+
+							setAmatValue(index,index,A);
+							setAmatValue(index,index_ip,Aip);
+							setAmatValue(index,index_im,Aim);
+							setAmatValue(index,index_jp,Ajp);
+							setAmatValue(index,index_jm,Ajm);
+							setAmatValue(index,index_kp,Akp);
+							setAmatValue(index,index_km,Akm);
+							setbValue(index,bVal);
 						}
 						else
 						{
@@ -1142,13 +1213,20 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
 								CXPC = domain.cell[i][j][k].cxp_c/r;
 								CXMC = domain.cell[i][j][k].cxm_c/r;
 							}
-							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = (CXMC + CXM + CZM - CXPC - CXP - CZP);
-							Amat(i + nX*j + nX*nY*k, (i-1) + nX*j + nX*nY*k) = (-CXMC - CXM);
-							Amat(i + nX*j + nX*nY*k, (i+1) + nX*j + nX*nY*k) = (CXPC + CXP);
-							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*(k-1)) = -CZM;
-							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*(k+1)) = CZP;
+							A = (CXMC + CXM + CZM - CXPC - CXP - CZP);
+							Aim = (-CXMC - CXM);
+							Aip = (CXPC + CXP);
+							Akm = -CZM;
+							Akp = CZP;
 
-							b(i + nX*j + nX*nY*k) = 0;
+							bVal = 0;
+
+							setAmatValue(index,index,A);
+							setAmatValue(index,index_ip,Aip);
+							setAmatValue(index,index_im,Aim);
+							setAmatValue(index,index_kp,Akp);
+							setAmatValue(index,index_km,Akm);
+							setbValue(index,bVal);
 						}
 					}
 					else
@@ -1172,23 +1250,31 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
 						if (foundation.coordinateSystem == Foundation::CS_3D ||
 							foundation.coordinateSystem == Foundation::CS_3D_SYMMETRY)
 						{
-							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = (1.0 + f*(CXP + CZP + CYP - CXM - CZM - CYM));
-							Amat(i + nX*j + nX*nY*k, (i-1) + nX*j + nX*nY*k) = f*CXM;
-							Amat(i + nX*j + nX*nY*k, (i+1) + nX*j + nX*nY*k) = f*(-CXP);
-							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*(k-1)) = f*CZM;
-							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*(k+1)) = f*(-CZP);
-							Amat(i + nX*j + nX*nY*k, i + nX*(j-1) + nX*nY*k) = f*CYM;
-							Amat(i + nX*j + nX*nY*k, i + nX*(j+1) + nX*nY*k) = f*(-CYP);
+							A = (1.0 + f*(CXP + CZP + CYP - CXM - CZM - CYM));
+							Aim = f*CXM;
+							Aip = f*(-CXP);
+							Akm = f*CZM;
+							Akp = f*(-CZP);
+							Ajm = f*CYM;
+							Ajp = f*(-CYP);
 
-							b(i + nX*j + nX*nY*k)
-									= TOld[i][j][k]*(1.0 + (1-f)*(CXM + CZM + CYM - CXP - CZP - CYP))
-									- TOld[i-1][j][k]*(1-f)*CXM
-									+ TOld[i+1][j][k]*(1-f)*CXP
-									- TOld[i][j][k-1]*(1-f)*CZM
-									+ TOld[i][j][k+1]*(1-f)*CZP
-									- TOld[i][j-1][k]*(1-f)*CYM
-									+ TOld[i][j+1][k]*(1-f)*CYP;
-						}
+							bVal = TOld[i][j][k]*(1.0 + (1-f)*(CXM + CZM + CYM - CXP - CZP - CYP))
+								 - TOld[i-1][j][k]*(1-f)*CXM
+								 + TOld[i+1][j][k]*(1-f)*CXP
+								 - TOld[i][j][k-1]*(1-f)*CZM
+								 + TOld[i][j][k+1]*(1-f)*CZP
+								 - TOld[i][j-1][k]*(1-f)*CYM
+								 + TOld[i][j+1][k]*(1-f)*CYP;
+
+							setAmatValue(index,index,A);
+							setAmatValue(index,index_ip,Aip);
+							setAmatValue(index,index_im,Aim);
+							setAmatValue(index,index_jp,Ajp);
+							setAmatValue(index,index_jm,Ajm);
+							setAmatValue(index,index_kp,Akp);
+							setAmatValue(index,index_km,Akm);
+							setbValue(index,bVal);
+}
 						else
 						{
 							double CXPC = 0;
@@ -1200,18 +1286,24 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
 								CXPC = domain.cell[i][j][k].cxp_c*theta/r;
 								CXMC = domain.cell[i][j][k].cxm_c*theta/r;
 							}
-							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*k) = (1.0 + f*(CXPC + CXP + CZP - CXMC - CXM - CZM));
-							Amat(i + nX*j + nX*nY*k, (i-1) + nX*j + nX*nY*k) = f*(CXMC + CXM);
-							Amat(i + nX*j + nX*nY*k, (i+1) + nX*j + nX*nY*k) = f*(-CXPC - CXP);
-							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*(k-1)) = f*CZM;
-							Amat(i + nX*j + nX*nY*k, i + nX*j + nX*nY*(k+1)) = f*(-CZP);
+							A = (1.0 + f*(CXPC + CXP + CZP - CXMC - CXM - CZM));
+							Aim = f*(CXMC + CXM);
+							Aip = f*(-CXPC - CXP);
+							Akm = f*CZM;
+							Akp = f*(-CZP);
 
-							b(i + nX*j + nX*nY*k)
-									= TOld[i][j][k]*(1.0 + (1-f)*(CXMC + CXM + CZM - CXPC - CXP - CZP))
-									- TOld[i-1][j][k]*(1-f)*(CXMC + CXM)
-									+ TOld[i+1][j][k]*(1-f)*(CXPC + CXP)
-									- TOld[i][j][k-1]*(1-f)*CZM
-									+ TOld[i][j][k+1]*(1-f)*CZP;
+							bVal = TOld[i][j][k]*(1.0 + (1-f)*(CXMC + CXM + CZM - CXPC - CXP - CZP))
+								 - TOld[i-1][j][k]*(1-f)*(CXMC + CXM)
+								 + TOld[i+1][j][k]*(1-f)*(CXPC + CXP)
+								 - TOld[i][j][k-1]*(1-f)*CZM
+								 + TOld[i][j][k+1]*(1-f)*CZP;
+
+							setAmatValue(index,index,A);
+							setAmatValue(index,index_ip,Aip);
+							setAmatValue(index,index_im,Aim);
+							setAmatValue(index,index_kp,Akp);
+							setAmatValue(index,index_km,Akm);
+							setbValue(index,bVal);
 						}
 					}
 					}
@@ -1221,7 +1313,7 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
 		}
 	}
 
-	umf::umf_solve(Amat,x,b);
+	solveLinearSystem();
 
 	for (size_t k = 0; k < nZ; ++k)
 	{
@@ -1229,18 +1321,17 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
 		{
 			for (size_t i = 0; i < nX; ++i)
 			{
+				int index = i + nX*j + nX*nY*k;
 				// Read solution into temperature matrix
-				TNew[i][j][k] = x(i + nX*j + nX*nY*k);
+				TNew[i][j][k] = getxValue(index);
 
 				// Update old values for next timestep
 				TOld[i][j][k] = TNew[i][j][k];
 			}
 		}
 	}
-	Amat.clear();
-	b.clear();
-	x.clear();
 
+	clearAmat();
 }
 
 void Ground::calculateADI(int dim)
@@ -1252,13 +1343,16 @@ void Ground::calculateADI(int dim)
 			for (size_t i = 0; i < nX; i++)
 			{
 
-				std::size_t index;
+				int index;
 				if (dim == 1)
 					index = i + nX*j + nX*nY*k;
 				else if (dim == 2)
 					index = j + nY*i + nY*nX*k;
 				else if (dim == 3)
 					index = k + nZ*i + nZ*nX*j;
+
+				double A, Ap, Am, bVal = 0.0;
+
 
 				switch (domain.cell[i][j][k].cellType)
 				{
@@ -1279,105 +1373,132 @@ void Ground::calculateADI(int dim)
 						switch (domain.cell[i][j][k].surface.orientation)
 						{
 						case Surface::X_NEG:
-							Amat(index, index) = 1.0;
+							A = 1.0;
+
 							if (dim == 1)
 							{
-								Amat(index, index+1) = -1.0;
-								b(index) = 0;
+								Ap = -1.0;
+								bVal = 0;
 							}
 							else
 							{
-								b(index) = TOld[i+1][j][k];
+								Ap = 0.0;
+								bVal = TOld[i+1][j][k];
 							}
+
+							setAmatValue(index,index,A);
+							setAmatValue(index,index+1,Ap);
+							setbValue(index,bVal);
 							break;
 						case Surface::X_POS:
-							Amat(index, index) = 1.0;
+							A = 1.0;
 							if (dim == 1)
 							{
-								Amat(index, index-1) = -1.0;
-								b(index) = 0;
+								Am = -1.0;
+								bVal = 0;
 							}
 							else
 							{
-								b(index) = TOld[i-1][j][k];
+								Am = 0.0;
+								bVal = TOld[i-1][j][k];
 							}
+
+							setAmatValue(index,index,A);
+							setAmatValue(index,index-1,Am);
+							setbValue(index,bVal);
 							break;
 						case Surface::Y_NEG:
-							Amat(index, index) = 1.0;
+							A = 1.0;
 							if (dim == 2)
 							{
-								Amat(index, index+1) = -1.0;
-								b(index) = 0;
+								Ap = -1.0;
+								bVal = 0;
 							}
 							else
 							{
-								b(index) = TOld[i][j+1][k];
+								Ap = 0.0;
+								bVal = TOld[i][j+1][k];
 							}
+
+							setAmatValue(index,index,A);
+							setAmatValue(index,index+1,Ap);
+							setbValue(index,bVal);
 							break;
 						case Surface::Y_POS:
-							Amat(index, index) = 1.0;
+							A = 1.0;
 							if (dim == 2)
 							{
-								Amat(index, index-1) = -1.0;
-								b(index) = 0;
+								Am = -1.0;
+								bVal = 0;
 							}
 							else
 							{
-								b(index) = TOld[i][j-1][k];
+								Am = 0.0;
+								bVal = TOld[i][j-1][k];
 							}
+
+							setAmatValue(index,index,A);
+							setAmatValue(index,index-1,Am);
+							setbValue(index,bVal);
 							break;
 						case Surface::Z_NEG:
-							Amat(index, index) = 1.0;
+							A = 1.0;
 							if (dim == 3)
 							{
-								Amat(index, index+1) = -1.0;
-								b(index) = 0;
+								Ap = -1.0;
+								bVal = 0;
 							}
 							else
 							{
-								b(index) = TOld[i][j][k+1];
+								Ap = 0.0;
+								bVal = TOld[i][j][k+1];
 							}
+
+							setAmatValue(index,index,A);
+							setAmatValue(index,index+1,Ap);
+							setbValue(index,bVal);
 							break;
 						case Surface::Z_POS:
-							Amat(index, index) = 1.0;
+							A = 1.0;
 							if (dim == 3)
 							{
-								Amat(index, index-1) = -1.0;
-								b(index) = 0;
+								Am = -1.0;
+								bVal = 0;
 							}
 							else
 							{
-								b(index) = TOld[i][j][k-1];
+								Am = 0.0;
+								bVal = TOld[i][j][k-1];
 							}
+
+							setAmatValue(index,index,A);
+							setAmatValue(index,index-1,Am);
+							setbValue(index,bVal);
 							break;
 						}
 						}
 						break;
-
 					case Surface::CONSTANT_TEMPERATURE:
-						{
-						Amat(index, index) = 1.0;
+						A = 1.0;
+						bVal = domain.cell[i][j][k].surface.temperature;
 
-						b(index) = domain.cell[i][j][k].surface.temperature;
-						}
+						setAmatValue(index,index,A);
+						setbValue(index,bVal);
 						break;
-
 					case Surface::INTERIOR_TEMPERATURE:
-						{
-						Amat(index, index) = 1.0;
+						A = 1.0;
+						bVal = foundation.indoorAirTemperature;
 
-						b(index) = foundation.indoorAirTemperature;
-						}
+						setAmatValue(index,index,A);
+						setbValue(index,bVal);
 						break;
-
 					case Surface::EXTERIOR_TEMPERATURE:
-						{
-						Amat(index, index) = 1.0;
+						A = 1.0;
+						bVal = getOutdoorTemperature();
 
-						b(index) = getOutdoorTemperature();
-						}
+						setAmatValue(index,index,A);
+						setbValue(index,bVal);
 						break;
-
 					case Surface::INTERIOR_FLUX:
 						{
 						double Tair = foundation.indoorAirTemperature;
@@ -1391,88 +1512,106 @@ void Ground::calculateADI(int dim)
 						switch (domain.cell[i][j][k].surface.orientation)
 						{
 						case Surface::X_NEG:
-							{
-							Amat(index, index) = domain.getKXP(i,j,k)/domain.getDXP(i) + (hc + hr);
+							A = domain.getKXP(i,j,k)/domain.getDXP(i) + (hc + hr);
 							if (dim == 1)
 							{
-								Amat(index, index+1) = -domain.getKXP(i,j,k)/domain.getDXP(i);
-								b(index) = (hc + hr)*Tair + q;
+								Ap = -domain.getKXP(i,j,k)/domain.getDXP(i);
+								bVal = (hc + hr)*Tair + q;
 							}
 							else
 							{
-								b(index) = TOld[i+1][j][k]*domain.getKXP(i,j,k)/domain.getDXP(i) + (hc + hr)*Tair + q;
+								Ap = 0.0;
+								bVal = TOld[i+1][j][k]*domain.getKXP(i,j,k)/domain.getDXP(i) + (hc + hr)*Tair + q;
 							}
-							}
+
+							setAmatValue(index,index,A);
+							setAmatValue(index,index+1,Ap);
+							setbValue(index,bVal);
 							break;
 						case Surface::X_POS:
-							{
-							Amat(index, index) = domain.getKXM(i,j,k)/domain.getDXM(i) + (hc + hr);
+							A = domain.getKXM(i,j,k)/domain.getDXM(i) + (hc + hr);
 							if (dim == 1)
 							{
-								Amat(index, index-1) = -domain.getKXM(i,j,k)/domain.getDXM(i);
-								b(index) = (hc + hr)*Tair + q;
+								Am = -domain.getKXM(i,j,k)/domain.getDXM(i);
+								bVal = (hc + hr)*Tair + q;
 							}
 							else
 							{
-								b(index) = TOld[i-1][j][k]*domain.getKXM(i,j,k)/domain.getDXM(i) + (hc + hr)*Tair + q;
+								Am = 0.0;
+								bVal = TOld[i-1][j][k]*domain.getKXM(i,j,k)/domain.getDXM(i) + (hc + hr)*Tair + q;
 							}
-							}
+
+							setAmatValue(index,index,A);
+							setAmatValue(index,index-1,Am);
+							setbValue(index,bVal);
 							break;
 						case Surface::Y_NEG:
-							{
-							Amat(index, index) = domain.getKYP(i,j,k)/domain.getDYP(j) + (hc + hr);
+							A = domain.getKYP(i,j,k)/domain.getDYP(j) + (hc + hr);
 							if (dim == 2)
 							{
-								Amat(index, index+1) = -domain.getKYP(i,j,k)/domain.getDYP(j);
-								b(index) = (hc + hr)*Tair + q;
+								Ap = -domain.getKYP(i,j,k)/domain.getDYP(j);
+								bVal = (hc + hr)*Tair + q;
 							}
 							else
 							{
-								b(index) = TOld[i][j+1][k]*domain.getKYP(i,j,k)/domain.getDYP(j) + (hc + hr)*Tair + q;
+								Ap = 0.0;
+								bVal = TOld[i][j+1][k]*domain.getKYP(i,j,k)/domain.getDYP(j) + (hc + hr)*Tair + q;
 							}
-							}
+
+							setAmatValue(index,index,A);
+							setAmatValue(index,index+1,Ap);
+							setbValue(index,bVal);
 							break;
 						case Surface::Y_POS:
-							{
-							Amat(index, index) = domain.getKYM(i,j,k)/domain.getDYM(j) + (hc + hr);
+							A = domain.getKYM(i,j,k)/domain.getDYM(j) + (hc + hr);
 							if (dim == 2)
 							{
-								Amat(index, index-1) = -domain.getKYM(i,j,k)/domain.getDYM(j);
-								b(index) = (hc + hr)*Tair + q;
+								Am = -domain.getKYM(i,j,k)/domain.getDYM(j);
+								bVal = (hc + hr)*Tair + q;
 							}
 							else
 							{
-								b(index) = TOld[i][j-1][k]*domain.getKYM(i,j,k)/domain.getDYM(j) + (hc + hr)*Tair + q;
+								Am = 0.0;
+								bVal = TOld[i][j-1][k]*domain.getKYM(i,j,k)/domain.getDYM(j) + (hc + hr)*Tair + q;
 							}
-							}
+
+							setAmatValue(index,index,A);
+							setAmatValue(index,index-1,Am);
+							setbValue(index,bVal);
 							break;
 						case Surface::Z_NEG:
-							{
-							Amat(index, index) = domain.getKZP(i,j,k)/domain.getDZP(k) + (hc + hr);
+							A = domain.getKZP(i,j,k)/domain.getDZP(k) + (hc + hr);
 							if (dim == 3)
 							{
-								Amat(index, index+1) = -domain.getKZP(i,j,k)/domain.getDZP(k);
-								b(index) = (hc + hr)*Tair + q;
+								Ap = -domain.getKZP(i,j,k)/domain.getDZP(k);
+								bVal = (hc + hr)*Tair + q;
 							}
 							else
 							{
-								b(index) = TOld[i][j][k+1]*domain.getKZP(i,j,k)/domain.getDZP(k) + (hc + hr)*Tair + q;
+								Ap = 0.0;
+								bVal = TOld[i][j][k+1]*domain.getKZP(i,j,k)/domain.getDZP(k) + (hc + hr)*Tair + q;
 							}
-							}
+
+							setAmatValue(index,index,A);
+							setAmatValue(index,index+1,Ap);
+							setbValue(index,bVal);
 							break;
 						case Surface::Z_POS:
-							{
-							Amat(index, index) = domain.getKZM(i,j,k)/domain.getDZM(k) + (hc + hr);
+							A = domain.getKZM(i,j,k)/domain.getDZM(k) + (hc + hr);
 							if (dim == 3)
 							{
-								Amat(index, index-1) = -domain.getKZM(i,j,k)/domain.getDZM(k);
-								b(index) = (hc + hr)*Tair + q;
+								Am = -domain.getKZM(i,j,k)/domain.getDZM(k);
+								bVal = (hc + hr)*Tair + q;
 							}
 							else
 							{
-								b(index) = TOld[i][j][k-1]*domain.getKZM(i,j,k)/domain.getDZM(k) + (hc + hr)*Tair + q;
+								Am = 0.0;
+								bVal = TOld[i][j][k-1]*domain.getKZM(i,j,k)/domain.getDZM(k) + (hc + hr)*Tair + q;
 							}
-							}
+
+							setAmatValue(index,index,A);
+							setAmatValue(index,index-1,Am);
+							setbValue(index,bVal);
 							break;
 						}
 						}
@@ -1491,88 +1630,106 @@ void Ground::calculateADI(int dim)
 						switch (domain.cell[i][j][k].surface.orientation)
 						{
 						case Surface::X_NEG:
-							{
-							Amat(index, index) = domain.getKXP(i,j,k)/domain.getDXP(i) + (hc + hr);
+							A = domain.getKXP(i,j,k)/domain.getDXP(i) + (hc + hr);
 							if (dim == 1)
 							{
-								Amat(index, index+1) = -domain.getKXP(i,j,k)/domain.getDXP(i);
-								b(index) = (hc + hr*pow(F,0.25))*Tair + q;
+								Ap = -domain.getKXP(i,j,k)/domain.getDXP(i);
+								bVal = (hc + hr*pow(F,0.25))*Tair + q;
 							}
 							else
 							{
-								b(index) = TOld[i+1][j][k]*domain.getKXP(i,j,k)/domain.getDXP(i) + (hc + hr*pow(F,0.25))*Tair + q;
+								Ap = 0.0;
+								bVal = TOld[i+1][j][k]*domain.getKXP(i,j,k)/domain.getDXP(i) + (hc + hr*pow(F,0.25))*Tair + q;
 							}
-							}
+
+							setAmatValue(index,index,A);
+							setAmatValue(index,index+1,Ap);
+							setbValue(index,bVal);
 							break;
 						case Surface::X_POS:
-							{
-							Amat(index, index) = domain.getKXM(i,j,k)/domain.getDXM(i) + (hc + hr);
+							A = domain.getKXM(i,j,k)/domain.getDXM(i) + (hc + hr);
 							if (dim == 1)
 							{
-								Amat(index, index-1) = -domain.getKXM(i,j,k)/domain.getDXM(i);
-								b(index) = (hc + hr*pow(F,0.25))*Tair + q;
+								Am = -domain.getKXM(i,j,k)/domain.getDXM(i);
+								bVal = (hc + hr*pow(F,0.25))*Tair + q;
 							}
 							else
 							{
-								b(index) = TOld[i-1][j][k]*domain.getKXM(i,j,k)/domain.getDXM(i) + (hc + hr*pow(F,0.25))*Tair + q;
+								Am = 0.0;
+								bVal = TOld[i-1][j][k]*domain.getKXM(i,j,k)/domain.getDXM(i) + (hc + hr*pow(F,0.25))*Tair + q;
 							}
-							}
+
+							setAmatValue(index,index,A);
+							setAmatValue(index,index-1,Am);
+							setbValue(index,bVal);
 							break;
 						case Surface::Y_NEG:
-							{
-							Amat(index, index) = domain.getKYP(i,j,k)/domain.getDYP(j) + (hc + hr);
+							A = domain.getKYP(i,j,k)/domain.getDYP(j) + (hc + hr);
 							if (dim == 2)
 							{
-								Amat(index, index+1) = -domain.getKYP(i,j,k)/domain.getDYP(j);
-								b(index) = (hc + hr*pow(F,0.25))*Tair + q;
+								Ap = -domain.getKYP(i,j,k)/domain.getDYP(j);
+								bVal = (hc + hr*pow(F,0.25))*Tair + q;
 							}
 							else
 							{
-								b(index) = TOld[i][j+1][k]*domain.getKYP(i,j,k)/domain.getDYP(j) + (hc + hr*pow(F,0.25))*Tair + q;
+								Ap = 0.0;
+								bVal = TOld[i][j+1][k]*domain.getKYP(i,j,k)/domain.getDYP(j) + (hc + hr*pow(F,0.25))*Tair + q;
 							}
-							}
+
+							setAmatValue(index,index,A);
+							setAmatValue(index,index+1,Ap);
+							setbValue(index,bVal);
 							break;
 						case Surface::Y_POS:
-							{
-							Amat(index, index) = domain.getKYM(i,j,k)/domain.getDYM(j) + (hc + hr);
+							A = domain.getKYM(i,j,k)/domain.getDYM(j) + (hc + hr);
 							if (dim == 2)
 							{
-								Amat(index, index-1) = -domain.getKYM(i,j,k)/domain.getDYM(j);
-								b(index) = (hc + hr*pow(F,0.25))*Tair + q;
+								Am = -domain.getKYM(i,j,k)/domain.getDYM(j);
+								bVal = (hc + hr*pow(F,0.25))*Tair + q;
 							}
 							else
 							{
-								b(index) = TOld[i][j-1][k]*domain.getKYM(i,j,k)/domain.getDYM(j) + (hc + hr*pow(F,0.25))*Tair + q;
+								Am = 0.0;
+								bVal = TOld[i][j-1][k]*domain.getKYM(i,j,k)/domain.getDYM(j) + (hc + hr*pow(F,0.25))*Tair + q;
 							}
-							}
+
+							setAmatValue(index,index,A);
+							setAmatValue(index,index-1,Am);
+							setbValue(index,bVal);
 							break;
 						case Surface::Z_NEG:
-							{
-							Amat(index, index) = domain.getKZP(i,j,k)/domain.getDZP(k) + (hc + hr);
+							A = domain.getKZP(i,j,k)/domain.getDZP(k) + (hc + hr);
 							if (dim == 3)
 							{
-								Amat(index, index+1) = -domain.getKZP(i,j,k)/domain.getDZP(k);
-								b(index) = (hc + hr*pow(F,0.25))*Tair + q;
+								Ap = -domain.getKZP(i,j,k)/domain.getDZP(k);
+								bVal = (hc + hr*pow(F,0.25))*Tair + q;
 							}
 							else
 							{
-								b(index) = TOld[i][j][k+1]*domain.getKZP(i,j,k)/domain.getDZP(k) + (hc + hr*pow(F,0.25))*Tair + q;
+								Ap = 0.0;
+								bVal = TOld[i][j][k+1]*domain.getKZP(i,j,k)/domain.getDZP(k) + (hc + hr*pow(F,0.25))*Tair + q;
 							}
-							}
+
+							setAmatValue(index,index,A);
+							setAmatValue(index,index+1,Ap);
+							setbValue(index,bVal);
 							break;
 						case Surface::Z_POS:
-							{
-							Amat(index, index) = domain.getKZM(i,j,k)/domain.getDZM(k) + (hc + hr);
+							A = domain.getKZM(i,j,k)/domain.getDZM(k) + (hc + hr);
 							if (dim == 3)
 							{
-								Amat(index, index-1) = -domain.getKZM(i,j,k)/domain.getDZM(k);
-								b(index) = (hc + hr*pow(F,0.25))*Tair + q;
+								Am = -domain.getKZM(i,j,k)/domain.getDZM(k);
+								bVal = (hc + hr*pow(F,0.25))*Tair + q;
 							}
 							else
 							{
-								b(index) = TOld[i][j][k-1]*domain.getKZM(i,j,k)/domain.getDZM(k) + (hc + hr*pow(F,0.25))*Tair + q;
+								Am = 0.0;
+								bVal = TOld[i][j][k-1]*domain.getKZM(i,j,k)/domain.getDZM(k) + (hc + hr*pow(F,0.25))*Tair + q;
 							}
-							}
+
+							setAmatValue(index,index,A);
+							setAmatValue(index,index-1,Am);
+							setbValue(index,bVal);
 							break;
 						}
 						}
@@ -1581,14 +1738,18 @@ void Ground::calculateADI(int dim)
 					}
 					break;
 				case Cell::INTERIOR_AIR:
-					Amat(index, index) = 1.0;
+					A = 1.0;
+					bVal = foundation.indoorAirTemperature;
 
-					b(index) = foundation.indoorAirTemperature;
+					setAmatValue(index,index,A);
+					setbValue(index,bVal);
 					break;
 				case Cell::EXTERIOR_AIR:
-					Amat(index, index) = 1.0;
+					A = 1.0;
+					bVal = getOutdoorTemperature();
 
-					b(index) = getOutdoorTemperature();
+					setAmatValue(index,index,A);
+					setbValue(index,bVal);
 					break;
 				default:
 					{
@@ -1619,43 +1780,41 @@ void Ground::calculateADI(int dim)
 					{
 						if (dim == 1) // x
 						{
-							Amat(index, index) = 1.0 + (3 - 2*f)*(CXP - CXM);
-							Amat(index, index-1) = (3 - 2*f)*CXM;
-							Amat(index, index+1) = (3 - 2*f)*(-CXP);
+							A = 1.0 + (3 - 2*f)*(CXP - CXM);
+							Am = (3 - 2*f)*CXM;
+							Ap = (3 - 2*f)*(-CXP);
 
-							b(index)
-									= TOld[i][j][k]*(1.0 + f*(CZM + CYM - CZP - CYP))
-									- TOld[i][j][k-1]*f*CZM
-									+ TOld[i][j][k+1]*f*CZP
-									- TOld[i][j-1][k]*f*CYM
-									+ TOld[i][j+1][k]*f*CYP;
+							bVal = TOld[i][j][k]*(1.0 + f*(CZM + CYM - CZP - CYP))
+								   - TOld[i][j][k-1]*f*CZM
+								   + TOld[i][j][k+1]*f*CZP
+								   - TOld[i][j-1][k]*f*CYM
+								   + TOld[i][j+1][k]*f*CYP;
 						}
 						else if (dim == 2) // y
 						{
-							Amat(index, index) = (1.0 + (3 - 2*f)*(CYP - CYM));
-							Amat(index, index-1) = (3 - 2*f)*CYM;
-							Amat(index, index+1) = (3 - 2*f)*(-CYP);
+							A = (1.0 + (3 - 2*f)*(CYP - CYM));
+							Am = (3 - 2*f)*CYM;
+							Ap = (3 - 2*f)*(-CYP);
 
-							b(index)
-									= TOld[i][j][k]*(1.0 + f*(CXM + CZM - CXP - CZP))
-									- TOld[i-1][j][k]*f*CXM
-									+ TOld[i+1][j][k]*f*CXP
-									- TOld[i][j][k-1]*f*CZM
-									+ TOld[i][j][k+1]*f*CZP;
+							bVal = TOld[i][j][k]*(1.0 + f*(CXM + CZM - CXP - CZP))
+								   - TOld[i-1][j][k]*f*CXM
+								   + TOld[i+1][j][k]*f*CXP
+								   - TOld[i][j][k-1]*f*CZM
+								   + TOld[i][j][k+1]*f*CZP;
 						}
 						else if (dim == 3) // z
 						{
-							Amat(index, index) = (1.0 + (3 - 2*f)*(CZP - CZM));
-							Amat(index, index-1) = (3 - 2*f)*CZM;
-							Amat(index, index+1) = (3 - 2*f)*(-CZP);
+							A = (1.0 + (3 - 2*f)*(CZP - CZM));
+							Am = (3 - 2*f)*CZM;
+							Ap = (3 - 2*f)*(-CZP);
 
-							b(index)
-									= TOld[i][j][k]*(1.0 + f*(CXM + CYM - CXP - CYP))
-									- TOld[i-1][j][k]*f*CXM
-									+ TOld[i+1][j][k]*f*CXP
-									- TOld[i][j-1][k]*f*CYM
-									+ TOld[i][j+1][k]*f*CYP;
+							bVal = TOld[i][j][k]*(1.0 + f*(CXM + CYM - CXP - CYP))
+								   - TOld[i-1][j][k]*f*CXM
+								   + TOld[i+1][j][k]*f*CXP
+								   - TOld[i][j-1][k]*f*CYM
+								   + TOld[i][j+1][k]*f*CYP;
 						}
+
 					}
 					else
 					{
@@ -1669,27 +1828,31 @@ void Ground::calculateADI(int dim)
 						}
 						if (dim == 1) // x
 						{
-							Amat(index, index) = 1.0 + (2 - f)*(CXPC + CXP - CXMC - CXM);
-							Amat(index, index-1) = (2 - f)*(CXMC + CXM);
-							Amat(index, index+1) = (2 - f)*(-CXPC - CXP);
+							A = 1.0 + (2 - f)*(CXPC + CXP - CXMC - CXM);
+							Am = (2 - f)*(CXMC + CXM);
+							Ap = (2 - f)*(-CXPC - CXP);
 
-							b(index)
-									= TOld[i][j][k]*(1.0 + f*(CZM - CZP))
-									- TOld[i][j][k-1]*f*CZM
-									+ TOld[i][j][k+1]*f*CZP;
+							bVal = TOld[i][j][k]*(1.0 + f*(CZM - CZP))
+								   - TOld[i][j][k-1]*f*CZM
+								   + TOld[i][j][k+1]*f*CZP;
 						}
 						else if (dim == 3) // z
 						{
-							Amat(index, index) = 1.0 + (2 - f)*(CZP - CZM);
-							Amat(index, index-1) = (2 - f)*CZM;
-							Amat(index, index+1) = (2 - f)*(-CZP);
+							A = 1.0 + (2 - f)*(CZP - CZM);
+							Am = (2 - f)*CZM;
+							Ap = (2 - f)*(-CZP);
 
-							b(index)
-									= TOld[i][j][k]*(1.0 + f*(CXMC + CXM - CXPC - CXP))
-									- TOld[i-1][j][k]*f*(CXMC + CXM)
-									+ TOld[i+1][j][k]*f*(CXPC + CXP);
+							bVal = TOld[i][j][k]*(1.0 + f*(CXMC + CXM - CXPC - CXP))
+								   - TOld[i-1][j][k]*f*(CXMC + CXM)
+								   + TOld[i+1][j][k]*f*(CXPC + CXP);
 						}
 					}
+
+					setAmatValue(index,index,A);
+					setAmatValue(index,index-1,Am);
+					setAmatValue(index,index+1,Ap);
+					setbValue(index,bVal);
+
 					}
 					break;
 				}
@@ -1697,7 +1860,7 @@ void Ground::calculateADI(int dim)
 		}
 	}
 
-	umf::umf_solve(Amat,x,b);
+	solveLinearSystem();
 
 	for (size_t k = 0; k < nZ; ++k)
 	{
@@ -1705,7 +1868,7 @@ void Ground::calculateADI(int dim)
 		{
 			for (size_t i = 0; i < nX; ++i)
 			{
-				std::size_t index;
+				int index;
 				if (dim == 1)
 					index = i + nX*j + nX*nY*k;
 				else if (dim == 2)
@@ -1714,16 +1877,14 @@ void Ground::calculateADI(int dim)
 					index = k + nZ*i + nZ*nX*j;
 
 				// Read solution into temperature matrix
-				TNew[i][j][k] = x(index);
+				TNew[i][j][k] = getxValue(index);
 				// Update old values for next timestep
 				TOld[i][j][k] = TNew[i][j][k];
 			}
 		}
 	}
-	Amat.clear();
-	b.clear();
-	x.clear();
 
+	clearAmat();
 }
 
 void Ground::calculate(double t)
@@ -1772,6 +1933,59 @@ void Ground::plot()
 		}
 	}
 }
+
+void Ground::setAmatValue(const int i,const int j,const double val)
+{
+#if defined(USE_LIS_SOLVER)
+	lis_matrix_set_value(LIS_INS_VALUE,i,j,val,Amat);
+#else
+	Amat(i,j) = val;
+#endif
+}
+
+void Ground::setbValue(const int i,const double val)
+{
+#if defined(USE_LIS_SOLVER)
+	lis_vector_set_value(LIS_INS_VALUE,i,val,b);
+#else
+	b(i) = val;
+#endif
+}
+
+void Ground::solveLinearSystem()
+{
+#if defined(USE_LIS_SOLVER)
+    lis_matrix_set_type(Amat,LIS_MATRIX_CSR);
+    lis_matrix_assemble(Amat);
+
+    lis_solve(Amat,b,x,solver);
+#else
+    umf::umf_solve(Amat,x,b);
+#endif
+}
+
+void Ground::clearAmat()
+{
+#if defined(USE_LIS_SOLVER)
+	lis_matrix_destroy(Amat);
+    lis_matrix_create(LIS_COMM_WORLD,&Amat);
+	lis_matrix_set_size(Amat,nX*nY*nZ,nX*nY*nZ);
+#else
+	Amat.clear();
+#endif
+}
+
+double Ground::getxValue(const int i)
+{
+#if defined(USE_LIS_SOLVER)
+	double xVal;
+	lis_vector_get_value(x,i,&xVal);
+	return xVal;
+#else
+	return x(i);
+#endif
+}
+
 
 boost::posix_time::ptime Ground::getSimTime(double t)
 {

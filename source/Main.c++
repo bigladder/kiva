@@ -16,21 +16,32 @@
  * along with Kiva.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#define USE_LIS_SOLVER
+
 #include <iostream>
 #include <fstream>
+#include <cmath>
+
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/date_time/gregorian/gregorian.hpp>
+#include <boost/program_options.hpp>
+
+#if defined(USE_LIS_SOLVER)
+#include "lis.h"
+#endif
+
 #include "InputParser.h"
 #include "WeatherData.h"
 #include "Input.h"
 #include "Ground.h"
-#include <cmath>
-#include <boost/program_options.hpp>
 
 namespace po = boost::program_options;
 
 int main(int argc, char *argv[])
 {
+#if defined(USE_LIS_SOLVER)
+	lis_initialize(&argc, &argv);
+#endif
 
 	std::string versionInfo = "kiva 0.1.0";
 	std::string copyrightInfo = "Copyright (C) 2012-2013 Big Ladder Software\n"
@@ -70,7 +81,6 @@ int main(int argc, char *argv[])
 			std::cout << copyrightInfo << "\n\n";
 			std::cout << usageInfo << "\n";
 			std::cout << generic;
-			return 0;
 		}
 		if (vm.count("help"))
 		{
@@ -78,13 +88,11 @@ int main(int argc, char *argv[])
 			std::cout << copyrightInfo << "\n\n";
 			std::cout << usageInfo << "\n";
 			std::cout << generic;
-			return 0;
 		}
 		if (vm.count("version"))
 		{
 			std::cout << versionInfo << "\n";
 			std::cout << copyrightInfo << "\n";
-			return 0;
 		}
 		if (vm.count("input-file") && vm.count("weather-file") && vm.count("output-file"))
 		{
@@ -156,7 +164,6 @@ int main(int argc, char *argv[])
 			boost::posix_time::time_duration totalCalc = finishCalc - beginCalc;
 			std::cout << "Elapsed Time: " << totalCalc << std::endl;
 
-			return 0;
 
 		}
 		else
@@ -165,13 +172,26 @@ int main(int argc, char *argv[])
 
 			std::cout << usageInfo << "\n";
 			std::cout << generic;
-			return 0;
+
+#if defined(USE_LIS_SOLVER)
+			lis_finalize();
+#endif
+			return 1;
 		}
+
+#if defined(USE_LIS_SOLVER)
+		lis_finalize();
+#endif
+		return 0;
+
 	}
     catch(std::exception& e)
     {
     	std::cout << e.what() << std::endl;
-        return 1;
+#if defined(USE_LIS_SOLVER)
+    	lis_finalize();
+#endif
+    	return 1;
     }
 
 }

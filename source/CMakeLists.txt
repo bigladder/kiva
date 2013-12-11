@@ -46,6 +46,7 @@ set(kiva_lib boost_date_time
              boost_filesystem
              boost_system
              boost_program_options
+             lis
              umfpack
              amd
              cholmod

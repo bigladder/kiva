@@ -36,6 +36,12 @@
 
 #include <boost/multi_array.hpp>
 
+#if defined(USE_LIS_SOLVER)
+
+#include "lis.h"
+
+#else
+
 #include <boost/numeric/ublas/matrix.hpp>
 #include <boost/numeric/ublas/matrix_sparse.hpp>
 
@@ -44,6 +50,8 @@
 #include <boost/numeric/bindings/umfpack/umfpack.hpp>
 
 namespace umf = boost::numeric::bindings::umfpack;
+
+#endif
 
 class Ground
 {
@@ -66,12 +74,20 @@ private:
 	boost::multi_array<double, 3> V; // ADE lower sweep, n+1
 	boost::multi_array<double, 3> VOld; // ADE lower sweep, n
 
-	boost::numeric::ublas::compressed_matrix<double,
-			boost::numeric::ublas::column_major, 0,
-			boost::numeric::ublas::unbounded_array<int>,
-			boost::numeric::ublas::unbounded_array<double> > Amat;
+#if defined(USE_LIS_SOLVER)
+	LIS_MATRIX Amat;
+	LIS_VECTOR b, x;
 
-	boost::numeric::ublas::vector<double> b, x;
+	LIS_SOLVER solver;
+#else
+    boost::numeric::ublas::compressed_matrix<double,
+                    boost::numeric::ublas::column_major, 0,
+                    boost::numeric::ublas::unbounded_array<int>,
+                    boost::numeric::ublas::unbounded_array<double> > Amat;
+
+    boost::numeric::ublas::vector<double> b, x;
+#endif
+
 
 	boost::multi_array<double, 3> TOld; // solution, n
 
@@ -119,6 +135,12 @@ private:
 	void plot();
 
 	// Misc. Functions
+	void setAmatValue(const int i, const int j, const double val);
+	void setbValue(const int i, const double val);
+	void solveLinearSystem();
+	void clearAmat();
+	double getxValue(const int i);
+
 	boost::posix_time::ptime getSimTime(double t);
 
 	double getInitialTemperature(double t, double z);
