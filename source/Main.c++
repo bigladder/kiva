@@ -43,7 +43,7 @@ int main(int argc, char *argv[])
 	lis_initialize(&argc, &argv);
 #endif
 
-	std::string versionInfo = "kiva 0.1.0";
+	std::string versionInfo = "kiva 0.1.1";
 	std::string copyrightInfo = "Copyright (C) 2012-2013 Big Ladder Software\n"
 			               	    "Web: www.bigladdersoftware.com";
 	std::string usageInfo = "Usage: kiva [Input File] [Weather File] [Output File]\n"
