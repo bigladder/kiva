@@ -2070,6 +2070,183 @@ double Ground::getLocalWindSpeed()
 	return vLocal;
 }
 
+std::string Ground::printOutputHeaders()
+{
+	std::string outputHeader = "";
+
+	for (size_t o = 0; o < foundation.outputReport.size(); o++)
+	{
+		outputHeader += ", " + foundation.outputReport[o].headerText;
+	}
+
+	return outputHeader;
+}
+
+std::string Ground::printOutputLine()
+{
+	std::string outputLine = "";
+
+	for (size_t o = 0; o < foundation.outputReport.size(); o++)
+	{
+		std::string valueString;
+		double value;
+		if (foundation.outputReport[o].variableID == 0)
+		{
+			// "Slab Core Average Heat Flux [W/m2]"
+			value = getSurfaceAverageHeatFlux("Slab Interior");
+			valueString = boost::lexical_cast<std::string>(value);
+		}
+		else if (foundation.outputReport[o].variableID == 1)
+		{
+			// "Slab Core Average Temperature [K]"
+			value = getSurfaceAverageTemperature("Slab Interior");
+			valueString = boost::lexical_cast<std::string>(value);
+		}
+		else if (foundation.outputReport[o].variableID == 2)
+		{
+			// "Slab Core Average Effective Temperature [C]"
+			value = getSurfaceEffectiveTemperature("Slab Interior",foundation.slab.totalResistance());
+			valueString = boost::lexical_cast<std::string>(value);
+		}
+		else if (foundation.outputReport[o].variableID == 3)
+		{
+			// "Slab Core Total Heat Transfer Rate [W]"
+			value = getSurfaceAverageHeatFlux("Slab Interior")*
+					getSurfaceArea("Slab Interior");
+			valueString = boost::lexical_cast<std::string>(value);
+		}
+		else if (foundation.outputReport[o].variableID == 4)
+		{
+			// "Slab Perimeter Average Heat Flux [W/m2]"
+			if (foundation.hasPerimeterSurface)
+			{
+				value = getSurfaceAverageHeatFlux("Slab Perimeter");
+				valueString = boost::lexical_cast<std::string>(value);
+			}
+			else
+				valueString = "null";
+		}
+		else if (foundation.outputReport[o].variableID == 5)
+		{
+			// "Slab Perimeter Average Temperature [K]"
+			if (foundation.hasPerimeterSurface)
+			{
+				value = getSurfaceAverageTemperature("Slab Perimeter");
+				valueString = boost::lexical_cast<std::string>(value);
+			}
+			else
+				valueString = "null";
+		}
+	    else if (foundation.outputReport[o].variableID == 6)
+		{
+			// "Slab Perimeter Average Effective Temperature [C]"
+			if (foundation.hasPerimeterSurface)
+			{
+				value = getSurfaceEffectiveTemperature("Slab Perimeter",foundation.slab.totalResistance());
+				valueString = boost::lexical_cast<std::string>(value);
+			}
+			else
+				valueString = "null";
+		}
+	    else if (foundation.outputReport[o].variableID == 7)
+		{
+			// "Slab Perimeter Total Heat Transfer Rate [W]"
+			if (foundation.hasPerimeterSurface)
+			{
+				value = getSurfaceAverageHeatFlux("Slab Perimeter")*
+						getSurfaceArea("Slab Perimeter");
+				valueString = boost::lexical_cast<std::string>(value);
+			}
+			else
+				valueString = "null";
+		}
+	    else if (foundation.outputReport[o].variableID == 8)
+		{
+			// "Slab Core Total Heat Transfer Rate [W]"
+			double coreTotal = getSurfaceAverageHeatFlux("Slab Interior")*
+					getSurfaceArea("Slab Interior");
+			double perimeterTotal = 0.0;
+			if (foundation.hasPerimeterSurface)
+				perimeterTotal = getSurfaceAverageHeatFlux("Slab Perimeter")*
+				getSurfaceArea("Slab Perimeter");
+
+			value = coreTotal + perimeterTotal;
+			valueString = boost::lexical_cast<std::string>(value);
+		}
+
+		else if (foundation.outputReport[o].variableID == 9)
+		{
+			// "Wall Average Heat Flux [W/m2]"
+			if (foundation.excavationDepth > 0.0)
+			{
+				value = getSurfaceAverageHeatFlux("Interior Wall");
+				valueString = boost::lexical_cast<std::string>(value);
+			}
+			else
+				valueString = "null";
+
+		}
+		else if (foundation.outputReport[o].variableID == 10)
+		{
+			// "Wall Average Temperature [K]"
+			if (foundation.excavationDepth > 0.0)
+			{
+				value = getSurfaceAverageTemperature("Interior Wall");
+				valueString = boost::lexical_cast<std::string>(value);
+			}
+			else
+				valueString = "null";
+		}
+		else if (foundation.outputReport[o].variableID == 11)
+		{
+			// "Wall Average Effective Temperature [C]"
+			if (foundation.excavationDepth > 0.0)
+			{
+				value = getSurfaceEffectiveTemperature("Interior Wall",foundation.wall.totalResistance());
+				valueString = boost::lexical_cast<std::string>(value);
+			}
+			else
+				valueString = "null";
+		}
+		else if (foundation.outputReport[o].variableID == 12)
+		{
+			// "Wall Total Heat Transfer Rate [W]"
+			if (foundation.excavationDepth > 0.0)
+			{
+				value = getSurfaceAverageHeatFlux("Interior Wall")*
+						getSurfaceArea("Interior Wall");
+				valueString = boost::lexical_cast<std::string>(value);
+			}
+			else
+				valueString = "null";
+		}
+		else if (foundation.outputReport[o].variableID == 13)
+		{
+			// "Slab Core Total Heat Transfer Rate [W]"
+			double coreTotal = getSurfaceAverageHeatFlux("Slab Interior")*
+					getSurfaceArea("Slab Interior");
+			double perimeterTotal = 0.0;
+			double wallTotal = 0.0;
+			if (foundation.hasPerimeterSurface)
+				perimeterTotal = getSurfaceAverageHeatFlux("Slab Perimeter")*
+				getSurfaceArea("Slab Perimeter");
+
+			if (foundation.excavationDepth > 0.0)
+				wallTotal = getSurfaceAverageHeatFlux("Interior Wall")*
+						getSurfaceArea("Interior Wall");
+
+			value = coreTotal + perimeterTotal + wallTotal;
+			valueString = boost::lexical_cast<std::string>(value);
+		}
+
+		outputLine += ", " + valueString;
+	}
+
+	return outputLine;
+
+}
+
+
 double Ground::getSurfaceAverageHeatFlux(std::string surfaceName)
 {
 	// Find surface
@@ -2218,7 +2395,7 @@ double Ground::getSurfaceAverageHeatFlux(std::string surfaceName)
 	return averageFlux;
 }
 
-double Ground::getBelowSlabTemperature(std::string surfaceName)
+double Ground::getSurfaceEffectiveTemperature(std::string surfaceName, double constructionRValue)
 {
 	// Find surface
 	Surface surface;
@@ -2368,7 +2545,263 @@ double Ground::getBelowSlabTemperature(std::string surfaceName)
 
 	double hAvg = averageFlux*totalArea/(Tair - Tavg);
 
-	return Tair - averageFlux*(foundation.slab.totalResistance()+1/hAvg) - 273.15;;
+	return Tair - averageFlux*(constructionRValue+1/hAvg) - 273.15;
+}
+
+double Ground::getSurfaceArea(std::string surfaceName)
+{
+	// Find surface
+	Surface surface;
+	for (size_t s = 0; s < foundation.surfaces.size(); s++)
+	{
+		if (foundation.surfaces[s].name == surfaceName)
+		{
+			surface = foundation.surfaces[s];
+		}
+	}
+
+	size_t iMin, iMax, jMin, jMax, kMin, kMax;
+	double totalArea = 0.0;
+
+	// Find bounding indices
+	if (surface.orientation == Surface::X_POS ||
+		surface.orientation == Surface::X_NEG)
+	{
+		iMin = domain.meshX.getNearestIndex(surface.xMin);
+		iMax = domain.meshX.getNearestIndex(surface.xMax);
+		jMin = domain.meshY.getNextIndex(surface.yMin);
+		jMax = domain.meshY.getPreviousIndex(surface.yMax);
+		kMin = domain.meshZ.getNextIndex(surface.zMin);
+		kMax = domain.meshZ.getPreviousIndex(surface.zMax);
+	}
+	else if (surface.orientation == Surface::Y_POS ||
+		surface.orientation == Surface::Y_NEG)
+	{
+		iMin = domain.meshX.getNextIndex(surface.xMin);
+		iMax = domain.meshX.getPreviousIndex(surface.xMax);
+		jMin = domain.meshY.getNearestIndex(surface.yMin);
+		jMax = domain.meshY.getNearestIndex(surface.yMax);
+		kMin = domain.meshZ.getNextIndex(surface.zMin);
+		kMax = domain.meshZ.getPreviousIndex(surface.zMax);
+	}
+	else // if (surface.orientation == Surface::Z_POS ||
+		 // surface.orientation == Surface::Z_NEG)
+	{
+		iMin = 0;
+		iMax = nX-1;
+		jMin = 0;
+		jMax = nY-1;
+		kMin = domain.meshZ.getNearestIndex(surface.zMin);
+		kMax = domain.meshZ.getNearestIndex(surface.zMax);
+	}
+
+	// Loop over cells and calculate heat loss from surface
+	for (size_t k = kMin; k <= kMax; ++k)
+	{
+		for (size_t j = jMin; j <= jMax; ++j)
+		{
+			for (size_t i = iMin; i <= iMax; ++i)
+			{
+				if (surface.orientation == Surface::X_POS ||
+					surface.orientation == Surface::X_NEG ||
+					surface.orientation == Surface::Y_POS ||
+					surface.orientation == Surface::Y_NEG ||
+					boost::geometry::within(Point(domain.meshX.centers[i],domain.meshY.centers[j]),surface.polygon))
+				{
+
+					// Calculate Area
+					double A;
+					if (foundation.coordinateSystem == Foundation::CS_2DAXIAL)
+					{
+						if (surface.orientation == Surface::X_POS ||
+							surface.orientation == Surface::X_NEG)
+						{
+							A = 2.0*PI*domain.meshX.centers[i]*domain.meshZ.deltas[k];
+						}
+						else // if (surface.orientation == Surface::Z_POS ||
+							 // surface.orientation == Surface::Z_NEG)
+						{
+							A = 2.0*PI*domain.meshX.deltas[i]*domain.meshX.centers[i];
+						}
+					}
+					else if (foundation.coordinateSystem == Foundation::CS_2DLINEAR)
+					{
+						if (surface.orientation == Surface::X_POS ||
+							surface.orientation == Surface::X_NEG)
+						{
+							A = domain.meshZ.deltas[k];
+						}
+						else // if (surface.orientation == Surface::Z_POS ||
+							 // surface.orientation == Surface::Z_NEG)
+						{
+							A = domain.meshX.deltas[i];
+						}
+					}
+					else  // if (foundation.coordinateSystem == Foundation::CS_3D)
+					{
+						if (surface.orientation == Surface::X_POS ||
+							surface.orientation == Surface::X_NEG)
+						{
+							A = domain.meshY.deltas[j]*domain.meshZ.deltas[k];
+						}
+						else if (surface.orientation == Surface::Y_POS ||
+							surface.orientation == Surface::Y_NEG)
+						{
+							A = domain.meshX.deltas[i]*domain.meshZ.deltas[k];
+						}
+						else // if (surface.orientation == Surface::Z_POS ||
+							 // surface.orientation == Surface::Z_NEG)
+						{
+							A = domain.meshX.deltas[i]*domain.meshY.deltas[j];
+						}
+
+						if (foundation.coordinateSystem == Foundation::CS_3D_SYMMETRY)
+						{
+							if (isXSymmetric(foundation.polygon))
+								A = 2*A;
+
+							if (isYSymmetric(foundation.polygon))
+								A = 2*A;
+						}
+					}
+
+					totalArea += A;
+				}
+			}
+		}
+	}
+
+	return totalArea;
+}
+
+double Ground::getSurfaceAverageTemperature(std::string surfaceName)
+{
+	// Find surface
+	Surface surface;
+	for (size_t s = 0; s < foundation.surfaces.size(); s++)
+	{
+		if (foundation.surfaces[s].name == surfaceName)
+		{
+			surface = foundation.surfaces[s];
+		}
+	}
+
+	size_t iMin, iMax, jMin, jMax, kMin, kMax;
+	double totalArea = 0.0;
+
+	// Find bounding indices
+	if (surface.orientation == Surface::X_POS ||
+		surface.orientation == Surface::X_NEG)
+	{
+		iMin = domain.meshX.getNearestIndex(surface.xMin);
+		iMax = domain.meshX.getNearestIndex(surface.xMax);
+		jMin = domain.meshY.getNextIndex(surface.yMin);
+		jMax = domain.meshY.getPreviousIndex(surface.yMax);
+		kMin = domain.meshZ.getNextIndex(surface.zMin);
+		kMax = domain.meshZ.getPreviousIndex(surface.zMax);
+	}
+	else if (surface.orientation == Surface::Y_POS ||
+		surface.orientation == Surface::Y_NEG)
+	{
+		iMin = domain.meshX.getNextIndex(surface.xMin);
+		iMax = domain.meshX.getPreviousIndex(surface.xMax);
+		jMin = domain.meshY.getNearestIndex(surface.yMin);
+		jMax = domain.meshY.getNearestIndex(surface.yMax);
+		kMin = domain.meshZ.getNextIndex(surface.zMin);
+		kMax = domain.meshZ.getPreviousIndex(surface.zMax);
+	}
+	else // if (surface.orientation == Surface::Z_POS ||
+		 // surface.orientation == Surface::Z_NEG)
+	{
+		iMin = 0;
+		iMax = nX-1;
+		jMin = 0;
+		jMax = nY-1;
+		kMin = domain.meshZ.getNearestIndex(surface.zMin);
+		kMax = domain.meshZ.getNearestIndex(surface.zMax);
+	}
+
+	std::vector<double> TA;
+
+	// Loop over cells and calculate heat loss from surface
+	for (size_t k = kMin; k <= kMax; ++k)
+	{
+		for (size_t j = jMin; j <= jMax; ++j)
+		{
+			for (size_t i = iMin; i <= iMax; ++i)
+			{
+				if (surface.orientation == Surface::X_POS ||
+					surface.orientation == Surface::X_NEG ||
+					surface.orientation == Surface::Y_POS ||
+					surface.orientation == Surface::Y_NEG ||
+					boost::geometry::within(Point(domain.meshX.centers[i],domain.meshY.centers[j]),surface.polygon))
+				{
+					// Calculate Area
+					double A;
+					if (foundation.coordinateSystem == Foundation::CS_2DAXIAL)
+					{
+						if (surface.orientation == Surface::X_POS ||
+							surface.orientation == Surface::X_NEG)
+						{
+							A = 2.0*PI*domain.meshX.centers[i]*domain.meshZ.deltas[k];
+						}
+						else // if (surface.orientation == Surface::Z_POS ||
+							 // surface.orientation == Surface::Z_NEG)
+						{
+							A = 2.0*PI*domain.meshX.deltas[i]*domain.meshX.centers[i];
+						}
+					}
+					else if (foundation.coordinateSystem == Foundation::CS_2DLINEAR)
+					{
+						if (surface.orientation == Surface::X_POS ||
+							surface.orientation == Surface::X_NEG)
+						{
+							A = domain.meshZ.deltas[k];
+						}
+						else // if (surface.orientation == Surface::Z_POS ||
+							 // surface.orientation == Surface::Z_NEG)
+						{
+							A = domain.meshX.deltas[i];
+						}
+					}
+					else  // if (foundation.coordinateSystem == Foundation::CS_3D)
+					{
+						if (surface.orientation == Surface::X_POS ||
+							surface.orientation == Surface::X_NEG)
+						{
+							A = domain.meshY.deltas[j]*domain.meshZ.deltas[k];
+						}
+						else if (surface.orientation == Surface::Y_POS ||
+							surface.orientation == Surface::Y_NEG)
+						{
+							A = domain.meshX.deltas[i]*domain.meshZ.deltas[k];
+						}
+						else // if (surface.orientation == Surface::Z_POS ||
+							 // surface.orientation == Surface::Z_NEG)
+						{
+							A = domain.meshX.deltas[i]*domain.meshY.deltas[j];
+						}
+
+						if (foundation.coordinateSystem == Foundation::CS_3D_SYMMETRY)
+						{
+							if (isXSymmetric(foundation.polygon))
+								A = 2*A;
+
+							if (isYSymmetric(foundation.polygon))
+								A = 2*A;
+						}
+					}
+
+					TA.push_back(TNew[i][j][k]*A);
+					totalArea += A;
+				}
+			}
+		}
+	}
+
+	double Tavg = std::accumulate((TA).begin(),(TA).end(), 0.0)/totalArea;
+
+	return Tavg;
 }
 
 double getArrayValue(boost::multi_array<double, 3> Mat, std::size_t i, std::size_t j, std::size_t k)

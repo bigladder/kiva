@@ -342,6 +342,14 @@ Input inputParser(std::string inputFile)
 
 	// Output
 
+	// CSV Reports
+	for(size_t i=0;i<yamlInput["Foundation"]["outputReport"].size();i++)
+	{
+		OutputVariable temp(yamlInput["Foundation"]["outputReport"][i].as<int>());
+		foundation1.outputReport.push_back(temp);
+	}
+
+	// Animations/Plots
 	for(size_t i=0;i<yamlInput["Foundation"]["outputAnimations"].size();i++)
 	{
 		OutputAnimation temp;

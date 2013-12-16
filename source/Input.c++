@@ -28,6 +28,7 @@ void SimulationControl::setStartTime()
 }
 
 
+
 double Wall::totalWidth()
 {
 	double width = 0.0;
@@ -63,6 +64,29 @@ double Slab::totalResistance()
 	for (size_t n = 0; n < layers.size(); n++) R += (layers[n].thickness/layers[n].material.conductivity);
 
 	return R;
+}
+
+OutputVariable::OutputVariable(int varID)
+{
+	headers.resize(14);
+
+	headers[0] = "Slab Core Average Heat Flux [W/m2]";
+	headers[1] = "Slab Core Average Temperature [K]";
+	headers[2] = "Slab Core Average Effective Temperature [C]";
+	headers[3] = "Slab Core Total Heat Transfer Rate [W]";
+	headers[4] = "Slab Perimeter Average Heat Flux [W/m2]";
+	headers[5] = "Slab Perimeter Average Temperature [K]";
+	headers[6] = "Slab Perimeter Average Effective Temperature [C]";
+	headers[7] = "Slab Perimeter Total Heat Transfer Rate [W]";
+	headers[8] = "Slab Total Heat Transfer Rate [W]";
+	headers[9] = "Wall Average Heat Flux [W/m2]";
+	headers[10] = "Wall Average Temperature [K]";
+	headers[11] = "Wall Average Effective Temperature [C]";
+	headers[12] = "Wall Total Heat Transfer Rate [W]";
+	headers[13] = "Total Heat Transfer Rate [W]";
+
+	variableID = varID;
+	headerText = headers[varID];
 }
 
 void Block::setSquarePolygon()

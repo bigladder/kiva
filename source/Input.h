@@ -137,6 +137,19 @@ public:
 
 };
 
+class OutputVariable
+{
+private:
+	std::vector<std::string> headers;
+
+public:
+	int variableID;
+	std::string headerText;
+
+	OutputVariable(int varID);
+
+};
+
 class Block
 {
 public:
@@ -349,8 +362,8 @@ public:
 	// Output Animations
 	std::vector<OutputAnimation> outputAnimations;
 
-	// Output Reports
-
+	// Output Report
+	std::vector<OutputVariable> outputReport;
 
 	// Derived variables
 	double area;  // [m2] Area of foundation

@@ -116,13 +116,15 @@ int main(int argc, char *argv[])
 			double tend = simDuration.total_seconds(); // [s] Simulation end time
 			double timestep = input.simulationControl.timestep.total_seconds();
 
-			// set up output file
-			std::ofstream output;
-			output.open(vm["output-file"].as<std::string>().c_str());
-			output << "Time Stamp, Ground Core Temperature [C], Ground Perimeter Temperature [C]" << std::endl;
 
 			// initialize
 			Ground ground(weather,input.foundations[0],input.simulationControl);
+
+			// set up output file
+			std::ofstream output;
+			output.open(vm["output-file"].as<std::string>().c_str());
+			output << "Time Stamp" << ground.printOutputHeaders() << std::endl;
+
 
 			// loop
 
@@ -146,9 +148,8 @@ int main(int argc, char *argv[])
 					prevTime = currentTime;
 				}
 
-				output << to_simple_string(simTime) << ", " <<
-						  ground.getBelowSlabTemperature("Slab Interior") << ", " <<
-						  ground.getBelowSlabTemperature("Slab Perimeter") << std::endl;
+				output << to_simple_string(simTime) <<
+						  ground.printOutputLine() << std::endl;
 
 			}
 

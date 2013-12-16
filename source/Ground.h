@@ -33,6 +33,7 @@
 
 #include <boost/thread.hpp>
 #include <boost/bind.hpp>
+#include <boost/lexical_cast.hpp>
 
 #include <boost/multi_array.hpp>
 
@@ -106,9 +107,9 @@ public:
 	// Calculator
 	void calculate(double t);
 
-	double getSurfaceAverageHeatFlux(std::string surfaceName);
+	std::string printOutputHeaders();
+	std::string printOutputLine();
 
-	double getBelowSlabTemperature(std::string surfaceName);
 
 private:
 
@@ -157,6 +158,13 @@ private:
 	double getOutdoorTemperature();
 
 	double getLocalWindSpeed();
+
+	double getSurfaceAverageHeatFlux(std::string surfaceName);
+	double getSurfaceAverageTemperature(std::string surfaceName);
+	double getSurfaceArea(std::string surfaceName);
+
+	double getSurfaceEffectiveTemperature(std::string surfaceName, double constructionRValue);
+
 };
 
 
