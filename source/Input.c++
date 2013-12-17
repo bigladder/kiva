@@ -183,7 +183,7 @@ void Foundation::setMeshData()
 	double zMin = -deepGroundDepth;
 
 	double zGrade = 0.0;
-	double zSlab = zMax - excavationDepth;
+	double zSlab = zMax - foundationDepth;
 
 	double zNearDeep = std::min(zSlab, zGrade);  // This will change depending on configuration
 
@@ -359,7 +359,7 @@ void Foundation::setMeshData()
 			surfaces.push_back(surface);
 		}
 
-		if(excavationDepth > 0.0)
+		if(foundationDepth > 0.0)
 		{
 			// Interior Wall Surface
 			{
@@ -533,7 +533,7 @@ void Foundation::setMeshData()
 			surfaces.push_back(surface);
 		}
 
-		if(excavationDepth > 0.0)
+		if(foundationDepth > 0.0)
 		{
 			// Interior Air Top Surface
 			Surface surface;
@@ -799,7 +799,7 @@ void Foundation::setMeshData()
 		double xMax = xMaxBB + farFieldWidth;
 		double yMax = yMaxBB + farFieldWidth;
 
-		if(excavationDepth > 0.0)
+		if(foundationDepth > 0.0)
 		{
 			// Interior Wall Surface
 			{
@@ -1043,7 +1043,7 @@ void Foundation::setMeshData()
 			surfaces.push_back(surface);
 		}
 
-		if(excavationDepth > 0.0)
+		if(foundationDepth > 0.0)
 		{
 			// Interior Air Top Surface
 			Polygon poly;
@@ -1522,7 +1522,7 @@ void Foundation::setMeshData()
 
 		std::size_t nV = polygon.outer().size();
 
-		if(excavationDepth > 0.0)
+		if(foundationDepth > 0.0)
 		{
 			// Interior Wall Surface
 			{
@@ -1778,7 +1778,7 @@ void Foundation::setMeshData()
 			surfaces.push_back(surface);
 		}
 
-		if(excavationDepth > 0.0)
+		if(foundationDepth > 0.0)
 		{
 			// Interior Air Top Surface
 			Polygon tempPoly;

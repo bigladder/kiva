@@ -28,13 +28,13 @@ Foundation:
       -
         material: Standard 140a Soil
         thickness: 0.24
-    depth: 0.10  # [m]
+    heightAboveGrade: 0.10  # [m]
     height: 0.10  # [m]
     interiorEmissivity: 0
     exteriorEmissivity: 0
     exteriorAbsorptivity: 0
 
-  excavationDepth: 0.0  # [m]
+  foundationDepth: 0.0  # [m]
   farFieldWidth: 40.0  # [m]
   deepGroundDepth: 40.0  # [m]
   deepGroundBoundary: CONSTANT-TEMP  # AUTO | CONSTANT-TEMP | ZERO-FLUX

@@ -2178,7 +2178,7 @@ std::string Ground::printOutputLine()
 		else if (foundation.outputReport[o].variableID == 9)
 		{
 			// "Wall Average Heat Flux [W/m2]"
-			if (foundation.excavationDepth > 0.0)
+			if (foundation.foundationDepth > 0.0)
 			{
 				value = getSurfaceAverageHeatFlux("Interior Wall");
 				valueString = boost::lexical_cast<std::string>(value);
@@ -2190,7 +2190,7 @@ std::string Ground::printOutputLine()
 		else if (foundation.outputReport[o].variableID == 10)
 		{
 			// "Wall Average Temperature [K]"
-			if (foundation.excavationDepth > 0.0)
+			if (foundation.foundationDepth > 0.0)
 			{
 				value = getSurfaceAverageTemperature("Interior Wall");
 				valueString = boost::lexical_cast<std::string>(value);
@@ -2201,7 +2201,7 @@ std::string Ground::printOutputLine()
 		else if (foundation.outputReport[o].variableID == 11)
 		{
 			// "Wall Average Effective Temperature [C]"
-			if (foundation.excavationDepth > 0.0)
+			if (foundation.foundationDepth > 0.0)
 			{
 				value = getSurfaceEffectiveTemperature("Interior Wall",foundation.wall.totalResistance());
 				valueString = boost::lexical_cast<std::string>(value);
@@ -2212,7 +2212,7 @@ std::string Ground::printOutputLine()
 		else if (foundation.outputReport[o].variableID == 12)
 		{
 			// "Wall Total Heat Transfer Rate [W]"
-			if (foundation.excavationDepth > 0.0)
+			if (foundation.foundationDepth > 0.0)
 			{
 				value = getSurfaceAverageHeatFlux("Interior Wall")*
 						getSurfaceArea("Interior Wall");
@@ -2232,7 +2232,7 @@ std::string Ground::printOutputLine()
 				perimeterTotal = getSurfaceAverageHeatFlux("Slab Perimeter")*
 				getSurfaceArea("Slab Perimeter");
 
-			if (foundation.excavationDepth > 0.0)
+			if (foundation.foundationDepth > 0.0)
 				wallTotal = getSurfaceAverageHeatFlux("Interior Wall")*
 						getSurfaceArea("Interior Wall");
 

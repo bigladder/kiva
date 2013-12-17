@@ -179,7 +179,7 @@ Input inputParser(std::string inputFile)
 
 	// Site
 
-	foundation1.excavationDepth = yamlInput["Foundation"]["excavationDepth"].as<double>();
+	foundation1.foundationDepth = yamlInput["Foundation"]["foundationDepth"].as<double>();
 	foundation1.farFieldWidth = yamlInput["Foundation"]["farFieldWidth"].as<double>();
 	foundation1.deepGroundDepth = yamlInput["Foundation"]["deepGroundDepth"].as<double>();
 

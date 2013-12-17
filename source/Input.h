@@ -247,7 +247,7 @@ public:
 	double farFieldWidth;  // [m] distance from outside of wall to the edge
 						   // of the domain
 	double deepGroundTemperature;  // [K]
-	double excavationDepth; // [m] below top of wall
+	double foundationDepth; // [m] below top of wall
 
 	enum DeepGroundBoundary
 	{
