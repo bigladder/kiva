@@ -61,7 +61,6 @@ private:
 
 	int frameNumber;
 
-	double nextPlotTime;
 
 public:
 
@@ -71,6 +70,7 @@ public:
 	SliceType sliceType;
 
 	double tStart, tEnd;
+	double nextPlotTime;
 	GroundPlot(OutputAnimation &outputAnimation, Domain &domain, std::vector<Block> &blocks);
 	void createFrame(boost::multi_array<double, 3> &T, std::string timeStamp);
 	bool makeNewFrame(double tNow);

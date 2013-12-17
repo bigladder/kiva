@@ -246,6 +246,7 @@ void Ground::initializePlots()
 		boost::posix_time::time_duration untilEnd =  endTime - simStart;
 
 		plots[p].tStart = untilStart.total_seconds();
+		plots[p].nextPlotTime = untilStart.total_seconds();
 		plots[p].tEnd = untilEnd.total_seconds();
 	}
 }

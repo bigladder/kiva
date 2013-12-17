@@ -28,7 +28,6 @@ GroundPlot::GroundPlot(OutputAnimation &outputAnimation, Domain &domain, std::ve
 	boost::filesystem::remove_all(outputAnimation.name + "_frames");
 	boost::filesystem::create_directory(outputAnimation.name + "_frames");
 
-	nextPlotTime = 0.0;
 	frameNumber = 0;
 
 	std::size_t contourLevels = 13;

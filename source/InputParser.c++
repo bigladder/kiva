@@ -103,7 +103,7 @@ Input inputParser(std::string inputFile)
 
 		}
 
-		foundation1.wall.depth = yamlInput["Foundation"]["wall"]["depth"].as<double>();
+		foundation1.wall.heightAboveGrade = yamlInput["Foundation"]["wall"]["heightAboveGrade"].as<double>();
 		foundation1.wall.height = yamlInput["Foundation"]["wall"]["height"].as<double>();
 		foundation1.wall.interiorEmissivity = yamlInput["Foundation"]["wall"]["interiorEmissivity"].as<double>();
 		foundation1.wall.exteriorEmissivity = yamlInput["Foundation"]["wall"]["exteriorEmissivity"].as<double>();

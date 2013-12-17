@@ -83,7 +83,7 @@ public:
 	double interiorEmissivity;
 	double exteriorEmissivity;
 	double exteriorAbsorptivity;
-	double depth;  // [m] below grade depth
+	double heightAboveGrade;  // [m] below grade depth
 	double height;  // [m] total height
 	std::vector <Layer> layers;
 

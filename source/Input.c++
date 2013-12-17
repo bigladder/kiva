@@ -176,7 +176,7 @@ void Foundation::setMeshData()
 	// Set misc. "Z" dimensions (relative to grade)
 	double zMax;
 	if (hasWall)
-		zMax = wall.height - wall.depth;
+		zMax = wall.heightAboveGrade;
 	else
 		zMax = 0.0;
 
@@ -279,7 +279,7 @@ void Foundation::setMeshData()
 	double zWall = 0.0;
 	if (hasWall)
 	{
-		zWall = -wall.depth;
+		zWall = wall.heightAboveGrade - wall.height;
 		if(zWall < zNearDeep)
 		{
 			zNearDeep = zWall;
