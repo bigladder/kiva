@@ -203,6 +203,10 @@ public:
 	};
 	Orientation orientation;
 
+	std::vector<boost::tuple<std::size_t,std::size_t,std::size_t> > indices;
+
+	double area;
+
 	void setSquarePolygon();
 };
 

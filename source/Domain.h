@@ -37,6 +37,9 @@ public:
 	double specificHeat;
 	double conductivity;
 
+	double volume;
+	double area;
+
 	// derived properties
 	double cxp_c;
 	double cxm_c;

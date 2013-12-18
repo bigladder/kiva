@@ -21,6 +21,8 @@
 
 #include "Domain.h"
 
+static const double PI = 4.0*atan(1.0);
+
 Domain::Domain()
 {
 
@@ -53,11 +55,11 @@ void Domain::setDomain(Foundation &foundation)
 
 	cell.resize(boost::extents[nX][nY][nZ]);
 
-	for (size_t k = 0; k < nZ; k++)
+	for (std::size_t k = 0; k < nZ; k++)
 	{
-		for (size_t j = 0; j < nY; j++)
+		for (std::size_t j = 0; j < nY; j++)
 		{
-			for (size_t i = 0; i < nX; i++)
+			for (std::size_t i = 0; i < nX; i++)
 			{
 
 				// Set Cell Properties
@@ -88,7 +90,7 @@ void Domain::setDomain(Foundation &foundation)
 					}
 				}
 
-				for (size_t b = 0; b < foundation.blocks.size(); b++)
+				for (std::size_t b = 0; b < foundation.blocks.size(); b++)
 				{
 					if (boost::geometry::within(Point(meshX.centers[i],meshY.centers[j]), foundation.blocks[b].polygon) &&
 						isGreaterThan(meshZ.centers[k], foundation.blocks[b].zMin) &&
@@ -113,7 +115,7 @@ void Domain::setDomain(Foundation &foundation)
 					}
 				}
 
-				for (size_t s = 0; s < foundation.surfaces.size(); s++)
+				for (std::size_t s = 0; s < foundation.surfaces.size(); s++)
 				{
 					if (boost::geometry::intersects(Point(meshX.centers[i],meshY.centers[j]), foundation.surfaces[s].polygon))
 					{
@@ -153,103 +155,181 @@ void Domain::setDomain(Foundation &foundation)
 									cell[i][j][k].cellType = Cell::ZERO_THICKNESS;
 							}
 
+							if (cell[i][j][k].cellType == Cell::BOUNDARY)
+							{
+								foundation.surfaces[s].indices.push_back(boost::tuple<std::size_t,std::size_t,std::size_t> (i,j,k));
+							}
+
 						}
 					}
 				}
-			}
-		}
 
-		// Set effective properties of zero-thickness cells
-		// based on other cells
-		for (size_t k = 0; k < nZ; k++)
-		{
-			for (size_t j = 0; j < nY; j++)
-			{
-				for (size_t i = 0; i < nX; i++)
+				// Set cell volume
+				cell[i][j][k].volume = meshX.deltas[i]*meshY.deltas[j]*meshZ.deltas[k];
+
+				// for boundary cells, set cell area
+				if (cell[i][j][k].cellType == Cell::BOUNDARY)
 				{
-					int numZeroDims = 0;
-					if (isEqual(meshX.deltas[i], 0.0))
-						numZeroDims += 1;
-					if (isEqual(meshY.deltas[j], 0.0))
-						numZeroDims += 1;
-					if (isEqual(meshZ.deltas[k], 0.0))
-						numZeroDims += 1;
-
-					if (numZeroDims > 0
-							&& cell[i][j][k].cellType != Cell::INTERIOR_AIR
-							&& cell[i][j][k].cellType != Cell::EXTERIOR_AIR)
-					{
-						if (foundation.coordinateSystem == Foundation::CS_3D ||
-							foundation.coordinateSystem == Foundation::CS_3D_SYMMETRY)
-						{
-							if (i != 0 && i != nX - 1 &&
-								j != 0 && j != nY - 1 &&
-								k != 0 && k != nZ - 1)
-								set3DZeroThicknessCellProperties(i,j,k);
-						}
-						else
-						{
-							if (i != 0 && i != nX - 1 && k != 0 && k != nZ - 1)
-								set2DZeroThicknessCellProperties(i,j,k);
-						}
-					}
-				}
-			}
-		}
-
-		// Calculate matrix coefficients
-		for (size_t k = 0; k < nZ; k++)
-		{
-			for (size_t j = 0; j < nY; j++)
-			{
-				for (size_t i = 0; i < nX; i++)
-				{
-
-					// PDE Coefficients
-
-					// Radial X terms
 					if (foundation.coordinateSystem == Foundation::CS_2DAXIAL)
 					{
-						cell[i][j][k].cxp_c = (getDXM(i)*getKXP(i,j,k))/
-								((getDXM(i) + getDXP(i))*getDXP(i));
-						cell[i][j][k].cxm_c = (getDXP(i)*getKXM(i,j,k))/
-								((getDXM(i) + getDXP(i))*getDXM(i));
+						if (cell[i][j][k].surface.orientation == Surface::X_POS ||
+							cell[i][j][k].surface.orientation == Surface::X_NEG)
+						{
+							cell[i][j][k].area = 2.0*PI*meshX.centers[i]*meshZ.deltas[k];
+						}
+						else // if (surface.orientation == Surface::Z_POS ||
+							 // surface.orientation == Surface::Z_NEG)
+						{
+							cell[i][j][k].area = 2.0*PI*meshX.deltas[i]*meshX.centers[i];
+						}
 					}
-					else
+					else if (foundation.coordinateSystem == Foundation::CS_2DLINEAR)
 					{
-						cell[i][j][k].cxp_c = 0.0;
-						cell[i][j][k].cxm_c = 0.0;
+						if (cell[i][j][k].surface.orientation == Surface::X_POS ||
+							cell[i][j][k].surface.orientation == Surface::X_NEG)
+						{
+							cell[i][j][k].area = meshZ.deltas[k];
+						}
+						else // if (surface.orientation == Surface::Z_POS ||
+							 // surface.orientation == Surface::Z_NEG)
+						{
+							cell[i][j][k].area = meshX.deltas[i];
+						}
 					}
+					else  // if (foundation.coordinateSystem == Foundation::CS_3D)
+					{
+						if (cell[i][j][k].surface.orientation == Surface::X_POS ||
+							cell[i][j][k].surface.orientation == Surface::X_NEG)
+						{
+							cell[i][j][k].area = meshY.deltas[j]*meshZ.deltas[k];
+						}
+						else if (cell[i][j][k].surface.orientation == Surface::Y_POS ||
+								 cell[i][j][k].surface.orientation == Surface::Y_NEG)
+						{
+							cell[i][j][k].area = meshX.deltas[i]*meshZ.deltas[k];
+						}
+						else // if (surface.orientation == Surface::Z_POS ||
+							 // surface.orientation == Surface::Z_NEG)
+						{
+							cell[i][j][k].area = meshX.deltas[i]*meshY.deltas[j];
+						}
 
-					// Cartesian X terms
-					cell[i][j][k].cxp = (2*getKXP(i,j,k))/
-							((getDXM(i) + getDXP(i))*getDXP(i));
-					cell[i][j][k].cxm = -1*(2*getKXM(i,j,k))/
-							((getDXM(i) + getDXP(i))*getDXM(i));
+						if (foundation.coordinateSystem == Foundation::CS_3D_SYMMETRY)
+						{
+							if (isXSymmetric(foundation.polygon))
+								cell[i][j][k].area = 2*cell[i][j][k].area;
 
-					// Cartesian Z terms
-					cell[i][j][k].czp = (2*getKZP(i,j,k))/
-							((getDZM(k) + getDZP(k))*getDZP(k));
-					cell[i][j][k].czm = -1*(2*getKZM(i,j,k))/
-							((getDZM(k) + getDZP(k))*getDZM(k));
+							if (isYSymmetric(foundation.polygon))
+								cell[i][j][k].area = 2*cell[i][j][k].area;
+						}
+					}
+				}
+			}
+		}
+	}
 
-					// Cartesian Y terms
+	// Set effective properties of zero-thickness cells
+	// based on other cells
+	for (std::size_t k = 0; k < nZ; k++)
+	{
+		for (std::size_t j = 0; j < nY; j++)
+		{
+			for (std::size_t i = 0; i < nX; i++)
+			{
+				int numZeroDims = 0;
+				if (isEqual(meshX.deltas[i], 0.0))
+					numZeroDims += 1;
+				if (isEqual(meshY.deltas[j], 0.0))
+					numZeroDims += 1;
+				if (isEqual(meshZ.deltas[k], 0.0))
+					numZeroDims += 1;
+
+				if (numZeroDims > 0
+						&& cell[i][j][k].cellType != Cell::INTERIOR_AIR
+						&& cell[i][j][k].cellType != Cell::EXTERIOR_AIR)
+				{
 					if (foundation.coordinateSystem == Foundation::CS_3D ||
 						foundation.coordinateSystem == Foundation::CS_3D_SYMMETRY)
 					{
-						cell[i][j][k].cyp = (2*getKYP(i,j,k))/
-								((getDYM(j) + getDYP(j))*getDYP(j));
-						cell[i][j][k].cym = -1*(2*getKYM(i,j,k))/
-								((getDYM(j) + getDYP(j))*getDYM(j));
+						if (i != 0 && i != nX - 1 &&
+							j != 0 && j != nY - 1 &&
+							k != 0 && k != nZ - 1)
+							set3DZeroThicknessCellProperties(i,j,k);
 					}
 					else
 					{
-						cell[i][j][k].cyp = 0.0;
-						cell[i][j][k].cym = 0.0;
+						if (i != 0 && i != nX - 1 && k != 0 && k != nZ - 1)
+							set2DZeroThicknessCellProperties(i,j,k);
 					}
-
 				}
 			}
+		}
+	}
+
+	// Calculate matrix coefficients
+	for (std::size_t k = 0; k < nZ; k++)
+	{
+		for (std::size_t j = 0; j < nY; j++)
+		{
+			for (std::size_t i = 0; i < nX; i++)
+			{
+
+				// PDE Coefficients
+
+				// Radial X terms
+				if (foundation.coordinateSystem == Foundation::CS_2DAXIAL)
+				{
+					cell[i][j][k].cxp_c = (getDXM(i)*getKXP(i,j,k))/
+							((getDXM(i) + getDXP(i))*getDXP(i));
+					cell[i][j][k].cxm_c = (getDXP(i)*getKXM(i,j,k))/
+							((getDXM(i) + getDXP(i))*getDXM(i));
+				}
+				else
+				{
+					cell[i][j][k].cxp_c = 0.0;
+					cell[i][j][k].cxm_c = 0.0;
+				}
+
+				// Cartesian X terms
+				cell[i][j][k].cxp = (2*getKXP(i,j,k))/
+						((getDXM(i) + getDXP(i))*getDXP(i));
+				cell[i][j][k].cxm = -1*(2*getKXM(i,j,k))/
+						((getDXM(i) + getDXP(i))*getDXM(i));
+
+				// Cartesian Z terms
+				cell[i][j][k].czp = (2*getKZP(i,j,k))/
+						((getDZM(k) + getDZP(k))*getDZP(k));
+				cell[i][j][k].czm = -1*(2*getKZM(i,j,k))/
+						((getDZM(k) + getDZP(k))*getDZM(k));
+
+				// Cartesian Y terms
+				if (foundation.coordinateSystem == Foundation::CS_3D ||
+					foundation.coordinateSystem == Foundation::CS_3D_SYMMETRY)
+				{
+					cell[i][j][k].cyp = (2*getKYP(i,j,k))/
+							((getDYM(j) + getDYP(j))*getDYP(j));
+					cell[i][j][k].cym = -1*(2*getKYM(i,j,k))/
+							((getDYM(j) + getDYP(j))*getDYM(j));
+				}
+				else
+				{
+					cell[i][j][k].cyp = 0.0;
+					cell[i][j][k].cym = 0.0;
+				}
+			}
+		}
+	}
+
+	for (std::size_t s = 0; s < foundation.surfaces.size(); s++)
+	{
+		foundation.surfaces[s].area = 0;
+		for (std::size_t index = 0; index < foundation.surfaces[s].indices.size(); index++)
+		{
+			std::size_t i = boost::get<0>(foundation.surfaces[s].indices[index]);
+			std::size_t j = boost::get<1>(foundation.surfaces[s].indices[index]);
+			std::size_t k = boost::get<2>(foundation.surfaces[s].indices[index]);
+
+			foundation.surfaces[s].area += cell[i][j][k].area;
 		}
 	}
 }
@@ -565,7 +645,7 @@ void Domain::setZeroThicknessCellProperties(std::size_t i,
 		if (cell[iP][jP][kP].cellType != Cell::INTERIOR_AIR &&
 			cell[iP][jP][kP].cellType != Cell::EXTERIOR_AIR)
 		{
-		double vol = meshX.deltas[iP]*meshY.deltas[jP]*meshZ.deltas[kP];
+		double vol = cell[iP][jP][kP].volume;
 		double rho = cell[iP][jP][kP].density;
 		double cp = cell[iP][jP][kP].specificHeat;
 		double kth = cell[iP][jP][kP].conductivity;
