@@ -162,27 +162,27 @@ GroundPlot::GroundPlot(OutputAnimation &outputAnimation, Domain &domain, std::ve
 	TGrid = TGridRef;
 	cDat = cDatRef;
 
-	hGrid.a[0] = hAxis.mesh.centers[hAxis.nMin];
+	hGrid.a[0] = hAxis.mesh.centers[hAxis.nMin]/0.3048;
 
 	for(size_t i = 0; i < hAxis.nN - 1; i++)
 	{
-		hDat.a[i] = hAxis.mesh.centers[i + hAxis.nMin];
-		hGrid.a[i + 1] = hAxis.mesh.dividers[i + hAxis.nMin + 1];
+		hDat.a[i] = hAxis.mesh.centers[i + hAxis.nMin]/0.3048;
+		hGrid.a[i + 1] = hAxis.mesh.dividers[i + hAxis.nMin + 1]/0.3048;
 	}
 
-	hDat.a[hAxis.nN - 1] = hAxis.mesh.centers[hAxis.nMax];
-	hGrid.a[hAxis.nN] = hAxis.mesh.centers[hAxis.nMax];
+	hDat.a[hAxis.nN - 1] = hAxis.mesh.centers[hAxis.nMax]/0.3048;
+	hGrid.a[hAxis.nN] = hAxis.mesh.centers[hAxis.nMax]/0.3048;
 
-	vGrid.a[0] = vAxis.mesh.centers[vAxis.nMin];
+	vGrid.a[0] = vAxis.mesh.centers[vAxis.nMin]/0.3048;
 
 	for(size_t j = 0; j < vAxis.nN - 1; j++)
 	{
-		vDat.a[j] = vAxis.mesh.centers[j + vAxis.nMin];
-		vGrid.a[j + 1] = vAxis.mesh.dividers[j + vAxis.nMin + 1];
+		vDat.a[j] = vAxis.mesh.centers[j + vAxis.nMin]/0.3048;
+		vGrid.a[j + 1] = vAxis.mesh.dividers[j + vAxis.nMin + 1]/0.3048;
 	}
 
-	vDat.a[vAxis.nN - 1] = vAxis.mesh.centers[vAxis.nMax];
-	vGrid.a[vAxis.nN] = vAxis.mesh.centers[vAxis.nMax];
+	vDat.a[vAxis.nN - 1] = vAxis.mesh.centers[vAxis.nMax]/0.3048;
+	vGrid.a[vAxis.nN] = vAxis.mesh.centers[vAxis.nMax]/0.3048;
 
 	for(size_t j = 0; j <= vAxis.nN; j++)
 	{
@@ -277,17 +277,17 @@ void GroundPlot::createFrame(boost::multi_array<double, 3> &T, std::string timeS
 		{
 		case XZ_2D:
 			{
-			mglPoint bl = mglPoint(std::min(std::max(blocks[b].xMin, hMin),hMax),
-								   std::min(std::max(blocks[b].zMin, vMin),vMax),
+			mglPoint bl = mglPoint(std::min(std::max(blocks[b].xMin/0.3048, hMin),hMax),
+								   std::min(std::max(blocks[b].zMin/0.3048, vMin),vMax),
 								   210.0);
-			mglPoint br = mglPoint(std::max(std::min(blocks[b].xMax, hMax),hMin),
-								   std::min(std::max(blocks[b].zMin, vMin),vMax),
+			mglPoint br = mglPoint(std::max(std::min(blocks[b].xMax/0.3048, hMax),hMin),
+								   std::min(std::max(blocks[b].zMin/0.3048, vMin),vMax),
 								   210.0);
-			mglPoint tr = mglPoint(std::max(std::min(blocks[b].xMax, hMax),hMin),
-								   std::max(std::min(blocks[b].zMax, vMax),vMin),
+			mglPoint tr = mglPoint(std::max(std::min(blocks[b].xMax/0.3048, hMax),hMin),
+								   std::max(std::min(blocks[b].zMax/0.3048, vMax),vMin),
 								   210.0);
-			mglPoint tl = mglPoint(std::min(std::max(blocks[b].xMin, hMin),hMax),
-								   std::max(std::min(blocks[b].zMax, vMax),vMin),
+			mglPoint tl = mglPoint(std::min(std::max(blocks[b].xMin/0.3048, hMin),hMax),
+								   std::max(std::min(blocks[b].zMax/0.3048, vMax),vMin),
 								   210.0);
 
 			gr.Line(bl, br, "k");
@@ -315,12 +315,12 @@ void GroundPlot::createFrame(boost::multi_array<double, 3> &T, std::string timeS
 				std::size_t nV = intersection[p].outer().size();
 				for (std::size_t v = 0; v < nV - 1; v++)
 				{
-					gr.Line(mglPoint(intersection[p].outer()[v].get<0>(),intersection[p].outer()[v].get<1>(),210.0),
-							mglPoint(intersection[p].outer()[v+1].get<0>(),intersection[p].outer()[v+1].get<1>(),210.0),
+					gr.Line(mglPoint(intersection[p].outer()[v].get<0>()/0.3048,intersection[p].outer()[v].get<1>()/0.3048,210.0),
+							mglPoint(intersection[p].outer()[v+1].get<0>()/0.3048,intersection[p].outer()[v+1].get<1>()/0.3048,210.0),
 							"k");
 				}
-				gr.Line(mglPoint(intersection[p].outer()[nV - 1].get<0>(),intersection[p].outer()[nV - 1].get<1>(),210.0),
-						mglPoint(intersection[p].outer()[0].get<0>(),intersection[p].outer()[0].get<1>(),210.0),
+				gr.Line(mglPoint(intersection[p].outer()[nV - 1].get<0>()/0.3048,intersection[p].outer()[nV - 1].get<1>()/0.3048,210.0),
+						mglPoint(intersection[p].outer()[0].get<0>()/0.3048,intersection[p].outer()[0].get<1>()/0.3048,210.0),
 						"k");
 			}
 
@@ -346,21 +346,21 @@ void GroundPlot::createFrame(boost::multi_array<double, 3> &T, std::string timeS
 			{
 				// Use point pairs and zmin/max to draw rectangles similar to 2D
 				// case.
-				double p1 = intersection[p].get<0>();
-				double p2 = intersection[p+1].get<0>();
+				double p1 = intersection[p].get<0>()/0.3048;
+				double p2 = intersection[p+1].get<0>()/0.3048;
 
 
 				mglPoint bl = mglPoint(std::min(std::max(p1, hMin),hMax),
-									   std::min(std::max(blocks[b].zMin, vMin),vMax),
+									   std::min(std::max(blocks[b].zMin/0.3048, vMin),vMax),
 									   210.0);
 				mglPoint br = mglPoint(std::max(std::min(p2, hMax),hMin),
-									   std::min(std::max(blocks[b].zMin, vMin),vMax),
+									   std::min(std::max(blocks[b].zMin/0.3048, vMin),vMax),
 									   210.0);
 				mglPoint tr = mglPoint(std::max(std::min(p2, hMax),hMin),
-									   std::max(std::min(blocks[b].zMax, vMax),vMin),
+									   std::max(std::min(blocks[b].zMax/0.3048, vMax),vMin),
 									   210.0);
 				mglPoint tl = mglPoint(std::min(std::max(p1, hMin),hMax),
-									   std::max(std::min(blocks[b].zMax, vMax),vMin),
+									   std::max(std::min(blocks[b].zMax/0.3048, vMax),vMin),
 									   210.0);
 
 				gr.Line(bl, br, "k");
@@ -393,21 +393,21 @@ void GroundPlot::createFrame(boost::multi_array<double, 3> &T, std::string timeS
 			{
 				// Use point pairs and zmin/max to draw rectangles similar to 2D
 				// case.
-				double p1 = intersection[p].get<1>();
-				double p2 = intersection[p+1].get<1>();
+				double p1 = intersection[p].get<1>()/0.3048;
+				double p2 = intersection[p+1].get<1>()/0.3048;
 
 
 				mglPoint bl = mglPoint(std::min(std::max(p1, hMin),hMax),
-									   std::min(std::max(blocks[b].zMin, vMin),vMax),
+									   std::min(std::max(blocks[b].zMin/0.3048, vMin),vMax),
 									   210.0);
 				mglPoint br = mglPoint(std::max(std::min(p2, hMax),hMin),
-									   std::min(std::max(blocks[b].zMin, vMin),vMax),
+									   std::min(std::max(blocks[b].zMin/0.3048, vMin),vMax),
 									   210.0);
 				mglPoint tr = mglPoint(std::max(std::min(p2, hMax),hMin),
-									   std::max(std::min(blocks[b].zMax, vMax),vMin),
+									   std::max(std::min(blocks[b].zMax/0.3048, vMax),vMin),
 									   210.0);
 				mglPoint tl = mglPoint(std::min(std::max(p1, hMin),hMax),
-									   std::max(std::min(blocks[b].zMax, vMax),vMin),
+									   std::max(std::min(blocks[b].zMax/0.3048, vMax),vMin),
 									   210.0);
 
 				gr.Line(bl, br, "k");
@@ -426,9 +426,11 @@ void GroundPlot::createFrame(boost::multi_array<double, 3> &T, std::string timeS
 		}
 	}
 
-	// Timestamp
-	gr.Puts(hText, vText, timeStamp.c_str(), ":AL");
+	gr.Puts(0.85, 0.055, "\\textdegree F", ":AL");
 
+	// Timestamp
+
+	gr.Puts(hText, vText, timeStamp.c_str(), ":AL");
 
 	gr.WritePNG((outputAnimation.name + "_frames/" + outputAnimation.name + str(boost::format("%04d") % frameNumber) + ".png").c_str(),"",false);
 
