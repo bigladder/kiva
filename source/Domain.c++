@@ -561,6 +561,7 @@ void Domain::setZeroThicknessCellProperties(std::size_t i,
 		std::size_t jP = boost::get<1>(pointSet[p]);
 		std::size_t kP = boost::get<2>(pointSet[p]);
 
+		// Do not add air cell properties into the weighted average
 		if (cell[iP][jP][kP].cellType != Cell::INTERIOR_AIR &&
 			cell[iP][jP][kP].cellType != Cell::EXTERIOR_AIR)
 		{
@@ -570,14 +571,20 @@ void Domain::setZeroThicknessCellProperties(std::size_t i,
 		double kth = cell[iP][jP][kP].conductivity;
 
 		volumes.push_back(vol);
-		densities.push_back(rho);
-		specificHeats.push_back(cp);
-		conductivities.push_back(kth);
-
 		masses.push_back(vol*rho);
 		capacities.push_back(vol*rho*cp);
 		weightedConductivity.push_back(vol*kth);
 		}
+	}
+
+	// if the neighboring cells are all air cells set properties to air properties
+	if (volumes.size() == 0)
+	{
+		volumes.push_back(1.0);
+		masses.push_back(1.275);
+		capacities.push_back(1.275*1007);
+		weightedConductivity.push_back(0.02587);
+
 	}
 
 	double totalVolume = std::accumulate(volumes.begin(), volumes.end(), 0.0);
@@ -607,15 +614,15 @@ void Domain::printCellTypes()
 
 	output << std::endl;
 
-	for (size_t j = nY - 1; j >= 0 && j < nY; j--)
+	for (size_t k = nZ - 1; k >= 0 && k < nZ; k--)
 	{
 
-		output << j;
+		output << k;
 
 		for (size_t i = 0; i < nX; i++)
 		{
 
-			output << ", " << cell[i][j][nZ-2].cellType;
+			output << ", " << cell[i][nY/2][k].cellType;
 
 		}
 

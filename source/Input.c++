@@ -194,31 +194,22 @@ void Foundation::setMeshData()
 	if (hasWall)
 	{
 		if (hasExteriorVerticalInsulation)
-		{
 			xyWallExterior = wall.totalWidth()
 					+ exteriorVerticalInsulation.layer.thickness;
 
-		}
 		else
-		{
 			xyWallExterior = wall.totalWidth();
-		}
 	}
 	else
-	{
 		xyWallExterior = 0.0;
-	}
 
 	double xyWallInterior;
 	if (hasInteriorVerticalInsulation)
-	{
 		xyWallInterior = -interiorVerticalInsulation.layer.thickness;
-
-	}
 	else
-	{
 		xyWallInterior = 0.0;
-	}
+
+	double xySlabPerimeter = xyWallInterior;
 
 	double xyNearInt = xyWallInterior;  // This will change depending on configuration
 	double xyNearExt = xyWallExterior;  // This will change depending on configuration
@@ -231,27 +222,11 @@ void Foundation::setMeshData()
 		zIntHIns = zMax - interiorHorizontalInsulation.depth - interiorHorizontalInsulation.layer.thickness;
 
 		if(zIntHIns < zNearDeep)
-		{
 			zNearDeep = zIntHIns;
-		}
 		if(xyIntHIns < xyNearInt)
-		{
 			xyNearInt = xyIntHIns;
-		}
-
 	}
 
-	double xyPerimeterSurface;
-	if (hasPerimeterSurface)
-	{
-		xyPerimeterSurface = -perimeterSurfaceWidth;
-		if(xyPerimeterSurface < xyNearInt)
-		{
-			xyNearInt = xyPerimeterSurface;
-		}
-	}
-	else
-		xyPerimeterSurface = 0.0;
 
 
 	double zSlabBottom = zSlab;
@@ -270,11 +245,24 @@ void Foundation::setMeshData()
 	{
 		zIntVIns = zMax -interiorVerticalInsulation.depth;
 
-		if(zIntVIns < zNearDeep)
-		{
+		if (zIntVIns < zNearDeep)
 			zNearDeep = zIntVIns;
+
+		if (isGreaterThan(zIntVIns,zSlab))
+			xySlabPerimeter = 0.0;
+	}
+
+	double xyPerimeterSurface;
+	if (hasPerimeterSurface)
+	{
+		xyPerimeterSurface = -perimeterSurfaceWidth;
+		if(xyPerimeterSurface < xyNearInt)
+		{
+			xyNearInt = xyPerimeterSurface;
 		}
 	}
+	else
+		xyPerimeterSurface = xySlabPerimeter;
 
 	double zWall = 0.0;
 	if (hasWall)
@@ -359,9 +347,60 @@ void Foundation::setMeshData()
 			surfaces.push_back(surface);
 		}
 
-		if(foundationDepth > 0.0)
+		if(isGreaterThan(foundationDepth,0.0))
 		{
 			// Interior Wall Surface
+
+			if (hasInteriorVerticalInsulation && isGreaterThan(zIntVIns,zSlab))
+			{
+				{
+					Surface surface;
+					surface.name = "Interior Wall";
+					surface.xMin = xRef + xyWallInterior;
+					surface.xMax = xRef + xyWallInterior;
+					surface.yMin = 0.0;
+					surface.yMax = 1.0;
+					surface.setSquarePolygon();
+					surface.zMin = zIntVIns;
+					surface.zMax = zMax;
+					surface.boundaryConditionType = Surface::INTERIOR_FLUX;
+					surface.orientation = Surface::X_NEG;
+					surface.emissivity = wall.interiorEmissivity;
+					surfaces.push_back(surface);
+				}
+				{
+					Surface surface;
+					surface.name = "Interior Wall";
+					surface.xMin = xRef + xyWallInterior;
+					surface.xMax = xRef;
+					surface.yMin = 0.0;
+					surface.yMax = 1.0;
+					surface.setSquarePolygon();
+					surface.zMin = zIntVIns;
+					surface.zMax = zIntVIns;
+					surface.boundaryConditionType = Surface::INTERIOR_FLUX;
+					surface.orientation = Surface::Z_NEG;
+					surface.emissivity = wall.interiorEmissivity;
+					surfaces.push_back(surface);
+				}
+				{
+					Surface surface;
+					surface.name = "Interior Wall";
+					surface.xMin = xRef;
+					surface.xMax = xRef;
+					surface.yMin = 0.0;
+					surface.yMax = 1.0;
+					surface.setSquarePolygon();
+					surface.zMin = zSlab;
+					surface.zMax = zIntVIns;
+					surface.boundaryConditionType = Surface::INTERIOR_FLUX;
+					surface.orientation = Surface::X_NEG;
+					surface.emissivity = wall.interiorEmissivity;
+					surfaces.push_back(surface);
+				}
+
+			}
+			else
 			{
 				Surface surface;
 				surface.name = "Interior Wall";
@@ -378,10 +417,10 @@ void Foundation::setMeshData()
 				surfaces.push_back(surface);
 			}
 
-			// Interior Air Left Temperature
+			// Interior Air Symmetry Temperature
 			{
 			Surface surface;
-			surface.name = "Interior Air Left";
+			surface.name = "Interior Air Symmetry";
 			surface.xMin = xMin;
 			surface.xMax = xMin;
 			surface.yMin = 0.0;
@@ -395,7 +434,7 @@ void Foundation::setMeshData()
 			}
 		}
 
-		if(zMax > 0.0)
+		if(isGreaterThan(zMax,0.0))
 		{
 			// Exterior Wall Surface
 			{
@@ -418,7 +457,7 @@ void Foundation::setMeshData()
 			// Exterior Air Right Surface
 			{
 				Surface surface;
-				surface.name = "Exterior Air Right";
+				surface.name = "Exterior Air Perimeter";
 				surface.xMin = xMax;
 				surface.xMax = xMax;
 				surface.yMin = 0.0;
@@ -503,7 +542,7 @@ void Foundation::setMeshData()
 			Surface surface;
 			surface.name = "Slab Perimeter";
 			surface.xMin = xRef + xyPerimeterSurface;
-			surface.xMax = xRef + xyWallInterior;
+			surface.xMax = xRef + xySlabPerimeter;
 			surface.yMin = 0.0;
 			surface.yMax = 1.0;
 			surface.setSquarePolygon();
@@ -661,17 +700,34 @@ void Foundation::setMeshData()
 		// Interior Vertical Insulation
 		if (hasInteriorVerticalInsulation)
 		{
-			Block block;
-			block.material = interiorVerticalInsulation.layer.material;
-			block.blockType = Block::SOLID;
-			block.xMin = xRef + xyWallInterior;
-			block.xMax = xRef;
-			block.yMin = 0.0;
-			block.yMax = 1.0;
-			block.setSquarePolygon();
-			block.zMin = zIntVIns;
-			block.zMax = zMax;
-			blocks.push_back(block);
+			{
+				Block block;
+				block.material = interiorVerticalInsulation.layer.material;
+				block.blockType = Block::SOLID;
+				block.xMin = xRef + xyWallInterior;
+				block.xMax = xRef;
+				block.yMin = 0.0;
+				block.yMax = 1.0;
+				block.setSquarePolygon();
+				block.zMin = zIntVIns;
+				block.zMax = zMax;
+				blocks.push_back(block);
+			}
+
+			if (isGreaterThan(zIntVIns,zSlab))
+			{
+				Block block;
+				block.material = air;
+				block.blockType = Block::INTERIOR_AIR;
+				block.xMin = xRef + xyWallInterior;
+				block.xMax = xRef;
+				block.yMin = 0.0;
+				block.yMax = 1.0;
+				block.setSquarePolygon();
+				block.zMin = zSlab;
+				block.zMax = zIntVIns;
+				blocks.push_back(block);
+			}
 		}
 
 		// Indoor Air
@@ -799,9 +855,105 @@ void Foundation::setMeshData()
 		double xMax = xMaxBB + farFieldWidth;
 		double yMax = yMaxBB + farFieldWidth;
 
-		if(foundationDepth > 0.0)
+		if(isGreaterThan(foundationDepth,0.0))
 		{
 			// Interior Wall Surface
+			if (hasInteriorVerticalInsulation && isGreaterThan(zIntVIns,zSlab))
+			{
+				{
+					Polygon poly;
+					poly = offset(polygon, xyWallInterior);
+
+					for (std::size_t v = 0; v < nV; v++)
+					{
+						Surface surface;
+						surface.name = "Interior Wall";
+						surface.xMin = getXmin(poly,v);
+						surface.xMax = getXmax(poly,v);
+						surface.yMin = getYmin(poly,v);
+						surface.yMax = getYmax(poly,v);
+						surface.setSquarePolygon();
+						surface.zMin = zIntVIns;
+						surface.zMax = zMax;
+						surface.boundaryConditionType = Surface::INTERIOR_FLUX;
+						switch (getDirectionOut(poly,v))
+						{
+						case geom::Y_POS:
+							surface.orientation = Surface::X_POS;
+							break;
+						case geom::X_POS:
+							surface.orientation = Surface::Y_NEG;
+							break;
+						case geom::Y_NEG:
+							surface.orientation = Surface::X_NEG;
+							break;
+						case geom::X_NEG:
+							surface.orientation = Surface::Y_POS;
+							break;
+						}
+						surface.emissivity = wall.interiorEmissivity;
+						surfaces.push_back(surface);
+					}
+				}
+				{
+					Polygon poly;
+					poly = polygon;
+
+					Polygon temp;
+					temp = offset(polygon, xyWallInterior);
+					Ring ring;
+					boost::geometry::convert(temp, ring);
+					boost::geometry::reverse(ring);
+
+					poly.inners().push_back(ring);
+
+					Surface surface;
+					surface.name = "Interior Wall";
+					surface.polygon = poly;
+					surface.zMin = zIntVIns;
+					surface.zMax = zIntVIns;
+					surface.boundaryConditionType = Surface::INTERIOR_FLUX;
+					surface.orientation = Surface::Z_NEG;
+					surface.emissivity = wall.interiorEmissivity;
+					surfaces.push_back(surface);
+				}
+				{
+					Polygon poly;
+					poly = polygon;
+
+					for (std::size_t v = 0; v < nV; v++)
+					{
+						Surface surface;
+						surface.name = "Interior Wall";
+						surface.xMin = getXmin(poly,v);
+						surface.xMax = getXmax(poly,v);
+						surface.yMin = getYmin(poly,v);
+						surface.yMax = getYmax(poly,v);
+						surface.setSquarePolygon();
+						surface.zMin = zSlab;
+						surface.zMax = zIntVIns;
+						surface.boundaryConditionType = Surface::INTERIOR_FLUX;
+						switch (getDirectionOut(poly,v))
+						{
+						case geom::Y_POS:
+							surface.orientation = Surface::X_POS;
+							break;
+						case geom::X_POS:
+							surface.orientation = Surface::Y_NEG;
+							break;
+						case geom::Y_NEG:
+							surface.orientation = Surface::X_NEG;
+							break;
+						case geom::X_NEG:
+							surface.orientation = Surface::Y_POS;
+							break;
+						}
+						surface.emissivity = wall.interiorEmissivity;
+						surfaces.push_back(surface);
+					}
+				}
+			}
+			else
 			{
 				Polygon poly;
 				poly = offset(polygon, xyWallInterior);
@@ -840,7 +992,7 @@ void Foundation::setMeshData()
 
 		}
 
-		if(zMax > 0.0)
+		if(isGreaterThan(zMax,0.0))
 		{
 			// Exterior Wall Surface
 			{
@@ -877,6 +1029,75 @@ void Foundation::setMeshData()
 					surfaces.push_back(surface);
 				}
 			}
+
+			// Exterior Air Perimeter Surfaces
+			{
+				{
+					// X Min
+					Surface surface;
+					surface.name = "Exterior Air Perimeter";
+					surface.xMin =	xMin;
+					surface.xMax =	xMin;
+					surface.yMin =	yMin;
+					surface.yMax =	yMax;
+					surface.setSquarePolygon();
+					surface.zMin =	zGrade;
+					surface.zMax =	zMax;
+					surface.boundaryConditionType = Surface::EXTERIOR_TEMPERATURE;
+					surface.orientation =	Surface::X_NEG;
+					surfaces.push_back(surface);
+				}
+
+				{
+					// X Max
+					Surface surface;
+					surface.name = "Exterior Air Perimeter";
+					surface.xMin =	xMax;
+					surface.xMax =	xMax;
+					surface.yMin =	yMin;
+					surface.yMax =	yMax;
+					surface.setSquarePolygon();
+					surface.zMin =	zGrade;
+					surface.zMax =	zMax;
+					surface.boundaryConditionType = Surface::EXTERIOR_TEMPERATURE;
+					surface.orientation =	Surface::X_POS;
+					surfaces.push_back(surface);
+				}
+
+				{
+					// Y Min
+					Surface surface;
+					surface.name = "Exterior Air Perimeter";
+					surface.xMin =	xMin;
+					surface.xMax =	xMax;
+					surface.yMin =	yMin;
+					surface.yMax =	yMin;
+					surface.setSquarePolygon();
+					surface.zMin =	zGrade;
+					surface.zMax =	zMax;
+					surface.boundaryConditionType = Surface::EXTERIOR_TEMPERATURE;
+					surface.orientation =	Surface::Y_NEG;
+					surfaces.push_back(surface);
+				}
+
+				{
+					// Y Max
+					Surface surface;
+					surface.name = "Exterior Air Perimeter";
+					surface.xMin =	xMin;
+					surface.xMax =	xMax;
+					surface.yMin =	yMax;
+					surface.yMax =	yMax;
+					surface.setSquarePolygon();
+					surface.zMin =	zGrade;
+					surface.zMax =	zMax;
+					surface.boundaryConditionType = Surface::EXTERIOR_TEMPERATURE;
+					surface.orientation =	Surface::Y_POS;
+					surfaces.push_back(surface);
+				}
+
+			}
+
 		}
 
 		// Far Field Surfaces
@@ -996,7 +1217,7 @@ void Foundation::setMeshData()
 		if (hasPerimeterSurface)
 		{
 			Polygon poly;
-			poly = offset(polygon, xyWallInterior);
+			poly = offset(polygon, xySlabPerimeter);
 
 			Polygon temp;
 			temp = offset(polygon, xyPerimeterSurface);
@@ -1062,26 +1283,29 @@ void Foundation::setMeshData()
 		if(zMax > 0.0)
 		{
 			// Exterior Air Top Surface
-			Polygon poly;
-			poly = offset(polygon, xyWallExterior);
+			{
+				Polygon poly;
+				poly = offset(polygon, xyWallExterior);
 
-			Ring ring;
-			boost::geometry::convert(poly, ring);
-			boost::geometry::reverse(ring);
+				Ring ring;
+				boost::geometry::convert(poly, ring);
+				boost::geometry::reverse(ring);
 
-			Surface surface;
-			surface.name = "Exterior Air Top";
-			surface.xMin = xMin;
-			surface.xMax = xMax;
-			surface.yMin = yMin;
-			surface.yMax = yMax;
-			surface.setSquarePolygon();
-			surface.polygon.inners().push_back(ring);
-			surface.zMin = zMax;
-			surface.zMax = zMax;
-			surface.boundaryConditionType = Surface::EXTERIOR_TEMPERATURE;
-			surface.orientation = Surface::Z_POS;
-			surfaces.push_back(surface);
+				Surface surface;
+				surface.name = "Exterior Air Top";
+				surface.xMin = xMin;
+				surface.xMax = xMax;
+				surface.yMin = yMin;
+				surface.yMax = yMax;
+				surface.setSquarePolygon();
+				surface.polygon.inners().push_back(ring);
+				surface.zMin = zMax;
+				surface.zMax = zMax;
+				surface.boundaryConditionType = Surface::EXTERIOR_TEMPERATURE;
+				surface.orientation = Surface::Z_POS;
+				surfaces.push_back(surface);
+			}
+
 		}
 
 
@@ -1195,23 +1419,48 @@ void Foundation::setMeshData()
 		// Interior Vertical Insulation
 		if (hasInteriorVerticalInsulation)
 		{
-			Polygon poly;
-			poly = polygon;
+			{
+				Polygon poly;
+				poly = polygon;
 
-			Polygon temp;
-			temp = offset(polygon, xyWallInterior);
-			Ring ring;
-			boost::geometry::convert(temp, ring);
-			boost::geometry::reverse(ring);
+				Polygon temp;
+				temp = offset(polygon, xyWallInterior);
+				Ring ring;
+				boost::geometry::convert(temp, ring);
+				boost::geometry::reverse(ring);
 
-			poly.inners().push_back(ring);
-			Block block;
-			block.material = interiorVerticalInsulation.layer.material;
-			block.blockType = Block::SOLID;
-			block.polygon = poly;
-			block.zMin = zIntVIns;
-			block.zMax = zMax;
-			blocks.push_back(block);
+				poly.inners().push_back(ring);
+				Block block;
+				block.material = interiorVerticalInsulation.layer.material;
+				block.blockType = Block::SOLID;
+				block.polygon = poly;
+				block.zMin = zIntVIns;
+				block.zMax = zMax;
+				blocks.push_back(block);
+			}
+
+			if (isGreaterThan(zIntVIns,zSlab))
+			{
+				Polygon poly;
+				poly = polygon;
+
+				Polygon temp;
+				temp = offset(polygon, xyWallInterior);
+				Ring ring;
+				boost::geometry::convert(temp, ring);
+				boost::geometry::reverse(ring);
+
+				poly.inners().push_back(ring);
+				Block block;
+				block.material = air;
+				block.blockType = Block::INTERIOR_AIR;
+				block.polygon = poly;
+				block.zMin = zSlab;
+				block.zMax = zIntVIns;
+				blocks.push_back(block);
+			}
+
+
 		}
 
 		// Indoor Air
@@ -1522,9 +1771,122 @@ void Foundation::setMeshData()
 
 		std::size_t nV = polygon.outer().size();
 
-		if(foundationDepth > 0.0)
+		if(isGreaterThan(foundationDepth,0.0))
 		{
 			// Interior Wall Surface
+			if (hasInteriorVerticalInsulation && isGreaterThan(zIntVIns,zSlab))
+			{
+				{
+					Polygon tempPoly;
+					tempPoly = offset(polygon, xyWallInterior);
+					MultiPolygon poly;
+					boost::geometry::intersection(domainBox,tempPoly,poly);
+
+					for (std::size_t v = 0; v < nV; v++)
+					{
+
+						if (!((isEqual(getXmin(poly[0],v),xMin) && isEqual(getXmax(poly[0],v),xMin)) ||
+							  (isEqual(getYmin(poly[0],v),yMin) && isEqual(getYmax(poly[0],v),yMin))))
+						{
+							Surface surface;
+							surface.name = "Interior Wall";
+							surface.xMin = getXmin(poly[0],v);
+							surface.xMax = getXmax(poly[0],v);
+							surface.yMin = getYmin(poly[0],v);
+							surface.yMax = getYmax(poly[0],v);
+							surface.setSquarePolygon();
+							surface.zMin = zIntVIns;
+							surface.zMax = zMax;
+							surface.boundaryConditionType = Surface::INTERIOR_FLUX;
+							switch (getDirectionOut(poly[0],v))
+							{
+							case geom::Y_POS:
+								surface.orientation = Surface::X_POS;
+								break;
+							case geom::X_POS:
+								surface.orientation = Surface::Y_NEG;
+								break;
+							case geom::Y_NEG:
+								surface.orientation = Surface::X_NEG;
+								break;
+							case geom::X_NEG:
+								surface.orientation = Surface::Y_POS;
+								break;
+							}
+							surface.emissivity = wall.interiorEmissivity;
+							surfaces.push_back(surface);
+						}
+					}
+				}
+				{
+					Polygon tempPoly;
+					tempPoly = polygon;
+
+					Polygon temp;
+					temp = offset(polygon, xyWallInterior);
+					Ring ring;
+					boost::geometry::convert(temp, ring);
+					boost::geometry::reverse(ring);
+
+					tempPoly.inners().push_back(ring);
+
+					MultiPolygon poly;
+					boost::geometry::intersection(domainBox,tempPoly,poly);
+
+					Surface surface;
+					surface.name = "Interior Wall";
+					surface.polygon = poly[0];
+					surface.zMin = zIntVIns;
+					surface.zMax = zIntVIns;
+					surface.boundaryConditionType = Surface::INTERIOR_FLUX;
+					surface.orientation = Surface::Z_NEG;
+					surface.emissivity = wall.interiorEmissivity;
+					surfaces.push_back(surface);
+				}
+				{
+					Polygon tempPoly;
+					tempPoly = polygon;
+					MultiPolygon poly;
+					boost::geometry::intersection(domainBox,tempPoly,poly);
+
+					for (std::size_t v = 0; v < nV; v++)
+					{
+
+						if (!((isEqual(getXmin(poly[0],v),xMin) && isEqual(getXmax(poly[0],v),xMin)) ||
+							  (isEqual(getYmin(poly[0],v),yMin) && isEqual(getYmax(poly[0],v),yMin))))
+						{
+							Surface surface;
+							surface.name = "Interior Wall";
+							surface.xMin = getXmin(poly[0],v);
+							surface.xMax = getXmax(poly[0],v);
+							surface.yMin = getYmin(poly[0],v);
+							surface.yMax = getYmax(poly[0],v);
+							surface.setSquarePolygon();
+							surface.zMin = zSlab;
+							surface.zMax = zIntVIns;
+							surface.boundaryConditionType = Surface::INTERIOR_FLUX;
+							switch (getDirectionOut(poly[0],v))
+							{
+							case geom::Y_POS:
+								surface.orientation = Surface::X_POS;
+								break;
+							case geom::X_POS:
+								surface.orientation = Surface::Y_NEG;
+								break;
+							case geom::Y_NEG:
+								surface.orientation = Surface::X_NEG;
+								break;
+							case geom::X_NEG:
+								surface.orientation = Surface::Y_POS;
+								break;
+							}
+							surface.emissivity = wall.interiorEmissivity;
+							surfaces.push_back(surface);
+						}
+					}
+				}
+			}
+			else
 			{
 				Polygon tempPoly;
 				tempPoly = offset(polygon, xyWallInterior);
@@ -1567,7 +1929,6 @@ void Foundation::setMeshData()
 					}
 				}
 			}
-
 		}
 
 		if(zMax > 0.0)
@@ -1626,7 +1987,7 @@ void Foundation::setMeshData()
 			surface.yMax =	yMax;
 			surface.setSquarePolygon();
 			surface.zMin =	zMin;
-			surface.zMax =	zGrade;
+			surface.zMax =	zMax;
 			surface.boundaryConditionType = Surface::ZERO_FLUX;
 			surface.orientation = Surface::X_NEG;
 			surfaces.push_back(surface);
@@ -1642,7 +2003,7 @@ void Foundation::setMeshData()
 			surface.yMax =	yMax;
 			surface.setSquarePolygon();
 			surface.zMin =	zMin;
-			surface.zMax =	zGrade;
+			surface.zMax =	zMax;
 			surface.boundaryConditionType = Surface::ZERO_FLUX;
 			surface.orientation = Surface::X_POS;
 			surfaces.push_back(surface);
@@ -1658,7 +2019,7 @@ void Foundation::setMeshData()
 			surface.yMax =	yMin;
 			surface.setSquarePolygon();
 			surface.zMin =	zMin;
-			surface.zMax =	zGrade;
+			surface.zMax =	zMax;
 			surface.boundaryConditionType = Surface::ZERO_FLUX;
 			surface.orientation =	Surface::Y_NEG;
 			surfaces.push_back(surface);
@@ -1674,7 +2035,7 @@ void Foundation::setMeshData()
 			surface.yMax =	yMax;
 			surface.setSquarePolygon();
 			surface.zMin =	zMin;
-			surface.zMax =	zGrade;
+			surface.zMax =	zMax;
 			surface.boundaryConditionType = Surface::ZERO_FLUX;
 			surface.orientation =	Surface::Y_POS;
 			surfaces.push_back(surface);
@@ -1734,7 +2095,7 @@ void Foundation::setMeshData()
 		if (hasPerimeterSurface)
 		{
 			Polygon tempPoly;
-			tempPoly = offset(polygon, xyWallInterior);
+			tempPoly = offset(polygon, xySlabPerimeter);
 
 			Polygon temp;
 			temp = offset(polygon, xyPerimeterSurface);
@@ -1941,27 +2302,55 @@ void Foundation::setMeshData()
 		// Interior Vertical Insulation
 		if (hasInteriorVerticalInsulation)
 		{
-			Polygon tempPoly;
-			tempPoly = polygon;
+			{
+				Polygon tempPoly;
+				tempPoly = polygon;
 
-			Polygon temp;
-			temp = offset(polygon, xyWallInterior);
-			Ring ring;
-			boost::geometry::convert(temp, ring);
-			boost::geometry::reverse(ring);
+				Polygon temp;
+				temp = offset(polygon, xyWallInterior);
+				Ring ring;
+				boost::geometry::convert(temp, ring);
+				boost::geometry::reverse(ring);
 
-			tempPoly.inners().push_back(ring);
+				tempPoly.inners().push_back(ring);
 
-			MultiPolygon poly;
-			boost::geometry::intersection(domainBox,tempPoly,poly);
+				MultiPolygon poly;
+				boost::geometry::intersection(domainBox,tempPoly,poly);
 
-			Block block;
-			block.material = interiorVerticalInsulation.layer.material;
-			block.blockType = Block::SOLID;
-			block.polygon = poly[0];
-			block.zMin = zIntVIns;
-			block.zMax = zMax;
-			blocks.push_back(block);
+				Block block;
+				block.material = interiorVerticalInsulation.layer.material;
+				block.blockType = Block::SOLID;
+				block.polygon = poly[0];
+				block.zMin = zIntVIns;
+				block.zMax = zMax;
+				blocks.push_back(block);
+			}
+
+			if (isGreaterThan(zIntVIns,zSlab))
+			{
+				Polygon tempPoly;
+				tempPoly = polygon;
+
+				Polygon temp;
+				temp = offset(polygon, xyWallInterior);
+				Ring ring;
+				boost::geometry::convert(temp, ring);
+				boost::geometry::reverse(ring);
+
+				tempPoly.inners().push_back(ring);
+
+				MultiPolygon poly;
+				boost::geometry::intersection(domainBox,tempPoly,poly);
+
+				Block block;
+				block.material = air;
+				block.blockType = Block::INTERIOR_AIR;
+				block.polygon = poly[0];
+				block.zMin = zSlab;
+				block.zMax = zIntVIns;
+				blocks.push_back(block);
+			}
+
 		}
 
 		// Indoor Air
