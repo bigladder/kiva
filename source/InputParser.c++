@@ -183,6 +183,15 @@ Input inputParser(std::string inputFile)
 	foundation1.farFieldWidth = yamlInput["Foundation"]["farFieldWidth"].as<double>();
 	foundation1.deepGroundDepth = yamlInput["Foundation"]["deepGroundDepth"].as<double>();
 
+	if  (yamlInput["Foundation"]["orientation"].IsDefined())
+	{
+		foundation1.orientation = yamlInput["Foundation"]["orientation"].as<double>();
+	}
+	else
+	{
+		foundation1.orientation = 0.0;
+	}
+
 	if (yamlInput["Foundation"]["deepGroundBoundary"].as<std::string>() == "AUTO")
 	{
 		foundation1.deepGroundBoundary = Foundation::DGB_AUTO;
@@ -215,6 +224,15 @@ Input inputParser(std::string inputFile)
 		foundation1.polygon.outer().push_back(Point(
 				yamlInput["Foundation"]["polygon"][i][0].as<double>(),
 				yamlInput["Foundation"]["polygon"][i][1].as<double>()));
+	}
+
+	if  (yamlInput["Foundation"]["buildingHeight"].IsDefined())
+	{
+		foundation1.buildingHeight = yamlInput["Foundation"]["buildingHeight"].as<double>();
+	}
+	else
+	{
+		foundation1.buildingHeight = 0.0;
 	}
 
 	if  (yamlInput["Foundation"]["perimeterSurfaceWidth"].IsDefined())

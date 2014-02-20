@@ -45,7 +45,7 @@ Ground::~Ground()
 	lis_matrix_destroy(Amat);
 	lis_vector_destroy(x);
 	lis_vector_destroy(b);
-	lis_solver_destroy(solver);
+	//lis_solver_destroy(solver);
 #endif
 
 }
@@ -58,7 +58,7 @@ void Ground::buildDomain()
 	if (foundation.deepGroundBoundary == Foundation::DGB_AUTO)
 		foundation.deepGroundTemperature = weatherData.dryBulbTemp.getAverage();
 
-	foundation.setMeshData();
+	foundation.createMeshData();
 
 	// Build matrices for PDE term coefficients
 	domain.setDomain(foundation);
@@ -356,7 +356,7 @@ void Ground::calculateADEUpwardSweep()
 					case Surface::INTERIOR_FLUX:
 						{
 						double Tair = foundation.indoorAirTemperature;
-						double q = 0;
+						double q = domain.cell[i][j][k].heatGain;
 
 						double hc = getConvectionCoeff(TOld[i][j][k],
 										Tair,0.0,1.0,false,tilt);
@@ -401,7 +401,7 @@ void Ground::calculateADEUpwardSweep()
 						double F = getEffectiveExteriorViewFactor(eSky,tilt);
 						double hc = getConvectionCoeff(TOld[i][j][k],Tair,v,1.0,true,tilt);
 						double hr = getExteriorIRCoeff(domain.cell[i][j][k].surface.emissivity,TOld[i][j][k],Tair,eSky,tilt);
-						double q = domain.cell[i][j][k].surface.absorptivity*weatherData.globalHorizontalSolar.getValue(getSimTime(tNow));
+						double q = domain.cell[i][j][k].heatGain;
 
 						switch (domain.cell[i][j][k].surface.orientation)
 						{
@@ -452,6 +452,7 @@ void Ground::calculateADEUpwardSweep()
 					double CZM = domain.cell[i][j][k].czm*theta;
 					double CYP = domain.cell[i][j][k].cyp*theta;
 					double CYM = domain.cell[i][j][k].cym*theta;
+					double Q = domain.cell[i][j][k].heatGain*theta;
 
 					if (foundation.coordinateSystem == Foundation::CS_3D ||
 						foundation.coordinateSystem == Foundation::CS_3D_SYMMETRY)
@@ -461,7 +462,8 @@ void Ground::calculateADEUpwardSweep()
 								- U[i][j][k-1]*CZM
 								+ UOld[i][j][k+1]*CZP
 								- U[i][j-1][k]*CYM
-								+ UOld[i][j+1][k]*CYP) /
+								+ UOld[i][j+1][k]*CYP
+								+ Q) /
 								(1.0 - CXM - CZM - CYM);
 					else
 					{
@@ -478,7 +480,8 @@ void Ground::calculateADEUpwardSweep()
 								- U[i-1][j][k]*(CXMC + CXM)
 								+ UOld[i+1][j][k]*(CXPC + CXP)
 								- U[i][j][k-1]*CZM
-								+ UOld[i][j][k+1]*CZP) /
+								+ UOld[i][j][k+1]*CZP
+								+ Q) /
 								(1.0 - CXMC - CXM - CZM);
 					}
 					}
@@ -653,6 +656,7 @@ void Ground::calculateADEDownwardSweep()
 					double CZM = domain.cell[i][j][k].czm*theta;
 					double CYP = domain.cell[i][j][k].cyp*theta;
 					double CYM = domain.cell[i][j][k].cym*theta;
+					double Q = domain.cell[i][j][k].heatGain*theta;
 
 					if (foundation.coordinateSystem == Foundation::CS_3D ||
 						foundation.coordinateSystem == Foundation::CS_3D_SYMMETRY)
@@ -662,7 +666,8 @@ void Ground::calculateADEDownwardSweep()
 								- VOld[i][j][k-1]*CZM
 								+ V[i][j][k+1]*CZP
 								- VOld[i][j-1][k]*CYM
-								+ V[i][j+1][k]*CYP) /
+								+ V[i][j+1][k]*CYP
+								+ Q) /
 								(1.0 + CXP + CZP + CYP);
 					else
 					{
@@ -679,7 +684,8 @@ void Ground::calculateADEDownwardSweep()
 								- VOld[i-1][j][k]*(CXMC + CXM)
 								+ V[i+1][j][k]*(CXPC + CXP)
 								- VOld[i][j][k-1]*CZM
-								+ V[i][j][k+1]*CZP) /
+								+ V[i][j][k+1]*CZP
+								+ Q) /
 								(1.0 + CXPC + CXP + CZP);
 					}
 					}
@@ -853,6 +859,7 @@ void Ground::calculateExplicit()
 					double CZM = domain.cell[i][j][k].czm*theta;
 					double CYP = domain.cell[i][j][k].cyp*theta;
 					double CYM = domain.cell[i][j][k].cym*theta;
+					double Q = domain.cell[i][j][k].heatGain*theta;
 
 					if (foundation.coordinateSystem == Foundation::CS_3D ||
 						foundation.coordinateSystem == Foundation::CS_3D_SYMMETRY)
@@ -862,7 +869,8 @@ void Ground::calculateExplicit()
 								- TOld[i][j][k-1]*CZM
 								+ TOld[i][j][k+1]*CZP
 								- TOld[i][j-1][k]*CYM
-								+ TOld[i][j+1][k]*CYP;
+								+ TOld[i][j+1][k]*CYP
+								+ Q;
 					else
 					{
 						double CXPC = 0;
@@ -879,7 +887,8 @@ void Ground::calculateExplicit()
 								- TOld[i-1][j][k]*(CXMC + CXM)
 								+ TOld[i+1][j][k]*(CXPC + CXP)
 								- TOld[i][j][k-1]*CZM
-								+ TOld[i][j][k+1]*CZP;
+								+ TOld[i][j][k+1]*CZP
+								+ Q;
 					}
 					}
 					break;
@@ -1180,6 +1189,7 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
 						double CZM = domain.cell[i][j][k].czm;
 						double CYP = domain.cell[i][j][k].cyp;
 						double CYM = domain.cell[i][j][k].cym;
+						double Q = domain.cell[i][j][k].heatGain;
 
 						if (foundation.coordinateSystem == Foundation::CS_3D ||
 							foundation.coordinateSystem == Foundation::CS_3D_SYMMETRY)
@@ -1192,7 +1202,7 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
 							Ajm = -CYM;
 							Ajp = CYP;
 
-							bVal = 0;
+							bVal = -Q;
 
 							setAmatValue(index,index,A);
 							setAmatValue(index,index_ip,Aip);
@@ -1220,7 +1230,7 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
 							Akm = -CZM;
 							Akp = CZP;
 
-							bVal = 0;
+							bVal = -Q;
 
 							setAmatValue(index,index,A);
 							setAmatValue(index,index_ip,Aip);
@@ -1247,6 +1257,7 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
 						double CZM = domain.cell[i][j][k].czm*theta;
 						double CYP = domain.cell[i][j][k].cyp*theta;
 						double CYM = domain.cell[i][j][k].cym*theta;
+						double Q = domain.cell[i][j][k].heatGain*theta;
 
 						if (foundation.coordinateSystem == Foundation::CS_3D ||
 							foundation.coordinateSystem == Foundation::CS_3D_SYMMETRY)
@@ -1265,7 +1276,8 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
 								 - TOld[i][j][k-1]*(1-f)*CZM
 								 + TOld[i][j][k+1]*(1-f)*CZP
 								 - TOld[i][j-1][k]*(1-f)*CYM
-								 + TOld[i][j+1][k]*(1-f)*CYP;
+								 + TOld[i][j+1][k]*(1-f)*CYP
+								 + Q;
 
 							setAmatValue(index,index,A);
 							setAmatValue(index,index_ip,Aip);
@@ -1297,7 +1309,8 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
 								 - TOld[i-1][j][k]*(1-f)*(CXMC + CXM)
 								 + TOld[i+1][j][k]*(1-f)*(CXPC + CXP)
 								 - TOld[i][j][k-1]*(1-f)*CZM
-								 + TOld[i][j][k+1]*(1-f)*CZP;
+								 + TOld[i][j][k+1]*(1-f)*CZP
+								 + Q;
 
 							setAmatValue(index,index,A);
 							setAmatValue(index,index_ip,Aip);
@@ -1773,6 +1786,7 @@ void Ground::calculateADI(int dim)
 					double CZM = domain.cell[i][j][k].czm*theta;
 					double CYP = domain.cell[i][j][k].cyp*theta;
 					double CYM = domain.cell[i][j][k].cym*theta;
+					double Q = domain.cell[i][j][k].heatGain*theta;
 
 					double f = foundation.fADI;
 
@@ -1789,7 +1803,8 @@ void Ground::calculateADI(int dim)
 								   - TOld[i][j][k-1]*f*CZM
 								   + TOld[i][j][k+1]*f*CZP
 								   - TOld[i][j-1][k]*f*CYM
-								   + TOld[i][j+1][k]*f*CYP;
+								   + TOld[i][j+1][k]*f*CYP
+								   + Q;
 						}
 						else if (dim == 2) // y
 						{
@@ -1801,7 +1816,8 @@ void Ground::calculateADI(int dim)
 								   - TOld[i-1][j][k]*f*CXM
 								   + TOld[i+1][j][k]*f*CXP
 								   - TOld[i][j][k-1]*f*CZM
-								   + TOld[i][j][k+1]*f*CZP;
+								   + TOld[i][j][k+1]*f*CZP
+								   + Q;
 						}
 						else if (dim == 3) // z
 						{
@@ -1813,7 +1829,8 @@ void Ground::calculateADI(int dim)
 								   - TOld[i-1][j][k]*f*CXM
 								   + TOld[i+1][j][k]*f*CXP
 								   - TOld[i][j-1][k]*f*CYM
-								   + TOld[i][j+1][k]*f*CYP;
+								   + TOld[i][j+1][k]*f*CYP
+								   + Q;
 						}
 
 					}
@@ -1835,7 +1852,8 @@ void Ground::calculateADI(int dim)
 
 							bVal = TOld[i][j][k]*(1.0 + f*(CZM - CZP))
 								   - TOld[i][j][k-1]*f*CZM
-								   + TOld[i][j][k+1]*f*CZP;
+								   + TOld[i][j][k+1]*f*CZP
+								   + Q;
 						}
 						else if (dim == 3) // z
 						{
@@ -1845,7 +1863,8 @@ void Ground::calculateADI(int dim)
 
 							bVal = TOld[i][j][k]*(1.0 + f*(CXMC + CXM - CXPC - CXP))
 								   - TOld[i-1][j][k]*f*(CXMC + CXM)
-								   + TOld[i+1][j][k]*f*(CXPC + CXP);
+								   + TOld[i+1][j][k]*f*(CXPC + CXP)
+								   + Q;
 						}
 					}
 
@@ -1891,6 +1910,9 @@ void Ground::calculateADI(int dim)
 void Ground::calculate(double t)
 {
 	tNow = t;
+
+	// update boundary conditions
+	setSolarBoundaryConditions();
 
 	// Calculate Temperatures
 	switch(foundation.numericalScheme)
@@ -2069,6 +2091,109 @@ double Ground::getLocalWindSpeed()
 	double vLocal = vWS*pow(deltaWS/zWS,alphaWS)*pow(zLocal/deltaLocal,alphaLocal);
 
 	return vLocal;
+}
+
+void Ground::setSolarBoundaryConditions()
+{
+	for (std::size_t s = 0; s < foundation.surfaces.size() ; s++)
+	{
+		if (foundation.surfaces[s].name == "Grade"
+				|| foundation.surfaces[s].name == "Exterior Wall")
+		{
+
+			double azi = weatherData.azimuth.getValue(getSimTime(tNow));
+			double alt = weatherData.altitude.getValue(getSimTime(tNow));
+			double qDN = weatherData.directNormalSolar.getValue(getSimTime(tNow));
+			double qGH = weatherData.globalHorizontalSolar.getValue(getSimTime(tNow));
+			double qDH = weatherData.diffuseHorizontalSolar.getValue(getSimTime(tNow));
+			double pssf;
+
+			if (foundation.coordinateSystem == Foundation::CS_3D)
+			{
+
+				PixelCounter counter(512, 1, false);
+
+				for (std::size_t index = 0; index < foundation.surfaces[s].indices.size(); index++)
+				{
+					std::size_t i = boost::get<0>(foundation.surfaces[s].indices[index]);
+					std::size_t j = boost::get<1>(foundation.surfaces[s].indices[index]);
+					std::size_t k = boost::get<2>(foundation.surfaces[s].indices[index]);
+
+					double q;
+
+					if (qGH > 0.0)
+					{
+						double tilt;
+						if (foundation.surfaces[s].orientation == Surface::Z_POS)
+							tilt = 0.0;
+						else if (foundation.surfaces[s].orientation == Surface::Z_NEG)
+							tilt = PI;
+						else
+							tilt = PI/2.0;
+
+						double Fsky = (1.0 + cos(tilt))/2.0;
+						double Fg = 1.0 - Fsky;
+						double alpha = domain.cell[i][j][k].surface.absorptivity;
+						double rho_g = 1.0 - foundation.soilAbsorptivity;
+
+						if (isGreaterThan(domain.cell[i][j][k].area, 0.0))
+						{
+							std::vector<Polygon3> shadedSurface(1);
+
+							double xMin, xMax, yMin, yMax, zMin, zMax;
+							xMin = domain.meshX.dividers[i];
+							xMax = domain.meshX.dividers[i+1];
+							yMin = domain.meshY.dividers[j];
+							yMax = domain.meshY.dividers[j+1];
+							zMin = domain.meshZ.dividers[k];
+							zMax = domain.meshZ.dividers[k+1];
+
+
+							Polygon3 poly;
+							poly.outer().push_back(Point3(xMin,yMin,zMax));
+							poly.outer().push_back(Point3(xMin,yMax,zMin));
+							poly.outer().push_back(Point3(xMax,yMax,zMax));
+							poly.outer().push_back(Point3(xMax,yMin,zMin));
+							shadedSurface[0] = poly;
+
+							double areaRatio = counter.getAreaRatio(foundation.orientation,azi,alt,foundation.buildingSurfaces,shadedSurface, 0);
+
+							int pixels = counter.retrievePixelCount(0);
+							pssf = areaRatio*pixels;
+
+							q = alpha*(qDN*pssf + qDH*Fsky + qGH*Fg*rho_g);
+						}
+						else
+						{
+							q = alpha*qGH;
+						}
+					}
+					else
+					{
+						q = 0;
+					}
+					domain.cell[i][j][k].heatGain = q;
+
+				}
+
+
+			}
+
+			else
+			{
+				for (std::size_t index = 0; index < foundation.surfaces[s].indices.size(); index++)
+				{
+					std::size_t i = boost::get<0>(foundation.surfaces[s].indices[index]);
+					std::size_t j = boost::get<1>(foundation.surfaces[s].indices[index]);
+					std::size_t k = boost::get<2>(foundation.surfaces[s].indices[index]);
+
+					double q = domain.cell[i][j][k].surface.absorptivity*qGH;
+
+					domain.cell[i][j][k].heatGain = q;
+				}
+			}
+		}
+	}
 }
 
 std::string Ground::printOutputHeaders()

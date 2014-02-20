@@ -96,6 +96,7 @@ void WeatherData::importEPW(std::string epwFile)
     typedef boost::tokenizer< boost::escaped_list_separator<char> > Tokenizer;
 
     int row = 0;
+	long hour = 0;
 
     while (getline(inf,line))
     {
@@ -114,10 +115,20 @@ void WeatherData::importEPW(std::string epwFile)
     		city = columns[1];
     		state = columns[2];
     		country = columns[3];
+    		latitude = double(boost::lexical_cast<double>(columns[6]));
+    		longitude = double(boost::lexical_cast<double>(columns[7]));
+    		timezone = double(boost::lexical_cast<double>(columns[8]));
+    		//elevation = double(boost::lexical_cast<double>(columns[9]));
     	}
+
+    	boost::gregorian::date newYear(2013,boost::gregorian::Jan,1);
+    	boost::posix_time::ptime newYearDate(newYear);
 
     	if (row > 8)
     	{
+        	boost::posix_time::ptime dateTime = newYearDate + boost::posix_time::hours(hour);
+        	double hourOfDay = dateTime.time_of_day().total_seconds()/3600.0;
+
     		double Tdb = double(boost::lexical_cast<double>(columns[6])) +
 		              273.15;
 
@@ -134,14 +145,17 @@ void WeatherData::importEPW(std::string epwFile)
     		atmosphericPressure.push_back(
     				double(boost::lexical_cast<double>(columns[9])));  // [Pa]
 
-    		globalHorizontalSolar.push_back(
-    				double(boost::lexical_cast<double>(columns[13])));  // [W/m2]
+    		// Note: global horizontal solar can be calculated using solar position,
+    		// direct normal solar and diffuse solar.
+    		// double qGH = double(boost::lexical_cast<double>(columns[13]));
 
-    		directNormalSolar.push_back(
-    				double(boost::lexical_cast<double>(columns[14])));  // [W/m2]
+    		double qDN = double(boost::lexical_cast<double>(columns[14]));
 
-    		diffuseHorizontalSolar.push_back(
-    				double(boost::lexical_cast<double>(columns[15])));  // [W/m2]
+    		directNormalSolar.push_back(qDN);  // [W/m2]
+
+    		double qDH = double(boost::lexical_cast<double>(columns[15]));
+
+    		diffuseHorizontalSolar.push_back(qDH);  // [W/m2]
 
     		windDirection.push_back(double(boost::lexical_cast<double>(columns[20]))*
     					PI/180.0);  // [rad]
@@ -165,6 +179,39 @@ void WeatherData::importEPW(std::string epwFile)
 
     		skyTemp.push_back(Tsky);
 
+    		// Solar calculations (from Duffie & Beckman)
+    		double day = dateTime.date().day_of_year();
+    		double B = (day - 1)*360/365*PI/180;
+    		double EOT = 229.2*(0.000075 + 0.001868*cos(B) - 0.032077*sin(B)
+    				     - 0.014615*cos(2*B) - 0.04089*sin(2*B));
+    		double declination = 0.006918 - 0.399912*cos(B) + 0.070257*sin(B)
+    		                     - 0.006758*cos(2*B) + 0.000907*sin(2*B)
+    		                     - 0.002697*cos(3*B) + 0.00148*sin(3*B);
+    		double solarHour = (hourOfDay - 0.5) + (4*(timezone*15.0 - longitude) + EOT)/60.0;
+    		double hourAngle = (solarHour - 12.00)*15.0;
+
+    		double sinLat = sin(latitude*PI/180);
+    		double cosLat = cos(latitude*PI/180);
+    		double sinDec = sin(declination*PI/180);
+    		double cosDec = cos(declination*PI/180);
+    		double cosHA = cos(hourAngle*PI/180);
+
+    		double alt = asin(sinLat*sinDec + cosLat*cosDec*cosHA);
+    		altitude.push_back(alt);
+
+    		double qGH = cos(PI/2 - alt)*qDN + qDH;
+    		globalHorizontalSolar.push_back(qGH);  // [W/m2]
+
+    		double azi = PI + acos((sin(alt)*sinLat - sinDec)/(cos(alt)*cosLat));
+
+    		if (hourAngle < 0.0)
+    		{
+    			azi = 2*PI - azi;
+    		}
+
+    		azimuth.push_back(azi);
+
+    		hour++;
     	}
     	columns.clear();
 

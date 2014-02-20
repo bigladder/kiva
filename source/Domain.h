@@ -39,6 +39,7 @@ public:
 
 	double volume;
 	double area;
+	double heatGain;
 
 	// derived properties
 	double cxp_c;
@@ -87,20 +88,20 @@ public:
 		Domain();
 		Domain(Foundation &foundation);
 		void setDomain(Foundation &foundation);
-		double getDXP(size_t i);
-		double getDXM(size_t i);
-		double getDYP(size_t j);
-		double getDYM(size_t j);
-		double getDZP(size_t k);
-		double getDZM(size_t k);
-		double getKXP(size_t i,size_t j,size_t k);
-		double getKXM(size_t i,size_t j,size_t k);
-		double getKYP(size_t i,size_t j,size_t k);
-		double getKYM(size_t i,size_t j,size_t k);
-		double getKZP(size_t i,size_t j,size_t k);
-		double getKZM(size_t i,size_t j,size_t k);
-		void set2DZeroThicknessCellProperties(size_t i,size_t j,size_t k);
-		void set3DZeroThicknessCellProperties(size_t i,size_t j,size_t k);
+		double getDXP(std::size_t i);
+		double getDXM(std::size_t i);
+		double getDYP(std::size_t j);
+		double getDYM(std::size_t j);
+		double getDZP(std::size_t k);
+		double getDZM(std::size_t k);
+		double getKXP(std::size_t i,std::size_t j,std::size_t k);
+		double getKXM(std::size_t i,std::size_t j,std::size_t k);
+		double getKYP(std::size_t i,std::size_t j,std::size_t k);
+		double getKYM(std::size_t i,std::size_t j,std::size_t k);
+		double getKZP(std::size_t i,std::size_t j,std::size_t k);
+		double getKZM(std::size_t i,std::size_t j,std::size_t k);
+		void set2DZeroThicknessCellProperties(std::size_t i,std::size_t j,std::size_t k);
+		void set3DZeroThicknessCellProperties(std::size_t i,std::size_t j,std::size_t k);
 		void setZeroThicknessCellProperties(std::size_t i, std::size_t j, std::size_t k,
 				std::vector<boost::tuple<std::size_t,std::size_t,std::size_t> > pointSet);
 		void printCellTypes();

@@ -25,7 +25,7 @@
 #include "Input.h"
 #include "Algorithms.h"
 #include "GroundPlot.h"
-
+#include "PixelCounter.h"
 #include <cmath>
 #include <vector>
 
@@ -158,6 +158,8 @@ private:
 	double getOutdoorTemperature();
 
 	double getLocalWindSpeed();
+
+	void setSolarBoundaryConditions();
 
 	double getSurfaceAverageHeatFlux(std::string surfaceName);
 	double getSurfaceAverageTemperature(std::string surfaceName);

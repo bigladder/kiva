@@ -54,7 +54,15 @@ set(kiva_lib boost_date_time
              colamd
              suitesparseconfig
              mgl
-             yaml-cpp)
+             yaml-cpp
+             GLEW
+             glfw3
+             pthread
+             Xrandr
+             Xxf86vm
+             Xi
+             X11
+             GL)
 
 target_link_libraries(Kiva ${kiva_lib})
                     

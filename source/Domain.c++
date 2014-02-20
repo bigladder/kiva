@@ -66,6 +66,7 @@ void Domain::setDomain(Foundation &foundation)
 				cell[i][j][k].density = foundation.soil.density;
 				cell[i][j][k].specificHeat = foundation.soil.specificHeat;
 				cell[i][j][k].conductivity = foundation.soil.conductivity;
+				cell[i][j][k].heatGain = 0.0;
 
 				// Default to normal cells
 				cell[i][j][k].cellType = Cell::NORMAL;
@@ -334,7 +335,7 @@ void Domain::setDomain(Foundation &foundation)
 	}
 }
 
-double Domain::getDXP(size_t i)
+double Domain::getDXP(std::size_t i)
 {
 	if (i == nX - 1)
 	{
@@ -348,7 +349,7 @@ double Domain::getDXP(size_t i)
 	}
 }
 
-double Domain::getDXM(size_t i)
+double Domain::getDXM(std::size_t i)
 {
 	if (i == 0)
 	{
@@ -362,7 +363,7 @@ double Domain::getDXM(size_t i)
 	}
 }
 
-double Domain::getDYP(size_t j)
+double Domain::getDYP(std::size_t j)
 {
 	if (j == nY - 1)
 	{
@@ -376,7 +377,7 @@ double Domain::getDYP(size_t j)
 	}
 }
 
-double Domain::getDYM(size_t j)
+double Domain::getDYM(std::size_t j)
 {
 	if (j == 0)
 	{
@@ -390,7 +391,7 @@ double Domain::getDYM(size_t j)
 	}
 }
 
-double Domain::getDZP(size_t k)
+double Domain::getDZP(std::size_t k)
 {
 	if (k == nZ - 1)
 	{
@@ -404,7 +405,7 @@ double Domain::getDZP(size_t k)
 	}
 }
 
-double Domain::getDZM(size_t k)
+double Domain::getDZM(std::size_t k)
 {
 	if (k == 0)
 	{
@@ -418,7 +419,7 @@ double Domain::getDZM(size_t k)
 	}
 }
 
-double Domain::getKXP(size_t i, size_t j, size_t k)
+double Domain::getKXP(std::size_t i, std::size_t j, std::size_t k)
 {
 	if (i == nX - 1)
 	{
@@ -433,7 +434,7 @@ double Domain::getKXP(size_t i, size_t j, size_t k)
 	}
 }
 
-double Domain::getKXM(size_t i, size_t j, size_t k)
+double Domain::getKXM(std::size_t i, std::size_t j, std::size_t k)
 {
 	if (i == 0)
 	{
@@ -448,7 +449,7 @@ double Domain::getKXM(size_t i, size_t j, size_t k)
 	}
 }
 
-double Domain::getKYP(size_t i, size_t j, size_t k)
+double Domain::getKYP(std::size_t i, std::size_t j, std::size_t k)
 {
 	if (j == nY - 1)
 	{
@@ -463,7 +464,7 @@ double Domain::getKYP(size_t i, size_t j, size_t k)
 	}
 }
 
-double Domain::getKYM(size_t i, size_t j, size_t k)
+double Domain::getKYM(std::size_t i, std::size_t j, std::size_t k)
 {
 	if (j == 0)
 	{
@@ -478,7 +479,7 @@ double Domain::getKYM(size_t i, size_t j, size_t k)
 	}
 }
 
-double Domain::getKZP(size_t i, size_t j, size_t k)
+double Domain::getKZP(std::size_t i, std::size_t j, std::size_t k)
 {
 	if (k == nZ - 1)
 	{
@@ -493,7 +494,7 @@ double Domain::getKZP(size_t i, size_t j, size_t k)
 	}
 }
 
-double Domain::getKZM(size_t i, size_t j, size_t k)
+double Domain::getKZM(std::size_t i, std::size_t j, std::size_t k)
 {
 	if (k == 0)
 	{
@@ -508,7 +509,7 @@ double Domain::getKZM(size_t i, size_t j, size_t k)
 	}
 }
 
-void Domain::set2DZeroThicknessCellProperties(size_t i,size_t j,size_t k)
+void Domain::set2DZeroThicknessCellProperties(std::size_t i,std::size_t j,std::size_t k)
 {
 	if (isEqual(meshX.deltas[i], 0.0) &&
 		isEqual(meshZ.deltas[k], 0.0))
@@ -542,7 +543,7 @@ void Domain::set2DZeroThicknessCellProperties(size_t i,size_t j,size_t k)
 	}
 }
 
-void Domain::set3DZeroThicknessCellProperties(size_t i,size_t j,size_t k)
+void Domain::set3DZeroThicknessCellProperties(std::size_t i,std::size_t j,std::size_t k)
 {
 	if (isEqual(meshX.deltas[i], 0.0) &&
 		isEqual(meshY.deltas[j], 0.0) &&
@@ -685,7 +686,7 @@ void Domain::printCellTypes()
 	std::ofstream output;
 	output.open("Cells.csv");
 
-	for (size_t i = 0; i < nX; i++)
+	for (std::size_t i = 0; i < nX; i++)
 	{
 
 		output << ", " << i;
@@ -694,12 +695,12 @@ void Domain::printCellTypes()
 
 	output << std::endl;
 
-	for (size_t k = nZ - 1; k >= 0 && k < nZ; k--)
+	for (std::size_t k = nZ - 1; k >= 0 && k < nZ; k--)
 	{
 
 		output << k;
 
-		for (size_t i = 0; i < nX; i++)
+		for (std::size_t i = 0; i < nX; i++)
 		{
 
 			output << ", " << cell[i][nY/2][k].cellType;

@@ -143,7 +143,7 @@ int main(int argc, char *argv[])
 
 					double percentComplete = round(t/tend*1000)/10.0;
 
-					std::cout << percentComplete << "% (" << today << ")\n";
+					std::cout << percentComplete << "% (" << simTime << ")\n";
 
 					prevTime = currentTime;
 				}

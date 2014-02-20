@@ -252,6 +252,7 @@ public:
 						   // of the domain
 	double deepGroundTemperature;  // [K]
 	double foundationDepth; // [m] below top of wall
+	double orientation;  // [radians] from north
 
 	enum DeepGroundBoundary
 	{
@@ -285,6 +286,9 @@ public:
 	CoordinateSystem coordinateSystem;
 
 	Polygon polygon;
+
+	double buildingHeight;
+	std::vector<Polygon3> buildingSurfaces;
 
 	// Constructions
 	Wall wall;
@@ -380,7 +384,7 @@ public:
 	std::vector<Block> blocks;
 	std::vector<Surface> surfaces;
 
-	void setMeshData();
+	void createMeshData();
 };
 
 

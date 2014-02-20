@@ -46,6 +46,10 @@ public:
 	std::string city;
 	std::string state;
 	std::string country;
+	double timezone;
+	double latitude;
+	double longitude;
+	double elevation;
 
 	HourlyData dryBulbTemp;
 	//HourlyData wetBulbTemp;
@@ -71,6 +75,8 @@ public:
 	//HourlyData cloudType;
 	//HourlyData snowFlag;
 	//HourlyData rainFlag;
+	HourlyData altitude;
+	HourlyData azimuth;
 
 public:
 	WeatherData(std::string weatherFile);

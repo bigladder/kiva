@@ -20,6 +20,7 @@
 #define ConvectionAlgorithms_HPP
 
 #include <cmath>
+//#include "PixelCounter.h"
 
 // TODO: use defaulting inputs
 double getDOE2ConvectionCoeff(double tilt,
@@ -37,6 +38,19 @@ double getExteriorIRCoeff(double eSurf,
 		                  double Tamb,
 		                  double eSky,
 		                  double tilt);
+
+/*
+double getExteriorSolarGain(double aSurf,
+		                    double Idn,
+							double Idiff,
+							double Igh,
+							double orientation,
+							double azimuth,
+							double altitude
+
+
+						    );
+*/
 
 double getEffectiveExteriorViewFactor(double eSky,
 		                              double tilt);

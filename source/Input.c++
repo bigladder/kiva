@@ -126,11 +126,38 @@ bool Ranges::isType(double position,RangeType::Type type)
 }
 
 
-void Foundation::setMeshData()
+void Foundation::createMeshData()
 {
 	area = boost::geometry::area(polygon);  // [m2] Area of foundation
 	perimeter = boost::geometry::perimeter(polygon);  // [m] Perimeter of foundation
 	effectiveLength = 2.0*area/perimeter;
+
+	std::size_t nV = polygon.outer().size();
+
+	for (std::size_t v = 0; v < nV; v++)
+	{
+		double thisX = polygon.outer()[v].get<0>();
+		double thisY = polygon.outer()[v].get<1>();
+		double nextX, nextY;
+
+		if (v < nV -1)
+		{
+			nextX = polygon.outer()[v+1].get<0>();
+			nextY = polygon.outer()[v+1].get<1>();
+		}
+		else
+		{
+			nextX = polygon.outer()[0].get<0>();
+			nextY = polygon.outer()[0].get<1>();
+		}
+
+		Polygon3 poly;
+		poly.outer().push_back(Point3(thisX,thisY,0.0));
+		poly.outer().push_back(Point3(thisX,thisY,buildingHeight));
+		poly.outer().push_back(Point3(nextX,nextY,buildingHeight));
+		poly.outer().push_back(Point3(nextX,nextY,0.0));
+		buildingSurfaces.push_back(poly);
+	}
 
 	Material air;
 	air.conductivity = 0.02587;
@@ -846,8 +873,6 @@ void Foundation::setMeshData()
 
 		double xMaxBB = boundingBox.max_corner().get<0>();
 		double yMaxBB = boundingBox.max_corner().get<1>();
-
-		std::size_t nV = polygon.outer().size();
 
 		double xMin = xMinBB - farFieldWidth;
 		double yMin = yMinBB - farFieldWidth;
@@ -1768,8 +1793,6 @@ void Foundation::setMeshData()
 		double yMax = yMaxBB + farFieldWidth;
 
 		Box domainBox(Point(xMin,yMin),Point(xMax,yMax));
-
-		std::size_t nV = polygon.outer().size();
 
 		if(isGreaterThan(foundationDepth,0.0))
 		{
