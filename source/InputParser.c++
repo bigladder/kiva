@@ -54,8 +54,11 @@ Input inputParser(std::string inputFile)
 
 	// Soil
 	foundation1.soil = materials[yamlInput["Foundation"]["soil"].as<std::string>()];
+
+	// Grade
     foundation1.soilAbsorptivity = yamlInput["Foundation"]["soilAbsorptivity"].as<double>();
     foundation1.soilEmissivity = yamlInput["Foundation"]["soilEmissivity"].as<double>();
+    foundation1.surfaceRoughness = yamlInput["Foundation"]["surfaceRoughness"].as<double>();
 
     // Local wind speed characteristics
     foundation1.vegetationHeight = yamlInput["Foundation"]["vegetationHeight"].as<double>();

@@ -359,7 +359,7 @@ void Ground::calculateADEUpwardSweep()
 						double q = domain.cell[i][j][k].heatGain;
 
 						double hc = getConvectionCoeff(TOld[i][j][k],
-										Tair,0.0,1.0,false,tilt);
+										Tair,0.0,1.52,false,tilt);
 						double hr = getSimpleInteriorIRCoeff(domain.cell[i][j][k].surface.emissivity,
 															 TOld[i][j][k],Tair);
 
@@ -399,7 +399,7 @@ void Ground::calculateADEUpwardSweep()
 						double v = getLocalWindSpeed();
 						double eSky = weatherData.skyEmissivity.getValue(getSimTime(tNow));
 						double F = getEffectiveExteriorViewFactor(eSky,tilt);
-						double hc = getConvectionCoeff(TOld[i][j][k],Tair,v,1.0,true,tilt);
+						double hc = getConvectionCoeff(TOld[i][j][k],Tair,v,foundation.surfaceRoughness,true,tilt);
 						double hr = getExteriorIRCoeff(domain.cell[i][j][k].surface.emissivity,TOld[i][j][k],Tair,eSky,tilt);
 						double q = domain.cell[i][j][k].heatGain;
 
@@ -562,7 +562,7 @@ void Ground::calculateADEDownwardSweep()
 						double q = 0;
 
 						double hc = getConvectionCoeff(TOld[i][j][k],
-										Tair,0.0,1.0,false,tilt);
+										Tair,0.0,1.52,false,tilt);
 						double hr = getSimpleInteriorIRCoeff(domain.cell[i][j][k].surface.emissivity,
 															 TOld[i][j][k],Tair);
 
@@ -602,7 +602,7 @@ void Ground::calculateADEDownwardSweep()
 						double v = getLocalWindSpeed();
 						double eSky = weatherData.skyEmissivity.getValue(getSimTime(tNow));
 						double F = getEffectiveExteriorViewFactor(eSky,tilt);
-						double hc = getConvectionCoeff(TOld[i][j][k],Tair,v,1.0,true,tilt);
+						double hc = getConvectionCoeff(TOld[i][j][k],Tair,v,foundation.surfaceRoughness,true,tilt);
 						double hr = getExteriorIRCoeff(domain.cell[i][j][k].surface.emissivity,TOld[i][j][k],Tair,eSky,tilt);
 						double q = domain.cell[i][j][k].surface.absorptivity*weatherData.globalHorizontalSolar.getValue(getSimTime(tNow));
 
@@ -765,7 +765,7 @@ void Ground::calculateExplicit()
 						double q = 0;
 
 						double hc = getConvectionCoeff(TOld[i][j][k],
-										Tair,0.0,1.0,false,tilt);
+										Tair,0.0,1.52,false,tilt);
 						double hr = getSimpleInteriorIRCoeff(domain.cell[i][j][k].surface.emissivity,
 															 TOld[i][j][k],Tair);
 
@@ -805,7 +805,7 @@ void Ground::calculateExplicit()
 						double v = getLocalWindSpeed();
 						double eSky = weatherData.skyEmissivity.getValue(getSimTime(tNow));
 						double F = getEffectiveExteriorViewFactor(eSky,tilt);
-						double hc = getConvectionCoeff(TOld[i][j][k],Tair,v,1.0,true,tilt);
+						double hc = getConvectionCoeff(TOld[i][j][k],Tair,v,foundation.surfaceRoughness,true,tilt);
 						double hr = getExteriorIRCoeff(domain.cell[i][j][k].surface.emissivity,TOld[i][j][k],Tair,eSky,tilt);
 						double q = domain.cell[i][j][k].surface.absorptivity*weatherData.globalHorizontalSolar.getValue(getSimTime(tNow));
 
@@ -1029,7 +1029,7 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
 						double q = 0;
 
 						double hc = getConvectionCoeff(TOld[i][j][k],
-										Tair,0.0,1.0,false,tilt);
+										Tair,0.0,1.52,false,tilt);
 						double hr = getSimpleInteriorIRCoeff(domain.cell[i][j][k].surface.emissivity,
 															 TOld[i][j][k],Tair);
 
@@ -1099,7 +1099,7 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
 						double v = getLocalWindSpeed();
 						double eSky = weatherData.skyEmissivity.getValue(getSimTime(tNow));
 						double F = getEffectiveExteriorViewFactor(eSky,tilt);
-						double hc = getConvectionCoeff(TOld[i][j][k],Tair,v,1.0,true,tilt);
+						double hc = getConvectionCoeff(TOld[i][j][k],Tair,v,foundation.surfaceRoughness,true,tilt);
 						double hr = getExteriorIRCoeff(domain.cell[i][j][k].surface.emissivity,TOld[i][j][k],Tair,eSky,tilt);
 						double q = domain.cell[i][j][k].surface.absorptivity*weatherData.globalHorizontalSolar.getValue(getSimTime(tNow));
 
@@ -1519,7 +1519,7 @@ void Ground::calculateADI(int dim)
 						double q = 0;
 
 						double hc = getConvectionCoeff(TOld[i][j][k],
-										Tair,0.0,1.0,false,tilt);
+										Tair,0.0,1.52,false,tilt);
 						double hr = getSimpleInteriorIRCoeff(domain.cell[i][j][k].surface.emissivity,
 															 TOld[i][j][k],Tair);
 
@@ -1637,7 +1637,7 @@ void Ground::calculateADI(int dim)
 						double v = getLocalWindSpeed();
 						double eSky = weatherData.skyEmissivity.getValue(getSimTime(tNow));
 						double F = getEffectiveExteriorViewFactor(eSky,tilt);
-						double hc = getConvectionCoeff(TOld[i][j][k],Tair,v,1.0,true,tilt);
+						double hc = getConvectionCoeff(TOld[i][j][k],Tair,v,foundation.surfaceRoughness,true,tilt);
 						double hr = getExteriorIRCoeff(domain.cell[i][j][k].surface.emissivity,TOld[i][j][k],Tair,eSky,tilt);
 						double q = domain.cell[i][j][k].surface.absorptivity*weatherData.globalHorizontalSolar.getValue(getSimTime(tNow));
 
@@ -2400,7 +2400,7 @@ double Ground::getSurfaceAverageHeatFlux(std::string surfaceName)
 				std::size_t j = boost::get<1>(foundation.surfaces[s].indices[index]);
 				std::size_t k = boost::get<2>(foundation.surfaces[s].indices[index]);
 
-				double h = getConvectionCoeff(TNew[i][j][k],Tair,0.0,1.0,false,tilt)
+				double h = getConvectionCoeff(TNew[i][j][k],Tair,0.0,1.52,false,tilt)
 						 + getSimpleInteriorIRCoeff(domain.cell[i][j][k].surface.emissivity,
 								 TNew[i][j][k],Tair);
 
@@ -2445,7 +2445,7 @@ double Ground::getSurfaceEffectiveTemperature(std::string surfaceName, double co
 				std::size_t j = boost::get<1>(foundation.surfaces[s].indices[index]);
 				std::size_t k = boost::get<2>(foundation.surfaces[s].indices[index]);
 
-				double h = getConvectionCoeff(TNew[i][j][k],Tair,0.0,1.0,false,tilt)
+				double h = getConvectionCoeff(TNew[i][j][k],Tair,0.0,1.52,false,tilt)
 						 + getSimpleInteriorIRCoeff(domain.cell[i][j][k].surface.emissivity,
 								 TNew[i][j][k],Tair);
 

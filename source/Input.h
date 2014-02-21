@@ -268,6 +268,7 @@ public:
 	Material soil;
 	double soilAbsorptivity;  // [frac]
 	double soilEmissivity;  // [frac]
+	double surfaceRoughness;  // dimensionless (roughly corresponsds to millimeters of relief)
 
 	// Local wind speed characteristics
 	double vegetationHeight;  // [m]
