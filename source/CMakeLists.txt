@@ -22,6 +22,7 @@ set(kiva_src Main.c++
              Input.c++
              InputParser.c++
              Mesher.c++
+             PixelCounter.c++
              WeatherData.c++)
 
 set(kiva_hdr Algorithms.h
@@ -33,12 +34,26 @@ set(kiva_hdr Algorithms.h
              Input.h
              InputParser.h
              Mesher.h
+             PixelCounter.h
              WeatherData.h)
 
 link_directories(${CMAKE_PREFIX_PATH}/lib)
 include_directories(${CMAKE_PREFIX_PATH}/include ${CMAKE_PREFIX_PATH}/include/boost-numeric-bindings)
 
 add_executable(Kiva ${kiva_src} ${kiva_hdr})
+
+
+if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+  set(kiva_link_flags "-fopenmp -framework OpenGL -framework Cocoa -framework IOKit")
+endif (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+
+if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+  set(kiva_link_flags "-fopenmp")
+endif (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+
+
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${kiva_link_flags}")
+
 
 
 set(kiva_lib boost_date_time
@@ -50,21 +65,29 @@ set(kiva_lib boost_date_time
              umfpack
              amd
              cholmod
-             openblas
              colamd
              suitesparseconfig
              mgl
              yaml-cpp
              GLEW
-             glfw3
-             pthread
-             Xrandr
-             Xxf86vm
-             Xi
-             X11
-             GL)
+             glfw3)
 
-target_link_libraries(Kiva ${kiva_lib})
-                    
-         
-                    
+if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+  set(kiva_lib_os )
+endif (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+
+if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+  set(kiva_lib_os openblas
+                  pthread
+                  Xrandr
+                  Xxf86vm
+                  Xi
+                  X11
+                  GL )
+endif (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+
+
+target_link_libraries(Kiva ${kiva_lib} ${kiva_lib_os})
+
+
+
