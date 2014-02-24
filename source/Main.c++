@@ -44,7 +44,7 @@ int main(int argc, char *argv[])
 #endif
 
 	std::string versionInfo = "kiva 0.1.1";
-	std::string copyrightInfo = "Copyright (C) 2012-2013 Big Ladder Software\n"
+	std::string copyrightInfo = "Copyright (C) 2012-2014 Big Ladder Software\n"
 			               	    "Web: www.bigladdersoftware.com";
 	std::string usageInfo = "Usage: kiva [Input File] [Weather File] [Output File]\n"
 			                "   Input format: yaml\n"
@@ -167,7 +167,7 @@ int main(int argc, char *argv[])
 
 
 		}
-		else
+		else if (!vm.empty())
 		{
 			std::cout << "ERROR: Incorrect number of arguments\n\n";
 
