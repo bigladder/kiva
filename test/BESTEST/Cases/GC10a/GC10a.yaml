@@ -17,6 +17,7 @@ Foundation:
   alphaLocal: 0.22
   soilAbsorptivity: 0  # 0-1
   soilEmissivity: 0  # 0-1
+  surfaceRoughness: 30
   slab:
     layers:
       -
@@ -48,11 +49,11 @@ Foundation:
     - [0, 12]
     - [12, 12]
     - [12, 0]
-  
-  perimeterSurfaceWidth: 1.0  # [m]
-  
+
+  perimeterSurfaceWidth: 0.1  # [m]
+
   mesh:
-    minCellDim: 0.017  # [m]
+    minCellDim: 0.015  # [m]
     maxDepthGrowthCoeff: 1.15
     maxInteriorGrowthCoeff: 1.15
     maxExteriorGrowthCoeff: 1.45
@@ -60,16 +61,31 @@ Foundation:
   numericalScheme: STEADY-STATE  # ADE | EXPLICIT | ADI | IMPLICIT | CRANK-NICOLSON | STEADY-STATE
   #fADI: 1
   initializationMethod: STEADY-STATE  # KUSUDA | CONSTANT | IMPLICIT-ACCEL | STEADY-STATE
-  initialTemperature: 283
+  initialTemperature: 283.15
   implicitAccelTimestep: 720  # hours
   implicitAccelPeriods: 24
   convectionCalculationMethod: CONSTANT # AUTO | CONSTANT
-  interiorConvectiveCoefficient: 9999
-  exteriorConvectiveCoefficient: 9999
+  interiorConvectiveCoefficient: 99999
+  exteriorConvectiveCoefficient: 99999
   outdoorTemperatureMethod: CONSTANT # WEATHER-FILE | CONSTANT
   outdoorDryBulbTemperature: 283.15
   wallTopBoundary: LINEAR-DT  # ZERO-FLUX | LINEAR-DT
   wallTopTemperatureDifference: 20  # [K]
+
+  outputReport:
+ #   - 1
+ #   - 2
+ #   - 3
+ #   - 4
+ #   - 5
+ #   - 6
+ #   - 7
+ #   - 8
+ #   - 9
+ #   - 10
+ #   - 11
+ #   - 12
+    - 13
 
   outputAnimations:
     -
