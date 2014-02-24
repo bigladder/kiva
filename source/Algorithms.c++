@@ -79,7 +79,7 @@ double getDOE2ConvectionCoeff(double tilt,
 
 bool isWindward(double tilt, double azimuth, double windDirection)
 {
-	if (fabs(cos(tilt) < 0.98))
+	if (fabs(cos(tilt)) < 0.98)
 	{
 		double diff = fabs(windDirection - azimuth);
 		if ((diff - PI) > 0.001)
