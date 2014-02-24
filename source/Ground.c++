@@ -104,7 +104,7 @@ void Ground::initializeConditions()
 
 		lis_vector_set_all(300,x);
 	    lis_solver_create(&solver);
-	    lis_solver_set_option("-i gmres -p ilu -initx_zeros false -tol 1.0e-5",solver);
+	    lis_solver_set_option((char *)"-i gmres -p ilu -initx_zeros false -tol 1.0e-5",solver);
 #else
         Amat = boost::numeric::ublas::compressed_matrix<double,
         boost::numeric::ublas::column_major, 0,
@@ -2288,7 +2288,7 @@ std::string Ground::printOutputLine()
 		}
 	    else if (foundation.outputReport[o].variableID == 8)
 		{
-			// "Slab Core Total Heat Transfer Rate [W]"
+			// "Slab Total Heat Transfer Rate [W]"
 			double coreTotal = getSurfaceAverageHeatFlux("Slab Interior")*
 					getSurfaceArea("Slab Interior");
 			double perimeterTotal = 0.0;
@@ -2348,7 +2348,7 @@ std::string Ground::printOutputLine()
 		}
 		else if (foundation.outputReport[o].variableID == 13)
 		{
-			// "Slab Core Total Heat Transfer Rate [W]"
+			// "Total Heat Transfer Rate [W]"
 			double coreTotal = getSurfaceAverageHeatFlux("Slab Interior")*
 					getSurfaceArea("Slab Interior");
 			double perimeterTotal = 0.0;
