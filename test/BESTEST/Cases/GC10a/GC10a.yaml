@@ -22,15 +22,15 @@ Foundation:
     layers:
       -
         material: Standard 140a Soil
-        thickness: 0.10
+        thickness: 0.1
     emissivity: 0
   wall:
     layers:
       -
         material: Standard 140a Soil
         thickness: 0.24
-    heightAboveGrade: 0.10  # [m]
-    height: 0.10  # [m]
+    heightAboveGrade: 0.0  # [m]
+    height: 0.015  # [m]
     interiorEmissivity: 0
     exteriorEmissivity: 0
     exteriorAbsorptivity: 0
@@ -50,13 +50,13 @@ Foundation:
     - [12, 12]
     - [12, 0]
 
-  perimeterSurfaceWidth: 0.1  # [m]
+  perimeterSurfaceWidth: 0.015  # [m]
 
   mesh:
-    minCellDim: 0.015  # [m]
+    minCellDim: 0.004  # [m]
     maxDepthGrowthCoeff: 1.15
     maxInteriorGrowthCoeff: 1.15
-    maxExteriorGrowthCoeff: 1.45
+    maxExteriorGrowthCoeff: 1.15
 
   numericalScheme: STEADY-STATE  # ADE | EXPLICIT | ADI | IMPLICIT | CRANK-NICOLSON | STEADY-STATE
   #fADI: 1
