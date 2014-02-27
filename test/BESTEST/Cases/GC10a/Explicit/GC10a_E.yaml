@@ -1,0 +1,108 @@
+Simulation Control:
+  startDate: 2013-Jan-1
+  endDate: 2013-Jan-1
+  timeStep: 1 # [min]
+
+Materials:
+  Standard 140a Soil:
+    k: 1.9  # [W/m-K]
+    rho: 1490.0  # [kg/m3]
+    cp: 1800.0  # [J/kg-K]
+
+
+Foundation:
+  soil: Standard 140a Soil  # Material reference
+  vegetationHeight: 0.3  # [m]
+  deltaLocal: 370  # [m]
+  alphaLocal: 0.22
+  soilAbsorptivity: 0  # 0-1
+  soilEmissivity: 0  # 0-1
+  surfaceRoughness: 30
+  slab:
+    layers:
+      -
+        material: Standard 140a Soil
+        thickness: 0.1
+    emissivity: 0
+  wall:
+    layers:
+      -
+        material: Standard 140a Soil
+        thickness: 0.24
+    heightAboveGrade: 0.0  # [m]
+    height: 0.017  # [m]
+    interiorEmissivity: 0
+    exteriorEmissivity: 0
+    exteriorAbsorptivity: 0
+
+  foundationDepth: 0.0  # [m]
+  farFieldWidth: 40.0  # [m]
+  deepGroundDepth: 40.0  # [m]
+  deepGroundBoundary: CONSTANT-TEMP  # AUTO | CONSTANT-TEMP | ZERO-FLUX
+  deepGroundTemperature: 283.15
+
+  indoorAirTemperature: 303.15  # [K]
+
+  coordinateSystem: 3DSYMMETRY  # 2DAXIAL | 2DLINEAR | 3D | 3DSYMMETRY
+  polygon:
+    - [0, 0]
+    - [0, 12]
+    - [12, 12]
+    - [12, 0]
+
+  perimeterSurfaceWidth: 0.017  # [m]
+
+  mesh:
+    minCellDim: 0.017  # [m]
+    maxDepthGrowthCoeff: 1.15
+    maxInteriorGrowthCoeff: 1.15
+    maxExteriorGrowthCoeff: 1.15
+
+  numericalScheme: EXPLICIT  # ADE | EXPLICIT | ADI | IMPLICIT | CRANK-NICOLSON | STEADY-STATE
+  #fADI: 1
+  initializationMethod: STEADY-STATE  # KUSUDA | CONSTANT | IMPLICIT-ACCEL | STEADY-STATE
+  initialTemperature: 283.15
+  implicitAccelTimestep: 720  # hours
+  implicitAccelPeriods: 24
+  convectionCalculationMethod: CONSTANT # AUTO | CONSTANT
+  interiorConvectiveCoefficient: 99999
+  exteriorConvectiveCoefficient: 99999
+  outdoorTemperatureMethod: CONSTANT # WEATHER-FILE | CONSTANT
+  outdoorDryBulbTemperature: 283.15
+  wallTopBoundary: LINEAR-DT  # ZERO-FLUX | LINEAR-DT
+  wallTopTemperatureDifference: 20  # [K]
+
+  outputReport:
+ #   - 1
+ #   - 2
+ #   - 3
+ #   - 4
+ #   - 5
+ #   - 6
+ #   - 7
+ #   - 8
+ #   - 9
+ #   - 10
+ #   - 11
+ #   - 12
+    - 13
+
+  outputAnimations:
+#    -
+#      name: "Horizontal"
+#      frequency: 24  # [h]
+#      grid: yes
+#      gradients: no
+#      contours: no
+#      size: 800
+#      zRange: [0,0]
+#      xRange: [11.5,12.5]
+#      yRange: [11.5,12.5]
+#    -
+#      name: "Vertical"
+#      frequency: 24  # [h]
+#      grid: yes
+#      gradients: no
+#      contours: no
+#      size: 800
+#      yRange: [6,6]
