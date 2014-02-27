@@ -88,21 +88,21 @@ Foundation:
     - 13
 
   outputAnimations:
-    -
-      name: "Horizontal"
-      frequency: 24  # [h]
-      grid: yes
-      gradients: no
-      contours: no
-      size: 800
-      zRange: [0,0]
-      xRange: [11.5,12.5]
-      yRange: [11.5,12.5]
-    -
-      name: "Vertical"
-      frequency: 24  # [h]
-      grid: yes
-      gradients: no
-      contours: no
-      size: 800
-      yRange: [6,6]
+ #   -
+ #     name: "Horizontal"
+ #     frequency: 24  # [h]
+ #     grid: yes
+ #     gradients: no
+ #     contours: no
+ #     size: 800
+ #     zRange: [0,0]
+ #     xRange: [11.5,12.5]
+ #     yRange: [11.5,12.5]
+ #   -
+ #     name: "Vertical"
+ #     frequency: 24  # [h]
+ #     grid: yes
+ #     gradients: no
+ #     contours: no
+ #     size: 800
+ #     yRange: [6,6]
