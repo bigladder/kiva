@@ -1,5 +1,5 @@
 cmake_minimum_required (VERSION 2.8)
-project (Kiva)
+project (kiva)
 
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build, options are:
@@ -40,7 +40,7 @@ set(kiva_hdr Algorithms.h
 link_directories(${CMAKE_PREFIX_PATH}/lib)
 include_directories(${CMAKE_PREFIX_PATH}/include ${CMAKE_PREFIX_PATH}/include/boost-numeric-bindings)
 
-add_executable(Kiva ${kiva_src} ${kiva_hdr})
+add_executable(kiva ${kiva_src} ${kiva_hdr})
 
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
@@ -87,7 +87,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 endif (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 
 
-target_link_libraries(Kiva ${kiva_lib} ${kiva_lib_os})
+target_link_libraries(kiva ${kiva_lib} ${kiva_lib_os})
 
 
 
