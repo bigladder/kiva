@@ -1,0 +1,315 @@
+<%#INITIALIZE
+
+parameter "start_year", :default=>2097
+parameter "start_month", :default=>'Jan'
+parameter "start_day", :default=>1
+
+parameter "end_year", :default=>2097
+parameter "end_month", :default=>'Dec'
+parameter "end_day", :default=>31
+
+parameter "foundation_shape", :default=>'-'  # '-', 'H', 'L'
+parameter "foundation_area", :default=>2000|'ft2'
+parameter "foundation_aspect_ratio", :default=>1
+
+parameter "foundation_type", :default=>'SLAB'
+
+parameter "exterior_vertical_depth", :default=>0|'ft'
+parameter "exterior_horizontal_width", :default=>0|'ft'
+parameter "interior_vertical_depth", :default=>0|'ft'
+parameter "interior_horizontal_width", :default=>0|'ft'
+parameter "whole_slab", :default=>false
+
+parameter "insulation_level", :default=>0|'R-IP'
+
+parameter "interior_temp", :default=>72|'F'
+
+parameter "building_height", :default=>0|'ft'
+
+parameter "slab_thickness", :default=>8|'in'
+parameter "perimeter_width", :default=>0|'ft'
+
+parameter "soil_type", :default=>"Typical Soil"
+
+parameter "deep_ground_depth", :default=>40
+parameter "far_field_width", :default=>40
+
+parameter "min_cell_dim", :default=>0.1
+parameter "max_cell_growth", :default=>1.15
+parameter "timestep", :default=>60
+
+parameter "numerical_scheme", :default=>"ADE"
+parameter "init_method", :default=>"IMPLICIT-ACCEL"
+
+parameter "all_outputs", :default=>false
+
+parameter "plot", :default=>true
+parameter "plot_freq", :default=>36
+parameter "plot_size", :default=>800
+
+parameter "bestest", :default=>false
+parameter "bestest_soil_k", :default=> 1.9
+parameter "bestest_deep_ground_temp", :default=>10
+parameter "bestest_int_conv", :default=>100
+parameter "bestest_ext_conv", :default=>100
+parameter "bestest_wall_boundary", :default=>"ZERO-FLUX"
+parameter "bestest_wall_dt", :default=>20
+
+%>
+<%
+
+if (foundation_type == 'BASEMENT')
+  foundation_wall_depth = 8|'ft'
+else
+  foundation_wall_depth = 4|'ft'
+end
+
+if (foundation_type == 'SLAB')
+  foundation_depth = 0|'ft'
+else
+  foundation_depth = foundation_wall_depth
+end
+
+wall_thickness = 1|'ft'
+footer_depth = 1|'ft'
+
+xps_k = 1/((5|'R-IP')/(1|'in'))
+insulation_thickness = insulation_level*xps_k
+
+concrete_material = "Concrete"
+absorptivity = 0.8
+
+height_above_grade = slab_thickness
+
+if (bestest)
+
+  soil_type = "Standard 140a Soil"
+  concrete_material = "Standard 140a Soil"
+  foundation_wall_depth = 0.1
+  footer_depth = 0.0
+  absorptivity = 0.0
+  wall_thickness = 0.24
+  height_above_grade = 0.0
+end
+
+%>
+Simulation Control:
+  startDate: <%= start_year %>-<%= start_month %>-<%= start_day %>
+  endDate: <%= end_year %>-<%= end_month %>-<%= end_day %>
+  timeStep: <%= timestep %> # [min]
+
+Materials:
+  Typical Soil:  # alpha: 4.54115E-7
+    k: 0.864  # [W/m-K]
+    rho: 1510.0  # [kg/m3]
+    cp: 1260.0  # [J/kg-K]
+  Wet Sandy Soil:  # alpha: 3.34857E-7
+    k: 0.586  # [W/m-K]
+    rho: 1750.0  # [kg/m3]
+    cp: 1000.0  # [J/kg-K]
+  Wet Loam Soil:  # alpha: 2.4881E-7
+    k: 0.418  # [W/m-K]
+    rho: 1600.0  # [kg/m3]
+    cp: 1050.0  # [J/kg-K]
+  Wet Clay Soil:  # alpha: 3.43572E-7
+    k: 1.51  # [W/m-K]
+    rho: 1500.0  # [kg/m3]
+    cp: 2930.0  # [J/kg-K]
+  Dry Sandy Soil:  # alpha: 2.01258E-7
+    k: 0.264  # [W/m-K]
+    rho: 1650.0  # [kg/m3]
+    cp: 795.0  # [J/kg-K]
+  Dry Loam Soil:  # alpha: 2.39904E-7
+    k: 0.251  # [W/m-K]
+    rho: 1250.0  # [kg/m3]
+    cp: 837.0  # [J/kg-K]
+
+  Standard 140a Soil:
+    k: <%= bestest_soil_k %>  # [W/m-K]
+    rho: 1490.0  # [kg/m3]
+    cp: 1800.0  # [J/kg-K]
+
+  Concrete:
+    k: 1.98  # [W/m-K]
+    rho: 1900.0  # [kg/m3]
+    cp: 665.0  # [J/kg-K]
+  XPS:
+    k: <%= xps_k %>  # [W/m-K]
+    rho: 28.0  # [kg/m3]
+    cp: 1450.0  # [J/kg-K]
+  Carpet:
+    k: 0.08  # [W/m-K]
+    rho: 28.0  # [kg/m3]
+    cp: 1450.0  # [J/kg-K]
+
+Foundation:
+  soil: <%= soil_type %>  # Material reference
+  vegetationHeight: 0.3  # [m]
+  deltaLocal: 370  # [m]
+  alphaLocal: 0.22
+  soilAbsorptivity: <%= absorptivity %>  # 0-1
+  soilEmissivity: <%= absorptivity %>  # 0-1
+  surfaceRoughness: 30
+  slab:
+    layers:
+      -
+        material: <%= concrete_material %>
+        thickness: <%= slab_thickness %>
+<% if (whole_slab) %>
+      -
+        material: XPS
+        thickness: <%= insulation_thickness%>
+<% end %>
+    emissivity: <%= absorptivity %>
+  wall:
+    layers:
+      -
+        material: <%= concrete_material %>
+        thickness: <%= wall_thickness %>
+    heightAboveGrade: <%= height_above_grade %>  # [m]
+    height: <%= foundation_wall_depth + footer_depth %>  # [m]
+    interiorEmissivity: <%= absorptivity %>
+    exteriorEmissivity: <%= absorptivity %>
+    exteriorAbsorptivity: <%= absorptivity %>
+<% if (exterior_vertical_depth > 0.0) %>
+  exteriorVerticalInsulation:
+    depth: <%= exterior_vertical_depth %>
+    material: XPS
+    thickness: <%= insulation_thickness%>
+<% end %>
+<% if (exterior_horizontal_width > 0.0) %>
+  exteriorHorizontalInsulation:
+    depth: <%= exterior_vertical_depth %>
+    width: <%= exterior_horizontal_width %>
+    material: XPS
+    thickness: <%= insulation_thickness%>
+<% end %>
+<% if (interior_vertical_depth > 0.0) %>
+  interiorVerticalInsulation:
+    depth: <%= interior_vertical_depth %>
+    material: XPS
+    thickness: <%= insulation_thickness%>
+<% end %>
+<% if (interior_horizontal_width > 0.0) %>
+  interiorHorizontalInsulation:
+    depth: <%= interior_vertical_depth %>
+    width: <%= interior_horizontal_width %>
+    material: XPS
+    thickness: <%= insulation_thickness%>
+<% end %>
+
+  foundationDepth: <%= foundation_depth %>  # [m]
+  farFieldWidth: <%= far_field_width %>  # [m]
+  deepGroundDepth: <%= deep_ground_depth %>  # [m]
+<% if (bestest) %>
+  deepGroundBoundary: CONSTANT-TEMP  # AUTO | CONSTANT-TEMP | ZERO-FLUX
+  deepGroundTemperature: <%= bestest_deep_ground_temp + 273.15 %>  # [K]
+<% else %>
+  deepGroundBoundary: ZERO-FLUX  # AUTO | CONSTANT-TEMP | ZERO-FLUX
+<% end %>
+
+  indoorAirTemperature: <%= interior_temp + 273.15 %>  # [K]
+
+  coordinateSystem: 3DSYMMETRY  # 2DAXIAL | 2DLINEAR | 3D | 3DSYMMETRY
+<%
+
+vertices = []
+
+if (foundation_shape == '-')
+  width = (foundation_area*foundation_aspect_ratio)**(0.5)
+  length = foundation_area/width
+  vertices << [-width/2.0,-length/2.0]
+  vertices << [-width/2.0,length/2.0]
+  vertices << [width/2.0,length/2.0]
+  vertices << [width/2.0,-length/2.0]
+end
+
+%>
+  polygon:
+<% for v in vertices %>
+    - [<%= v[0] %>, <%= v[1] %>]
+<% end %>
+
+<% if (perimeter_width > 0.0) %>
+  perimeterSurfaceWidth: <%= perimeter_width %>  # [m]
+<% end %>
+
+  mesh:
+    minCellDim: <%= min_cell_dim %>  # [m]
+    maxDepthGrowthCoeff: <%= max_cell_growth %>
+    maxInteriorGrowthCoeff: <%= max_cell_growth %>
+    maxExteriorGrowthCoeff: <%= max_cell_growth %>
+
+  numericalScheme: <%= numerical_scheme %>  # ADE | EXPLICIT | ADI | IMPLICIT | CRANK-NICOLSON | STEADY-STATE
+<% if (numerical_scheme == "ADI") %>
+  fADI: 0.1
+<% end %>
+  initializationMethod: <%= init_method %>  # KUSUDA | CONSTANT | IMPLICIT-ACCEL | STEADY-STATE
+<% if (init_method == "IMPLICIT-ACCEL") %>
+  implicitAccelTimestep: 720  # hours
+  implicitAccelPeriods: 12
+<% elsif (init_method == "CONSTANT") %>
+  initialTemperature: <%= bestest_deep_ground_temp + 273.15 %>
+<% end %>
+<% if (bestest) %>
+  convectionCalculationMethod: CONSTANT # AUTO | CONSTANT
+  interiorConvectiveCoefficient: <%= bestest_int_conv %>
+  exteriorConvectiveCoefficient: <%= bestest_ext_conv %>
+<% else %>
+  convectionCalculationMethod: AUTO # AUTO | CONSTANT
+<% end %>
+
+<% if (bestest) %>
+  wallTopBoundary: <%= bestest_wall_boundary %>  # ZERO-FLUX | LINEAR-DT
+  <% if (bestest_wall_boundary == "LINEAR-DT") %>
+  wallTopTemperatureDifference: <%= bestest_wall_dt %>  # [K]
+  <% end %>
+<% else %>
+  wallTopBoundary: ZERO-FLUX  # ZERO-FLUX | LINEAR-DT
+<% end %>
+  outdoorTemperatureMethod: WEATHER-FILE # WEATHER-FILE | CONSTANT
+
+  outputReport:
+<% if (all_outputs) %>
+    - 1
+    - 2
+    - 3
+    - 4
+    - 5
+    - 6
+    - 7
+    - 8
+    - 9
+    - 10
+    - 11
+    - 12
+<% end %>
+    - 13
+
+  outputAnimations:
+<% if (plot) %>
+    -
+      name: "Grade"
+      frequency: <%= plot_freq %>  # [h]
+      grid: yes
+      gradients: no
+      contours: no
+      size: <%= plot_size %>
+      zRange: [0,0]
+    -
+      name: "X-Slice"
+      frequency: <%= plot_freq %>  # [h]
+      grid: yes
+      gradients: no
+      contours: no
+      size: <%= plot_size %>
+      xRange: [0,0]
+    -
+      name: "Y-Slice"
+      frequency: <%= plot_freq %>  # [h]
+      grid: yes
+      gradients: no
+      contours: no
+      size: <%= plot_size %>
+      yRange: [0,0]
+<% end %>
