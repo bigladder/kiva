@@ -217,10 +217,10 @@ void Domain::setDomain(Foundation &foundation)
 
 						if (foundation.coordinateSystem == Foundation::CS_3D_SYMMETRY)
 						{
-							if (isXSymmetric(foundation.polygon))
+							if (foundation.isXSymm)
 								cell[i][j][k].area = 2*cell[i][j][k].area;
 
-							if (isYSymmetric(foundation.polygon))
+							if (foundation.isYSymm)
 								cell[i][j][k].area = 2*cell[i][j][k].area;
 						}
 					}

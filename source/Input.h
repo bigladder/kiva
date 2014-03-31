@@ -287,6 +287,7 @@ public:
 	CoordinateSystem coordinateSystem;
 
 	Polygon polygon;
+	bool isXSymm, isYSymm;
 
 	double buildingHeight;
 	std::vector<Polygon3> buildingSurfaces;

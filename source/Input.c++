@@ -1760,8 +1760,8 @@ void Foundation::createMeshData()
 	else if(coordinateSystem == CS_3D_SYMMETRY)
 	{
 		// TODO: 3D Symmetric
-		bool isXSymm = isXSymmetric(polygon);
-		bool isYSymm = isYSymmetric(polygon);
+		isXSymm = isXSymmetric(polygon);
+		isYSymm = isYSymmetric(polygon);
 
 		// Change polygon to minimum symmetric unit
 		Polygon symmetricPoly;
