@@ -2,7 +2,7 @@
 
 :bestest=>true,
 
-:plot=>false
+:plot=>false,
 
 :start_year=>2096,
 :start_month=>'Dec',
@@ -17,8 +17,8 @@
 
 :min_cell_dim=>0.003,
 :numerical_scheme=>"ADE",
-:init_method=>"CONSTANT",
+:init_method=>"STEADY-STATE",
 :bestest_int_conv=>99999,
 :bestest_ext_conv=>99999,
-:bestest_wall_boundary=>"LINEAR-DT",
+:bestest_wall_boundary=>"LINEAR-DT"
 
