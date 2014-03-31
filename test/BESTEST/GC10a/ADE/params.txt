@@ -16,6 +16,8 @@
 :slab_thickness=>0.01,
 
 :min_cell_dim=>0.003,
+:max_cell_growth=>1.30,
+
 :numerical_scheme=>"ADE",
 :init_method=>"STEADY-STATE",
 :bestest_int_conv=>99999,
