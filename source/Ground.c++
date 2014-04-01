@@ -267,7 +267,7 @@ void Ground::calculateADE()
 	}
 
 	// Solve for new values (Main loop)
-	#pragma omp parallel sections
+	#pragma omp parallel sections num_threads(2)
 	{
 		#pragma omp section
 			calculateADEUpwardSweep();
