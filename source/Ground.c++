@@ -267,11 +267,13 @@ void Ground::calculateADE()
 	}
 
 	// Solve for new values (Main loop)
-	boost::thread up(boost::bind(&Ground::calculateADEUpwardSweep, this));
-	boost::thread down(boost::bind(&Ground::calculateADEDownwardSweep, this));
-
-	up.join();
-	down.join();
+	#pragma omp parallel sections
+	{
+		#pragma omp section
+			calculateADEUpwardSweep();
+		#pragma omp section
+			calculateADEDownwardSweep();
+	}
 
 	for (size_t k = 0; k < nZ; ++k)
 	{

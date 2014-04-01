@@ -31,10 +31,7 @@
 
 #include <mgl2/mgl.h>
 
-#include <boost/thread.hpp>
-#include <boost/bind.hpp>
 #include <boost/lexical_cast.hpp>
-
 #include <boost/multi_array.hpp>
 
 #if defined(USE_LIS_SOLVER)

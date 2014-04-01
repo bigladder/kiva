@@ -51,13 +51,12 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
   set(kiva_link_flags "-fopenmp")
 endif (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 
-
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${kiva_link_flags}")
 
 
 
 set(kiva_lib boost_date_time
-             boost_thread
              boost_filesystem
              boost_system
              boost_program_options
