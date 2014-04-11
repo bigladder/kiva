@@ -25,6 +25,8 @@
 
 static const double PI = 4.0*atan(1.0);
 
+static const bool TDMA = true;
+
 Ground::Ground(WeatherData &weatherData, Foundation &foundation,
 		       SimulationControl &simulationControl) : foundation(foundation),
 		       simulationControl(simulationControl), weatherData(weatherData)
@@ -45,7 +47,7 @@ Ground::~Ground()
 	lis_matrix_destroy(Amat);
 	lis_vector_destroy(x);
 	lis_vector_destroy(b);
-	//lis_solver_destroy(solver);
+	//lis_solver_destroy(solver); // for whatever reason, this causes a crash
 #endif
 
 }
@@ -87,10 +89,9 @@ void Ground::initializeConditions()
 	}
 
 	if (foundation.numericalScheme == Foundation::NS_CRANK_NICOLSON ||
-			 foundation.numericalScheme == Foundation::NS_ADI ||
-			 foundation.numericalScheme == Foundation::NS_IMPLICIT ||
-			 foundation.numericalScheme == Foundation::NS_STEADY_STATE ||
-			 foundation.initializationMethod == Foundation::IM_STEADY_STATE)
+	    foundation.numericalScheme == Foundation::NS_IMPLICIT ||
+		foundation.numericalScheme == Foundation::NS_STEADY_STATE ||
+		foundation.initializationMethod == Foundation::IM_STEADY_STATE)
 	{
 
 #if defined(USE_LIS_SOLVER)
@@ -116,6 +117,41 @@ void Ground::initializeConditions()
 
 	}
 
+	if (foundation.numericalScheme == Foundation::NS_ADI)
+	{
+		if (TDMA)
+		{
+			a1.resize(nX*nY*nZ, 0.0);
+			a2.resize(nX*nY*nZ, 0.0);
+			a3.resize(nX*nY*nZ, 0.0);
+			b_.resize(nX*nY*nZ, 0.0);
+			x_.resize(nX*nY*nZ);
+		}
+		else
+		{
+#if defined(USE_LIS_SOLVER)
+		lis_matrix_create(LIS_COMM_WORLD,&Amat);
+		lis_matrix_set_size(Amat,nX*nY*nZ,nX*nY*nZ);
+
+		lis_vector_create(LIS_COMM_WORLD,&b);
+		lis_vector_set_size(b,0,nX*nY*nZ);
+
+		lis_vector_duplicate(b,&x);
+
+		lis_vector_set_all(300,x);
+	    lis_solver_create(&solver);
+	    lis_solver_set_option((char *)"-i gmres -p ilu -initx_zeros false -tol 1.0e-5",solver);
+#else
+        Amat = boost::numeric::ublas::compressed_matrix<double,
+        boost::numeric::ublas::column_major, 0,
+        boost::numeric::ublas::unbounded_array<int>,
+        boost::numeric::ublas::unbounded_array<double> >(nX*nY*nZ,nX*nY*nZ);  // Coefficient Matrix
+        b = boost::numeric::ublas::vector<double> (nX*nY*nZ);  // constant and unknown vectors
+        x = boost::numeric::ublas::vector<double> (nX*nY*nZ);  // constant and unknown vectors
+#endif
+		}
+	}
+
 	TNew.resize(boost::extents[nX][nY][nZ]);
 	TOld.resize(boost::extents[nX][nY][nZ]);
 
@@ -123,7 +159,10 @@ void Ground::initializeConditions()
 	{
 		if (foundation.initializationMethod == Foundation::IM_STEADY_STATE)
 		{
+			Foundation::NumericalScheme tempNS = foundation.numericalScheme;
+			foundation.numericalScheme = Foundation::NS_STEADY_STATE;
 			calculateMatrix(Foundation::NS_STEADY_STATE);
+			foundation.numericalScheme = tempNS;
 		}
 		else if (foundation.initializationMethod == Foundation::IM_IMPLICIT_ACCELERATION)
 		{
@@ -1961,36 +2000,72 @@ void Ground::plot()
 
 void Ground::setAmatValue(const int i,const int j,const double val)
 {
+	if (foundation.numericalScheme == Foundation::NS_ADI && TDMA)
+	{
+		if (j < i)
+			a1[i] = val;
+		else if (j == i)
+			a2[i] = val;
+		else
+			a3[i] = val;
+	}
+	else
+	{
 #if defined(USE_LIS_SOLVER)
-	lis_matrix_set_value(LIS_INS_VALUE,i,j,val,Amat);
+		lis_matrix_set_value(LIS_INS_VALUE,i,j,val,Amat);
 #else
-	Amat(i,j) = val;
+		Amat(i,j) = val;
 #endif
+	}
 }
 
 void Ground::setbValue(const int i,const double val)
 {
+	if (foundation.numericalScheme == Foundation::NS_ADI && TDMA)
+	{
+		b_[i] = val;
+	}
+	else
+	{
 #if defined(USE_LIS_SOLVER)
 	lis_vector_set_value(LIS_INS_VALUE,i,val,b);
 #else
 	b(i) = val;
 #endif
+	}
 }
 
 void Ground::solveLinearSystem()
 {
+	if (foundation.numericalScheme == Foundation::NS_ADI && TDMA)
+	{
+		solveTDM(a1,a2,a3,b_,x_);
+	}
+	else
+	{
 #if defined(USE_LIS_SOLVER)
-    lis_matrix_set_type(Amat,LIS_MATRIX_CSR);
-    lis_matrix_assemble(Amat);
+		lis_matrix_set_type(Amat,LIS_MATRIX_CSR);
+		lis_matrix_assemble(Amat);
 
-    lis_solve(Amat,b,x,solver);
+		lis_solve(Amat,b,x,solver);
 #else
-    umf::umf_solve(Amat,x,b);
+		umf::umf_solve(Amat,x,b);
 #endif
+	}
 }
 
 void Ground::clearAmat()
 {
+	if (foundation.numericalScheme == Foundation::NS_ADI && TDMA)
+	{
+		std::fill(a1.begin(), a1.end(), 0.0);
+		std::fill(a2.begin(), a2.end(), 0.0);
+		std::fill(a3.begin(), a3.end(), 0.0);
+		std::fill(b_.begin(), b_.end(), 0.0);
+
+	}
+	else
+	{
 #if defined(USE_LIS_SOLVER)
 	lis_matrix_destroy(Amat);
     lis_matrix_create(LIS_COMM_WORLD,&Amat);
@@ -1998,10 +2073,17 @@ void Ground::clearAmat()
 #else
 	Amat.clear();
 #endif
+	}
 }
 
 double Ground::getxValue(const int i)
 {
+	if (foundation.numericalScheme == Foundation::NS_ADI && TDMA)
+	{
+		return x_[i];
+	}
+	else
+	{
 #if defined(USE_LIS_SOLVER)
 	double xVal;
 	lis_vector_get_value(x,i,&xVal);
@@ -2009,6 +2091,7 @@ double Ground::getxValue(const int i)
 #else
 	return x(i);
 #endif
+	}
 }
 
 

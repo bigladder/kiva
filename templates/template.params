@@ -242,7 +242,7 @@ end
 
   numericalScheme: <%= numerical_scheme %>  # ADE | EXPLICIT | ADI | IMPLICIT | CRANK-NICOLSON | STEADY-STATE
 <% if (numerical_scheme == "ADI") %>
-  fADI: 0.1
+  fADI: 0.01
 <% end %>
   initializationMethod: <%= init_method %>  # KUSUDA | CONSTANT | IMPLICIT-ACCEL | STEADY-STATE
 <% if (init_method == "IMPLICIT-ACCEL") %>

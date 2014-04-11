@@ -28,6 +28,7 @@
 #include "PixelCounter.h"
 #include <cmath>
 #include <vector>
+#include <iostream>
 
 #include <mgl2/mgl.h>
 
@@ -61,17 +62,26 @@ private:
 	WeatherData &weatherData;
 
 	double tNow;
-	size_t nX, nY, nZ;
 	double annualAverageDryBulbTemperature;
 
 	Domain domain;
 
 	// Data structures
+
+	// ADE
 	boost::multi_array<double, 3> U; // ADE upper sweep, n+1
 	boost::multi_array<double, 3> UOld; // ADE upper sweep, n
 	boost::multi_array<double, 3> V; // ADE lower sweep, n+1
 	boost::multi_array<double, 3> VOld; // ADE lower sweep, n
 
+	// ADI
+	std::vector<double> a1; // lower diagonal
+	std::vector<double> a2; // main diagonal
+	std::vector<double> a3; // upper diagonal
+	std::vector<double> b_; // right-hand side
+	std::vector<double> x_; // solution
+
+	// Implicit
 #if defined(USE_LIS_SOLVER)
 	LIS_MATRIX Amat;
 	LIS_VECTOR b, x;
@@ -92,6 +102,7 @@ private:
 	std::vector<GroundPlot> plots;
 
 public:
+	size_t nX, nY, nZ;
 
 	boost::multi_array<double, 3> TNew; // solution, n+1
 
