@@ -62,10 +62,10 @@ public:
 	};
 	CellType cellType;
 
-	size_t blockNumber;
+	//size_t blockNumber;
 	Block block;
 
-	size_t surfaceNumber;
+	//size_t surfaceNumber;
 	Surface surface;
 };
 

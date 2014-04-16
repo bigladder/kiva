@@ -101,7 +101,7 @@ void Domain::setDomain(Foundation &foundation)
 						cell[i][j][k].specificHeat = foundation.blocks[b].material.specificHeat;
 						cell[i][j][k].conductivity = foundation.blocks[b].material.conductivity;
 
-						cell[i][j][k].blockNumber = b;
+						//cell[i][j][k].blockNumber = b;
 						cell[i][j][k].block = foundation.blocks[b];
 
 
@@ -125,7 +125,7 @@ void Domain::setDomain(Foundation &foundation)
 						{
 							cell[i][j][k].cellType = Cell::BOUNDARY;
 
-							cell[i][j][k].surfaceNumber = s;
+							//cell[i][j][k].surfaceNumber = s;
 
 							cell[i][j][k].surface = foundation.surfaces[s];
 

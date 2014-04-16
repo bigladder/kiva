@@ -47,7 +47,7 @@ Ground::~Ground()
 	lis_matrix_destroy(Amat);
 	lis_vector_destroy(x);
 	lis_vector_destroy(b);
-	//lis_solver_destroy(solver); // for whatever reason, this causes a crash
+	lis_solver_destroy(solver); // for whatever reason, this causes a crash
 #endif
 
 }
@@ -2070,6 +2070,15 @@ void Ground::clearAmat()
 	lis_matrix_destroy(Amat);
     lis_matrix_create(LIS_COMM_WORLD,&Amat);
 	lis_matrix_set_size(Amat,nX*nY*nZ,nX*nY*nZ);
+
+	lis_vector_destroy(b);
+	lis_vector_create(LIS_COMM_WORLD,&b);
+	lis_vector_set_size(b,0,nX*nY*nZ);
+
+	lis_solver_destroy(solver);
+    lis_solver_create(&solver);
+    lis_solver_set_option((char *)"-i gmres -p ilu -initx_zeros false -tol 1.0e-5",solver);
+
 #else
 	Amat.clear();
 #endif
