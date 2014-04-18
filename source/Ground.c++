@@ -88,10 +88,20 @@ void Ground::initializeConditions()
 		VOld.resize(boost::extents[nX][nY][nZ]);
 	}
 
+	if (foundation.numericalScheme == Foundation::NS_ADI && TDMA)
+	{
+		a1.resize(nX*nY*nZ, 0.0);
+		a2.resize(nX*nY*nZ, 0.0);
+		a3.resize(nX*nY*nZ, 0.0);
+		b_.resize(nX*nY*nZ, 0.0);
+		x_.resize(nX*nY*nZ);
+	}
+
 	if (foundation.numericalScheme == Foundation::NS_CRANK_NICOLSON ||
 	    foundation.numericalScheme == Foundation::NS_IMPLICIT ||
 		foundation.numericalScheme == Foundation::NS_STEADY_STATE ||
-		foundation.initializationMethod == Foundation::IM_STEADY_STATE)
+		foundation.initializationMethod == Foundation::IM_STEADY_STATE ||
+		(foundation.numericalScheme == Foundation::NS_ADI && !(TDMA)))
 	{
 
 #if defined(USE_LIS_SOLVER)
@@ -116,41 +126,25 @@ void Ground::initializeConditions()
 #endif
 
 	}
-
-	if (foundation.numericalScheme == Foundation::NS_ADI)
+	else
 	{
-		if (TDMA)
-		{
-			a1.resize(nX*nY*nZ, 0.0);
-			a2.resize(nX*nY*nZ, 0.0);
-			a3.resize(nX*nY*nZ, 0.0);
-			b_.resize(nX*nY*nZ, 0.0);
-			x_.resize(nX*nY*nZ);
-		}
-		else
-		{
+		// Create a place holder matrix/vector system of size 1 to avoid problems when destroying the LIS components
 #if defined(USE_LIS_SOLVER)
 		lis_matrix_create(LIS_COMM_WORLD,&Amat);
-		lis_matrix_set_size(Amat,nX*nY*nZ,nX*nY*nZ);
+		lis_matrix_set_size(Amat,1,1);
 
 		lis_vector_create(LIS_COMM_WORLD,&b);
-		lis_vector_set_size(b,0,nX*nY*nZ);
+		lis_vector_set_size(b,0,1);
 
 		lis_vector_duplicate(b,&x);
 
 		lis_vector_set_all(300,x);
 	    lis_solver_create(&solver);
 	    lis_solver_set_option((char *)"-i gmres -p ilu -initx_zeros false -tol 1.0e-5",solver);
-#else
-        Amat = boost::numeric::ublas::compressed_matrix<double,
-        boost::numeric::ublas::column_major, 0,
-        boost::numeric::ublas::unbounded_array<int>,
-        boost::numeric::ublas::unbounded_array<double> >(nX*nY*nZ,nX*nY*nZ);  // Coefficient Matrix
-        b = boost::numeric::ublas::vector<double> (nX*nY*nZ);  // constant and unknown vectors
-        x = boost::numeric::ublas::vector<double> (nX*nY*nZ);  // constant and unknown vectors
 #endif
-		}
+
 	}
+
 
 	TNew.resize(boost::extents[nX][nY][nZ]);
 	TOld.resize(boost::extents[nX][nY][nZ]);

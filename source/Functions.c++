@@ -88,9 +88,8 @@ void solveTDM(const std::vector<double>& a1, const std::vector<double>& a2,
 	  b[i] = (b[i] - a1[i]*b[i-1]) / (a2[i] - a1[i]*a3[i-1]);
   }
 
-
   x[N-1] = b[N-1];
-  for (int i = N-1; i-- >= 0; )
+  for (int i = N-2; i >= 0 && i < N; i--)
   {
       x[i] = b[i] - a3[i]*x[i+1];
   }
