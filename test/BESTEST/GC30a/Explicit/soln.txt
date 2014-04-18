@@ -1,0 +1,10 @@
+# Set values below
+
+:timestep=>1,
+
+:slab_thickness=>0.02,
+
+:min_cell_dim=>0.02,
+
+:numerical_scheme=>"EXPLICIT"
+

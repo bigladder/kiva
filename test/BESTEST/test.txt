@@ -1,0 +1,8 @@
+# Set values below
+
+:bestest=>true,
+
+:plot=>false,
+
+:perimeter_width=>0.0,
+:slab_thickness=>0.01
