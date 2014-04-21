@@ -63,7 +63,7 @@
         layers:
           -
             material: Standard 140a Soil
-            thickness: 0.1
+            thickness: 0.01
         emissivity: 0.0
       wall:
         layers:
