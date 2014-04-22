@@ -97,6 +97,12 @@ void Ground::initializeConditions()
 		x_.resize(nX*nY*nZ);
 	}
 
+#if defined(USE_LIS_SOLVER)
+    solverOptions = "-i bicgstab -p ilu -maxiter 100000 -initx_zeros false -tol 1.0e-6";
+    std::vector<char> solverChars(solverOptions.begin(),solverOptions.end());
+    solverChars.push_back('\0');
+#endif
+
 	if (foundation.numericalScheme == Foundation::NS_CRANK_NICOLSON ||
 	    foundation.numericalScheme == Foundation::NS_IMPLICIT ||
 		foundation.numericalScheme == Foundation::NS_STEADY_STATE ||
@@ -113,9 +119,9 @@ void Ground::initializeConditions()
 
 		lis_vector_duplicate(b,&x);
 
-		lis_vector_set_all(300,x);
+		lis_vector_set_all(283.15,x);
 	    lis_solver_create(&solver);
-	    lis_solver_set_option((char *)"-i gmres -p ilu -initx_zeros false -tol 1.0e-5",solver);
+	    lis_solver_set_option(&solverChars[0],solver);
 #else
         Amat = boost::numeric::ublas::compressed_matrix<double,
         boost::numeric::ublas::column_major, 0,
@@ -138,13 +144,11 @@ void Ground::initializeConditions()
 
 		lis_vector_duplicate(b,&x);
 
-		lis_vector_set_all(300,x);
+		lis_vector_set_all(283.15,x);
 	    lis_solver_create(&solver);
-	    lis_solver_set_option((char *)"-i gmres -p ilu -initx_zeros false -tol 1.0e-5",solver);
+	    lis_solver_set_option(&solverChars[0],solver);
 #endif
-
 	}
-
 
 	TNew.resize(boost::extents[nX][nY][nZ]);
 	TOld.resize(boost::extents[nX][nY][nZ]);
@@ -2042,6 +2046,25 @@ void Ground::solveLinearSystem()
 		lis_matrix_assemble(Amat);
 
 		lis_solve(Amat,b,x,solver);
+
+		int status;
+		lis_solver_get_status(solver, &status);
+
+		if (status != 0) // LIS_MAXITER status
+		{
+			int iters;
+			double residual;
+
+			lis_solver_get_iters(solver, &iters);
+			lis_solver_get_residualnorm(solver, &residual);
+
+			std::cout << "Warning: Solution did not converge after ";
+			std::cout << iters << " iterations." << std::endl;
+			std::cout << "  The final residual was: " << residual << std::endl;
+			std::cout << "  Solver status: " << status << std::endl;
+
+		}
+		//lis_output(Amat,b,x,LIS_FMT_MM,"Matrix.mtx");
 #else
 		umf::umf_solve(Amat,x,b);
 #endif
@@ -2071,7 +2094,9 @@ void Ground::clearAmat()
 
 	lis_solver_destroy(solver);
     lis_solver_create(&solver);
-    lis_solver_set_option((char *)"-i gmres -p ilu -initx_zeros false -tol 1.0e-5",solver);
+    std::vector<char> solverChars(solverOptions.begin(),solverOptions.end());
+    solverChars.push_back('\0');
+    lis_solver_set_option(&solverChars[0],solver);
 
 #else
 	Amat.clear();

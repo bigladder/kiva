@@ -87,6 +87,8 @@ private:
 	LIS_VECTOR b, x;
 
 	LIS_SOLVER solver;
+
+	std::string solverOptions;
 #else
     boost::numeric::ublas::compressed_matrix<double,
                     boost::numeric::ublas::column_major, 0,
