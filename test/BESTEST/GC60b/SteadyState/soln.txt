@@ -1,0 +1,10 @@
+# Set values below
+
+:start_year=>2097,
+:start_month=>'Jan',
+:start_day=>1,
+:end_month=>'Jan',
+:end_day=>1,
+:timestep=>1440,
+
+:numerical_scheme=>"STEADY-STATE"
