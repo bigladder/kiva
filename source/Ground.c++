@@ -19,8 +19,6 @@
 #ifndef Ground_CPP
 #define Ground_CPP
 
-#define USE_LIS_SOLVER
-
 #include "Ground.h"
 
 static const double PI = 4.0*atan(1.0);

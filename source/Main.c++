@@ -16,8 +16,6 @@
  * along with Kiva.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define USE_LIS_SOLVER
-
 #include <iostream>
 #include <fstream>
 #include <cmath>

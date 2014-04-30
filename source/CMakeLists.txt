@@ -1,16 +1,8 @@
-cmake_minimum_required (VERSION 2.8)
-project (kiva)
+set(iterative_solver "true" )
 
-if(NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build, options are:
-		None(CMAKE_CXX_FLAGS or CMAKE_C_FLAGS used) Debug Release RelWithDebInfo MinSizeRel." FORCE)
-endif(NOT CMAKE_BUILD_TYPE)
-
-if(NOT CMAKE_PREFIX_PATH)
-  set(CMAKE_PREFIX_PATH "/usr/local" CACHE STRING "Primary prefix path for bin, lib, include directories." FORCE)
-endif(NOT CMAKE_PREFIX_PATH)
-
-message(${CMAKE_PREFIX_PATH})
+if (${iterative_solver})
+  add_definitions(-D USE_LIS_SOLVER )
+endif (${iterative_solver})
 
 set(kiva_src Main.c++
              Algorithms.c++
@@ -23,7 +15,7 @@ set(kiva_src Main.c++
              InputParser.c++
              Mesher.c++
              PixelCounter.c++
-             WeatherData.c++)
+             WeatherData.c++ )
 
 set(kiva_hdr Algorithms.h
              Domain.h
@@ -35,7 +27,7 @@ set(kiva_hdr Algorithms.h
              InputParser.h
              Mesher.h
              PixelCounter.h
-             WeatherData.h)
+             WeatherData.h )
 
 link_directories(${CMAKE_PREFIX_PATH}/lib)
 include_directories(${CMAKE_PREFIX_PATH}/include ${CMAKE_PREFIX_PATH}/include/boost-numeric-bindings)
@@ -60,33 +52,40 @@ set(kiva_lib boost_date_time
              boost_filesystem
              boost_system
              boost_program_options
-             lis
-             umfpack
-             amd
-             cholmod
-             colamd
-             suitesparseconfig
              mgl
              yaml-cpp
              GLEW
-             glfw3)
+             glfw3 )
+             
+if (${iterative_solver})
+  set(kiva_lib_solver lis )
+else (${iterative_solver})
+  set(kiva_lib_solver umfpack
+                      amd
+                      cholmod
+                      colamd
+                      suitesparseconfig ) 
+endif (${iterative_solver})
+
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   set(kiva_lib_os )
 endif (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-  set(kiva_lib_os openblas
-                  pthread
+  set(kiva_lib_os pthread
                   Xrandr
                   Xxf86vm
                   Xi
                   X11
                   GL )
+  if (NOT ${iterative_solver})
+    set (kiva_lib_os ${kiva_lib_os} openblas)
+  endif (NOT ${iterative_solver})
 endif (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 
 
-target_link_libraries(kiva ${kiva_lib} ${kiva_lib_os})
+target_link_libraries(kiva ${kiva_lib} ${kiva_lib_solver} ${kiva_lib_os})
 
 
 
