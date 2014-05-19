@@ -105,6 +105,7 @@ void Ground::initializeConditions()
 	    foundation.numericalScheme == Foundation::NS_IMPLICIT ||
 		foundation.numericalScheme == Foundation::NS_STEADY_STATE ||
 		foundation.initializationMethod == Foundation::IM_STEADY_STATE ||
+    foundation.initializationMethod == Foundation::IM_IMPLICIT_ACCELERATION ||
 		(foundation.numericalScheme == Foundation::NS_ADI && !(TDMA)))
 	{
 
@@ -162,34 +163,30 @@ void Ground::initializeConditions()
 		}
 		else if (foundation.initializationMethod == Foundation::IM_IMPLICIT_ACCELERATION)
 		{
-			Foundation initialFoundation = foundation;
-			initialFoundation.initializationMethod = Foundation::IM_STEADY_STATE;
-			initialFoundation.numericalScheme = Foundation::NS_IMPLICIT;
-			initialFoundation.outputAnimations.clear();
-			SimulationControl initialSimControl;
-			initialSimControl.timestep = boost::posix_time::hours(foundation.implicitAccelTimestep);
-			initialSimControl.endDate = simulationControl.startDate;
-			boost::posix_time::ptime endTime(initialSimControl.endDate);
-			endTime = endTime - simulationControl.timestep;
-			initialSimControl.startTime = endTime - boost::posix_time::hours(foundation.implicitAccelTimestep*foundation.implicitAccelPeriods);
-			initialSimControl.startDate = initialSimControl.startTime.date();
+      SimulationControl initialSimControl;
+      boost::posix_time::time_duration tempTimestep = simulationControl.timestep;
+      simulationControl.timestep = boost::posix_time::hours(foundation.implicitAccelTimestep);
+      timestep = simulationControl.timestep.total_seconds();
 
-			boost::posix_time::ptime simEnd(endTime);
-			boost::posix_time::ptime simStart(initialSimControl.startTime);
-			boost::posix_time::time_duration simDuration =  simEnd  - simStart;
+      double simDuration = foundation.implicitAccelTimestep*foundation.implicitAccelPeriods*3600;
 
-			double tstart = 0.0; // [s] Simulation start time
-			double tend = simDuration.total_seconds(); // [s] Simulation end time
-			double initialTimestep = initialSimControl.timestep.total_seconds();
+      double tstart = -tempTimestep.total_seconds() - simDuration; // [s] Simulation start time
+      double tend = -tempTimestep.total_seconds(); // [s] Simulation end time
 
-			Ground initialGround(weatherData,initialFoundation,initialSimControl);
+      Foundation::NumericalScheme tempNS = foundation.numericalScheme;
+      foundation.numericalScheme = Foundation::NS_STEADY_STATE;
+      calculate(tstart);
 
-			for (double t = tstart; t <= tend; t = t + initialTimestep)
+      foundation.numericalScheme = Foundation::NS_IMPLICIT;
+
+			for (double t = tstart; t <= tend; t += timestep)
 			{
-				initialGround.calculate(t);
+				calculate(t);
 			}
 
-			TOld = initialGround.TNew;
+      foundation.numericalScheme = tempNS;
+      simulationControl.timestep = tempTimestep;
+      timestep = simulationControl.timestep.total_seconds();
 
 		}
 		else
