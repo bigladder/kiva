@@ -1,16 +1,41 @@
-import numpy as np
-import scipy as sci
 import matplotlib.pyplot as plt
-import pandas as pd
 import seaborn as sns
 import xlrd
-import datetime as dt
 import csv
 
-from dateutil.parser import parse
+workbook = xlrd.open_workbook('../doc/GC-InDepth-Results.XLS')
 
-def getLastValue(case, solution):
-    with open('../'+case+'/'+solution+'/Timeseries.csv') as f:
+def getValue(case, solution):
+    if (solution.ref):
+        return readXLS(case,solution.ID)
+    else:
+        return getLastValue(case, solution.ID)
+
+
+def readXLS(case, ID):
+    worksheet = workbook.sheet_by_name(ID)
+    if (case == 'GC10a'):
+        row = 57
+    elif (case == 'GC30a'):
+        row = 58
+    elif (case == 'GC30b'):
+        row = 59
+    elif (case == 'GC30c'):
+        row = 60
+    elif (case == 'GC60b'):
+        row = 61
+    elif (case == 'GC65b'):
+        row = 62
+    
+    if (ID == 'Analytical' and case != 'GC10a'):
+        return 0.0
+    else:    
+        return worksheet.cell_value(row,4)
+        
+
+
+def getLastValue(case, ID):
+    with open('../'+case+'/'+ID+'/Timeseries.csv') as f:
         lines = f.readlines()
         reader = csv.reader([lines[-1]])
         for row in reader:
@@ -18,155 +43,143 @@ def getLastValue(case, solution):
 
     return float(val)
 
+class Solution:
+    def __init__(self):
+        self.name = ""
+        self.color = []
+        self.ID = ""
+        self.ref = False
+        
+    
+
 print "Begin generating plots..."
 
 sns.set_style("white")
-
-# GC10a
-
-# Absolute values
-
-fig, ax = plt.subplots()
-
-refs = ['Analytical','TRNSYS', 'FLUENT', 'MATLAB']
-
 blue_palette = sns.blend_palette(["ghostwhite",sns.color_palette("deep",6)[0]],5)
 green_palette = sns.blend_palette(["ghostwhite",sns.color_palette("deep",6)[1]],5)
 red_palette = sns.blend_palette(["ghostwhite",sns.color_palette("deep",6)[2]],5)
 purple_palette = sns.blend_palette(["ghostwhite",sns.color_palette("deep",6)[3]],5)
 yellow_palette = sns.blend_palette(["ghostwhite",sns.color_palette("deep",6)[4]],5)
 
-colors = [blue_palette[4],
-          green_palette[4],
-          green_palette[3],
-          green_palette[2]]
 
-gc10a_values = []
+fig = plt.figure()
+ax = plt.subplot(111)
 
-print "Read reference results..."
-workbook = xlrd.open_workbook('../doc/GC-InDepth-Results.XLS')
+analytical_solution = Solution()
+analytical_solution.color = blue_palette[4]
+analytical_solution.ref = True
+analytical_solution.name = "Analytical"
+analytical_solution.ID = "Analytical"
 
-for name in refs:
-    worksheet = workbook.sheet_by_name(name)
-    gc10a_values.append(worksheet.cell_value(57,4))
+trnsys_solution = Solution()
+trnsys_solution.color = green_palette[4]
+trnsys_solution.ref = True
+trnsys_solution.name = "TRNSYS"
+trnsys_solution.ID = "TRNSYS"
 
-names = refs
+fluent_solution = Solution()
+fluent_solution.color = green_palette[3]
+fluent_solution.ref = True
+fluent_solution.name = "FLUENT"
+fluent_solution.ID = "FLUENT"
 
-gc10a_results = {}
+matlab_solution = Solution()
+matlab_solution.color = green_palette[2]
+matlab_solution.ref = True
+matlab_solution.name = "MATLAB"
+matlab_solution.ID = "MATLAB"
 
+ss_solution = Solution()
+ss_solution.color = purple_palette[4]
+ss_solution.ref = False
+ss_solution.name = "Kiva: Steady-State"
+ss_solution.ID = "SteadyState"
 
-# Analytical
-'''
-val = gc10a_values[0]
+ade_solution = Solution()
+ade_solution.color = red_palette[4]
+ade_solution.ref = False
+ade_solution.name = "Kiva: ADE"
+ade_solution.ID = "ADE"
 
-dates = [parse('2096-Dec-31 00:00:00'), parse('2097-Dec-31 23:00:00')]
-ts = pd.Series([val,val], index=dates)
-gc10a_results['Analytical'] = pd.DataFrame({'W': ts})
-'''
-# SS
-print "Read SS results..."
+adi_solution = Solution()
+adi_solution.color = red_palette[3]
+adi_solution.ref = False
+adi_solution.name = "Kiva: ADI"
+adi_solution.ID = "ADI"
 
-df = pd.read_csv('../GC10a/SteadyState/Timeseries.csv',
-                                   header=0,
-                                   names=['time','W'],
-                                   parse_dates=True,
-                                   index_col=0)
-names.append('Kiva: SS')
+implicit_solution = Solution()
+implicit_solution.color = yellow_palette[4]
+implicit_solution.ref = False
+implicit_solution.name = "Kiva: Implicit"
+implicit_solution.ID = "Implicit"
 
-val = df['W'][len(df.index)-1]
-gc10a_values.append(val)
+explicit_solution = Solution()
+explicit_solution.color = yellow_palette[3]
+explicit_solution.ref = False
+explicit_solution.name = "Kiva: Explicit"
+explicit_solution.ID = "Explicit"
 
-'''
-dates = [parse('2096-Dec-31 00:00:00'), parse('2097-Dec-31 23:00:00')]
-ts = pd.Series([val,val], index=dates)
-gc10a_results['SS'] = pd.DataFrame({'W': ts})
-'''
+cn_solution = Solution()
+cn_solution.color = yellow_palette[2]
+cn_solution.ref = False
+cn_solution.name = "Kiva: Crank-Nicolson"
+cn_solution.ID = "CrankNicolson"
 
-colors.append(purple_palette[4])
+solutions = [analytical_solution,
+             trnsys_solution,
+             fluent_solution,
+             matlab_solution,
+             ss_solution,
+             ade_solution,
+             adi_solution,
+             implicit_solution,
+             explicit_solution,
+             cn_solution]
 
-# ADE
-print "Read ADE results..."
+cases = ['GC10a',
+         'GC30a',
+         'GC30b',
+         'GC30c',
+         'GC60b',
+         'GC65b']
 
-gc10a_results['ADE'] = pd.read_csv('../GC10a/ADE/Timeseries.csv',
-                                   header=0,
-                                   names=['time','W'],
-                                   parse_dates=True,
-                                   index_col=0)
-df = gc10a_results['ADE']
-names.append('Kiva: ADE')
-gc10a_values.append(df['W'][len(df.index)-1])
-colors.append(red_palette[4])
+values = []
+names = []
+colors = []
 
-# ADI
-print "Read ADI results..."
+print "Read results..."
 
-gc10a_results['ADI'] = pd.read_csv('../GC10a/ADI/Timeseries.csv',
-                                   header=0,
-                                   names=['time','W'],
-                                   parse_dates=True,
-                                   index_col=0)
-df = gc10a_results['ADI']
-names.append('Kiva: ADI')
-gc10a_values.append(df['W'][len(df.index)-1])
-colors.append(red_palette[3])
+for soln in solutions:
+    names.append(soln.name)
+    colors.append(soln.color)
 
-# Implicit
-print "Read Implicit results..."
+ind = []
 
-'''
-gc10a_results['Implicit'] = pd.read_csv('../GC10a/Implicit/Timeseries.csv',
-                                   header=0,
-                                   names=['time','W'],
-                                   parse_dates=True,
-                                   index_col=0)
-df = gc10a_results['Implicit']
-'''
+i = 1
 
-names.append('Kiva: Implicit')
-gc10a_values.append(df['W'][len(df.index)-1])
-colors.append(yellow_palette[4])
-
-# Explicit
-print "Read Explicit results..."
-
-'''
-gc10a_results['Explicit'] = pd.read_csv('../GC10a/Explicit/Timeseries.csv',
-                                   header=0,
-                                   names=['time','W'],
-                                   parse_dates=True,
-                                   index_col=0)
-df = gc10a_results['Explicit']
-'''
-
-names.append('Kiva: Explicit')
-gc10a_values.append(getLastValue('GC10a','Explicit'))
-colors.append(yellow_palette[3])
-
-#print gc10a_values
-
+for case in cases:
+    for soln in solutions:
+        values.append(getValue(case,soln))
+        ind.append(i)
+        i+=1
+    i+=1
+    
 # Bar Chart
 print "Create figure..."
 
-ind = range(1,len(names)+1)
 width = 1
 
-data = ax.bar(ind, gc10a_values, width, color=colors)
+data = ax.bar(ind, values, width, color=colors)
 
-'''
-# Steady-State time series chart
+box = ax.get_position()
+ax.set_position([box.x0, box.y0 + box.height*0.1, box.width, box.height*0.9])
 
-df = pd.concat([gc10a_results['Analytical'].resample('H', fill_method='pad'),
-                gc10a_results['SS'].resample('H', fill_method='pad'),
-                gc10a_results['ADE'],
-                gc10a_results['ADI'],
-                gc10a_results['Implicit'],
-                gc10a_results['Explicit'].resample('H', how='mean')], 
-               axis=1, keys=['Analytical','Steady State','ADE','ADI','Implicit','Explicit'])
+legend = ax.legend(data[:10], names[:10], loc='upper center', ncol=5, bbox_to_anchor=(0.5,-0.05),
+                   fancybox=True, shadow=True)
 
-df.plot()
-'''
 
 plt.show()
+#plt.savefig('../figures/GC10a.pdf')
 
 print "Done."
 
