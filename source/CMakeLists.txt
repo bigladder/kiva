@@ -1,4 +1,4 @@
-set(iterative_solver "true" )
+set(iterative_solver 1 )
 
 if (${iterative_solver})
   add_definitions(-D USE_LIS_SOLVER )
