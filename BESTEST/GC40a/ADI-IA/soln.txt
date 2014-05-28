@@ -1,0 +1,4 @@
+# Set values below
+
+:init_method=>"IMPLICIT-ACCEL",
+:numerical_scheme=>"ADI"

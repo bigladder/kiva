@@ -1,0 +1,5 @@
+# Set values below
+
+:init_method=>"KUSUDA",
+:numerical_scheme=>"ADE"
+

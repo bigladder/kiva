@@ -1,0 +1,17 @@
+# Set values below
+
+:end_year=>2103,
+:timestep=>60,
+
+:foundation_area=>144,
+:interior_temp=>30,
+
+:deep_ground_depth=>30,
+:far_field_width=>20,
+
+:min_cell_dim=>0.003,
+:max_cell_growth=>1.30,
+
+:bestest_int_conv=>99999,
+:bestest_ext_conv=>99999
+
