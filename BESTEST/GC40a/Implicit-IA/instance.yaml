@@ -3,8 +3,8 @@
     
     
     Simulation Control:
-      startDate: 2096-Dec-31
-      endDate: 2097-Dec-31
+      startDate: 2097-Jan-1
+      endDate: 2103-Dec-31
       timeStep: 60 # [min]
     
     Materials:
@@ -77,8 +77,8 @@
         exteriorAbsorptivity: 0.0
     
       foundationDepth: 0.0  # [m]
-      farFieldWidth: 15  # [m]
-      deepGroundDepth: 15  # [m]
+      farFieldWidth: 20  # [m]
+      deepGroundDepth: 30  # [m]
       deepGroundBoundary: CONSTANT-TEMP  # AUTO | CONSTANT-TEMP | ZERO-FLUX
       deepGroundTemperature: 283.15  # [K]
     
@@ -100,10 +100,12 @@
         maxExteriorGrowthCoeff: 1.3
     
       numericalScheme: IMPLICIT  # ADE | EXPLICIT | ADI | IMPLICIT | CRANK-NICOLSON | STEADY-STATE
-      initializationMethod: STEADY-STATE  # KUSUDA | CONSTANT | IMPLICIT-ACCEL | STEADY-STATE
+      initializationMethod: IMPLICIT-ACCEL  # KUSUDA | CONSTANT | IMPLICIT-ACCEL | STEADY-STATE
+      implicitAccelTimestep: 720  # hours
+      implicitAccelPeriods: 12
       convectionCalculationMethod: CONSTANT # AUTO | CONSTANT
-      interiorConvectiveCoefficient: 100
-      exteriorConvectiveCoefficient: 100
+      interiorConvectiveCoefficient: 99999
+      exteriorConvectiveCoefficient: 99999
     
       wallTopBoundary: ZERO-FLUX  # ZERO-FLUX | LINEAR-DT
       
