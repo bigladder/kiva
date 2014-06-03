@@ -123,7 +123,7 @@ legend = ax.legend(data[:10], names[:10], loc='upper center', ncol=5, bbox_to_an
 
 
 
-fig.savefig('../figures/' + file_name + '.pdf')
+fig.savefig('../figures/' + file_name + '.png')
 fig.savefig(output_dir + 'images/' + file_name + '.pdf')
 
 
