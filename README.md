@@ -5,6 +5,12 @@ Kiva is a free and open source ground heat transfer calculation tool written in 
 to calculate heat loss and gain on a timestep basis from building foundations. The goal is
 to create a tool that can integrate the multi-dimensional heat transfer into standard building energy simulation engines.
 
+Testing and Validation
+----------------------
+Kiva has been tested against the International Energy Agency Building Energy Simulation Test (IEA BESTEST) in-depth diagnorstic cases for ground coupled heat transfer related to slab-on-grade construction. The results of which match very closely with the analytical truth standard and the verified numerical truth standards:
+
+![Alt Text](BESTEST/figures/bestest_ss.png "IEA BESTEST Steady-State Test Case Results")
+
 Contributing
 ------------
 
