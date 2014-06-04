@@ -39,7 +39,13 @@ parameter "max_cell_growth", :default=>1.15
 parameter "timestep", :default=>60
 
 parameter "numerical_scheme", :default=>"ADE"
-parameter "init_method", :default=>"IMPLICIT-ACCEL"
+parameter "init_method", :default=>"STEADY-STATE"
+
+parameter "imp_periods", :default=>0
+parameter "imp_timestep", :default=>0
+parameter "warmup_days", :default=>0
+
+parameter "coordinate_system", :default=>"3DSYMMETRY"
 
 parameter "all_outputs", :default=>false
 
@@ -210,7 +216,7 @@ Foundation:
 
   indoorAirTemperature: <%= interior_temp + 273.15 %>  # [K]
 
-  coordinateSystem: 3DSYMMETRY  # 2DAXIAL | 2DLINEAR | 3D | 3DSYMMETRY
+  coordinateSystem: <%= coordinate_system %>  # 2DAXIAL | 2DLINEAR | 3D | 3DSYMMETRY
 <%
 
 vertices = []
@@ -244,12 +250,16 @@ end
 <% if (numerical_scheme == "ADI") %>
   fADI: 0.01
 <% end %>
-  initializationMethod: <%= init_method %>  # KUSUDA | CONSTANT | IMPLICIT-ACCEL | STEADY-STATE
-<% if (init_method == "IMPLICIT-ACCEL") %>
-  implicitAccelTimestep: 720  # hours
-  implicitAccelPeriods: 12
-<% elsif (init_method == "CONSTANT") %>
+  initializationMethod: <%= init_method %>  # KUSUDA | CONSTANT | STEADY-STATE
+<% if (init_method == "CONSTANT") %>
   initialTemperature: <%= bestest_deep_ground_temp + 273.15 %>
+<% end %>
+<% if (imp_periods > 0) %>
+  implicitAccelTimestep: <%= imp_timestep %>  # hours
+  implicitAccelPeriods: <%= imp_periods %>
+<% end %>
+<% if (warmup_days > 0) %>
+  warmupDays: <%= warmup_days %> # days
 <% end %>
 <% if (bestest) %>
   convectionCalculationMethod: CONSTANT # AUTO | CONSTANT

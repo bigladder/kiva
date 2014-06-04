@@ -296,12 +296,6 @@ Input inputParser(std::string inputFile)
 	{
 		if (yamlInput["Foundation"]["initializationMethod"].as<std::string>() == "KUSUDA")
 			foundation1.initializationMethod = Foundation::IM_KUSUDA;
-		else if (yamlInput["Foundation"]["initializationMethod"].as<std::string>() == "IMPLICIT-ACCEL")
-		{
-			foundation1.initializationMethod = Foundation::IM_IMPLICIT_ACCELERATION;
-			foundation1.implicitAccelTimestep = yamlInput["Foundation"]["implicitAccelTimestep"].as<long>();
-			foundation1.implicitAccelPeriods = yamlInput["Foundation"]["implicitAccelPeriods"].as<long>();
-		}
 		else if (yamlInput["Foundation"]["initializationMethod"].as<std::string>() == "STEADY-STATE")
 			foundation1.initializationMethod = Foundation::IM_STEADY_STATE;
 		else if (yamlInput["Foundation"]["initializationMethod"].as<std::string>() == "CONSTANT")
@@ -312,8 +306,36 @@ Input inputParser(std::string inputFile)
 	}
 	else
 	{
-		foundation1.initializationMethod = Foundation::IM_KUSUDA;
+		foundation1.initializationMethod = Foundation::IM_STEADY_STATE;
 	}
+
+  if  (yamlInput["Foundation"]["implicitAccelTimestep"].IsDefined())
+  {
+    foundation1.implicitAccelTimestep = yamlInput["Foundation"]["implicitAccelTimestep"].as<long>();
+  }
+  else
+  {
+    foundation1.implicitAccelTimestep = 0;
+  }
+
+  if  (yamlInput["Foundation"]["implicitAccelPeriods"].IsDefined())
+  {
+    foundation1.implicitAccelPeriods = yamlInput["Foundation"]["implicitAccelPeriods"].as<long>();
+  }
+  else
+  {
+    foundation1.implicitAccelPeriods = 0;
+  }
+
+  if  (yamlInput["Foundation"]["warmupDays"].IsDefined())
+  {
+    foundation1.warmupDays = yamlInput["Foundation"]["warmupDays"].as<long>();
+  }
+  else
+  {
+    foundation1.warmupDays = 0;
+  }
+
 
 	if  (yamlInput["Foundation"]["convectionCalculationMethod"].IsDefined())
 	{

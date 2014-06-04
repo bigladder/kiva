@@ -1,5 +1,7 @@
 # Set values below
 
-:init_method=>"IMPLICIT-ACCEL",
+:init_method=>"STEADY-STATE",
+:imp_periods=>12,
+:imp_timestep=>720,
 :numerical_scheme=>"ADE"
 

@@ -329,15 +329,16 @@ public:
 	double fADI;  // ADI modified f-factor
 
 	double initialTemperature;
-	long implicitAccelTimestep;
-	long implicitAccelPeriods;
 	enum InitializationMethod
 	{
 		IM_KUSUDA,
 		IM_CONSTANT_TEMPERATURE,
-		IM_IMPLICIT_ACCELERATION,
 		IM_STEADY_STATE
 	};
+
+	long warmupDays;
+  long implicitAccelTimestep;
+  long implicitAccelPeriods;
 
 	InitializationMethod initializationMethod;
 

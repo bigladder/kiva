@@ -73,7 +73,6 @@ void Ground::buildDomain()
 void Ground::initializeConditions()
 {
 
-	tNow = 0.0;
 	annualAverageDryBulbTemperature = weatherData.dryBulbTemp.getAverage();
 
 	// Initialize matices
@@ -105,7 +104,7 @@ void Ground::initializeConditions()
 	    foundation.numericalScheme == Foundation::NS_IMPLICIT ||
 		foundation.numericalScheme == Foundation::NS_STEADY_STATE ||
 		foundation.initializationMethod == Foundation::IM_STEADY_STATE ||
-    foundation.initializationMethod == Foundation::IM_IMPLICIT_ACCELERATION ||
+    foundation.implicitAccelPeriods > 0 ||
 		(foundation.numericalScheme == Foundation::NS_ADI && !(TDMA)))
 	{
 
@@ -152,34 +151,58 @@ void Ground::initializeConditions()
 	TNew.resize(boost::extents[nX][nY][nZ]);
 	TOld.resize(boost::extents[nX][nY][nZ]);
 
+  tNow = 0.0;
+
+	// TODO Change to initialization + acceleration + warmup
 	if (foundation.numericalScheme != Foundation::NS_STEADY_STATE)
 	{
+	  // Calculate initial time in seconds (simulation start minus warmup and acceleration periods)
+    double simulationTimestep = simulationControl.timestep.total_seconds();
+    double accelTimestep = foundation.implicitAccelTimestep*3600;
+
+	  double accelDuration = accelTimestep*foundation.implicitAccelPeriods;
+	  double warmupDuration = foundation.warmupDays*24*3600;
+
+	  double tInit = -warmupDuration - simulationTimestep - accelDuration - accelTimestep;
+
+	  // Calculate initial conditions
 		if (foundation.initializationMethod == Foundation::IM_STEADY_STATE)
 		{
 			Foundation::NumericalScheme tempNS = foundation.numericalScheme;
 			foundation.numericalScheme = Foundation::NS_STEADY_STATE;
-			calculateMatrix(Foundation::NS_STEADY_STATE);
+			calculate(tInit);
 			foundation.numericalScheme = tempNS;
 		}
-		else if (foundation.initializationMethod == Foundation::IM_IMPLICIT_ACCELERATION)
+    else
+    {
+      tNow = tInit;
+      for (size_t k = 0; k < nZ; ++k)
+      {
+        for (size_t j = 0; j < nY; ++j)
+        {
+          for (size_t i = 0; i < nX; ++i)
+          {
+            TOld[i][j][k]= getInitialTemperature(tInit,
+                domain.meshZ.centers[k]);
+          }
+        }
+      }
+    }
+
+		// Calculate implicit acceleration
+		if (foundation.implicitAccelPeriods > 0)
 		{
-      SimulationControl initialSimControl;
       boost::posix_time::time_duration tempTimestep = simulationControl.timestep;
       simulationControl.timestep = boost::posix_time::hours(foundation.implicitAccelTimestep);
-      timestep = simulationControl.timestep.total_seconds();
+      timestep = accelTimestep;
 
-      double simDuration = foundation.implicitAccelTimestep*foundation.implicitAccelPeriods*3600;
-
-      double tstart = -tempTimestep.total_seconds() - simDuration; // [s] Simulation start time
-      double tend = -tempTimestep.total_seconds(); // [s] Simulation end time
+      double tAccelStart = -warmupDuration - simulationTimestep - accelDuration; // [s] Acceleration start time
+      double tAccelEnd = -warmupDuration - simulationTimestep; // [s] Acceleration end time
 
       Foundation::NumericalScheme tempNS = foundation.numericalScheme;
-      foundation.numericalScheme = Foundation::NS_STEADY_STATE;
-      calculate(tstart);
-
       foundation.numericalScheme = Foundation::NS_IMPLICIT;
 
-			for (double t = tstart; t <= tend; t += timestep)
+			for (double t = tAccelStart; t <= tAccelEnd; t += timestep)
 			{
 				calculate(t);
 			}
@@ -189,20 +212,21 @@ void Ground::initializeConditions()
       timestep = simulationControl.timestep.total_seconds();
 
 		}
-		else
-		{
-			for (size_t k = 0; k < nZ; ++k)
-			{
-				for (size_t j = 0; j < nY; ++j)
-				{
-					for (size_t i = 0; i < nX; ++i)
-					{
-						TOld[i][j][k]= getInitialTemperature(tNow,
-								domain.meshZ.centers[k]);
-					}
-				}
-			}
-		}
+
+		// Calculate warmup
+    if (foundation.warmupDays > 0)
+    {
+
+      double tWarmupStart = -warmupDuration; // [s] Acceleration start time
+      double tWarmupEnd = -simulationTimestep; // [s] Simulation end time
+
+      for (double t = tWarmupStart; t <= tWarmupEnd; t += timestep)
+      {
+        calculate(t);
+      }
+
+    }
+
 	}
 }
 
