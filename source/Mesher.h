@@ -28,44 +28,44 @@ class Interval
 {
 public:
 
-	double maxGrowthCoeff;
-	double minCellDim;
-	enum Growth
-	{
-		FORWARD,
-		BACKWARD,
-		UNIFORM,
-		CENTERED
-	};
-	Growth growthDir;
+  double maxGrowthCoeff;
+  double minCellDim;
+  enum Growth
+  {
+    FORWARD,
+    BACKWARD,
+    UNIFORM,
+    CENTERED
+  };
+  Growth growthDir;
 
 };
 
 class MeshData
 {
 public:
-	std::vector<double> points;
-	std::vector<Interval> intervals;
+  std::vector<double> points;
+  std::vector<Interval> intervals;
 
 };
 
 class Mesher
 {
 private:
-		MeshData data;
+    MeshData data;
 
 public:
-		std::vector<double> dividers;
-		std::vector<double> deltas;
-		std::vector<double> centers;
+    std::vector<double> dividers;
+    std::vector<double> deltas;
+    std::vector<double> centers;
 
 public:
 
-		Mesher();
-		Mesher(MeshData &data);
-		std::size_t getNearestIndex(double position);
-		std::size_t getNextIndex(double position);
-		std::size_t getPreviousIndex(double position);
+    Mesher();
+    Mesher(MeshData &data);
+    std::size_t getNearestIndex(double position);
+    std::size_t getNextIndex(double position);
+    std::size_t getPreviousIndex(double position);
 
 };
 

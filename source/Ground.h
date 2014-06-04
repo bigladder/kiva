@@ -56,39 +56,39 @@ class Ground
 {
 private:
 
-	double timestep;
-	Foundation &foundation;
-	SimulationControl &simulationControl;
-	WeatherData &weatherData;
+  double timestep;
+  Foundation &foundation;
+  SimulationControl &simulationControl;
+  WeatherData &weatherData;
 
-	double tNow;
-	double annualAverageDryBulbTemperature;
+  double tNow;
+  double annualAverageDryBulbTemperature;
 
-	Domain domain;
+  Domain domain;
 
-	// Data structures
+  // Data structures
 
-	// ADE
-	boost::multi_array<double, 3> U; // ADE upper sweep, n+1
-	boost::multi_array<double, 3> UOld; // ADE upper sweep, n
-	boost::multi_array<double, 3> V; // ADE lower sweep, n+1
-	boost::multi_array<double, 3> VOld; // ADE lower sweep, n
+  // ADE
+  boost::multi_array<double, 3> U; // ADE upper sweep, n+1
+  boost::multi_array<double, 3> UOld; // ADE upper sweep, n
+  boost::multi_array<double, 3> V; // ADE lower sweep, n+1
+  boost::multi_array<double, 3> VOld; // ADE lower sweep, n
 
-	// ADI
-	std::vector<double> a1; // lower diagonal
-	std::vector<double> a2; // main diagonal
-	std::vector<double> a3; // upper diagonal
-	std::vector<double> b_; // right-hand side
-	std::vector<double> x_; // solution
+  // ADI
+  std::vector<double> a1; // lower diagonal
+  std::vector<double> a2; // main diagonal
+  std::vector<double> a3; // upper diagonal
+  std::vector<double> b_; // right-hand side
+  std::vector<double> x_; // solution
 
-	// Implicit
+  // Implicit
 #if defined(USE_LIS_SOLVER)
-	LIS_MATRIX Amat;
-	LIS_VECTOR b, x;
+  LIS_MATRIX Amat;
+  LIS_VECTOR b, x;
 
-	LIS_SOLVER solver;
+  LIS_SOLVER solver;
 
-	std::string solverOptions;
+  std::string solverOptions;
 #else
     boost::numeric::ublas::compressed_matrix<double,
                     boost::numeric::ublas::column_major, 0,
@@ -99,83 +99,83 @@ private:
 #endif
 
 
-	boost::multi_array<double, 3> TOld; // solution, n
+  boost::multi_array<double, 3> TOld; // solution, n
 
-	std::vector<GroundPlot> plots;
+  std::vector<GroundPlot> plots;
 
 public:
-	size_t nX, nY, nZ;
+  size_t nX, nY, nZ;
 
-	boost::multi_array<double, 3> TNew; // solution, n+1
+  boost::multi_array<double, 3> TNew; // solution, n+1
 
-	// Constructor
-	Ground(WeatherData &weatherData, Foundation &foundation, SimulationControl &simulationControl);
+  // Constructor
+  Ground(WeatherData &weatherData, Foundation &foundation, SimulationControl &simulationControl);
 
-	// Destructor
-	virtual ~Ground();
+  // Destructor
+  virtual ~Ground();
 
-	// Calculator
-	void calculate(double t);
+  // Calculator
+  void calculate(double t);
 
-	std::string printOutputHeaders();
-	std::string printOutputLine();
+  std::string printOutputHeaders();
+  std::string printOutputLine();
 
 
 private:
 
-	// Initializers (Called from constructor)
-	void buildDomain();
+  // Initializers (Called from constructor)
+  void buildDomain();
 
-	void initializeConditions();
+  void initializeConditions();
 
-	void initializePlots();
+  void initializePlots();
 
-	// Calculators (Called from main calculator)
-	void calculateADE();
+  // Calculators (Called from main calculator)
+  void calculateADE();
 
-	void calculateADEUpwardSweep();
+  void calculateADEUpwardSweep();
 
-	void calculateADEDownwardSweep();
+  void calculateADEDownwardSweep();
 
-	void calculateExplicit();
+  void calculateExplicit();
 
-	void calculateMatrix(Foundation::NumericalScheme scheme);
+  void calculateMatrix(Foundation::NumericalScheme scheme);
 
-	void calculateADI(int dim);
+  void calculateADI(int dim);
 
-	void plot();
+  void plot();
 
-	// Misc. Functions
-	void setAmatValue(const int i, const int j, const double val);
-	void setbValue(const int i, const double val);
-	void solveLinearSystem();
-	void clearAmat();
-	double getxValue(const int i);
+  // Misc. Functions
+  void setAmatValue(const int i, const int j, const double val);
+  void setbValue(const int i, const double val);
+  void solveLinearSystem();
+  void clearAmat();
+  double getxValue(const int i);
 
-	boost::posix_time::ptime getSimTime(double t);
+  boost::posix_time::ptime getSimTime(double t);
 
-	double getInitialTemperature(double t, double z);
+  double getInitialTemperature(double t, double z);
 
-	double getDeepGroundTemperature();
+  double getDeepGroundTemperature();
 
-	double getConvectionCoeff(double Tsurf,
-							  double Tamb,
-							  double Vair,
-							  double roughness,
-							  bool isExterior,
-							  double tilt);
+  double getConvectionCoeff(double Tsurf,
+                double Tamb,
+                double Vair,
+                double roughness,
+                bool isExterior,
+                double tilt);
 
-	double getOutdoorTemperature();
+  double getOutdoorTemperature();
 
-	double getLocalWindSpeed();
+  double getLocalWindSpeed();
 
-	void setSolarBoundaryConditions();
+  void setSolarBoundaryConditions();
 
-	double getSurfaceAverageHeatFlux(std::string surfaceName);
-	double getSurfaceAverageTemperature(std::string surfaceName);
-	double getSurfaceArea(std::string surfaceName);
+  double getSurfaceAverageHeatFlux(std::string surfaceName);
+  double getSurfaceAverageTemperature(std::string surfaceName);
+  double getSurfaceArea(std::string surfaceName);
 
-	double getSurfaceEffectiveTemperature(std::string surfaceName, double constructionRValue);
+  double getSurfaceEffectiveTemperature(std::string surfaceName, double constructionRValue);
 
 };
 

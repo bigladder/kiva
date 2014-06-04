@@ -41,23 +41,23 @@ class PixelCounter
 {
 public:
 
-	PixelCounter(int size = 512, int numQueries = 8, bool showWindow = false);
-	~PixelCounter();
+  PixelCounter(int size = 512, int numQueries = 8, bool showWindow = false);
+  ~PixelCounter();
 
 
-	double getAreaRatio(double orientation, double azimuth, double altitude, std::vector<Polygon3> shading, std::vector<Polygon3> shaded, int index);
-	int retrievePixelCount(int index);
-	bool queryComplete(int index);
+  double getAreaRatio(double orientation, double azimuth, double altitude, std::vector<Polygon3> shading, std::vector<Polygon3> shaded, int index);
+  int retrievePixelCount(int index);
+  bool queryComplete(int index);
 
 private:
 
-	glm::vec3 sun;
-	glm::mat4 viewMatrix;
-	glm::mat4 projectionMatrix;
+  glm::vec3 sun;
+  glm::mat4 viewMatrix;
+  glm::mat4 projectionMatrix;
 
-	int size;
+  int size;
     int numQueries;
-	bool showWindow;
+  bool showWindow;
     GLFWwindow* window;
     GLuint vao[2];
     GLuint vbo[2];
@@ -65,7 +65,7 @@ private:
     std::vector<GLuint> queries, fbo, rbo1, rbo2;
 
 
-	void drawRectangles(std::vector<Polygon3> polygons, float color, GLuint &vao, GLuint &vbo, GLuint &ebo);
+  void drawRectangles(std::vector<Polygon3> polygons, float color, GLuint &vao, GLuint &vbo, GLuint &ebo);
 
 
 };

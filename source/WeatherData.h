@@ -33,56 +33,56 @@ class HourlyData: public std::vector<double>
 {
 public:
 
-	double getValue(boost::posix_time::ptime t);
-	double getAverage();
-	double getMin();
-	double getMax();
+  double getValue(boost::posix_time::ptime t);
+  double getAverage();
+  double getMin();
+  double getMax();
 };
 
 class WeatherData
 {
 public:
 
-	std::string city;
-	std::string state;
-	std::string country;
-	double timezone;
-	double latitude;
-	double longitude;
-	double elevation;
+  std::string city;
+  std::string state;
+  std::string country;
+  double timezone;
+  double latitude;
+  double longitude;
+  double elevation;
 
-	HourlyData dryBulbTemp;
-	//HourlyData wetBulbTemp;
-	HourlyData dewPointTemp;
-	HourlyData atmosphericPressure;
-	//HourlyData density;
-	HourlyData relativeHumidity;
-	//HourlyData humidityRatio;
-	//HourlyData enthalpy;
+  HourlyData dryBulbTemp;
+  //HourlyData wetBulbTemp;
+  HourlyData dewPointTemp;
+  HourlyData atmosphericPressure;
+  //HourlyData density;
+  HourlyData relativeHumidity;
+  //HourlyData humidityRatio;
+  //HourlyData enthalpy;
 
-	//HourlyData solarAngle;
-	HourlyData globalHorizontalSolar;
-	HourlyData directNormalSolar;
-	HourlyData diffuseHorizontalSolar;
+  //HourlyData solarAngle;
+  HourlyData globalHorizontalSolar;
+  HourlyData directNormalSolar;
+  HourlyData diffuseHorizontalSolar;
 
-	HourlyData windDirection;
-	HourlyData windSpeed;
+  HourlyData windDirection;
+  HourlyData windSpeed;
 
-	HourlyData totalSkyCover;
-	HourlyData opaqueSkyCover;
-	HourlyData skyEmissivity;
-	HourlyData skyTemp;
-	//HourlyData cloudType;
-	//HourlyData snowFlag;
-	//HourlyData rainFlag;
-	HourlyData altitude;
-	HourlyData azimuth;
+  HourlyData totalSkyCover;
+  HourlyData opaqueSkyCover;
+  HourlyData skyEmissivity;
+  HourlyData skyTemp;
+  //HourlyData cloudType;
+  //HourlyData snowFlag;
+  //HourlyData rainFlag;
+  HourlyData altitude;
+  HourlyData azimuth;
 
 public:
-	WeatherData(std::string weatherFile);
+  WeatherData(std::string weatherFile);
 
 private:
-	void importEPW(std::string epwFile);
+  void importEPW(std::string epwFile);
 
 };
 

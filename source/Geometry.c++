@@ -23,464 +23,464 @@
 
 bool isRectilinear(Polygon poly)
 {
-	for (std::size_t v = 0; v < poly.outer().size(); v++)
-	{
-		double x = poly.outer()[v].get<0>();
-		double y = poly.outer()[v].get<1>();
-		double xNext, yNext;
-		if (v == poly.outer().size() - 1)
-		{
-			xNext = poly.outer()[0].get<0>();
-			yNext = poly.outer()[0].get<1>();
-		}
-		else
-		{
-			xNext = poly.outer()[v+1].get<0>();
-			yNext = poly.outer()[v+1].get<1>();
-		}
+  for (std::size_t v = 0; v < poly.outer().size(); v++)
+  {
+    double x = poly.outer()[v].get<0>();
+    double y = poly.outer()[v].get<1>();
+    double xNext, yNext;
+    if (v == poly.outer().size() - 1)
+    {
+      xNext = poly.outer()[0].get<0>();
+      yNext = poly.outer()[0].get<1>();
+    }
+    else
+    {
+      xNext = poly.outer()[v+1].get<0>();
+      yNext = poly.outer()[v+1].get<1>();
+    }
 
-		if (isEqual(x,xNext) || isEqual(y,yNext))
-		{
-			// Do nothing
-		}
-		else
-		{
-			return false;
-		}
-	}
-	return true;
+    if (isEqual(x,xNext) || isEqual(y,yNext))
+    {
+      // Do nothing
+    }
+    else
+    {
+      return false;
+    }
+  }
+  return true;
 }
 
 // TODO: Replace with boost geometry buffer algorithm for polygons when it becomes available
 Polygon offset(Polygon poly, double dist)
 {
-	if (!isRectilinear(poly))
-	{
-		// Throw exception
-	}
-	// March around polygon set offsets from each vertex
-	int nV = poly.outer().size();
+  if (!isRectilinear(poly))
+  {
+    // Throw exception
+  }
+  // March around polygon set offsets from each vertex
+  int nV = poly.outer().size();
 
 
-	Polygon offset;
-	// Main loop
-	for (int v = 0; v < nV; v++)
-	{
-		// current coordinates
-		double x = poly.outer()[v].get<0>();
-		double y = poly.outer()[v].get<1>();
+  Polygon offset;
+  // Main loop
+  for (int v = 0; v < nV; v++)
+  {
+    // current coordinates
+    double x = poly.outer()[v].get<0>();
+    double y = poly.outer()[v].get<1>();
 
-		double xNew, yNew;
+    double xNew, yNew;
 
-		switch (getDirectionOut(poly,v))
-		{
-		case geom::Y_POS:
-			if (getTurn(poly,v) == geom::LEFT)
-			{
-				xNew = x - dist;
-				yNew = y + dist;
-			}
-			else
-			{
-				xNew = x - dist;
-				yNew = y - dist;
-			}
-			break;
-		case geom::X_POS:
-			if (getTurn(poly,v) == geom::LEFT)
-			{
-				xNew = x + dist;
-				yNew = y + dist;
-			}
-			else
-			{
-				xNew = x - dist;
-				yNew = y + dist;
-			}
-			break;
-		case geom::Y_NEG:
-			if (getTurn(poly,v) == geom::LEFT)
-			{
-				xNew = x + dist;
-				yNew = y - dist;
-			}
-			else
-			{
-				xNew = x + dist;
-				yNew = y + dist;
-			}
-			break;
-		case geom::X_NEG:
-			if (getTurn(poly,v) == geom::LEFT)
-			{
-				xNew = x - dist;
-				yNew = y - dist;
-			}
-			else
-			{
-				xNew = x + dist;
-				yNew = y - dist;
-			}
-			break;
-		}
+    switch (getDirectionOut(poly,v))
+    {
+    case geom::Y_POS:
+      if (getTurn(poly,v) == geom::LEFT)
+      {
+        xNew = x - dist;
+        yNew = y + dist;
+      }
+      else
+      {
+        xNew = x - dist;
+        yNew = y - dist;
+      }
+      break;
+    case geom::X_POS:
+      if (getTurn(poly,v) == geom::LEFT)
+      {
+        xNew = x + dist;
+        yNew = y + dist;
+      }
+      else
+      {
+        xNew = x - dist;
+        yNew = y + dist;
+      }
+      break;
+    case geom::Y_NEG:
+      if (getTurn(poly,v) == geom::LEFT)
+      {
+        xNew = x + dist;
+        yNew = y - dist;
+      }
+      else
+      {
+        xNew = x + dist;
+        yNew = y + dist;
+      }
+      break;
+    case geom::X_NEG:
+      if (getTurn(poly,v) == geom::LEFT)
+      {
+        xNew = x - dist;
+        yNew = y - dist;
+      }
+      else
+      {
+        xNew = x + dist;
+        yNew = y - dist;
+      }
+      break;
+    }
 
-		offset.outer().push_back(Point(xNew, yNew));
+    offset.outer().push_back(Point(xNew, yNew));
 
-	}
-	return offset;
+  }
+  return offset;
 }
 
 geom::Direction getDirectionIn(Polygon poly, std::size_t vertex)
 {
-	if (!isRectilinear(poly))
-	{
-		// Throw exception
-	}
+  if (!isRectilinear(poly))
+  {
+    // Throw exception
+  }
 
-	double xPrev;
-	double yPrev;
-	double x;
-	double y;
+  double xPrev;
+  double yPrev;
+  double x;
+  double y;
 
-	std::size_t nV = poly.outer().size();
+  std::size_t nV = poly.outer().size();
 
-	if (vertex == 0)
-	{
-		xPrev = poly.outer()[nV - 1].get<0>();
-		yPrev = poly.outer()[nV - 1].get<1>();
-	}
-	else
-	{
-		xPrev = poly.outer()[vertex - 1].get<0>();
-		yPrev = poly.outer()[vertex - 1].get<1>();
-	}
+  if (vertex == 0)
+  {
+    xPrev = poly.outer()[nV - 1].get<0>();
+    yPrev = poly.outer()[nV - 1].get<1>();
+  }
+  else
+  {
+    xPrev = poly.outer()[vertex - 1].get<0>();
+    yPrev = poly.outer()[vertex - 1].get<1>();
+  }
 
-	x = poly.outer()[vertex].get<0>();
-	y = poly.outer()[vertex].get<1>();
+  x = poly.outer()[vertex].get<0>();
+  y = poly.outer()[vertex].get<1>();
 
-	if (isLessThan(x,xPrev))
-	{
-		return geom::X_NEG;
-	}
-	else if (isGreaterThan(x,xPrev))
-	{
-		return geom::X_POS;
-	}
-	else if (isLessThan(y,yPrev))
-	{
-		return geom::Y_NEG;
-	}
-	else // if (isGreaterThan(y,yPrev))
-	{
-		return geom::Y_POS;
-	}
+  if (isLessThan(x,xPrev))
+  {
+    return geom::X_NEG;
+  }
+  else if (isGreaterThan(x,xPrev))
+  {
+    return geom::X_POS;
+  }
+  else if (isLessThan(y,yPrev))
+  {
+    return geom::Y_NEG;
+  }
+  else // if (isGreaterThan(y,yPrev))
+  {
+    return geom::Y_POS;
+  }
 
 }
 
 geom::Direction getDirectionOut(Polygon poly, std::size_t vertex)
 {
-	if (!isRectilinear(poly))
-	{
-		// Throw exception
-	}
+  if (!isRectilinear(poly))
+  {
+    // Throw exception
+  }
 
-	double xNext;
-	double yNext;
-	double x;
-	double y;
+  double xNext;
+  double yNext;
+  double x;
+  double y;
 
-	std::size_t nV = poly.outer().size();
+  std::size_t nV = poly.outer().size();
 
-	if (vertex == nV - 1)
-	{
-		xNext = poly.outer()[0].get<0>();
-		yNext = poly.outer()[0].get<1>();
-	}
-	else
-	{
-		xNext = poly.outer()[vertex + 1].get<0>();
-		yNext = poly.outer()[vertex + 1].get<1>();
-	}
+  if (vertex == nV - 1)
+  {
+    xNext = poly.outer()[0].get<0>();
+    yNext = poly.outer()[0].get<1>();
+  }
+  else
+  {
+    xNext = poly.outer()[vertex + 1].get<0>();
+    yNext = poly.outer()[vertex + 1].get<1>();
+  }
 
-	x = poly.outer()[vertex].get<0>();
-	y = poly.outer()[vertex].get<1>();
+  x = poly.outer()[vertex].get<0>();
+  y = poly.outer()[vertex].get<1>();
 
-	if (isLessThan(xNext,x))
-	{
-		return geom::X_NEG;
-	}
-	else if (isGreaterThan(xNext,x))
-	{
-		return geom::X_POS;
-	}
-	else if (isLessThan(yNext,y))
-	{
-		return geom::Y_NEG;
-	}
-	else // if (isGreaterThan(yNext,y))
-	{
-		return geom::Y_POS;
-	}
+  if (isLessThan(xNext,x))
+  {
+    return geom::X_NEG;
+  }
+  else if (isGreaterThan(xNext,x))
+  {
+    return geom::X_POS;
+  }
+  else if (isLessThan(yNext,y))
+  {
+    return geom::Y_NEG;
+  }
+  else // if (isGreaterThan(yNext,y))
+  {
+    return geom::Y_POS;
+  }
 
 }
 
 geom::Turn getTurn(Polygon poly, std::size_t vertex)
 {
-	switch (getDirectionIn(poly,vertex))
-	{
-	case geom::X_NEG:
-		{
-		if (getDirectionOut(poly,vertex) == geom::Y_POS)
-			return geom::RIGHT;
-		else  // if (getDirectionOut(poly,vertex) == Y_NEG)
-			return geom::LEFT;
-		}
-		break;
-	case geom::X_POS:
-		{
-		if (getDirectionOut(poly,vertex) == geom::Y_POS)
-			return geom::LEFT;
-		else  // if (getDirectionOut(poly,vertex) == Y_NEG)
-			return geom::RIGHT;
-		}
-		break;
-	case geom::Y_NEG:
-		{
-		if (getDirectionOut(poly,vertex) == geom::X_POS)
-			return geom::LEFT;
-		else  // if (getDirectionOut(poly,vertex) == X_NEG)
-			return geom::RIGHT;
-		}
-		break;
-	default:  //case geom::Y_POS:
-		{
-		if (getDirectionOut(poly,vertex) == geom::X_POS)
-			return geom::RIGHT;
-		else  // if (getDirectionOut(poly,vertex) == X_NEG)
-			return geom::LEFT;
-		}
-		break;
-	}
+  switch (getDirectionIn(poly,vertex))
+  {
+  case geom::X_NEG:
+    {
+    if (getDirectionOut(poly,vertex) == geom::Y_POS)
+      return geom::RIGHT;
+    else  // if (getDirectionOut(poly,vertex) == Y_NEG)
+      return geom::LEFT;
+    }
+    break;
+  case geom::X_POS:
+    {
+    if (getDirectionOut(poly,vertex) == geom::Y_POS)
+      return geom::LEFT;
+    else  // if (getDirectionOut(poly,vertex) == Y_NEG)
+      return geom::RIGHT;
+    }
+    break;
+  case geom::Y_NEG:
+    {
+    if (getDirectionOut(poly,vertex) == geom::X_POS)
+      return geom::LEFT;
+    else  // if (getDirectionOut(poly,vertex) == X_NEG)
+      return geom::RIGHT;
+    }
+    break;
+  default:  //case geom::Y_POS:
+    {
+    if (getDirectionOut(poly,vertex) == geom::X_POS)
+      return geom::RIGHT;
+    else  // if (getDirectionOut(poly,vertex) == X_NEG)
+      return geom::LEFT;
+    }
+    break;
+  }
 }
 
 MultiPolygon mirrorX(MultiPolygon poly, double x)
 {
-	boost::geometry::strategy::transform::ublas_transformer<double,2,2>
-	transform(-1, 0, 2*x,
-			   0, 1,   0,
-			   0, 0,   1);
+  boost::geometry::strategy::transform::ublas_transformer<double,2,2>
+  transform(-1, 0, 2*x,
+         0, 1,   0,
+         0, 0,   1);
 
-	MultiPolygon mirror;
+  MultiPolygon mirror;
 
-	boost::geometry::transform(poly, mirror, transform);
+  boost::geometry::transform(poly, mirror, transform);
 
-	boost::geometry::reverse(mirror);
+  boost::geometry::reverse(mirror);
 
 
-	return mirror;
+  return mirror;
 }
 
 MultiPolygon mirrorY(MultiPolygon poly, double y)
 {
-	boost::geometry::strategy::transform::ublas_transformer<double,2,2>
-	transform(1,  0,   0,
-			  0, -1, 2*y,
-			  0,  0,   1);
+  boost::geometry::strategy::transform::ublas_transformer<double,2,2>
+  transform(1,  0,   0,
+        0, -1, 2*y,
+        0,  0,   1);
 
-	MultiPolygon mirror;
+  MultiPolygon mirror;
 
-	boost::geometry::transform(poly, mirror, transform);
+  boost::geometry::transform(poly, mirror, transform);
 
-	boost::geometry::reverse(mirror);
+  boost::geometry::reverse(mirror);
 
 
-	return mirror;
+  return mirror;
 }
 
 
 bool isXSymmetric(Polygon poly)
 {
 
-	// Find centroid
-	Point centroid;
-	boost::geometry::centroid(poly, centroid);
-	double centroidX = centroid.get<0>();
+  // Find centroid
+  Point centroid;
+  boost::geometry::centroid(poly, centroid);
+  double centroidX = centroid.get<0>();
 
-	// Create Left and Right bounding boxes
-	Box bb;
-	boost::geometry::envelope(poly,bb);
+  // Create Left and Right bounding boxes
+  Box bb;
+  boost::geometry::envelope(poly,bb);
 
-	Box bbLeft(bb.min_corner(),Point(centroidX,bb.max_corner().get<1>()));
-	Box bbRight(Point(centroidX,bb.min_corner().get<1>()),bb.max_corner());
+  Box bbLeft(bb.min_corner(),Point(centroidX,bb.max_corner().get<1>()));
+  Box bbRight(Point(centroidX,bb.min_corner().get<1>()),bb.max_corner());
 
-	// Create Left and Right polygons
-	MultiPolygon left;
-	MultiPolygon right;
+  // Create Left and Right polygons
+  MultiPolygon left;
+  MultiPolygon right;
 
-	boost::geometry::intersection(poly,bbLeft,left);
-	boost::geometry::intersection(poly,bbRight,right);
+  boost::geometry::intersection(poly,bbLeft,left);
+  boost::geometry::intersection(poly,bbRight,right);
 
-	// Mirror right polygon across the centroid
-	right = mirrorX(right,centroidX);
+  // Mirror right polygon across the centroid
+  right = mirrorX(right,centroidX);
 
-	return boost::geometry::equals(left,right);
+  return boost::geometry::equals(left,right);
 }
 
 bool isYSymmetric(Polygon poly)
 {
 
-	// Find centroid
-	Point centroid;
-	boost::geometry::centroid(poly, centroid);
-	double centroidY = centroid.get<1>();
+  // Find centroid
+  Point centroid;
+  boost::geometry::centroid(poly, centroid);
+  double centroidY = centroid.get<1>();
 
-	// Create Bottom and Top bounding boxes
-	Box bb;
-	boost::geometry::envelope(poly,bb);
+  // Create Bottom and Top bounding boxes
+  Box bb;
+  boost::geometry::envelope(poly,bb);
 
-	Box bbBottom(bb.min_corner(),Point(bb.max_corner().get<0>(),centroidY));
-	Box bbTop(Point(bb.min_corner().get<0>(),centroidY),bb.max_corner());
+  Box bbBottom(bb.min_corner(),Point(bb.max_corner().get<0>(),centroidY));
+  Box bbTop(Point(bb.min_corner().get<0>(),centroidY),bb.max_corner());
 
-	// Create Bottom and Top polygons
-	MultiPolygon bottom;
-	MultiPolygon top;
+  // Create Bottom and Top polygons
+  MultiPolygon bottom;
+  MultiPolygon top;
 
-	boost::geometry::intersection(poly,bbTop,top);
-	boost::geometry::intersection(poly,bbBottom,bottom);
+  boost::geometry::intersection(poly,bbTop,top);
+  boost::geometry::intersection(poly,bbBottom,bottom);
 
-	// Mirror top polygon across the centroid
-	top = mirrorY(top,centroidY);
+  // Mirror top polygon across the centroid
+  top = mirrorY(top,centroidY);
 
-	return boost::geometry::equals(top,bottom);
+  return boost::geometry::equals(top,bottom);
 }
 
 Polygon symmetricUnit(Polygon poly)
 {
-	MultiPolygon symPolys;
+  MultiPolygon symPolys;
 
-	Box bb;
-	boost::geometry::envelope(poly,bb);
+  Box bb;
+  boost::geometry::envelope(poly,bb);
 
-	if (isXSymmetric(poly))
-	{
-		// Find centroid
-		Point centroid;
-		boost::geometry::centroid(poly, centroid);
-		double centroidX = centroid.get<0>();
+  if (isXSymmetric(poly))
+  {
+    // Find centroid
+    Point centroid;
+    boost::geometry::centroid(poly, centroid);
+    double centroidX = centroid.get<0>();
 
-		// Create Right bounding box
-		Box bbRight(Point(centroidX,bb.min_corner().get<1>()),bb.max_corner());
+    // Create Right bounding box
+    Box bbRight(Point(centroidX,bb.min_corner().get<1>()),bb.max_corner());
 
-		// Create Right polygon
-		MultiPolygon xSymPolys;
-		Polygon right;
-		boost::geometry::convert(bbRight,right);
-		boost::geometry::intersection(poly,right,xSymPolys);
-		symPolys = xSymPolys;
-	}
+    // Create Right polygon
+    MultiPolygon xSymPolys;
+    Polygon right;
+    boost::geometry::convert(bbRight,right);
+    boost::geometry::intersection(poly,right,xSymPolys);
+    symPolys = xSymPolys;
+  }
 
-	if (isYSymmetric(poly))
-	{
-		// Find centroid
-		Point centroid;
-		boost::geometry::centroid(poly, centroid);
-		double centroidY = centroid.get<1>();
+  if (isYSymmetric(poly))
+  {
+    // Find centroid
+    Point centroid;
+    boost::geometry::centroid(poly, centroid);
+    double centroidY = centroid.get<1>();
 
-		// Create Top bounding box
-		Box bbTop(Point(bb.min_corner().get<0>(),centroidY),bb.max_corner());
+    // Create Top bounding box
+    Box bbTop(Point(bb.min_corner().get<0>(),centroidY),bb.max_corner());
 
-		// Create Top polygon
-		MultiPolygon ySymPolys;
-		Polygon top;
-		boost::geometry::convert(bbTop,top);
-		boost::geometry::intersection(symPolys[0],top,ySymPolys);
-		symPolys = ySymPolys;
-	}
+    // Create Top polygon
+    MultiPolygon ySymPolys;
+    Polygon top;
+    boost::geometry::convert(bbTop,top);
+    boost::geometry::intersection(symPolys[0],top,ySymPolys);
+    symPolys = ySymPolys;
+  }
 
 
-	return symPolys[0];
+  return symPolys[0];
 }
 
 double getXmax(Polygon poly, std::size_t vertex)
 {
-	double x = poly.outer()[vertex].get<0>();
-	double xNext;
-	std::size_t nV = poly.outer().size();
+  double x = poly.outer()[vertex].get<0>();
+  double xNext;
+  std::size_t nV = poly.outer().size();
 
-	if (vertex == nV - 1)
-	{
-		xNext = poly.outer()[0].get<0>();
-	}
-	else
-	{
-		xNext = poly.outer()[vertex + 1].get<0>();
-	}
+  if (vertex == nV - 1)
+  {
+    xNext = poly.outer()[0].get<0>();
+  }
+  else
+  {
+    xNext = poly.outer()[vertex + 1].get<0>();
+  }
 
-	return std::max(x,xNext);
+  return std::max(x,xNext);
 }
 
 double getYmax(Polygon poly, std::size_t vertex)
 {
-	double y = poly.outer()[vertex].get<1>();
-	double yNext;
-	std::size_t nV = poly.outer().size();
+  double y = poly.outer()[vertex].get<1>();
+  double yNext;
+  std::size_t nV = poly.outer().size();
 
-	if (vertex == nV - 1)
-	{
-		yNext = poly.outer()[0].get<1>();
-	}
-	else
-	{
-		yNext = poly.outer()[vertex + 1].get<1>();
-	}
+  if (vertex == nV - 1)
+  {
+    yNext = poly.outer()[0].get<1>();
+  }
+  else
+  {
+    yNext = poly.outer()[vertex + 1].get<1>();
+  }
 
-	return std::max(y,yNext);
+  return std::max(y,yNext);
 }
 
 double getXmin(Polygon poly, std::size_t vertex)
 {
-	double x = poly.outer()[vertex].get<0>();
-	double xNext;
-	std::size_t nV = poly.outer().size();
+  double x = poly.outer()[vertex].get<0>();
+  double xNext;
+  std::size_t nV = poly.outer().size();
 
-	if (vertex == nV - 1)
-	{
-		xNext = poly.outer()[0].get<0>();
-	}
-	else
-	{
-		xNext = poly.outer()[vertex + 1].get<0>();
-	}
+  if (vertex == nV - 1)
+  {
+    xNext = poly.outer()[0].get<0>();
+  }
+  else
+  {
+    xNext = poly.outer()[vertex + 1].get<0>();
+  }
 
-	return std::min(x,xNext);
+  return std::min(x,xNext);
 }
 
 double getYmin(Polygon poly, std::size_t vertex)
 {
-	double y = poly.outer()[vertex].get<1>();
-	double yNext;
-	std::size_t nV = poly.outer().size();
+  double y = poly.outer()[vertex].get<1>();
+  double yNext;
+  std::size_t nV = poly.outer().size();
 
-	if (vertex == nV - 1)
-	{
-		yNext = poly.outer()[0].get<1>();
-	}
-	else
-	{
-		yNext = poly.outer()[vertex + 1].get<1>();
-	}
+  if (vertex == nV - 1)
+  {
+    yNext = poly.outer()[0].get<1>();
+  }
+  else
+  {
+    yNext = poly.outer()[vertex + 1].get<1>();
+  }
 
-	return std::min(y,yNext);
+  return std::min(y,yNext);
 }
 
 bool comparePointsX(Point first, Point second)
 {
-	return (first.get<0>() < second.get<0>());
+  return (first.get<0>() < second.get<0>());
 }
 
 bool comparePointsY(Point first, Point second)
 {
-	return (first.get<1>() < second.get<1>());
+  return (first.get<1>() < second.get<1>());
 }
 
 #endif /* GEOMETRY_CPP_ */

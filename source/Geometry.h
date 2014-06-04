@@ -39,19 +39,19 @@ typedef boost::geometry::model::polygon<Point3, true, false> Polygon3;
 
 namespace geom
 {
-	enum Direction
-	{
-		X_NEG,
-		X_POS,
-		Y_NEG,
-		Y_POS
-	};
+  enum Direction
+  {
+    X_NEG,
+    X_POS,
+    Y_NEG,
+    Y_POS
+  };
 
-	enum Turn
-	{
-		LEFT,
-		RIGHT
-	};
+  enum Turn
+  {
+    LEFT,
+    RIGHT
+  };
 };
 
 bool isRectilinear(Polygon poly);
