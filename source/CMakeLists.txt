@@ -1,8 +1,10 @@
-set(iterative_solver 1 )
-
-if (${iterative_solver})
+if (${ENABLE_ITERATIVE_SOLVER})
   add_definitions(-D USE_LIS_SOLVER )
-endif (${iterative_solver})
+endif (${ENABLE_ITERATIVE_SOLVER})
+
+if (${ENABLE_OPENGL})
+  add_definitions(-D ENABLE_OPENGL )
+endif (${ENABLE_OPENGL})
 
 execute_process(COMMAND git describe --tags --long
                 RESULT_VARIABLE git_exit_status
@@ -23,34 +25,35 @@ configure_file (
 
 set(kiva_src Main.c++
              Algorithms.c++
+             Algorithms.h
              Domain.c++
-             Functions.c++
-             Geometry.c++
-             Ground.c++
-             GroundPlot.c++
-             Input.c++
-             InputParser.c++
-             Mesher.c++
-             PixelCounter.c++
-             WeatherData.c++ )
-
-set(kiva_hdr Algorithms.h
              Domain.h
+             Functions.c++
              Functions.h
+             Geometry.c++
              Geometry.h
+             Ground.c++
              Ground.h
+             GroundPlot.c++
              GroundPlot.h
+             Input.c++
              Input.h
+             InputParser.c++
              InputParser.h
+             Mesher.c++
              Mesher.h
-             PixelCounter.h
+             WeatherData.c++
              WeatherData.h
              Version.h )
+
+if (${ENABLE_OPENGL})
+  set(kiva_src ${kiva_src} PixelCounter.c++ PixelCounter.h )
+endif (${ENABLE_OPENGL})
 
 link_directories(${CMAKE_PREFIX_PATH}/lib)
 include_directories(${CMAKE_PREFIX_PATH}/include ${CMAKE_PREFIX_PATH}/include/boost-numeric-bindings)
 
-add_executable(kiva ${kiva_src} ${kiva_hdr})
+add_executable(kiva ${kiva_src})
 
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
@@ -64,46 +67,42 @@ endif (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${kiva_link_flags}")
 
-
-
 set(kiva_lib boost_date_time
              boost_filesystem
              boost_system
              boost_program_options
              mgl
-             yaml-cpp
-             GLEW
-             glfw3 )
+             yaml-cpp )
              
-if (${iterative_solver})
-  set(kiva_lib_solver lis )
-else (${iterative_solver})
-  set(kiva_lib_solver umfpack
-                      amd
-                      cholmod
-                      colamd
-                      suitesparseconfig ) 
-endif (${iterative_solver})
+if (${ENABLE_ITERATIVE_SOLVER})
+  set(kiva_lib ${kiva_lib} lis )
+else (${ENABLE_ITERATIVE_SOLVER})
+  set(kiva_lib ${kiva_lib} umfpack
+                           amd
+                           cholmod
+                           colamd
+                           suitesparseconfig ) 
+endif (${ENABLE_ITERATIVE_SOLVER})
 
-
-if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-  set(kiva_lib_os )
-endif (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+if (${ENABLE_OPENGL})
+  set(kiva_lib ${kiva_lib} GLEW glfw3 )
+endif (${ENABLE_OPENGL})
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-  set(kiva_lib_os pthread
-                  Xrandr
-                  Xxf86vm
-                  Xi
-                  X11
-                  GL )
-  if (NOT ${iterative_solver})
-    set (kiva_lib_os ${kiva_lib_os} openblas)
-  endif (NOT ${iterative_solver})
+  if (${ENABLE_OPENGL})
+    set(kiva_lib ${kiva_lib} pthread
+                             Xrandr
+                             Xxf86vm
+                             Xi
+                             X11
+                             GL )
+  endif (${ENABLE_OPENGL})
+  if (NOT ${ENABLE_ITERATIVE_SOLVER})
+    set (kiva_lib ${kiva_lib} openblas)
+  endif (NOT ${ENABLE_ITERATIVE_SOLVER})
 endif (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 
-
-target_link_libraries(kiva ${kiva_lib} ${kiva_lib_solver} ${kiva_lib_os})
+target_link_libraries(kiva ${kiva_lib})
 
 
 

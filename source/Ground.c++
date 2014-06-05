@@ -2243,6 +2243,7 @@ void Ground::setSolarBoundaryConditions()
       if (foundation.coordinateSystem == Foundation::CS_3D)
       {
 
+#if defined(ENABLE_OPENGL)
         PixelCounter counter(512, 1, false);
 
         for (std::size_t index = 0; index < foundation.surfaces[s].indices.size(); index++)
@@ -2308,6 +2309,18 @@ void Ground::setSolarBoundaryConditions()
 
         }
 
+#else
+        for (std::size_t index = 0; index < foundation.surfaces[s].indices.size(); index++)
+        {
+          std::size_t i = boost::get<0>(foundation.surfaces[s].indices[index]);
+          std::size_t j = boost::get<1>(foundation.surfaces[s].indices[index]);
+          std::size_t k = boost::get<2>(foundation.surfaces[s].indices[index]);
+
+          double q = domain.cell[i][j][k].surface.absorptivity*qGH;
+
+          domain.cell[i][j][k].heatGain = q;
+        }
+#endif
 
       }
 

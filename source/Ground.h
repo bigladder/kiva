@@ -25,7 +25,13 @@
 #include "Input.h"
 #include "Algorithms.h"
 #include "GroundPlot.h"
+
+#if defined(ENABLE_OPENGL)
+
 #include "PixelCounter.h"
+
+#endif
+
 #include <cmath>
 #include <vector>
 #include <iostream>

@@ -14,5 +14,8 @@ set( CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}" )
 set( CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}" )
 set( CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}" )
 
+option( ENABLE_ITERATIVE_SOLVER "Use LIS as an iterative solver instead of UMFPACK" ON )
+option( ENABLE_OPENGL "Use OpenGL to perform shading calculations." OFF )
+
 add_subdirectory(source)
 
