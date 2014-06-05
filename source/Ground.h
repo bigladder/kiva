@@ -19,6 +19,8 @@
 #ifndef GROUND_HPP_
 #define GROUND_HPP_
 
+//#define USE_LIS_SOLVER
+
 #include "Mesher.h"
 #include "Domain.h"
 #include "WeatherData.h"
@@ -35,6 +37,7 @@
 #include <cmath>
 #include <vector>
 #include <iostream>
+#include <string>
 
 #include <mgl2/mgl.h>
 
@@ -94,7 +97,7 @@ private:
 
   LIS_SOLVER solver;
 
-  std::string solverOptions;
+  std::vector<char> solverOptions;
 #else
     boost::numeric::ublas::compressed_matrix<double,
                     boost::numeric::ublas::column_major, 0,

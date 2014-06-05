@@ -328,6 +328,11 @@ public:
 
   double fADI;  // ADI modified f-factor
 
+  std::string solver;
+  std::string preconditioner;
+  double tolerance;
+  int maxIterations;
+
   double initialTemperature;
   enum InitializationMethod
   {

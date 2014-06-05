@@ -39,6 +39,12 @@ parameter "max_cell_growth", :default=>1.15
 parameter "timestep", :default=>60
 
 parameter "numerical_scheme", :default=>"ADE"
+
+parameter "linear_solver_type", :default=>"bicgstab"
+parameter "linear_solver_pc", :default=>"ilu"
+parameter "linear_solver_max_iter", :default=>100000
+parameter "linear_solver_tolerance", :default=>1.0e-6
+
 parameter "init_method", :default=>"STEADY-STATE"
 
 parameter "imp_periods", :default=>0
@@ -250,6 +256,10 @@ end
 <% if (numerical_scheme == "ADI") %>
   fADI: 0.01
 <% end %>
+  solver: <%= linear_solver_type %>
+  preconditioner: <%= linear_solver_pc %>
+  maxIterations: <%= linear_solver_max_iter %>
+  tolerance: <%= linear_solver_tolerance %>
   initializationMethod: <%= init_method %>  # KUSUDA | CONSTANT | STEADY-STATE
 <% if (init_method == "CONSTANT") %>
   initialTemperature: <%= bestest_deep_ground_temp + 273.15 %>

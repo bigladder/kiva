@@ -291,6 +291,41 @@ Input inputParser(std::string inputFile)
     foundation1.numericalScheme = Foundation::NS_ADE;
   }
 
+  if  (yamlInput["Foundation"]["solver"].IsDefined())
+  {
+    foundation1.solver = yamlInput["Foundation"]["solver"].as<std::string>();
+  }
+  else
+  {
+    foundation1.solver = "bicgstab";
+  }
+
+  if  (yamlInput["Foundation"]["preconditioner"].IsDefined())
+  {
+    foundation1.preconditioner = yamlInput["Foundation"]["preconditioner"].as<std::string>();
+  }
+  else
+  {
+    foundation1.preconditioner = "ilu";
+  }
+
+  if  (yamlInput["Foundation"]["maxIterations"].IsDefined())
+  {
+    foundation1.maxIterations = yamlInput["Foundation"]["maxIterations"].as<int>();
+  }
+  else
+  {
+    foundation1.maxIterations = 100000;
+  }
+
+  if  (yamlInput["Foundation"]["tolerance"].IsDefined())
+  {
+    foundation1.tolerance = yamlInput["Foundation"]["tolerance"].as<double>();
+  }
+  else
+  {
+    foundation1.tolerance = 1.0e-6;
+  }
 
   if  (yamlInput["Foundation"]["initializationMethod"].IsDefined())
   {

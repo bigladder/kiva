@@ -19,6 +19,8 @@
 #ifndef Ground_CPP
 #define Ground_CPP
 
+//#define USE_LIS_SOLVER
+
 #include "Ground.h"
 
 static const double PI = 4.0*atan(1.0);
@@ -95,9 +97,18 @@ void Ground::initializeConditions()
   }
 
 #if defined(USE_LIS_SOLVER)
-    solverOptions = "-i bicgstab -p ilu -maxiter 100000 -initx_zeros false -tol 1.0e-6";
-    std::vector<char> solverChars(solverOptions.begin(),solverOptions.end());
+    std::string solverOptionsString = "-i ";
+    solverOptionsString.append(foundation.solver);
+    solverOptionsString.append(" -p ");
+    solverOptionsString.append(foundation.preconditioner);
+    solverOptionsString.append(" -maxiter ");
+    solverOptionsString.append(std::to_string(foundation.maxIterations));
+    solverOptionsString.append(" -initx_zeros false -tol ");
+    solverOptionsString.append(std::to_string(foundation.tolerance));
+
+    std::vector<char> solverChars(solverOptionsString.begin(),solverOptionsString.end());
     solverChars.push_back('\0');
+    solverOptions = solverChars;
 #endif
 
   if (foundation.numericalScheme == Foundation::NS_CRANK_NICOLSON ||
@@ -119,7 +130,7 @@ void Ground::initializeConditions()
 
     lis_vector_set_all(283.15,x);
     lis_solver_create(&solver);
-    lis_solver_set_option(&solverChars[0],solver);
+    lis_solver_set_option(&solverOptions[0],solver);
 #else
         Amat = boost::numeric::ublas::compressed_matrix<double,
         boost::numeric::ublas::column_major, 0,
@@ -144,7 +155,7 @@ void Ground::initializeConditions()
 
     lis_vector_set_all(283.15,x);
     lis_solver_create(&solver);
-    lis_solver_set_option(&solverChars[0],solver);
+    lis_solver_set_option(&solverOptions[0],solver);
 #endif
   }
 
@@ -2113,9 +2124,7 @@ void Ground::clearAmat()
 
   lis_solver_destroy(solver);
   lis_solver_create(&solver);
-  std::vector<char> solverChars(solverOptions.begin(),solverOptions.end());
-  solverChars.push_back('\0');
-  lis_solver_set_option(&solverChars[0],solver);
+  lis_solver_set_option(&solverOptions[0],solver);
 
 #else
   Amat.clear();
