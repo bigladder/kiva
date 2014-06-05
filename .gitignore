@@ -5,3 +5,4 @@ jrun.sh
 .project
 .pydevproject
 sandbox.*
+source/Version.h

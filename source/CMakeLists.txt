@@ -4,6 +4,23 @@ if (${iterative_solver})
   add_definitions(-D USE_LIS_SOLVER )
 endif (${iterative_solver})
 
+execute_process(COMMAND git describe --tags --long
+                RESULT_VARIABLE git_exit_status
+                OUTPUT_VARIABLE kiva_verion
+                OUTPUT_STRIP_TRAILING_WHITESPACE)
+
+if(${git_exit_status} MATCHES "0")
+    SET(VERSION_NUMBER ${kiva_verion})
+    message("Building Kiva version: ${VERSION_NUMBER}")
+else()
+    message("Error finding version number.")
+endif(${git_exit_status} MATCHES "0")
+                
+configure_file (
+    "${PROJECT_SOURCE_DIR}/source/Version.h.in"
+    "${PROJECT_SOURCE_DIR}/source/Version.h"
+)
+
 set(kiva_src Main.c++
              Algorithms.c++
              Domain.c++
@@ -27,7 +44,8 @@ set(kiva_hdr Algorithms.h
              InputParser.h
              Mesher.h
              PixelCounter.h
-             WeatherData.h )
+             WeatherData.h
+             Version.h )
 
 link_directories(${CMAKE_PREFIX_PATH}/lib)
 include_directories(${CMAKE_PREFIX_PATH}/include ${CMAKE_PREFIX_PATH}/include/boost-numeric-bindings)

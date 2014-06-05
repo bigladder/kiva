@@ -28,6 +28,7 @@
 #include "lis.h"
 #endif
 
+#include "Version.h"
 #include "InputParser.h"
 #include "WeatherData.h"
 #include "Input.h"
@@ -41,7 +42,8 @@ int main(int argc, char *argv[])
   lis_initialize(&argc, &argv);
 #endif
 
-  std::string versionInfo = "kiva 0.1.1";
+  std::string versionInfo = "kiva ";
+  versionInfo.append(VERSION_NUMBER);
   std::string copyrightInfo = "Copyright (C) 2012-2014 Big Ladder Software\n"
                            "Web: www.bigladdersoftware.com";
   std::string usageInfo = "Usage: kiva [Input File] [Weather File] [Output File]\n"
@@ -94,6 +96,9 @@ int main(int argc, char *argv[])
     }
     if (vm.count("input-file") && vm.count("weather-file") && vm.count("output-file"))
     {
+      std::cout << versionInfo << "\n";
+      std::cout << copyrightInfo << "\n\n";
+
       boost::posix_time::ptime beginCalc = boost::posix_time::second_clock::local_time();
       std::cout << "Starting Program: " << beginCalc << std::endl;
 
