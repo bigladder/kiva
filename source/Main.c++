@@ -121,6 +121,7 @@ int main(int argc, char *argv[])
 
 
       // initialize
+      std::cout << "Initializing Conditions..." << std::endl;
       Ground ground(weather,input.foundations[0],input.simulationControl);
 
       // set up output file
@@ -132,6 +133,8 @@ int main(int argc, char *argv[])
       // loop
 
       boost::posix_time::ptime prevTime = boost::posix_time::second_clock::local_time();
+
+      std::cout << "Beginning Simulation..." << std::endl;
 
       for (double t = tstart; t < tend; t = t + timestep)
       {

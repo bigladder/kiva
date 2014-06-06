@@ -33,10 +33,22 @@ class HourlyData: public std::vector<double>
 {
 public:
 
+  enum DataType
+  {
+    DT_SOLAR,
+    DT_METEOROLOGICAL
+  };
+
+  DataType dataType;
+
   double getValue(boost::posix_time::ptime t);
   double getAverage();
   double getMin();
   double getMax();
+
+  HourlyData();
+  HourlyData(DataType dT);
+
 };
 
 class WeatherData

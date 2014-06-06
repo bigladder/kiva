@@ -164,7 +164,6 @@ void Ground::initializeConditions()
 
   tNow = 0.0;
 
-  // TODO Change to initialization + acceleration + warmup
   if (foundation.numericalScheme != Foundation::NS_STEADY_STATE)
   {
     // Calculate initial time in seconds (simulation start minus warmup and acceleration periods)

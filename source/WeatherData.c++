@@ -23,6 +23,16 @@
 
 static const double PI = 4.0*atan(1.0);
 
+HourlyData::HourlyData()
+{
+  dataType = DT_METEOROLOGICAL;
+}
+
+HourlyData::HourlyData(DataType dT)
+{
+  dataType = dT;
+}
+
 double HourlyData::getValue(boost::posix_time::ptime t)
 {
   long year = t.date().year();
@@ -33,27 +43,41 @@ double HourlyData::getValue(boost::posix_time::ptime t)
   double hour = second/60.0/60.0;
   long hour_before = hour;
   long hour_after = hour_before + 1;
-  double frac = hour - hour_before;
 
-  if (boost::gregorian::gregorian_calendar::is_leap_year(year))
+  if (boost::gregorian::gregorian_calendar::is_leap_year(year) && hour >= 1416.0)
   {
-
-    if (hour < 1416.0)
-    {
-      return (*this)[hour_before]*(1.0 - frac) + (*this)[hour_after]*frac;
-
-    }
-    else
-    {
-      return (*this)[hour_before - 24]*(1.0 - frac)
-          + (*this)[hour_after - 24]*frac;
-    }
+      hour_before -= 24;
+      hour_after -= 24;
+      hour -= 24.0;
   }
-  else
+
+  if (hour_after == 8760) hour_after = 0;
+  if (hour_before == -1) hour_before = 8759;
+
+  double value;
+  if (dataType == DT_METEOROLOGICAL)
   {
-    return (*this)[hour_before]*(1.0 - frac) + (*this)[hour_after]*frac;
+    // Meteorological measurements are made at the hour indicated (Hour 1 = 1:00 AM)
 
+    double frac = hour - hour_before;
+    // Decrement hours since the zeroeth element corresponds to the value at the
+    // first hour
+    hour_before -= 1;
+    hour_after -= 1;
+
+    if (hour_before == -1) hour_before = 8759;
+    if (hour_after == -1) hour_after = 8759;
+
+    value = (*this)[hour_before]*(1.0 - frac) + (*this)[hour_after]*frac;
   }
+  else // if (dataType == DT_SOLAR)
+  {
+    // Solar radiation values represent the energy received during the 60 minutes
+    // preceding the hour indicated (Hour 1 = 12:00 AM - 1:00AM)
+    value = (*this)[hour_before];
+  }
+  return value;
+
 }
 
 double HourlyData::getAverage()
@@ -73,6 +97,9 @@ double HourlyData::getMax()
 
 WeatherData::WeatherData(std::string weatherFile)
 {
+  globalHorizontalSolar.dataType = HourlyData::DT_SOLAR;
+  directNormalSolar.dataType = HourlyData::DT_SOLAR;
+  diffuseHorizontalSolar.dataType = HourlyData::DT_SOLAR;
   importEPW(weatherFile);
 }
 
