@@ -7,17 +7,22 @@ if (${ENABLE_OPENGL})
 endif (${ENABLE_OPENGL})
 
 execute_process(COMMAND git describe --tags --long
+                WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
                 RESULT_VARIABLE git_exit_status
-                OUTPUT_VARIABLE kiva_verion
+                OUTPUT_VARIABLE kiva_version
                 OUTPUT_STRIP_TRAILING_WHITESPACE)
 
+if(${CMAKE_BUILD_TYPE} MATCHES "Debug")
+  set (kiva_version "${kiva_version}-Debug")
+endif(${CMAKE_BUILD_TYPE} MATCHES "Debug")               
+
 if(${git_exit_status} MATCHES "0")
-    SET(VERSION_NUMBER ${kiva_verion})
-    message("Building Kiva version: ${VERSION_NUMBER}")
+  set(VERSION_NUMBER ${kiva_version})
+  message("Building Kiva version: ${VERSION_NUMBER}")
 else()
-    message("Error finding version number.")
+  message("Error finding version number.")
 endif(${git_exit_status} MATCHES "0")
-                
+
 configure_file (
     "${PROJECT_SOURCE_DIR}/source/Version.h.in"
     "${PROJECT_SOURCE_DIR}/source/Version.h"
