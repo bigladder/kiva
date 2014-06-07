@@ -28,9 +28,14 @@ static const double PI = 4.0*atan(1.0);
 static const bool TDMA = true;
 
 Ground::Ground(WeatherData &weatherData, Foundation &foundation,
-           SimulationControl &simulationControl) : foundation(foundation),
-           simulationControl(simulationControl), weatherData(weatherData)
+               SimulationControl &simulationControl, std::string outputFileName) :
+               foundation(foundation), simulationControl(simulationControl),
+               weatherData(weatherData)
 {
+  // set up output file
+  outputFile.open(outputFileName.c_str());
+  outputFile << "Time Stamp" << printOutputHeaders() << "\n";
+
   // Build Domain Object
   buildDomain();
 
@@ -42,6 +47,8 @@ Ground::Ground(WeatherData &weatherData, Foundation &foundation,
 
 Ground::~Ground()
 {
+
+  outputFile.close();
 
 #if defined(USE_LIS_SOLVER)
   lis_matrix_destroy(Amat);
@@ -60,6 +67,7 @@ void Ground::buildDomain()
   if (foundation.deepGroundBoundary == Foundation::DGB_AUTO)
     foundation.deepGroundTemperature = weatherData.dryBulbTemp.getAverage();
 
+  std::cout << "Creating Domain..." << "\n";
   foundation.createMeshData();
 
   // Build matrices for PDE term coefficients
@@ -164,8 +172,14 @@ void Ground::initializeConditions()
 
   tNow = 0.0;
 
+  prevStatusUpdate = boost::posix_time::second_clock::local_time();
+
+  initPeriod = true;
+
   if (foundation.numericalScheme != Foundation::NS_STEADY_STATE)
   {
+    std::cout << "Initializing Temperatures..." << "\n";
+
     // Calculate initial time in seconds (simulation start minus warmup and acceleration periods)
     double simulationTimestep = simulationControl.timestep.total_seconds();
     double accelTimestep = foundation.implicitAccelTimestep*3600;
@@ -238,6 +252,8 @@ void Ground::initializeConditions()
     }
 
   }
+  initPeriod = false;
+
 }
 
 void Ground::initializePlots()
@@ -315,6 +331,32 @@ void Ground::initializePlots()
     plots[p].nextPlotTime = untilStart.total_seconds();
     plots[p].tEnd = untilEnd.total_seconds();
   }
+}
+
+void Ground::simulate()
+{
+  std::cout << "Beginning Simulation..." << "\n";
+
+  boost::posix_time::ptime simStart = simulationControl.startTime;
+  boost::posix_time::ptime simEnd(simulationControl.endDate + boost::gregorian::days(1));
+  boost::posix_time::time_duration simDuration =  simEnd - simStart;
+
+
+  double tstart = 0.0; // [s] Simulation start time
+  double tend = simDuration.total_seconds(); // [s] Simulation end time
+
+  for (double t = tstart; t < tend; t = t + timestep)
+  {
+
+    percentComplete = round(t/tend*1000)/10.0;
+    calculate(t);
+
+    outputFile << to_simple_string(getSimTime(t)) << printOutputLine() << "\n";
+
+  }
+
+  std::cout << getSimTime(tend - timestep) << " (100%)\n";
+
 }
 
 void Ground::calculateADE()
@@ -2010,6 +2052,8 @@ void Ground::calculate(double t)
   }
 
   plot();
+
+  printStatus(t);
 }
 
 void Ground::plot()
@@ -2023,6 +2067,28 @@ void Ground::plot()
       plots[p].createFrame(TNew, timeStamp);
     }
   }
+}
+
+void Ground::printStatus(double t)
+{
+  boost::posix_time::ptime currentTime = boost::posix_time::second_clock::local_time();
+  boost::posix_time::ptime simTime = getSimTime(t);
+
+  if (currentTime - prevStatusUpdate > boost::posix_time::milliseconds(500))
+  {
+    if (initPeriod)
+    {
+      std::cout << simTime << "\n";
+    }
+    else
+    {
+      std::cout << simTime << " (" << percentComplete << "%)\n";
+    }
+
+    prevStatusUpdate = currentTime;
+  }
+
+
 }
 
 void Ground::setAmatValue(const int i,const int j,const double val)
@@ -2088,9 +2154,9 @@ void Ground::solveLinearSystem()
       lis_solver_get_residualnorm(solver, &residual);
 
       std::cout << "Warning: Solution did not converge after ";
-      std::cout << iters << " iterations." << std::endl;
-      std::cout << "  The final residual was: " << residual << std::endl;
-      std::cout << "  Solver status: " << status << std::endl;
+      std::cout << iters << " iterations." << "\n";
+      std::cout << "  The final residual was: " << residual << "\n";
+      std::cout << "  Solver status: " << status << "\n";
 
     }
     //lis_output(Amat,b,x,LIS_FMT_MM,"Matrix.mtx");

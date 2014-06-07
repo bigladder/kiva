@@ -51,7 +51,8 @@ int main(int argc, char *argv[])
               "   Weather format: epw\n"
               "   Output format: csv";
 
-  try {
+  try
+  {
 
     po::options_description generic("Options");
     generic.add_options()
@@ -80,27 +81,27 @@ int main(int argc, char *argv[])
       std::cout << versionInfo << "\n";
       std::cout << copyrightInfo << "\n\n";
       std::cout << usageInfo << "\n";
-      std::cout << generic;
+      std::cout << generic << "\n";
     }
-    if (vm.count("help"))
+    else if (vm.count("help"))
     {
       std::cout << versionInfo << "\n";
       std::cout << copyrightInfo << "\n\n";
       std::cout << usageInfo << "\n";
-      std::cout << generic;
+      std::cout << generic << "\n";
     }
-    if (vm.count("version"))
+    else if (vm.count("version"))
     {
       std::cout << versionInfo << "\n";
-      std::cout << copyrightInfo << "\n";
+      std::cout << copyrightInfo << "\n\n";
     }
-    if (vm.count("input-file") && vm.count("weather-file") && vm.count("output-file"))
+    else if (vm.count("input-file") && vm.count("weather-file") && vm.count("output-file"))
     {
       std::cout << versionInfo << "\n";
       std::cout << copyrightInfo << "\n\n";
 
       boost::posix_time::ptime beginCalc = boost::posix_time::second_clock::local_time();
-      std::cout << "Starting Program: " << beginCalc << std::endl;
+      std::cout << "Starting Program: " << beginCalc << "\n";
 
       // parse input
       Input input = inputParser(vm["input-file"].as<std::string>());
@@ -108,69 +109,19 @@ int main(int argc, char *argv[])
       // parse weather
       WeatherData weather(vm["weather-file"].as<std::string>());
 
-      // simulation
       input.simulationControl.setStartTime();
-      boost::posix_time::ptime simStart = input.simulationControl.startTime;
-      boost::posix_time::ptime simEnd(input.simulationControl.endDate + boost::gregorian::days(1));
-      boost::posix_time::time_duration simDuration =  simEnd - simStart;
-
-
-      double tstart = 0.0; // [s] Simulation start time
-      double tend = simDuration.total_seconds(); // [s] Simulation end time
-      double timestep = input.simulationControl.timestep.total_seconds();
-
 
       // initialize
-      std::cout << "Initializing Conditions..." << std::endl;
-      Ground ground(weather,input.foundations[0],input.simulationControl);
+      Ground ground(weather,input.foundations[0],input.simulationControl,
+          vm["output-file"].as<std::string>());
 
-      // set up output file
-      std::ofstream output;
-      output.open(vm["output-file"].as<std::string>().c_str());
-      output << "Time Stamp" << ground.printOutputHeaders() << std::endl;
-
-
-      // loop
-
-      boost::posix_time::ptime prevTime = boost::posix_time::second_clock::local_time();
-
-      std::cout << "Beginning Simulation..." << std::endl;
-
-      for (double t = tstart; t < tend; t = t + timestep)
-      {
-        boost::posix_time::ptime currentTime = boost::posix_time::second_clock::local_time();
-        boost::posix_time::ptime simTime(input.simulationControl.startDate,boost::posix_time::seconds(t));
-        boost::gregorian::date today = simTime.date();
-
-        ground.calculate(t);
-
-        if (currentTime - prevTime > boost::posix_time::milliseconds(500))
-        {
-
-          double percentComplete = round(t/tend*1000)/10.0;
-
-          std::cout << percentComplete << "% (" << simTime << ")\n";
-
-          prevTime = currentTime;
-        }
-
-        output << to_simple_string(simTime) <<
-              ground.printOutputLine() << std::endl;
-
-      }
-
-      output.close();
-
-      boost::posix_time::ptime simTime(input.simulationControl.startDate,boost::posix_time::seconds(tend));
-      boost::gregorian::date today = simTime.date();
-      std::cout << "100% (" << today << ")\n";
+      ground.simulate();
 
       boost::posix_time::ptime finishCalc = boost::posix_time::second_clock::local_time();
-      std::cout << "Finished Program: " << finishCalc << std::endl;
+      std::cout << "Finished Program: " << finishCalc << "\n";
 
       boost::posix_time::time_duration totalCalc = finishCalc - beginCalc;
-      std::cout << "Elapsed Time: " << totalCalc << std::endl;
-
+      std::cout << "Elapsed Time: " << totalCalc << "\n"  << "\n";
 
     }
     else if (!vm.empty())
@@ -178,7 +129,7 @@ int main(int argc, char *argv[])
       std::cout << "ERROR: Incorrect number of arguments\n\n";
 
       std::cout << usageInfo << "\n";
-      std::cout << generic;
+      std::cout << generic << "\n";
 
 #if defined(USE_LIS_SOLVER)
       lis_finalize();
@@ -192,14 +143,14 @@ int main(int argc, char *argv[])
     return 0;
 
   }
-    catch(std::exception& e)
-    {
-      std::cout << e.what() << std::endl;
+  catch(std::exception& e)
+  {
+    std::cout << e.what() << "\n";
 #if defined(USE_LIS_SOLVER)
-      lis_finalize();
+    lis_finalize();
 #endif
-      return 1;
-    }
+    return 1;
+  }
 
 }
 

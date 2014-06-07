@@ -111,23 +111,31 @@ private:
   boost::multi_array<double, 3> TOld; // solution, n
 
   std::vector<GroundPlot> plots;
+  std::ofstream outputFile;
+
+
+  boost::posix_time::ptime prevStatusUpdate;
+  bool initPeriod;
+
 
 public:
   size_t nX, nY, nZ;
 
   boost::multi_array<double, 3> TNew; // solution, n+1
 
+  double percentComplete;
+
   // Constructor
-  Ground(WeatherData &weatherData, Foundation &foundation, SimulationControl &simulationControl);
+  Ground(WeatherData &weatherData,
+      Foundation &foundation,
+      SimulationControl &simulationControl,
+      std::string outputFileName);
 
   // Destructor
   virtual ~Ground();
 
   // Calculator
-  void calculate(double t);
-
-  std::string printOutputHeaders();
-  std::string printOutputLine();
+  void simulate();
 
 
 private:
@@ -138,6 +146,13 @@ private:
   void initializeConditions();
 
   void initializePlots();
+
+  void calculate(double t);
+
+  void printStatus(double t);
+
+  std::string printOutputHeaders();
+  std::string printOutputLine();
 
   // Calculators (Called from main calculator)
   void calculateADE();
