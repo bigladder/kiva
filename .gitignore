@@ -4,5 +4,6 @@ jrun.sh
 ._.DS_Store
 .project
 .pydevproject
-sandbox.*
 source/Version.h
+*.pyc
+sandbox.*

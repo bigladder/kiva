@@ -1,3 +1,6 @@
+print "...sys"
+import sys
+
 print "...matplotlib"
 import matplotlib.pyplot as plt
 
