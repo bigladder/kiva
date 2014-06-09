@@ -1,5 +1,0 @@
-# Set values below
-
-:init_method=>"CONSTANT",
-:numerical_scheme=>"IMPLICIT"
-
