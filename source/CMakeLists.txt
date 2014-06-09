@@ -60,14 +60,13 @@ include_directories(${CMAKE_PREFIX_PATH}/include ${CMAKE_PREFIX_PATH}/include/bo
 
 add_executable(kiva ${kiva_src})
 
+set(kiva_link_flags "-fopenmp")
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-  set(kiva_link_flags "-fopenmp -framework OpenGL -framework Cocoa -framework IOKit")
+  if (${ENABLE_OPENGL})
+    set(kiva_link_flags "${kiva_link_flags} -framework OpenGL -framework Cocoa -framework IOKit" )
+  endif (${ENABLE_OPENGL})
 endif (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-
-if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-  set(kiva_link_flags "-fopenmp")
-endif (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -fopenmp")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${kiva_link_flags}")
