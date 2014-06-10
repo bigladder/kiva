@@ -150,6 +150,12 @@ public:
 
 };
 
+class OutputReport: public std::vector<OutputVariable>
+{
+public:
+  boost::posix_time::time_duration minFrequency;
+};
+
 class Block
 {
 public:
@@ -379,7 +385,7 @@ public:
   std::vector<OutputAnimation> outputAnimations;
 
   // Output Report
-  std::vector<OutputVariable> outputReport;
+  OutputReport outputReport;
 
   // Derived variables
   double area;  // [m2] Area of foundation

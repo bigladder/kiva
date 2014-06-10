@@ -343,6 +343,7 @@ void Ground::simulate()
 
 
   double tstart = 0.0; // [s] Simulation start time
+  prevOutputTime = -foundation.outputReport.minFrequency.total_seconds();
   double tend = simDuration.total_seconds(); // [s] Simulation end time
 
   for (double t = tstart; t < tend; t = t + timestep)
@@ -351,7 +352,11 @@ void Ground::simulate()
     percentComplete = round(t/tend*1000)/10.0;
     calculate(t);
 
-    outputFile << to_simple_string(getSimTime(t)) << printOutputLine() << "\n";
+    if (t - prevOutputTime >= foundation.outputReport.minFrequency.total_seconds())
+    {
+      outputFile << to_simple_string(getSimTime(t)) << printOutputLine() << "\n";
+      prevOutputTime = t;
+    }
 
   }
 

@@ -421,10 +421,21 @@ Input inputParser(std::string inputFile)
   // Output
 
   // CSV Reports
-  for(size_t i=0;i<yamlInput["Foundation"]["outputReport"].size();i++)
+  for(size_t i=0;i<yamlInput["Foundation"]["outputReport"]["reports"].size();i++)
   {
-    OutputVariable temp(yamlInput["Foundation"]["outputReport"][i].as<int>());
+    OutputVariable temp(yamlInput["Foundation"]["outputReport"]["reports"][i].as<int>());
     foundation1.outputReport.push_back(temp);
+  }
+
+  if  (yamlInput["Foundation"]["outputReport"]["minFrequency"].IsDefined())
+  {
+    foundation1.outputReport.minFrequency =
+        boost::posix_time::minutes(
+            yamlInput["Foundation"]["outputReport"]["minFrequency"].as<long>());
+  }
+  else
+  {
+    foundation1.outputReport.minFrequency = boost::posix_time::minutes(60);
   }
 
   // Animations/Plots

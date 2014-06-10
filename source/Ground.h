@@ -115,6 +115,7 @@ private:
 
 
   boost::posix_time::ptime prevStatusUpdate;
+  double prevOutputTime;
   bool initPeriod;
 
 
