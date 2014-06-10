@@ -24,10 +24,14 @@
 * Change "excavation depth" variable to "foundation depth".
 
 ### Fixes:
-* Calculate incident solar on vertical surfaces (previously used horizontal value).
+* Calculate incident solar on vertical surfaces (previously used horizontal 
+  value).
 * Fix interpretation of weather file data.
 * Implicit acceleration is now less memory-intensive.
-* Use Tridiagonal Matrix Algorithm for ADI calculations (dramatically improves runtime).
+* Use Tridiagonal Matrix Algorithm for ADI calculations (dramatically improves 
+  runtime).
+* Fix problem where interior cells were not growing towards the center in 3D 
+  simulations.
 * Fix windward convection algorithm typo.
 * Fix block outlines in 3D slice plots.
 * Fix plot update for plots starting mid-year.
