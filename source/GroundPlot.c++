@@ -21,6 +21,8 @@
 
 #include "GroundPlot.h"
 
+static const double EPSILON = 1E-5;
+
 GroundPlot::GroundPlot(OutputAnimation &outputAnimation, Domain &domain, std::vector<Block> &blocks) :
   outputAnimation(outputAnimation), blocks(blocks)
 {
@@ -324,7 +326,7 @@ void GroundPlot::createFrame(boost::multi_array<double, 3> &T, std::string timeS
             "k");
       }
 
-      std::string sliceString = "Z = " + str(boost::format("%0.2f") % slice);
+      std::string sliceString = "Z = " + str(boost::format("%0.2f") % (slice/0.3048)) + " ft";
       gr.Puts(hText, vText - vTextSpacing, sliceString.c_str(), ":AL");
 
       }
@@ -333,8 +335,8 @@ void GroundPlot::createFrame(boost::multi_array<double, 3> &T, std::string timeS
       {
       // Find intersecting point pairs with slicing plane
       Line slicingPlane;
-      slicingPlane.push_back(Point(xMin,slice));
-      slicingPlane.push_back(Point(xMax,slice));
+      slicingPlane.push_back(Point(xMin-EPSILON,slice));
+      slicingPlane.push_back(Point(xMax+EPSILON,slice));
 
       MultiPoint intersection;
       boost::geometry::intersection(slicingPlane, blocks[b].polygon, intersection);
@@ -371,7 +373,7 @@ void GroundPlot::createFrame(boost::multi_array<double, 3> &T, std::string timeS
         p += 1; // skip one point, on to the next pair
       }
 
-      std::string sliceString = "Y = " + str(boost::format("%0.2f") % slice);
+      std::string sliceString = "Y = " + str(boost::format("%0.2f") % (slice/0.3048)) + " ft";
       gr.Puts(hText, vText - vTextSpacing, sliceString.c_str(), ":AL");
 
       }
@@ -380,8 +382,8 @@ void GroundPlot::createFrame(boost::multi_array<double, 3> &T, std::string timeS
       {
       // Find intersecting point pairs with slicing plane
       Line slicingPlane;
-      slicingPlane.push_back(Point(slice,yMin));
-      slicingPlane.push_back(Point(slice,yMax));
+      slicingPlane.push_back(Point(slice,yMin-EPSILON));
+      slicingPlane.push_back(Point(slice,yMax+EPSILON));
 
       MultiPoint intersection;
       boost::geometry::intersection(slicingPlane, blocks[b].polygon, intersection);
@@ -418,7 +420,7 @@ void GroundPlot::createFrame(boost::multi_array<double, 3> &T, std::string timeS
         p += 1; // skip one point, on to the next pair
       }
 
-      std::string sliceString = "X = " + str(boost::format("%0.2f") % slice);
+      std::string sliceString = "X = " + str(boost::format("%0.2f") % (slice/0.3048)) + " ft";
       gr.Puts(hText, vText - vTextSpacing, sliceString.c_str(), ":AL");
 
       }
