@@ -188,7 +188,7 @@ void Foundation::createMeshData()
   Interval midInterior;
   midInterior.maxGrowthCoeff = mesh.maxInteriorGrowthCoeff;
   midInterior.minCellDim = mesh.minCellDim;
-  midInterior.growthDir = Interval::BACKWARD;
+  midInterior.growthDir = Interval::CENTERED;
 
   Interval minExterior;
   minExterior.maxGrowthCoeff = mesh.maxExteriorGrowthCoeff;
