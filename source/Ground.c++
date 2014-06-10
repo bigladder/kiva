@@ -2318,103 +2318,187 @@ void Ground::setSolarBoundaryConditions()
       double qGH = weatherData.globalHorizontalSolar.getValue(getSimTime(tNow));
       double qDH = weatherData.diffuseHorizontalSolar.getValue(getSimTime(tNow));
       double pssf;
+      double q;
 
-      if (foundation.coordinateSystem == Foundation::CS_3D)
+      double incidence;
+      double aziYPos = foundation.orientation;
+      double aziXPos = PI/2 + foundation.orientation;
+      double aziYNeg = PI + foundation.orientation;
+      double aziXNeg = 3*PI/2 + foundation.orientation;
+
+      double tilt;
+      if (foundation.surfaces[s].orientation == Surface::Z_POS)
       {
+        tilt = 0.0;
+        incidence = cos(PI/2 - alt);
+      }
+      else if (foundation.surfaces[s].orientation == Surface::Z_NEG)
+      {
+        tilt = PI;
+        incidence = cos(PI/2 - alt - PI);
+      }
+      else
+      {
+        tilt = PI/2.0;
+
+        if (foundation.coordinateSystem == Foundation::CS_2DAXIAL ||
+                 foundation.coordinateSystem == Foundation::CS_2DLINEAR)
+        {
+          // incidence is the average incidence on the exterior of a vertical cylinder
+          // 2*(int(cos(alt)*cos(x),x,0,PI/2))/(2*PI)
+          // 2*(integral of incidence over a quarter of the cylinder) = lit portion
+          // divide by the total radians in the circle (2*PI)
+          // = 2*(cos(alt))/(2*PI)
+          // = cos(alt)/PI
+          incidence = cos(alt)/PI;
+        }
+        else
+        {
+          double aziSurf;
+          if (foundation.surfaces[s].orientation == Surface::Y_POS)
+          {
+            aziSurf = aziYPos;
+          }
+          else if (foundation.surfaces[s].orientation == Surface::X_POS)
+          {
+            aziSurf = aziXPos;
+          }
+          else if (foundation.surfaces[s].orientation == Surface::Y_NEG)
+          {
+            aziSurf = aziYNeg;
+          }
+          else if (foundation.surfaces[s].orientation == Surface::X_NEG)
+          {
+            aziSurf = aziXNeg;
+          }
+
+          if (foundation.coordinateSystem == Foundation::CS_3D)
+          {
+            // incidence = cos(alt)*cos(azi-aziSurf)*sin(tilt)+sin(alt)*cos(tilt)
+            // simplifies for tilt = PI/2 to = cos(alt)*cos(azi-aziSurf)
+            incidence = cos(alt)*cos(azi-aziSurf);
+          }
+          else // if (foundation.coordinateSystem == Foundation::CS_3D_SYMMETRY)
+          {
+            // if symmetric, use average incidence (one side will be facing the sun,
+            // the other won't).
+            if (foundation.surfaces[s].orientation == Surface::Y_POS ||
+                foundation.surfaces[s].orientation == Surface::Y_NEG)
+            {
+              if (foundation.isXSymm)
+              {
+                double incidenceYPos = cos(alt)*cos(azi-aziYPos);
+                if (incidenceYPos < 0)
+                  incidenceYPos = 0;
+
+                double incidenceYNeg = cos(alt)*cos(azi-aziYNeg);
+                if (incidenceYNeg < 0)
+                  incidenceYNeg = 0;
+
+                incidence = (incidenceYPos + incidenceYNeg)/2.0;
+
+              }
+              else
+              {
+                incidence = cos(alt)*cos(azi-aziSurf);
+              }
+            }
+
+            if (foundation.surfaces[s].orientation == Surface::X_POS ||
+                foundation.surfaces[s].orientation == Surface::X_NEG)
+            {
+              if (foundation.isYSymm)
+              {
+                double incidenceXPos = cos(alt)*cos(azi-aziXPos);
+                if (incidenceXPos < 0)
+                  incidenceXPos = 0;
+
+                double incidenceXNeg = cos(alt)*cos(azi-aziXNeg);
+                if (incidenceXNeg < 0)
+                  incidenceXNeg = 0;
+
+                incidence = (incidenceXPos + incidenceXNeg)/2.0;
+
+              }
+              else
+              {
+                incidence = cos(alt)*cos(azi-aziSurf);
+              }
+            }
+          }
+        }
+      }
+
+      // if sun is below horizon, incidence is zero
+      if (sin(alt) < 0)
+        incidence = 0;
+      if (incidence < 0)
+        incidence = 0;
+
+      double Fsky = (1.0 + cos(tilt))/2.0;
+      double Fg = 1.0 - Fsky;
+      double rho_g = 1.0 - foundation.soilAbsorptivity;
 
 #if defined(ENABLE_OPENGL)
-        PixelCounter counter(512, 1, false);
+      PixelCounter counter(512, 1, false);
+#endif
 
-        for (std::size_t index = 0; index < foundation.surfaces[s].indices.size(); index++)
+      for (std::size_t index = 0; index < foundation.surfaces[s].indices.size(); index++)
+      {
+        std::size_t i = boost::get<0>(foundation.surfaces[s].indices[index]);
+        std::size_t j = boost::get<1>(foundation.surfaces[s].indices[index]);
+        std::size_t k = boost::get<2>(foundation.surfaces[s].indices[index]);
+
+        double alpha = domain.cell[i][j][k].surface.absorptivity;
+
+        if (qGH > 0.0)
         {
-          std::size_t i = boost::get<0>(foundation.surfaces[s].indices[index]);
-          std::size_t j = boost::get<1>(foundation.surfaces[s].indices[index]);
-          std::size_t k = boost::get<2>(foundation.surfaces[s].indices[index]);
 
-          double q;
-
-          if (qGH > 0.0)
+#if defined(ENABLE_OPENGL)
+          if (isGreaterThan(domain.cell[i][j][k].area, 0.0))
           {
-            double tilt;
-            if (foundation.surfaces[s].orientation == Surface::Z_POS)
-              tilt = 0.0;
-            else if (foundation.surfaces[s].orientation == Surface::Z_NEG)
-              tilt = PI;
-            else
-              tilt = PI/2.0;
 
-            double Fsky = (1.0 + cos(tilt))/2.0;
-            double Fg = 1.0 - Fsky;
-            double alpha = domain.cell[i][j][k].surface.absorptivity;
-            double rho_g = 1.0 - foundation.soilAbsorptivity;
+            std::vector<Polygon3> shadedSurface(1);
 
-            if (isGreaterThan(domain.cell[i][j][k].area, 0.0))
-            {
-              std::vector<Polygon3> shadedSurface(1);
-
-              double xMin, xMax, yMin, yMax, zMin, zMax;
-              xMin = domain.meshX.dividers[i];
-              xMax = domain.meshX.dividers[i+1];
-              yMin = domain.meshY.dividers[j];
-              yMax = domain.meshY.dividers[j+1];
-              zMin = domain.meshZ.dividers[k];
-              zMax = domain.meshZ.dividers[k+1];
+            double xMin, xMax, yMin, yMax, zMin, zMax;
+            xMin = domain.meshX.dividers[i];
+            xMax = domain.meshX.dividers[i+1];
+            yMin = domain.meshY.dividers[j];
+            yMax = domain.meshY.dividers[j+1];
+            zMin = domain.meshZ.dividers[k];
+            zMax = domain.meshZ.dividers[k+1];
 
 
-              Polygon3 poly;
-              poly.outer().push_back(Point3(xMin,yMin,zMax));
-              poly.outer().push_back(Point3(xMin,yMax,zMin));
-              poly.outer().push_back(Point3(xMax,yMax,zMax));
-              poly.outer().push_back(Point3(xMax,yMin,zMin));
-              shadedSurface[0] = poly;
+            Polygon3 poly;
+            poly.outer().push_back(Point3(xMin,yMin,zMax));
+            poly.outer().push_back(Point3(xMin,yMax,zMin));
+            poly.outer().push_back(Point3(xMax,yMax,zMax));
+            poly.outer().push_back(Point3(xMax,yMin,zMin));
+            shadedSurface[0] = poly;
 
-              double areaRatio = counter.getAreaRatio(foundation.orientation,azi,alt,foundation.buildingSurfaces,shadedSurface, 0);
+            double areaRatio = counter.getAreaRatio(foundation.orientation,azi,alt,foundation.buildingSurfaces,shadedSurface, 0);
 
-              int pixels = counter.retrievePixelCount(0);
-              pssf = areaRatio*pixels;
+            int pixels = counter.retrievePixelCount(0);
+            pssf = areaRatio*pixels;
 
-              q = alpha*(qDN*pssf + qDH*Fsky + qGH*Fg*rho_g);
-            }
-            else
-            {
-              q = alpha*qGH;
-            }
           }
           else
           {
-            q = 0;
-          }
-          domain.cell[i][j][k].heatGain = q;
-
-        }
-
 #else
-        for (std::size_t index = 0; index < foundation.surfaces[s].indices.size(); index++)
-        {
-          std::size_t i = boost::get<0>(foundation.surfaces[s].indices[index]);
-          std::size_t j = boost::get<1>(foundation.surfaces[s].indices[index]);
-          std::size_t k = boost::get<2>(foundation.surfaces[s].indices[index]);
-
-          double q = domain.cell[i][j][k].surface.absorptivity*qGH;
-
-          domain.cell[i][j][k].heatGain = q;
-        }
+          pssf = incidence;
 #endif
+#if defined(ENABLE_OPENGL)
+          }
+#endif
+          q = alpha*(qDN*pssf + qDH*Fsky + qGH*Fg*rho_g);
 
-      }
-
-      else
-      {
-        for (std::size_t index = 0; index < foundation.surfaces[s].indices.size(); index++)
-        {
-          std::size_t i = boost::get<0>(foundation.surfaces[s].indices[index]);
-          std::size_t j = boost::get<1>(foundation.surfaces[s].indices[index]);
-          std::size_t k = boost::get<2>(foundation.surfaces[s].indices[index]);
-
-          double q = domain.cell[i][j][k].surface.absorptivity*qGH;
-
-          domain.cell[i][j][k].heatGain = q;
         }
+        else
+        {
+          q = 0;
+        }
+        domain.cell[i][j][k].heatGain = q;
+
       }
     }
   }

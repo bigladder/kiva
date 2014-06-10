@@ -229,6 +229,7 @@ void WeatherData::importEPW(std::string epwFile)
         double qGH = cos(PI/2 - alt)*qDN + qDH;
         globalHorizontalSolar.push_back(qGH);  // [W/m2]
 
+        // clockwise from north
         double azi = PI + acos((sin(alt)*sinLat - sinDec)/(cos(alt)*cosLat));
 
         if (hourAngle < 0.0)
