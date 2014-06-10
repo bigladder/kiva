@@ -2,12 +2,15 @@
 -------------------------
 
 ### Features:
-* Change to LIS (Library of Iterative Solvers) for linear algebra solutions. User can
-  select solver options.
+* Change to LIS (Library of Iterative Solvers) for linear algebra solutions. 
+  User can select solver options.
 * Add ability to model partial wall insulation for basements.
 * Add ability to simulate shading using graphics hardware acceleration.
-* New initialization scheme separates initialization into initial conditions, implicit
-  acceleration and warm-up periods. All three may be used for a single initialization.
+* New initialization scheme separates initialization into initial conditions, 
+  implicit acceleration and warm-up periods. All three may be used for a single 
+  initialization.
+* Allow user to specify the minimum output frequency (e.g., output every hour 
+  even if timestep is smaller). 
 * Generalize hourly output format.
 * Allow user to specify exterior grade roughness (e.g., for grass or asphalt).
 
