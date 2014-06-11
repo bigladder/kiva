@@ -1,5 +1,5 @@
-0.2.0 Released ? ??? 2014
--------------------------
+0.2.0 Released 11 June 2014
+---------------------------
 
 ### Features:
 * Change to LIS (Library of Iterative Solvers) for linear algebra solutions. 
