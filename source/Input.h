@@ -29,40 +29,40 @@
 class SimulationControl
 {
 public:
-	// Simulation Control
-	boost::gregorian::date startDate;
-	boost::gregorian::date endDate;
-	boost::posix_time::time_duration timestep;
-	std::string weatherFile;
-	boost::posix_time::ptime startTime;
+  // Simulation Control
+  boost::gregorian::date startDate;
+  boost::gregorian::date endDate;
+  boost::posix_time::time_duration timestep;
+  std::string weatherFile;
+  boost::posix_time::ptime startTime;
 
-	void setStartTime();
+  void setStartTime();
 };
 
 class Material
 {
 public:
 
-	double conductivity;  // [W/m-K] conductivity (boost function of z, t?)
-	double density;  // [kg/m3] density
-	double specificHeat;  // [J/kg-K] specific heat
+  double conductivity;  // [W/m-K] conductivity (boost function of z, t?)
+  double density;  // [kg/m3] density
+  double specificHeat;  // [J/kg-K] specific heat
 };
 
 class Layer
 {
 public:
 
-	Material material;
-	double thickness;  // [m] thickness
+  Material material;
+  double thickness;  // [m] thickness
 };
 
 class HorizontalInsulation
 {
 public:
 
-	double depth;  // [m] depth from top of wall
-	double width;  // [m] width from side of wall
-	Layer layer;
+  double depth;  // [m] depth from top of wall
+  double width;  // [m] width from side of wall
+  Layer layer;
 
 
 };
@@ -71,8 +71,8 @@ class VerticalInsulation
 {
 public:
 
-	double depth; // [m] depth from top of wall
-	Layer layer;
+  double depth; // [m] depth from top of wall
+  Layer layer;
 
 };
 
@@ -80,36 +80,36 @@ class Wall
 {
 public:
 
-	double interiorEmissivity;
-	double exteriorEmissivity;
-	double exteriorAbsorptivity;
-	double depth;  // [m] below grade depth
-	double height;  // [m] total height
-	std::vector <Layer> layers;
+  double interiorEmissivity;
+  double exteriorEmissivity;
+  double exteriorAbsorptivity;
+  double heightAboveGrade;  // [m] below grade depth
+  double height;  // [m] total height
+  std::vector <Layer> layers;
 
-	double totalWidth();
-	double totalResistance();
+  double totalWidth();
+  double totalResistance();
 };
 
 class Slab
 {
 public:
 
-	double emissivity;
-	std::vector <Layer> layers;
+  double emissivity;
+  std::vector <Layer> layers;
 
-	double totalWidth();
-	double totalResistance();
+  double totalWidth();
+  double totalResistance();
 };
 
 class Mesh
 {
 public:
 
-	double maxExteriorGrowthCoeff;
-	double maxInteriorGrowthCoeff;
-	double maxDepthGrowthCoeff;
-	double minCellDim;  // [m]
+  double maxExteriorGrowthCoeff;
+  double maxInteriorGrowthCoeff;
+  double maxDepthGrowthCoeff;
+  double minCellDim;  // [m]
 
 };
 
@@ -117,44 +117,63 @@ class OutputAnimation
 {
 public:
 
-	std::string name;
-	boost::posix_time::time_duration frequency;
-	bool grid;
-	bool contours;
-	bool gradients;
-	int size;
-	boost::gregorian::date startDate;
-	boost::gregorian::date endDate;
-	std::pair<double, double> xRange;
-	std::pair<double, double> yRange;
-	std::pair<double, double> zRange;
+  std::string name;
+  boost::posix_time::time_duration frequency;
+  bool grid;
+  bool contours;
+  bool gradients;
+  int size;
+  boost::gregorian::date startDate;
+  boost::gregorian::date endDate;
+  std::pair<double, double> xRange;
+  std::pair<double, double> yRange;
+  std::pair<double, double> zRange;
 
-	bool startDateSet;
-	bool endDateSet;
-	bool xRangeSet;
-	bool yRangeSet;
-	bool zRangeSet;
+  bool startDateSet;
+  bool endDateSet;
+  bool xRangeSet;
+  bool yRangeSet;
+  bool zRangeSet;
 
+};
+
+class OutputVariable
+{
+private:
+  std::vector<std::string> headers;
+
+public:
+  int variableID;
+  std::string headerText;
+
+  OutputVariable(int varID);
+
+};
+
+class OutputReport: public std::vector<OutputVariable>
+{
+public:
+  boost::posix_time::time_duration minFrequency;
 };
 
 class Block
 {
 public:
 
-	Polygon polygon;
-	double xMin, xMax, yMin, yMax, zMin, zMax;
-	Material material;
+  Polygon polygon;
+  double xMin, xMax, yMin, yMax, zMin, zMax;
+  Material material;
 
-	enum BlockType
-	{
-		SOLID,
-		INTERIOR_AIR,
-		EXTERIOR_AIR
-	};
+  enum BlockType
+  {
+    SOLID,
+    INTERIOR_AIR,
+    EXTERIOR_AIR
+  };
 
-	BlockType blockType;
+  BlockType blockType;
 
-	void setSquarePolygon();
+  void setSquarePolygon();
 
 };
 
@@ -162,35 +181,39 @@ class Surface
 {
 public:
 
-	Polygon polygon;
-	double xMin, xMax, yMin, yMax, zMin, zMax;
-	std::string name;
-	double emissivity, absorptivity, temperature;
+  Polygon polygon;
+  double xMin, xMax, yMin, yMax, zMin, zMax;
+  std::string name;
+  double emissivity, absorptivity, temperature;
 
 
-	enum BoundaryConditionType
-	{
-		ZERO_FLUX,
-		INTERIOR_FLUX,
-		EXTERIOR_FLUX,
-		CONSTANT_TEMPERATURE,
-		INTERIOR_TEMPERATURE,
-		EXTERIOR_TEMPERATURE
-	};
-	BoundaryConditionType boundaryConditionType;
+  enum BoundaryConditionType
+  {
+    ZERO_FLUX,
+    INTERIOR_FLUX,
+    EXTERIOR_FLUX,
+    CONSTANT_TEMPERATURE,
+    INTERIOR_TEMPERATURE,
+    EXTERIOR_TEMPERATURE
+  };
+  BoundaryConditionType boundaryConditionType;
 
-	enum Orientation
-	{
-		X_POS,
-		X_NEG,
-		Y_POS,
-		Y_NEG,
-		Z_POS,
-		Z_NEG
-	};
-	Orientation orientation;
+  enum Orientation
+  {
+    X_POS,
+    X_NEG,
+    Y_POS,
+    Y_NEG,
+    Z_POS,
+    Z_NEG
+  };
+  Orientation orientation;
 
-	void setSquarePolygon();
+  std::vector<boost::tuple<std::size_t,std::size_t,std::size_t> > indices;
+
+  double area;
+
+  void setSquarePolygon();
 };
 
 
@@ -199,27 +222,27 @@ class RangeType
 {
 public:
 
-	typedef std::pair<double,double> Range;
+  typedef std::pair<double,double> Range;
 
-	enum Type
-	{
-		MIN_INTERIOR,
-		MID_INTERIOR,
-		MIN_EXTERIOR,
-		MAX_EXTERIOR,
-		DEEP,
-		NEAR
-	};
-	Type type;
-	Range range;
+  enum Type
+  {
+    MIN_INTERIOR,
+    MID_INTERIOR,
+    MIN_EXTERIOR,
+    MAX_EXTERIOR,
+    DEEP,
+    NEAR
+  };
+  Type type;
+  Range range;
 };
 
 class Ranges
 {
 public:
-	std::vector<RangeType> ranges;
+  std::vector<RangeType> ranges;
 
-	bool isType(double position,RangeType::Type type);
+  bool isType(double position,RangeType::Type type);
 
 };
 
@@ -227,151 +250,163 @@ class Foundation
 {
 public:
 
-	// Inputs
+  // Inputs
 
-	// Site
-	double deepGroundDepth;  // [m]
-	double farFieldWidth;  // [m] distance from outside of wall to the edge
-						   // of the domain
-	double deepGroundTemperature;  // [K]
-	double excavationDepth; // [m] below top of wall
+  // Site
+  double deepGroundDepth;  // [m]
+  double farFieldWidth;  // [m] distance from outside of wall to the edge
+               // of the domain
+  double deepGroundTemperature;  // [K]
+  double foundationDepth; // [m] below top of wall
+  double orientation;  // [radians] from north
 
-	enum DeepGroundBoundary
-	{
-		DGB_AUTO,
-		DGB_CONSTANT_TEMPERATURE,
-		DGB_ZERO_FLUX
-	};
+  enum DeepGroundBoundary
+  {
+    DGB_AUTO,
+    DGB_CONSTANT_TEMPERATURE,
+    DGB_ZERO_FLUX
+  };
 
-	DeepGroundBoundary deepGroundBoundary;
+  DeepGroundBoundary deepGroundBoundary;
 
-	double indoorAirTemperature; // [K]
+  double indoorAirTemperature; // [K]
 
-	Material soil;
-	double soilAbsorptivity;  // [frac]
-	double soilEmissivity;  // [frac]
+  Material soil;
+  double soilAbsorptivity;  // [frac]
+  double soilEmissivity;  // [frac]
+  double surfaceRoughness;  // dimensionless (roughly corresponsds to millimeters of relief)
 
-	// Local wind speed characteristics
-	double vegetationHeight;  // [m]
-	double deltaLocal;  // [m]
-	double alphaLocal;  // [-]
-
-
-	// Geometry
-	enum CoordinateSystem
-	{
-		CS_2DAXIAL,
-		CS_2DLINEAR,
-		CS_3D,
-		CS_3D_SYMMETRY
-	};
-	CoordinateSystem coordinateSystem;
-
-	Polygon polygon;
-
-	// Constructions
-	Wall wall;
-	bool hasWall;
-	Slab slab;
-	bool hasSlab;
-	HorizontalInsulation interiorHorizontalInsulation;
-	bool hasInteriorHorizontalInsulation;
-	HorizontalInsulation exteriorHorizontalInsulation;
-	bool hasExteriorHorizontalInsulation;
-	VerticalInsulation interiorVerticalInsulation;
-	bool hasInteriorVerticalInsulation;
-	VerticalInsulation exteriorVerticalInsulation;
-	bool hasExteriorVerticalInsulation;
-
-	double perimeterSurfaceWidth;
-	bool hasPerimeterSurface;
-
-	// Meshing
-	Mesh mesh;
+  // Local wind speed characteristics
+  double vegetationHeight;  // [m]
+  double deltaLocal;  // [m]
+  double alphaLocal;  // [-]
 
 
-	// Simulation Control
-	enum NumericalScheme
-	{
-		NS_ADE,
-		NS_EXPLICIT,
-		NS_ADI,
-		NS_IMPLICIT,
-		NS_CRANK_NICOLSON,
-		NS_STEADY_STATE
-	};
+  // Geometry
+  enum CoordinateSystem
+  {
+    CS_2DAXIAL,
+    CS_2DLINEAR,
+    CS_3D,
+    CS_3D_SYMMETRY
+  };
+  CoordinateSystem coordinateSystem;
 
-	NumericalScheme numericalScheme;
+  Polygon polygon;
+  bool isXSymm, isYSymm;
 
-	double fADI;  // ADI modified f-factor
+  double buildingHeight;
+  std::vector<Polygon3> buildingSurfaces;
 
-	double initialTemperature;
-	long implicitAccelTimestep;
-	long implicitAccelPeriods;
-	enum InitializationMethod
-	{
-		IM_KUSUDA,
-		IM_CONSTANT_TEMPERATURE,
-		IM_IMPLICIT_ACCELERATION,
-		IM_STEADY_STATE
-	};
+  // Constructions
+  Wall wall;
+  bool hasWall;
+  Slab slab;
+  bool hasSlab;
+  HorizontalInsulation interiorHorizontalInsulation;
+  bool hasInteriorHorizontalInsulation;
+  HorizontalInsulation exteriorHorizontalInsulation;
+  bool hasExteriorHorizontalInsulation;
+  VerticalInsulation interiorVerticalInsulation;
+  bool hasInteriorVerticalInsulation;
+  VerticalInsulation exteriorVerticalInsulation;
+  bool hasExteriorVerticalInsulation;
 
-	InitializationMethod initializationMethod;
+  double perimeterSurfaceWidth;
+  bool hasPerimeterSurface;
 
-	double interiorConvectiveCoefficient;
-	double exteriorConvectiveCoefficient;
-	enum ConvectionCalculationMethod
-	{
-		CCM_AUTO,
-		CCM_CONSTANT_COEFFICIENT
-	};
-
-	ConvectionCalculationMethod convectionCalculationMethod;
-
-	double outdoorDryBulbTemperature;
-	enum OutdoorTemperatureMethod
-	{
-		OTM_WEATHER_FILE,
-		OTM_CONSTANT_TEMPERATURE
-	};
-
-	OutdoorTemperatureMethod outdoorTemperatureMethod;
-
-	double wallTopTemperatureDifference;
-	enum WallTopBoundary
-	{
-		WTB_ZERO_FLUX,
-		WTB_LINEAR_DT
-	};
-
-	WallTopBoundary wallTopBoundary;
-
-	// Output Animations
-	std::vector<OutputAnimation> outputAnimations;
-
-	// Output Reports
+  // Meshing
+  Mesh mesh;
 
 
-	// Derived variables
-	double area;  // [m2] Area of foundation
-	double perimeter;  // [m] Perimeter of foundation
-	double effectiveLength;
+  // Simulation Control
+  enum NumericalScheme
+  {
+    NS_ADE,
+    NS_EXPLICIT,
+    NS_ADI,
+    NS_IMPLICIT,
+    NS_CRANK_NICOLSON,
+    NS_STEADY_STATE
+  };
 
-	MeshData xMeshData;
-	MeshData yMeshData;
-	MeshData zMeshData;
-	std::vector<Block> blocks;
-	std::vector<Surface> surfaces;
+  NumericalScheme numericalScheme;
 
-	void setMeshData();
+  double fADI;  // ADI modified f-factor
+
+  std::string solver;
+  std::string preconditioner;
+  double tolerance;
+  int maxIterations;
+
+  double initialTemperature;
+  enum InitializationMethod
+  {
+    IM_KUSUDA,
+    IM_CONSTANT_TEMPERATURE,
+    IM_STEADY_STATE
+  };
+
+  long warmupDays;
+  long implicitAccelTimestep;
+  long implicitAccelPeriods;
+
+  InitializationMethod initializationMethod;
+
+  double interiorConvectiveCoefficient;
+  double exteriorConvectiveCoefficient;
+  enum ConvectionCalculationMethod
+  {
+    CCM_AUTO,
+    CCM_CONSTANT_COEFFICIENT
+  };
+
+  ConvectionCalculationMethod convectionCalculationMethod;
+
+  double outdoorDryBulbTemperature;
+  enum OutdoorTemperatureMethod
+  {
+    OTM_WEATHER_FILE,
+    OTM_CONSTANT_TEMPERATURE
+  };
+
+  OutdoorTemperatureMethod outdoorTemperatureMethod;
+
+  double wallTopTemperatureDifference;
+  enum WallTopBoundary
+  {
+    WTB_ZERO_FLUX,
+    WTB_LINEAR_DT
+  };
+
+  WallTopBoundary wallTopBoundary;
+
+  // Output Animations
+  std::vector<OutputAnimation> outputAnimations;
+
+  // Output Report
+  OutputReport outputReport;
+
+  // Derived variables
+  double area;  // [m2] Area of foundation
+  double perimeter;  // [m] Perimeter of foundation
+  double effectiveLength;
+
+  MeshData xMeshData;
+  MeshData yMeshData;
+  MeshData zMeshData;
+  std::vector<Block> blocks;
+  std::vector<Surface> surfaces;
+
+  void createMeshData();
 };
 
 
 class Input
 {
 public:
-	SimulationControl simulationControl;
-	std::vector <Foundation> foundations;
+  SimulationControl simulationControl;
+  std::vector <Foundation> foundations;
 };
 
 #endif /* INPUT_HPP_ */

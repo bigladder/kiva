@@ -32,48 +32,48 @@
 
 struct Axis
 {
-	std::size_t nMin;
-	std::size_t nMax;
-	std::size_t nN;
-	Mesher mesh;
+  std::size_t nMin;
+  std::size_t nMax;
+  std::size_t nN;
+  Mesher mesh;
 };
 
 enum SliceType
 {
-	XZ_2D,
-	XY,
-	XZ,
-	YZ
+  XZ_2D,
+  XY,
+  XZ,
+  YZ
 };
 
 class GroundPlot
 {
 private:
-	mglData TDat, hDat, vDat, cDat, hGrid, vGrid, TGrid;
+  mglData TDat, hDat, vDat, cDat, hGrid, vGrid, TGrid;
 
-	std::size_t iMin, iMax, jMin, jMax, kMin, kMax;
+  std::size_t iMin, iMax, jMin, jMax, kMin, kMax;
 
-	double slice;
-	double xMin, xMax, yMin, yMax;
+  double slice;
+  double xMin, xMax, yMin, yMax;
 
-	Axis hAxis;
-	Axis vAxis;
+  Axis hAxis;
+  Axis vAxis;
 
-	int frameNumber;
+  int frameNumber;
 
-	double nextPlotTime;
 
 public:
 
-	//mglGraph gr;
-	OutputAnimation outputAnimation;
-	std::vector<Block> blocks;
-	SliceType sliceType;
+  //mglGraph gr;
+  OutputAnimation outputAnimation;
+  std::vector<Block> blocks;
+  SliceType sliceType;
 
-	double tStart, tEnd;
-	GroundPlot(OutputAnimation &outputAnimation, Domain &domain, std::vector<Block> &blocks);
-	void createFrame(boost::multi_array<double, 3> &T, std::string timeStamp);
-	bool makeNewFrame(double tNow);
+  double tStart, tEnd;
+  double nextPlotTime;
+  GroundPlot(OutputAnimation &outputAnimation, Domain &domain, std::vector<Block> &blocks);
+  void createFrame(boost::multi_array<double, 3> &T, std::string timeStamp);
+  bool makeNewFrame(double tNow);
 };
 
 

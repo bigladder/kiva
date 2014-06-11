@@ -32,75 +32,79 @@ class Cell
 {
 public:
 
-	// inherent properties
-	double density;
-	double specificHeat;
-	double conductivity;
+  // inherent properties
+  double density;
+  double specificHeat;
+  double conductivity;
 
-	// derived properties
-	double cxp_c;
-	double cxm_c;
-	double cxp;
-	double cxm;
-	double cyp;
-	double cym;
-	double czp;
-	double czm;
+  double volume;
+  double area;
+  double heatGain;
 
-	// organizational properties
-	enum CellType
-	{
-		EXTERIOR_AIR,  // 0
-		INTERIOR_AIR,  // 1
-		NORMAL,  // 2
-		BOUNDARY,  // 3
-		ZERO_THICKNESS  // 4
-	};
-	CellType cellType;
+  // derived properties
+  double cxp_c;
+  double cxm_c;
+  double cxp;
+  double cxm;
+  double cyp;
+  double cym;
+  double czp;
+  double czm;
 
-	size_t blockNumber;
-	Block block;
+  // organizational properties
+  enum CellType
+  {
+    EXTERIOR_AIR,  // 0
+    INTERIOR_AIR,  // 1
+    NORMAL,  // 2
+    BOUNDARY,  // 3
+    ZERO_THICKNESS  // 4
+  };
+  CellType cellType;
 
-	size_t surfaceNumber;
-	Surface surface;
+  //size_t blockNumber;
+  Block block;
+
+  //size_t surfaceNumber;
+  Surface surface;
 };
 
 class Domain
 {
 public:
 
-		// mesh
-		Mesher meshX;
-		Mesher meshY;
-		Mesher meshZ;
-		std::size_t nX;
-		std::size_t nY;
-		std::size_t nZ;
+    // mesh
+    Mesher meshX;
+    Mesher meshY;
+    Mesher meshZ;
+    std::size_t nX;
+    std::size_t nY;
+    std::size_t nZ;
 
-		boost::multi_array<Cell, 3> cell;
-		
+    boost::multi_array<Cell, 3> cell;
+    
 public:
 
-		Domain();
-		Domain(Foundation &foundation);
-		void setDomain(Foundation &foundation);
-		double getDXP(size_t i);
-		double getDXM(size_t i);
-		double getDYP(size_t j);
-		double getDYM(size_t j);
-		double getDZP(size_t k);
-		double getDZM(size_t k);
-		double getKXP(size_t i,size_t j,size_t k);
-		double getKXM(size_t i,size_t j,size_t k);
-		double getKYP(size_t i,size_t j,size_t k);
-		double getKYM(size_t i,size_t j,size_t k);
-		double getKZP(size_t i,size_t j,size_t k);
-		double getKZM(size_t i,size_t j,size_t k);
-		void set2DZeroThicknessCellProperties(size_t i,size_t j,size_t k);
-		void set3DZeroThicknessCellProperties(size_t i,size_t j,size_t k);
-		void setZeroThicknessCellProperties(std::size_t i, std::size_t j, std::size_t k,
-				std::vector<boost::tuple<std::size_t,std::size_t,std::size_t> > pointSet);
-		void printCellTypes();
+    Domain();
+    Domain(Foundation &foundation);
+    void setDomain(Foundation &foundation);
+    double getDXP(std::size_t i);
+    double getDXM(std::size_t i);
+    double getDYP(std::size_t j);
+    double getDYM(std::size_t j);
+    double getDZP(std::size_t k);
+    double getDZM(std::size_t k);
+    double getKXP(std::size_t i,std::size_t j,std::size_t k);
+    double getKXM(std::size_t i,std::size_t j,std::size_t k);
+    double getKYP(std::size_t i,std::size_t j,std::size_t k);
+    double getKYM(std::size_t i,std::size_t j,std::size_t k);
+    double getKZP(std::size_t i,std::size_t j,std::size_t k);
+    double getKZM(std::size_t i,std::size_t j,std::size_t k);
+    void set2DZeroThicknessCellProperties(std::size_t i,std::size_t j,std::size_t k);
+    void set3DZeroThicknessCellProperties(std::size_t i,std::size_t j,std::size_t k);
+    void setZeroThicknessCellProperties(std::size_t i, std::size_t j, std::size_t k,
+        std::vector<boost::tuple<std::size_t,std::size_t,std::size_t> > pointSet);
+    void printCellTypes();
 
 };
 
