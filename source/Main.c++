@@ -100,7 +100,7 @@ int main(int argc, char *argv[])
       std::cout << versionInfo << "\n";
       std::cout << copyrightInfo << "\n\n";
 
-      boost::posix_time::ptime beginCalc = boost::posix_time::second_clock::local_time();
+      boost::posix_time::ptime beginCalc = boost::posix_time::microsec_clock::local_time();
       std::cout << "Starting Program: " << beginCalc << "\n";
 
       // parse input
@@ -117,7 +117,7 @@ int main(int argc, char *argv[])
 
       ground.simulate();
 
-      boost::posix_time::ptime finishCalc = boost::posix_time::second_clock::local_time();
+      boost::posix_time::ptime finishCalc = boost::posix_time::microsec_clock::local_time();
       std::cout << "Finished Program: " << finishCalc << "\n";
 
       boost::posix_time::time_duration totalCalc = finishCalc - beginCalc;
