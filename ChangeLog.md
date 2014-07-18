@@ -35,6 +35,8 @@
 * Fix windward convection algorithm typo.
 * Fix block outlines in 3D slice plots.
 * Fix plot update for plots starting mid-year.
+* Fix for symmetric simulations where the symmeteric unit had a different number
+  of vertices from the original polygon.
 
 0.1.1 Released 9 December 2013
 ------------------------------

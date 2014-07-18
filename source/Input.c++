@@ -1767,6 +1767,8 @@ void Foundation::createMeshData()
     Polygon symmetricPoly;
     symmetricPoly = symmetricUnit(polygon);
 
+    nV = symmetricPoly.outer().size();
+
     Box boundingBox;
     boost::geometry::envelope(symmetricPoly, boundingBox);
 
@@ -2717,7 +2719,7 @@ void Foundation::createMeshData()
 
   for (size_t b = 0; b < blocks.size(); b++)
   {
-    for (std::size_t v = 0; v < surfaces[b].polygon.outer().size(); v++)
+    for (std::size_t v = 0; v < blocks[b].polygon.outer().size(); v++)
     {
       xPoints.push_back(blocks[b].polygon.outer()[v].get<0>());
       yPoints.push_back(blocks[b].polygon.outer()[v].get<1>());
