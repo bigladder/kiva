@@ -1,3 +1,18 @@
+0.2.1 Released ????
+-------------------
+### Features:
+* Microsecond resolution for elapsed time listed in stdout
+* More output variables:
+  * Slab Average Heat Flux [W/m2]
+  * Slab Average Temperature [K]
+  * Foundation Average Heat Flux [W/m2]
+  * Foundation Average Temperature [K]
+
+### Fixes:
+* Fix for symmetric simulations where the symmeteric unit had a different number
+  of vertices from the original polygon.
+
+
 0.2.0 Released 11 June 2014
 ---------------------------
 
@@ -35,8 +50,6 @@
 * Fix windward convection algorithm typo.
 * Fix block outlines in 3D slice plots.
 * Fix plot update for plots starting mid-year.
-* Fix for symmetric simulations where the symmeteric unit had a different number
-  of vertices from the original polygon.
 
 0.1.1 Released 9 December 2013
 ------------------------------

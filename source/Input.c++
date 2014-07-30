@@ -68,7 +68,7 @@ double Slab::totalResistance()
 
 OutputVariable::OutputVariable(int varID)
 {
-  headers.resize(14);
+  headers.resize(18);
 
   headers[0] = "Slab Core Average Heat Flux [W/m2]";
   headers[1] = "Slab Core Average Temperature [K]";
@@ -78,12 +78,16 @@ OutputVariable::OutputVariable(int varID)
   headers[5] = "Slab Perimeter Average Temperature [K]";
   headers[6] = "Slab Perimeter Average Effective Temperature [C]";
   headers[7] = "Slab Perimeter Total Heat Transfer Rate [W]";
-  headers[8] = "Slab Total Heat Transfer Rate [W]";
-  headers[9] = "Wall Average Heat Flux [W/m2]";
-  headers[10] = "Wall Average Temperature [K]";
-  headers[11] = "Wall Average Effective Temperature [C]";
-  headers[12] = "Wall Total Heat Transfer Rate [W]";
-  headers[13] = "Total Heat Transfer Rate [W]";
+  headers[8] = "Slab Average Heat Flux [W/m2]";
+  headers[9] = "Slab Average Temperature [K]";
+  headers[10] = "Slab Total Heat Transfer Rate [W]";
+  headers[11] = "Wall Average Heat Flux [W/m2]";
+  headers[12] = "Wall Average Temperature [K]";
+  headers[13] = "Wall Average Effective Temperature [C]";
+  headers[14] = "Wall Total Heat Transfer Rate [W]";
+  headers[15] = "Foundation Average Heat Flux [W/m2]";
+  headers[16] = "Foundation Average Temperature [K]";
+  headers[17] = "Foundation Total Heat Transfer Rate [W]";
 
   variableID = varID;
   headerText = headers[varID];
