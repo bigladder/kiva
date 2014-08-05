@@ -323,6 +323,37 @@ bool isXSymmetric(Polygon poly)
   // Mirror right polygon across the centroid
   right = mirrorX(right,centroidX);
 
+  // Round values since we don't have control over tolerance in the equals
+  // algorithm.
+  for (std::size_t v = 0; v < left[0].outer().size(); v++)
+  {
+    double x = left[0].outer()[v].get<0>();
+    double y = left[0].outer()[v].get<1>();
+
+    x = round(x*1000)/1000.0;
+    y = round(y*1000)/1000.0;
+
+    left[0].outer()[v].set<0>(x);
+    left[0].outer()[v].set<1>(y);
+  }
+  for (std::size_t v = 0; v < right[0].outer().size(); v++)
+  {
+    double x = right[0].outer()[v].get<0>();
+    double y = right[0].outer()[v].get<1>();
+
+    x = round(x*1000)/1000.0;
+    y = round(y*1000)/1000.0;
+
+    right[0].outer()[v].set<0>(x);
+    right[0].outer()[v].set<1>(y);
+  }
+
+  boost::geometry::unique(left);
+  boost::geometry::unique(right);
+
+  boost::geometry::append(left[0], Point(left[0].outer()[0].get<0>(),left[0].outer()[0].get<1>()));
+  boost::geometry::append(right[0], Point(right[0].outer()[0].get<0>(),right[0].outer()[0].get<1>()));
+
   return boost::geometry::equals(left,right);
 }
 
@@ -351,17 +382,52 @@ bool isYSymmetric(Polygon poly)
   // Mirror top polygon across the centroid
   top = mirrorY(top,centroidY);
 
+  // Round values since we don't have control over tolerance in the equals
+  // algorithm.
+  for (std::size_t v = 0; v < bottom[0].outer().size(); v++)
+  {
+    double x = bottom[0].outer()[v].get<0>();
+    double y = bottom[0].outer()[v].get<1>();
+
+    x = round(x*1000)/1000.0;
+    y = round(y*1000)/1000.0;
+
+    bottom[0].outer()[v].set<0>(x);
+    bottom[0].outer()[v].set<1>(y);
+  }
+  for (std::size_t v = 0; v < top[0].outer().size(); v++)
+  {
+    double x = top[0].outer()[v].get<0>();
+    double y = top[0].outer()[v].get<1>();
+
+    x = round(x*1000)/1000.0;
+    y = round(y*1000)/1000.0;
+
+    top[0].outer()[v].set<0>(x);
+    top[0].outer()[v].set<1>(y);
+  }
+
+  boost::geometry::unique(bottom);
+  boost::geometry::unique(top);
+
+  boost::geometry::append(bottom[0], Point(bottom[0].outer()[0].get<0>(),bottom[0].outer()[0].get<1>()));
+  boost::geometry::append(top[0], Point(top[0].outer()[0].get<0>(),top[0].outer()[0].get<1>()));
+
   return boost::geometry::equals(top,bottom);
 }
 
 Polygon symmetricUnit(Polygon poly)
 {
   MultiPolygon symPolys;
+  symPolys.push_back(poly);
 
   Box bb;
   boost::geometry::envelope(poly,bb);
 
-  if (isXSymmetric(poly))
+  bool isXsymm = isXSymmetric(poly);
+  bool isYsymm = isYSymmetric(poly);
+
+  if (isXsymm)
   {
     // Find centroid
     Point centroid;
@@ -375,11 +441,11 @@ Polygon symmetricUnit(Polygon poly)
     MultiPolygon xSymPolys;
     Polygon right;
     boost::geometry::convert(bbRight,right);
-    boost::geometry::intersection(poly,right,xSymPolys);
+    boost::geometry::intersection(symPolys[0],right,xSymPolys);
     symPolys = xSymPolys;
   }
 
-  if (isYSymmetric(poly))
+  if (isYsymm)
   {
     // Find centroid
     Point centroid;

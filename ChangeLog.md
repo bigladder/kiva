@@ -9,8 +9,7 @@
   * Foundation Average Temperature [K]
 
 ### Fixes:
-* Fix for symmetric simulations where the symmeteric unit had a different number
-  of vertices from the original polygon.
+* Fixes for symmetric simulations.
 
 
 0.2.0 Released 11 June 2014
