@@ -330,8 +330,8 @@ bool isXSymmetric(Polygon poly)
     double x = left[0].outer()[v].get<0>();
     double y = left[0].outer()[v].get<1>();
 
-    x = round(x*1000)/1000.0;
-    y = round(y*1000)/1000.0;
+    x = round(x*100)/100.0;
+    y = round(y*100)/100.0;
 
     left[0].outer()[v].set<0>(x);
     left[0].outer()[v].set<1>(y);
@@ -341,8 +341,8 @@ bool isXSymmetric(Polygon poly)
     double x = right[0].outer()[v].get<0>();
     double y = right[0].outer()[v].get<1>();
 
-    x = round(x*1000)/1000.0;
-    y = round(y*1000)/1000.0;
+    x = round(x*100)/100.0;
+    y = round(y*100)/100.0;
 
     right[0].outer()[v].set<0>(x);
     right[0].outer()[v].set<1>(y);
@@ -389,8 +389,8 @@ bool isYSymmetric(Polygon poly)
     double x = bottom[0].outer()[v].get<0>();
     double y = bottom[0].outer()[v].get<1>();
 
-    x = round(x*1000)/1000.0;
-    y = round(y*1000)/1000.0;
+    x = round(x*100)/100.0;
+    y = round(y*100)/100.0;
 
     bottom[0].outer()[v].set<0>(x);
     bottom[0].outer()[v].set<1>(y);
@@ -400,8 +400,8 @@ bool isYSymmetric(Polygon poly)
     double x = top[0].outer()[v].get<0>();
     double y = top[0].outer()[v].get<1>();
 
-    x = round(x*1000)/1000.0;
-    y = round(y*1000)/1000.0;
+    x = round(x*100)/100.0;
+    y = round(y*100)/100.0;
 
     top[0].outer()[v].set<0>(x);
     top[0].outer()[v].set<1>(y);
