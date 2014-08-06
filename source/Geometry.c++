@@ -323,31 +323,16 @@ bool isXSymmetric(Polygon poly)
   // Mirror right polygon across the centroid
   right = mirrorX(right,centroidX);
 
-  // Round values since we don't have control over tolerance in the equals
-  // algorithm.
-  for (std::size_t v = 0; v < left[0].outer().size(); v++)
-  {
-    double x = left[0].outer()[v].get<0>();
-    double y = left[0].outer()[v].get<1>();
+  MultiPolygon intersection;
 
-    x = round(x*100)/100.0;
-    y = round(y*100)/100.0;
+  boost::geometry::intersection(left,right,intersection);
 
-    left[0].outer()[v].set<0>(x);
-    left[0].outer()[v].set<1>(y);
-  }
-  for (std::size_t v = 0; v < right[0].outer().size(); v++)
-  {
-    double x = right[0].outer()[v].get<0>();
-    double y = right[0].outer()[v].get<1>();
+  return (isEqual(boost::geometry::area(left),boost::geometry::area(intersection),1e-4));
 
-    x = round(x*100)/100.0;
-    y = round(y*100)/100.0;
 
-    right[0].outer()[v].set<0>(x);
-    right[0].outer()[v].set<1>(y);
-  }
-
+  /* Weird stuff needed for equals statement...
+   * Turns out the equals statement has a pretty tight tolerance
+   *
   boost::geometry::unique(left);
   boost::geometry::unique(right);
 
@@ -355,6 +340,8 @@ bool isXSymmetric(Polygon poly)
   boost::geometry::append(right[0], Point(right[0].outer()[0].get<0>(),right[0].outer()[0].get<1>()));
 
   return boost::geometry::equals(left,right);
+  */
+
 }
 
 bool isYSymmetric(Polygon poly)
@@ -382,31 +369,15 @@ bool isYSymmetric(Polygon poly)
   // Mirror top polygon across the centroid
   top = mirrorY(top,centroidY);
 
-  // Round values since we don't have control over tolerance in the equals
-  // algorithm.
-  for (std::size_t v = 0; v < bottom[0].outer().size(); v++)
-  {
-    double x = bottom[0].outer()[v].get<0>();
-    double y = bottom[0].outer()[v].get<1>();
+  MultiPolygon intersection;
 
-    x = round(x*100)/100.0;
-    y = round(y*100)/100.0;
+  boost::geometry::intersection(bottom,top,intersection);
 
-    bottom[0].outer()[v].set<0>(x);
-    bottom[0].outer()[v].set<1>(y);
-  }
-  for (std::size_t v = 0; v < top[0].outer().size(); v++)
-  {
-    double x = top[0].outer()[v].get<0>();
-    double y = top[0].outer()[v].get<1>();
+  return (isEqual(boost::geometry::area(bottom),boost::geometry::area(intersection),1e-4));
 
-    x = round(x*100)/100.0;
-    y = round(y*100)/100.0;
-
-    top[0].outer()[v].set<0>(x);
-    top[0].outer()[v].set<1>(y);
-  }
-
+  /* Weird stuff needed for equals statement...
+   * Turns out the equals statement has a pretty tight tolerance
+   *
   boost::geometry::unique(bottom);
   boost::geometry::unique(top);
 
@@ -414,6 +385,7 @@ bool isYSymmetric(Polygon poly)
   boost::geometry::append(top[0], Point(top[0].outer()[0].get<0>(),top[0].outer()[0].get<1>()));
 
   return boost::geometry::equals(top,bottom);
+  */
 }
 
 Polygon symmetricUnit(Polygon poly)
