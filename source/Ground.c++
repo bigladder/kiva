@@ -34,7 +34,7 @@ Ground::Ground(WeatherData &weatherData, Foundation &foundation,
 {
   // set up output file
   outputFile.open(outputFileName.c_str());
-  outputFile << "Time Stamp" << printOutputHeaders() << "\n";
+  outputFile << "Time Stamp" << printOutputHeaders() << std::endl;
 
   // Build Domain Object
   buildDomain();
@@ -67,7 +67,7 @@ void Ground::buildDomain()
   if (foundation.deepGroundBoundary == Foundation::DGB_AUTO)
     foundation.deepGroundTemperature = weatherData.dryBulbTemp.getAverage();
 
-  std::cout << "Creating Domain..." << "\n";
+  std::cout << "Creating Domain..." << std::endl;
   foundation.createMeshData();
 
   // Build matrices for PDE term coefficients
@@ -76,6 +76,11 @@ void Ground::buildDomain()
   nX = domain.meshX.centers.size();
   nY = domain.meshY.centers.size();
   nZ = domain.meshZ.centers.size();
+
+  std::cout << "  X Cells: " << nX << std::endl;
+  std::cout << "  Y Cells: " << nY << std::endl;
+  std::cout << "  Z Cells: " << nZ << std::endl;
+  std::cout << "  Total Cells: " << nX*nY*nZ << std::endl;
 
   //domain.printCellTypes();
 }
@@ -178,7 +183,7 @@ void Ground::initializeConditions()
 
   if (foundation.numericalScheme != Foundation::NS_STEADY_STATE)
   {
-    std::cout << "Initializing Temperatures..." << "\n";
+    std::cout << "Initializing Temperatures..." << std::endl;
 
     // Calculate initial time in seconds (simulation start minus warmup and acceleration periods)
     double simulationTimestep = simulationControl.timestep.total_seconds();
@@ -335,7 +340,7 @@ void Ground::initializePlots()
 
 void Ground::simulate()
 {
-  std::cout << "Beginning Simulation..." << "\n";
+  std::cout << "Beginning Simulation..." << std::endl;
 
   boost::posix_time::ptime simStart = simulationControl.startTime;
   boost::posix_time::ptime simEnd(simulationControl.endDate + boost::gregorian::days(1));
@@ -354,13 +359,13 @@ void Ground::simulate()
 
     if (t - prevOutputTime >= foundation.outputReport.minFrequency.total_seconds())
     {
-      outputFile << to_simple_string(getSimTime(t)) << printOutputLine() << "\n";
+      outputFile << to_simple_string(getSimTime(t)) << printOutputLine() << std::endl;
       prevOutputTime = t;
     }
 
   }
 
-  std::cout << getSimTime(tend - timestep) << " (100%)\n";
+  std::cout << "  " << getSimTime(tend - timestep) << " (100%)" << std::endl;
 
 }
 
@@ -2083,11 +2088,11 @@ void Ground::printStatus(double t)
   {
     if (initPeriod)
     {
-      std::cout << simTime << "\n";
+      std::cout << "  " << simTime << std::endl;
     }
     else
     {
-      std::cout << simTime << " (" << percentComplete << "%)\n";
+      std::cout << "  " << simTime << " (" << percentComplete << "%)" << std::endl;
     }
 
     prevStatusUpdate = currentTime;
@@ -2161,7 +2166,7 @@ void Ground::solveLinearSystem()
       std::cout << "Warning: Solution did not converge after ";
       std::cout << iters << " iterations." << "\n";
       std::cout << "  The final residual was: " << residual << "\n";
-      std::cout << "  Solver status: " << status << "\n";
+      std::cout << "  Solver status: " << status << std::endl;
 
     }
     //lis_output(Amat,b,x,LIS_FMT_MM,"Matrix.mtx");

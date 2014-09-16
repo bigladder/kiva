@@ -81,27 +81,27 @@ int main(int argc, char *argv[])
       std::cout << versionInfo << "\n";
       std::cout << copyrightInfo << "\n\n";
       std::cout << usageInfo << "\n";
-      std::cout << generic << "\n";
+      std::cout << generic << std::endl;
     }
     else if (vm.count("help"))
     {
       std::cout << versionInfo << "\n";
       std::cout << copyrightInfo << "\n\n";
       std::cout << usageInfo << "\n";
-      std::cout << generic << "\n";
+      std::cout << generic << std::endl;
     }
     else if (vm.count("version"))
     {
       std::cout << versionInfo << "\n";
-      std::cout << copyrightInfo << "\n\n";
+      std::cout << copyrightInfo << "\n" << std::endl;
     }
     else if (vm.count("input-file") && vm.count("weather-file") && vm.count("output-file"))
     {
       std::cout << versionInfo << "\n";
-      std::cout << copyrightInfo << "\n\n";
+      std::cout << copyrightInfo << "\n" << std::endl;
 
       boost::posix_time::ptime beginCalc = boost::posix_time::microsec_clock::local_time();
-      std::cout << "Starting Program: " << beginCalc << "\n";
+      std::cout << "Starting Program: " << beginCalc << std::endl;
 
       // parse input
       Input input = inputParser(vm["input-file"].as<std::string>());
@@ -118,10 +118,10 @@ int main(int argc, char *argv[])
       ground.simulate();
 
       boost::posix_time::ptime finishCalc = boost::posix_time::microsec_clock::local_time();
-      std::cout << "Finished Program: " << finishCalc << "\n";
+      std::cout << "Finished Program: " << finishCalc << std::endl;
 
       boost::posix_time::time_duration totalCalc = finishCalc - beginCalc;
-      std::cout << "Elapsed Time: " << totalCalc << "\n"  << "\n";
+      std::cout << "Elapsed Time: " << totalCalc << "\n"  << std::endl;
 
     }
     else if (!vm.empty())
@@ -129,7 +129,7 @@ int main(int argc, char *argv[])
       std::cout << "ERROR: Incorrect number of arguments\n\n";
 
       std::cout << usageInfo << "\n";
-      std::cout << generic << "\n";
+      std::cout << generic << std::endl;
 
 #if defined(USE_LIS_SOLVER)
       lis_finalize();
@@ -145,7 +145,7 @@ int main(int argc, char *argv[])
   }
   catch(std::exception& e)
   {
-    std::cout << e.what() << "\n";
+    std::cout << e.what() << std::endl;
 #if defined(USE_LIS_SOLVER)
     lis_finalize();
 #endif
