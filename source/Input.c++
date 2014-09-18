@@ -134,7 +134,6 @@ void Foundation::createMeshData()
 {
   area = boost::geometry::area(polygon);  // [m2] Area of foundation
   perimeter = boost::geometry::perimeter(polygon);  // [m] Perimeter of foundation
-  effectiveLength = 2.0*area/perimeter;
 
   std::size_t nV = polygon.outer().size();
 
@@ -357,6 +356,12 @@ void Foundation::createMeshData()
   {
 
     // TODO: 2D
+
+	if (coordinateSystem == CS_2DAXIAL)
+		effectiveLength = 2.0*area/perimeter;
+	else
+		effectiveLength = area/perimeter;
+
     double xMin = 0.0;
     double xMax = effectiveLength + farFieldWidth;
 
@@ -1036,6 +1041,8 @@ void Foundation::createMeshData()
           surface.xMax = getXmax(poly,v);
           surface.yMin = getYmin(poly,v);
           surface.yMax = getYmax(poly,v);
+          surface.zMin = zGrade;
+          surface.zMax = zMax;
           surface.setSquarePolygon();
           surface.boundaryConditionType = Surface::EXTERIOR_FLUX;
           switch (getDirectionOut(poly,v))
@@ -1981,6 +1988,8 @@ void Foundation::createMeshData()
             surface.yMin = getYmin(poly[0],v);
             surface.yMax = getYmax(poly[0],v);
             surface.setSquarePolygon();
+            surface.zMin = zGrade;
+            surface.zMax = zMax;
             surface.boundaryConditionType = Surface::EXTERIOR_FLUX;
             switch (getDirectionOut(poly[0],v))
             {
