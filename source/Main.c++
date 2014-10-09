@@ -47,9 +47,9 @@ int main(int argc, char *argv[])
   std::string copyrightInfo = "Copyright (C) 2012-2014 Big Ladder Software\n"
                            "Web: www.bigladdersoftware.com";
   std::string usageInfo = "Usage: kiva [Input File] [Weather File] [Output File]\n"
-                      "   Input format: yaml\n"
-              "   Weather format: epw\n"
-              "   Output format: csv";
+                          "   Input format: yaml\n"
+                          "   Weather format: epw\n"
+                          "   Output format: csv";
 
   try
   {
@@ -81,19 +81,19 @@ int main(int argc, char *argv[])
       std::cout << versionInfo << "\n";
       std::cout << copyrightInfo << "\n\n";
       std::cout << usageInfo << "\n";
-      std::cout << generic << std::endl;
+      std::cout << generic;
     }
     else if (vm.count("help"))
     {
       std::cout << versionInfo << "\n";
       std::cout << copyrightInfo << "\n\n";
       std::cout << usageInfo << "\n";
-      std::cout << generic << std::endl;
+      std::cout << generic;
     }
     else if (vm.count("version"))
     {
       std::cout << versionInfo << "\n";
-      std::cout << copyrightInfo << "\n" << std::endl;
+      std::cout << copyrightInfo << std::endl;
     }
     else if (vm.count("input-file") && vm.count("weather-file") && vm.count("output-file"))
     {
@@ -121,7 +121,7 @@ int main(int argc, char *argv[])
       std::cout << "Finished Program: " << finishCalc << std::endl;
 
       boost::posix_time::time_duration totalCalc = finishCalc - beginCalc;
-      std::cout << "Elapsed Time: " << totalCalc << "\n"  << std::endl;
+      std::cout << "Elapsed Time: " << totalCalc << std::endl;
 
     }
     else if (!vm.empty())
@@ -129,7 +129,7 @@ int main(int argc, char *argv[])
       std::cout << "ERROR: Incorrect number of arguments\n\n";
 
       std::cout << usageInfo << "\n";
-      std::cout << generic << std::endl;
+      std::cout << generic;
 
 #if defined(USE_LIS_SOLVER)
       lis_finalize();

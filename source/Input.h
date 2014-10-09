@@ -106,6 +106,7 @@ class Mesh
 {
 public:
 
+  double maxNearGrowthCoeff;
   double maxExteriorGrowthCoeff;
   double maxInteriorGrowthCoeff;
   double maxDepthGrowthCoeff;

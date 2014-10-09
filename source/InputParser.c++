@@ -252,6 +252,7 @@ Input inputParser(std::string inputFile)
   if  (yamlInput["Foundation"]["mesh"].IsDefined())
   {
     foundation1.mesh.minCellDim = yamlInput["Foundation"]["mesh"]["minCellDim"].as<double>();
+    foundation1.mesh.maxNearGrowthCoeff = yamlInput["Foundation"]["mesh"]["maxNearGrowthCoeff"].as<double>();
     foundation1.mesh.maxDepthGrowthCoeff = yamlInput["Foundation"]["mesh"]["maxDepthGrowthCoeff"].as<double>();
     foundation1.mesh.maxInteriorGrowthCoeff = yamlInput["Foundation"]["mesh"]["maxInteriorGrowthCoeff"].as<double>();
     foundation1.mesh.maxExteriorGrowthCoeff = yamlInput["Foundation"]["mesh"]["maxExteriorGrowthCoeff"].as<double>();
@@ -259,6 +260,7 @@ Input inputParser(std::string inputFile)
   else
   {
     foundation1.mesh.minCellDim = 0.05;
+    foundation1.mesh.maxNearGrowthCoeff = 1.25;
     foundation1.mesh.maxDepthGrowthCoeff = 1.25;
     foundation1.mesh.maxInteriorGrowthCoeff = 1.25;
     foundation1.mesh.maxExteriorGrowthCoeff = 1.25;

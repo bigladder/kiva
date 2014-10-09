@@ -174,9 +174,9 @@ void Foundation::createMeshData()
   zeroThickness.growthDir = Interval::UNIFORM;
 
   Interval near;
-  near.maxGrowthCoeff = 1.0;
+  near.maxGrowthCoeff = mesh.maxNearGrowthCoeff;
   near.minCellDim = mesh.minCellDim;
-  near.growthDir = Interval::UNIFORM;
+  near.growthDir = Interval::CENTERED;
 
   Interval deep;
   deep.maxGrowthCoeff = mesh.maxDepthGrowthCoeff;
