@@ -198,7 +198,7 @@ void WeatherData::importEPW(std::string epwFile)
             double(boost::lexical_cast<double>(columns[23])));  // [tenths]
 
         double eSky = 0.787 + 0.764*log(Tdp/Tdb)*
-            (1 + 0.0224*fc + 0.0035*pow(fc,2) + 0.00028*pow(fc,3));
+            (1 + 0.0224*fc - 0.0035*pow(fc,2) + 0.00028*pow(fc,3));
 
         skyEmissivity.push_back(eSky);  // [frac]
 

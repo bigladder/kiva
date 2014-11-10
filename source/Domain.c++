@@ -181,7 +181,8 @@ void Domain::setDomain(Foundation &foundation)
             else // if (surface.orientation == Surface::Z_POS ||
                // surface.orientation == Surface::Z_NEG)
             {
-              cell[i][j][k].area = 2.0*PI*meshX.deltas[i]*meshX.centers[i];
+              cell[i][j][k].area = PI*(meshX.dividers[i+1]*meshX.dividers[i+1] -
+            		  meshX.dividers[i]*meshX.dividers[i] );
             }
           }
           else if (foundation.coordinateSystem == Foundation::CS_2DLINEAR)
@@ -189,12 +190,12 @@ void Domain::setDomain(Foundation &foundation)
             if (cell[i][j][k].surface.orientation == Surface::X_POS ||
               cell[i][j][k].surface.orientation == Surface::X_NEG)
             {
-              cell[i][j][k].area = meshZ.deltas[k];
+              cell[i][j][k].area = 2.0*meshZ.deltas[k];
             }
             else // if (surface.orientation == Surface::Z_POS ||
                // surface.orientation == Surface::Z_NEG)
             {
-              cell[i][j][k].area = meshX.deltas[i];
+              cell[i][j][k].area = 2.0*meshX.deltas[i];
             }
           }
           else  // if (foundation.coordinateSystem == Foundation::CS_3D)
