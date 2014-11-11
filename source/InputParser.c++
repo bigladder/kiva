@@ -213,14 +213,25 @@ Input inputParser(std::string inputFile)
 
 
   // Geometry
-  if (yamlInput["Foundation"]["coordinateSystem"].as<std::string>() == "2DAXIAL")
-    foundation1.coordinateSystem = Foundation::CS_2DAXIAL;
-  else if (yamlInput["Foundation"]["coordinateSystem"].as<std::string>() == "2DLINEAR")
-    foundation1.coordinateSystem = Foundation::CS_2DLINEAR;
-  else if (yamlInput["Foundation"]["coordinateSystem"].as<std::string>() == "3D")
-    foundation1.coordinateSystem = Foundation::CS_3D;
-  else if (yamlInput["Foundation"]["coordinateSystem"].as<std::string>() == "3DSYMMETRY")
-    foundation1.coordinateSystem = Foundation::CS_3D_SYMMETRY;
+  if (yamlInput["Foundation"]["coordinateSystem"].as<std::string>() == "CARTESIAN")
+    foundation1.coordinateSystem = Foundation::CS_CARTESIAN;
+  else if (yamlInput["Foundation"]["coordinateSystem"].as<std::string>() == "CYLINDRICAL")
+    foundation1.coordinateSystem = Foundation::CS_CYLINDRICAL;
+
+  if (yamlInput["Foundation"]["reductionStrategy"].as<std::string>() == "AP")
+    foundation1.reductionStrategy = Foundation::RS_AP;
+  else if (yamlInput["Foundation"]["reductionStrategy"].as<std::string>() == "NEG")
+    foundation1.reductionStrategy = Foundation::RS_NEG;
+
+  if  (yamlInput["Foundation"]["numberOfDimensions"].IsDefined())
+    foundation1.numberOfDimensions = yamlInput["Foundation"]["numberOfDimensions"].as<int>();
+  else
+    foundation1.numberOfDimensions = 2;
+
+  if  (yamlInput["Foundation"]["useSymmetry"].IsDefined())
+    foundation1.useSymmetry = yamlInput["Foundation"]["useSymmetry"].as<bool>();
+  else
+    foundation1.useSymmetry = true;
 
   for (size_t i=0;i<yamlInput["Foundation"]["polygon"].size();i++)
   {

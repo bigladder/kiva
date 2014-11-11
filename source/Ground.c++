@@ -271,8 +271,7 @@ void Ground::initializePlots()
     if (!foundation.outputAnimations[p].endDateSet)
       foundation.outputAnimations[p].endDate = simulationControl.endDate;
 
-    if (foundation.coordinateSystem == Foundation::CS_3D ||
-      foundation.coordinateSystem == Foundation::CS_3D_SYMMETRY)
+    if (foundation.numberOfDimensions == 3)
     {
       if (!foundation.outputAnimations[p].xRangeSet)
       {
@@ -574,8 +573,7 @@ void Ground::calculateADEUpwardSweep()
           double CYM = domain.cell[i][j][k].cym*theta;
           double Q = domain.cell[i][j][k].heatGain*theta;
 
-          if (foundation.coordinateSystem == Foundation::CS_3D ||
-            foundation.coordinateSystem == Foundation::CS_3D_SYMMETRY)
+          if (foundation.numberOfDimensions == 3)
             U[i][j][k] = (UOld[i][j][k]*(1.0 - CXP - CZP - CYP)
                 - U[i-1][j][k]*CXM
                 + UOld[i+1][j][k]*CXP
@@ -778,8 +776,7 @@ void Ground::calculateADEDownwardSweep()
           double CYM = domain.cell[i][j][k].cym*theta;
           double Q = domain.cell[i][j][k].heatGain*theta;
 
-          if (foundation.coordinateSystem == Foundation::CS_3D ||
-            foundation.coordinateSystem == Foundation::CS_3D_SYMMETRY)
+          if (foundation.numberOfDimensions == 3)
             V[i][j][k] = (VOld[i][j][k]*(1.0 + CXM + CZM + CYM)
                 - VOld[i-1][j][k]*CXM
                 + V[i+1][j][k]*CXP
@@ -981,8 +978,7 @@ void Ground::calculateExplicit()
           double CYM = domain.cell[i][j][k].cym*theta;
           double Q = domain.cell[i][j][k].heatGain*theta;
 
-          if (foundation.coordinateSystem == Foundation::CS_3D ||
-            foundation.coordinateSystem == Foundation::CS_3D_SYMMETRY)
+          if (foundation.numberOfDimensions == 3)
             TNew[i][j][k] = TOld[i][j][k]*(1.0 + CXM + CZM + CYM - CXP - CZP - CYP)
                 - TOld[i-1][j][k]*CXM
                 + TOld[i+1][j][k]*CXP
@@ -1311,8 +1307,7 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
             double CYM = domain.cell[i][j][k].cym;
             double Q = domain.cell[i][j][k].heatGain;
 
-            if (foundation.coordinateSystem == Foundation::CS_3D ||
-              foundation.coordinateSystem == Foundation::CS_3D_SYMMETRY)
+            if (foundation.numberOfDimensions == 3)
             {
               A = (CXM + CZM + CYM - CXP - CZP - CYP);
               Aim = -CXM;
@@ -1379,8 +1374,7 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
             double CYM = domain.cell[i][j][k].cym*theta;
             double Q = domain.cell[i][j][k].heatGain*theta;
 
-            if (foundation.coordinateSystem == Foundation::CS_3D ||
-              foundation.coordinateSystem == Foundation::CS_3D_SYMMETRY)
+            if (foundation.numberOfDimensions == 3)
             {
               A = (1.0 + f*(CXP + CZP + CYP - CXM - CZM - CYM));
               Aim = f*CXM;
@@ -1888,8 +1882,7 @@ void Ground::calculateADI(int dim)
         default:
           {
           double theta;
-          if (foundation.coordinateSystem == Foundation::CS_3D ||
-            foundation.coordinateSystem == Foundation::CS_3D_SYMMETRY)
+          if (foundation.numberOfDimensions == 3)
           {
             theta = timestep/
                 (3*domain.cell[i][j][k].density*domain.cell[i][j][k].specificHeat);
@@ -1910,8 +1903,7 @@ void Ground::calculateADI(int dim)
 
           double f = foundation.fADI;
 
-          if (foundation.coordinateSystem == Foundation::CS_3D ||
-            foundation.coordinateSystem == Foundation::CS_3D_SYMMETRY)
+          if (foundation.numberOfDimensions == 3)
           {
             if (dim == 1) // x
             {
@@ -2045,8 +2037,7 @@ void Ground::calculate(double t)
     break;
   case Foundation::NS_ADI:
     calculateADI(1);
-    if (foundation.coordinateSystem == Foundation::CS_3D ||
-      foundation.coordinateSystem == Foundation::CS_3D_SYMMETRY)
+    if (foundation.numberOfDimensions == 3)
       calculateADI(2);
     calculateADI(3);
     break;
@@ -2346,8 +2337,7 @@ void Ground::setSolarBoundaryConditions()
       {
         tilt = PI/2.0;
 
-        if (foundation.coordinateSystem == Foundation::CS_2DAXIAL ||
-                 foundation.coordinateSystem == Foundation::CS_2DLINEAR)
+        if (foundation.numberOfDimensions == 2)
         {
           // incidence is the average incidence on the exterior of a vertical cylinder
           // 2*(int(cos(alt)*cos(x),x,0,PI/2))/(2*PI)
@@ -2377,7 +2367,7 @@ void Ground::setSolarBoundaryConditions()
             aziSurf = aziXNeg;
           }
 
-          if (foundation.coordinateSystem == Foundation::CS_3D)
+          if (foundation.numberOfDimensions == 3 && !foundation.useSymmetry)
           {
             // incidence = cos(alt)*cos(azi-aziSurf)*sin(tilt)+sin(alt)*cos(tilt)
             // simplifies for tilt = PI/2 to = cos(alt)*cos(azi-aziSurf)

@@ -286,12 +286,21 @@ public:
   // Geometry
   enum CoordinateSystem
   {
-    CS_2DAXIAL,
-    CS_2DLINEAR,
-    CS_3D,
-    CS_3D_SYMMETRY
+    CS_CARTESIAN,
+    CS_CYLINDRICAL
   };
   CoordinateSystem coordinateSystem;
+
+  int numberOfDimensions;  // 2 or 3
+
+  bool useSymmetry;
+
+  enum ReductionStrategy
+  {
+    RS_AP,
+    RS_NEG
+  };
+  ReductionStrategy reductionStrategy;
 
   Polygon polygon;
   bool isXSymm, isYSymm;
@@ -389,10 +398,6 @@ public:
   OutputReport outputReport;
 
   // Derived variables
-  double area;  // [m2] Area of foundation
-  double perimeter;  // [m] Perimeter of foundation
-  double effectiveLength;
-
   MeshData xMeshData;
   MeshData yMeshData;
   MeshData zMeshData;
