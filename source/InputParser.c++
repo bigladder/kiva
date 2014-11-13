@@ -470,6 +470,36 @@ Input inputParser(std::string inputFile)
     else
       temp.colorScheme = OutputAnimation::C_CMR;
 
+    if (yamlInput["Foundation"]["outputAnimations"][i]["outputUnits"].IsDefined())
+    {
+      if (yamlInput["Foundation"]["outputAnimations"][i]["outputUnits"].as<std::string>() == "IP")
+        temp.outputUnits = OutputAnimation::IP;
+      else if (yamlInput["Foundation"]["outputAnimations"][i]["outputUnits"].as<std::string>() == "SI")
+        temp.outputUnits = OutputAnimation::SI;
+    }
+    else
+      temp.outputUnits = OutputAnimation::SI;
+
+    if (yamlInput["Foundation"]["outputAnimations"][i]["temperatureRange"].IsDefined())
+    {
+      temp.minimumTemperature = yamlInput["Foundation"]["outputAnimations"][i]["temperatureRange"][0].as<double>();
+      temp.maximumTemperature = yamlInput["Foundation"]["outputAnimations"][i]["temperatureRange"][1].as<double>();
+    }
+    else
+    {
+      temp.minimumTemperature = -20;
+      temp.maximumTemperature = 40;
+    }
+
+    if (yamlInput["Foundation"]["outputAnimations"][i]["numberOfContours"].IsDefined())
+    {
+      temp.numberOfContours = yamlInput["Foundation"]["outputAnimations"][i]["numberOfContours"].as<int>();
+    }
+    else
+    {
+      temp.numberOfContours = 13;
+    }
+
     temp.size = yamlInput["Foundation"]["outputAnimations"][i]["size"].as<int>();
 
     if (yamlInput["Foundation"]["outputAnimations"][i]["startDate"].IsDefined())

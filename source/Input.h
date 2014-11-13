@@ -137,6 +137,18 @@ public:
   };
   ColorScheme colorScheme;
 
+  enum OutputUnits
+  {
+    IP,
+    SI
+  };
+  OutputUnits outputUnits;
+
+  double minimumTemperature;
+  double maximumTemperature;
+
+  int numberOfContours;
+
   bool startDateSet;
   bool endDateSet;
   bool xRangeSet;

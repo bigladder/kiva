@@ -53,6 +53,8 @@ private:
 
   std::size_t iMin, iMax, jMin, jMax, kMin, kMax;
 
+  double distanceUnitConversion;
+
   double slice;
   double xMin, xMax, yMin, yMax;
 
