@@ -44,6 +44,7 @@ double HourlyData::getValue(boost::posix_time::ptime t)
   long hour_before = hour;
   long hour_after = hour_before + 1;
 
+  // Handle leap year days
   if (boost::gregorian::gregorian_calendar::is_leap_year(year) && hour >= 1416.0)
   {
       hour_before -= 24;
@@ -123,7 +124,16 @@ void WeatherData::importEPW(std::string epwFile)
     typedef boost::tokenizer< boost::escaped_list_separator<char> > Tokenizer;
 
     int row = 0;
-  long hour = 0;
+    long hour = 0;
+
+    hourOfMinimumTemperature = hour;
+    double Tmin = 9999;
+
+    std::vector<int> months;
+    std::vector<int> days;
+
+    int dayOfYear = 1;
+    int previousDayOfMonth = 1;
 
     while (getline(inf,line))
     {
@@ -151,13 +161,30 @@ void WeatherData::importEPW(std::string epwFile)
       boost::gregorian::date newYear(2013,boost::gregorian::Jan,1);
       boost::posix_time::ptime newYearDate(newYear);
 
+
       if (row > 8)
       {
-          boost::posix_time::ptime dateTime = newYearDate + boost::posix_time::hours(hour);
-          double hourOfDay = dateTime.time_of_day().total_seconds()/3600.0;
+        boost::posix_time::ptime dateTime = newYearDate + boost::posix_time::hours(hour);
+        double hourOfDay = dateTime.time_of_day().total_seconds()/3600.0;
 
-        double Tdb = double(boost::lexical_cast<double>(columns[6])) +
-                  273.15;
+        double Tdb = double(boost::lexical_cast<double>(columns[6])) + 273.15;
+
+        months.push_back(int(boost::lexical_cast<int>(columns[1])));
+
+        int dayOfMonth = int(boost::lexical_cast<int>(columns[2]));
+
+        if (dayOfMonth != previousDayOfMonth)
+          dayOfYear += 1;
+
+        days.push_back(dayOfYear);
+
+        previousDayOfMonth = dayOfMonth;
+
+        if (Tdb < Tmin)
+        {
+          Tmin = Tdb;
+          hourOfMinimumTemperature = hour;
+        }
 
         dryBulbTemp.push_back(Tdb);  // [K]
 
@@ -184,8 +211,7 @@ void WeatherData::importEPW(std::string epwFile)
 
         diffuseHorizontalSolar.push_back(qDH);  // [W/m2]
 
-        windDirection.push_back(double(boost::lexical_cast<double>(columns[20]))*
-              PI/180.0);  // [rad]
+        windDirection.push_back(double(boost::lexical_cast<double>(columns[20]))*PI/180.0);  // [rad]
 
         windSpeed.push_back(
             double(boost::lexical_cast<double>(columns[21])));  // [m/s]
@@ -246,6 +272,53 @@ void WeatherData::importEPW(std::string epwFile)
     }
 
     inf.close();
+
+    // Calculate average daily and monthly temperatures
+    dailyAverageTemperatures.reserve(365);
+    monthlyAverageTemperatures.reserve(12);
+
+    double dailyTemperatureSum = 0;
+    double monthlyTemperatureSum = 0;
+
+    int dayCount = 0;
+    int monthCount = 0;
+
+    for (int h = 0; h < days.size(); ++h)
+    {
+      dailyTemperatureSum += dryBulbTemp[h];
+      monthlyTemperatureSum += dryBulbTemp[h];
+      dayCount += 1;
+      monthCount += 1;
+
+      if (h != days.size() - 1)
+      {
+        if (days[h] != days[h+1])
+        {
+          dailyAverageTemperatures.push_back(dailyTemperatureSum/dayCount);
+          dailyTemperatureSum = 0;
+          dayCount = 0;
+        }
+        if (months[h] != months[h+1])
+        {
+          monthlyAverageTemperatures.push_back(monthlyTemperatureSum/monthCount);
+          monthlyTemperatureSum = 0;
+          monthCount = 0;
+        }
+      }
+      else
+      {
+        dailyAverageTemperatures.push_back(dailyTemperatureSum/dayCount);
+        dailyTemperatureSum = 0;
+        dayCount = 0;
+        monthlyAverageTemperatures.push_back(monthlyTemperatureSum/monthCount);
+        monthlyTemperatureSum = 0;
+        monthCount = 0;
+      }
+    }
+
+    minimumAverageMontlyTemperature = *min_element(monthlyAverageTemperatures.begin(),monthlyAverageTemperatures.end());
+    maximumAverageMontlyTemperature = *max_element(monthlyAverageTemperatures.begin(),monthlyAverageTemperatures.end());
+
 }
 
 #endif

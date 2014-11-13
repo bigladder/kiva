@@ -2237,15 +2237,15 @@ double Ground::getInitialTemperature(double t, double z)
     boost::posix_time::ptime tYearStart(dayBegin);
     boost::posix_time::time_duration tSinceYearStart = tp - tYearStart;
     double trel = tSinceYearStart.total_seconds();
-    double tshift = 0;  // Assume min temperature occurs at the beginning of the year
+    double tshift = weatherData.hourOfMinimumTemperature*60.0*60.0;
     double seconds_in_day = 60.0*60.0*24.0;
-    double Tamp = (maxDryBulb - minDryBulb) / 2.0;
+    double Tamp = (weatherData.maximumAverageMontlyTemperature - weatherData.minimumAverageMontlyTemperature) / 2.0;
     double diff = foundation.soil.conductivity/(foundation.soil.density*foundation.soil.specificHeat);
 
+    //std::cout << "Amplitude: " << Tamp << std::endl;
+
     return annualAverageDryBulbTemperature
-        - Tamp*exp(z*pow(PI/(365*seconds_in_day*diff),0.5))
-        *cos(2*PI/(365*seconds_in_day)*(trel - tshift
-        - z/2*pow((365*seconds_in_day)/(PI*diff),0.5)));
+        - Tamp*exp(z*sqrt(PI/(365*seconds_in_day*diff)))*cos((2*PI)/(365*seconds_in_day)*(trel - tshift + z*0.5*sqrt((365*seconds_in_day)/(PI*diff))));
   }
   else //if (foundation.initializationMethod == Foundation::IM_CONSTANT_TEMPERATURE)
     return foundation.initialTemperature;
