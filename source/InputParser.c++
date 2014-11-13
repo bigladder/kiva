@@ -460,6 +460,16 @@ Input inputParser(std::string inputFile)
     temp.grid = yamlInput["Foundation"]["outputAnimations"][i]["grid"].as<bool>();
     temp.gradients = yamlInput["Foundation"]["outputAnimations"][i]["gradients"].as<bool>();
     temp.contours = yamlInput["Foundation"]["outputAnimations"][i]["contours"].as<bool>();
+    if (yamlInput["Foundation"]["outputAnimations"][i]["colorScheme"].IsDefined())
+    {
+      if (yamlInput["Foundation"]["outputAnimations"][i]["colorScheme"].as<std::string>() == "CMR")
+        temp.colorScheme = OutputAnimation::C_CMR;
+      else if (yamlInput["Foundation"]["outputAnimations"][i]["colorScheme"].as<std::string>() == "JET")
+        temp.colorScheme = OutputAnimation::C_JET;
+    }
+    else
+      temp.colorScheme = OutputAnimation::C_CMR;
+
     temp.size = yamlInput["Foundation"]["outputAnimations"][i]["size"].as<int>();
 
     if (yamlInput["Foundation"]["outputAnimations"][i]["startDate"].IsDefined())

@@ -202,6 +202,7 @@ GroundPlot::GroundPlot(OutputAnimation &outputAnimation, Domain &domain, std::ve
     cDat.a[n] = mid - range/2 + double(n)*step;
   }
 
+
 }
 
 void GroundPlot::createFrame(boost::multi_array<double, 3> &T, std::string timeStamp)
@@ -262,9 +263,15 @@ void GroundPlot::createFrame(boost::multi_array<double, 3> &T, std::string timeS
   gr.Aspect(hRange, vRange);
   gr.Axis("yU");
   gr.Axis("x");
-  gr.Colorbar("_");
+  if (outputAnimation.colorScheme == OutputAnimation::C_CMR)
+    gr.Colorbar("kUrqyw_");
+  else
+    gr.Colorbar("BbcyrR_");
   gr.Box("k",false);
-  gr.Dens(hDat, vDat, TDat);
+  if (outputAnimation.colorScheme == OutputAnimation::C_CMR)
+    gr.Dens(hDat, vDat, TDat,"kUrqyw");
+  else
+    gr.Dens(hDat, vDat, TDat,"BbcyrR");
   if (outputAnimation.contours)
     gr.Cont(cDat, hDat, vDat, TDat,"H");
   if (outputAnimation.gradients)

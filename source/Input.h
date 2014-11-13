@@ -130,6 +130,13 @@ public:
   std::pair<double, double> yRange;
   std::pair<double, double> zRange;
 
+  enum ColorScheme
+  {
+    C_CMR,
+    C_JET
+  };
+  ColorScheme colorScheme;
+
   bool startDateSet;
   bool endDateSet;
   bool xRangeSet;
