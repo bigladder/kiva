@@ -263,6 +263,7 @@ void GroundPlot::createFrame(boost::multi_array<double, 3> &T, std::string timeS
   double vTextSpacing = 0.05;
 
   mglGraph gr;
+  gr.LoadFont("heros");
 
   // Plot
   gr.Clf(1,1,1);
@@ -270,9 +271,9 @@ void GroundPlot::createFrame(boost::multi_array<double, 3> &T, std::string timeS
   int height = outputAnimation.size;
   int width = height*aspect;
 
+
   gr.SetSize(width,height);
 
-  gr.LoadFont("none");
   gr.SetFontSize(2.0);
   gr.SetRange('x', hGrid);
   gr.SetRange('y', vGrid);
@@ -280,23 +281,76 @@ void GroundPlot::createFrame(boost::multi_array<double, 3> &T, std::string timeS
   gr.SetRange('z', Tmin, Tmax);
   gr.SetTicks('c', Tstep, nT, Tmin);
   gr.Aspect(hRange, vRange);
-  gr.Axis("yU");
-  gr.Axis("x");
-  if (outputAnimation.colorScheme == OutputAnimation::C_CMR)
-    gr.Colorbar("kUrqyw_");
-  else
-    gr.Colorbar("BbcyrR_");
+
+
+  // Timestamp
+
+  std::string timeStampMinusYear = timeStamp.substr(5,timeStamp.size()-5);
+  if (outputAnimation.axes)
+    gr.Puts(0.95, 0.055, temperatureUnit.c_str(), ":AL");
+
+  if (outputAnimation.timestamp)
+    gr.Puts(hText, vText, timeStampMinusYear.c_str(), ":AL");
+
+  switch (sliceType)
+  {
+  case XZ_2D:
+  {
+  }
+  break;
+  case XY:
+  {
+    std::string sliceString = "Z = " + str(boost::format("%0.2f") % (slice*distanceUnitConversion)) + " " + distanceUnit;
+    if (outputAnimation.axes)
+      gr.Puts(hText, vText - vTextSpacing, sliceString.c_str(), ":AL");
+  }
+  break;
+  case XZ:
+  {
+    std::string sliceString = "Y = " + str(boost::format("%0.2f") % (slice*distanceUnitConversion)) + " " + distanceUnit;
+    if (outputAnimation.axes)
+      gr.Puts(hText, vText - vTextSpacing, sliceString.c_str(), ":AL");
+  }
+  break;
+  case YZ:
+  {
+    std::string sliceString = "X = " + str(boost::format("%0.2f") % (slice*distanceUnitConversion)) + " " + distanceUnit;
+    if (outputAnimation.axes)
+      gr.Puts(hText, vText - vTextSpacing, sliceString.c_str(), ":AL");
+  }
+  }
+  gr.SetPlotFactor(1.2);
+
+  if (outputAnimation.axes)
+  {
+    gr.Axis("yU");
+    gr.Axis("x");
+    if (outputAnimation.colorScheme == OutputAnimation::C_CMR)
+    {
+      gr.Colorbar("kUrqyw_");
+      gr.Dens(hDat, vDat, TDat,"kUrqyw");
+    }
+    else // if (outputAnimation.colorScheme == OutputAnimation::C_JET)
+    {
+      gr.Colorbar("BbcyrR_");
+      gr.Dens(hDat, vDat, TDat,"BbcyrR");
+    }
+  }
+
   gr.Box("k",false);
-  if (outputAnimation.colorScheme == OutputAnimation::C_CMR)
-    gr.Dens(hDat, vDat, TDat,"kUrqyw");
-  else
-    gr.Dens(hDat, vDat, TDat,"BbcyrR");
+
   if (outputAnimation.contours)
-    gr.Cont(cDat, hDat, vDat, TDat,"H");
+  {
+    if (outputAnimation.contourLabels)
+      gr.Cont(cDat, hDat, vDat, TDat,"Ht");
+    else
+      gr.Cont(cDat, hDat, vDat, TDat,"H");
+  }
   if (outputAnimation.gradients)
     gr.Grad(hDat, vDat, TDat);
   if (outputAnimation.grid)
     gr.Grid(hGrid, vGrid, TGrid, "W");
+
 
   // Draw blocks
   for (size_t b = 0; b < blocks.size(); b++)
@@ -304,7 +358,7 @@ void GroundPlot::createFrame(boost::multi_array<double, 3> &T, std::string timeS
     switch (sliceType)
     {
     case XZ_2D:
-      {
+    {
       mglPoint bl = mglPoint(std::min(std::max(blocks[b].xMin*distanceUnitConversion, hMin),hMax),
                    std::min(std::max(blocks[b].zMin*distanceUnitConversion, vMin),vMax),
                    210.0);
@@ -322,10 +376,10 @@ void GroundPlot::createFrame(boost::multi_array<double, 3> &T, std::string timeS
       gr.Line(br, tr, "k");
       gr.Line(tr, tl, "k");
       gr.Line(tl, bl, "k");
-      }
-      break;
+    }
+    break;
     case XY:
-      {
+    {
       // Find intersection with viewing window
       Polygon view;
       view.outer().push_back(Point(hMin,vMin));
@@ -351,12 +405,8 @@ void GroundPlot::createFrame(boost::multi_array<double, 3> &T, std::string timeS
             mglPoint(intersection[p].outer()[0].get<0>()*distanceUnitConversion,intersection[p].outer()[0].get<1>()*distanceUnitConversion,210.0),
             "k");
       }
-
-      std::string sliceString = "Z = " + str(boost::format("%0.2f") % (slice*distanceUnitConversion)) + " " + distanceUnit;
-      gr.Puts(hText, vText - vTextSpacing, sliceString.c_str(), ":AL");
-
-      }
-      break;
+    }
+    break;
     case XZ:
       {
       // Find intersecting point pairs with slicing plane
@@ -398,10 +448,6 @@ void GroundPlot::createFrame(boost::multi_array<double, 3> &T, std::string timeS
 
         p += 1; // skip one point, on to the next pair
       }
-
-      std::string sliceString = "Y = " + str(boost::format("%0.2f") % (slice*distanceUnitConversion)) + " " + distanceUnit;
-      gr.Puts(hText, vText - vTextSpacing, sliceString.c_str(), ":AL");
-
       }
       break;
     case YZ:
@@ -445,23 +491,15 @@ void GroundPlot::createFrame(boost::multi_array<double, 3> &T, std::string timeS
 
         p += 1; // skip one point, on to the next pair
       }
-
-      std::string sliceString = "X = " + str(boost::format("%0.2f") % (slice*distanceUnitConversion)) + " " + distanceUnit;
-      gr.Puts(hText, vText - vTextSpacing, sliceString.c_str(), ":AL");
-
       }
       break;
     }
   }
 
-  gr.Puts(0.85, 0.055, temperatureUnit.c_str(), ":AL");
-
-  // Timestamp
-
-  std::string timeStampMinusYear = timeStamp.substr(5,timeStamp.size()-5);
-  gr.Puts(hText, vText, timeStampMinusYear.c_str(), ":AL");
-
-  gr.WritePNG((outputAnimation.name + "_frames/" + outputAnimation.name + str(boost::format("%04d") % frameNumber) + ".png").c_str(),"",false);
+  if (outputAnimation.format == OutputAnimation::F_PNG)
+    gr.WritePNG((outputAnimation.name + "_frames/" + outputAnimation.name + str(boost::format("%04d") % frameNumber) + ".png").c_str(),"",false);
+  else if (outputAnimation.format == OutputAnimation::F_TEX)
+    gr.WriteTEX((outputAnimation.name + "_frames/" + outputAnimation.name + str(boost::format("%04d") % frameNumber) + ".tex").c_str());
 
   frameNumber += 1;
   nextPlotTime += outputAnimation.frequency.total_seconds();

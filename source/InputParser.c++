@@ -460,6 +460,10 @@ Input inputParser(std::string inputFile)
     temp.grid = yamlInput["Foundation"]["outputAnimations"][i]["grid"].as<bool>();
     temp.gradients = yamlInput["Foundation"]["outputAnimations"][i]["gradients"].as<bool>();
     temp.contours = yamlInput["Foundation"]["outputAnimations"][i]["contours"].as<bool>();
+    temp.contourLabels = yamlInput["Foundation"]["outputAnimations"][i]["contourLabels"].as<bool>();
+    temp.axes = yamlInput["Foundation"]["outputAnimations"][i]["axes"].as<bool>();
+    temp.timestamp = yamlInput["Foundation"]["outputAnimations"][i]["timestamp"].as<bool>();
+
     if (yamlInput["Foundation"]["outputAnimations"][i]["colorScheme"].IsDefined())
     {
       if (yamlInput["Foundation"]["outputAnimations"][i]["colorScheme"].as<std::string>() == "CMR")
@@ -469,6 +473,16 @@ Input inputParser(std::string inputFile)
     }
     else
       temp.colorScheme = OutputAnimation::C_CMR;
+
+    if (yamlInput["Foundation"]["outputAnimations"][i]["format"].IsDefined())
+    {
+      if (yamlInput["Foundation"]["outputAnimations"][i]["format"].as<std::string>() == "PNG")
+        temp.format = OutputAnimation::F_PNG;
+      else if (yamlInput["Foundation"]["outputAnimations"][i]["format"].as<std::string>() == "TEX")
+        temp.format = OutputAnimation::F_TEX;
+    }
+    else
+      temp.format = OutputAnimation::F_PNG;
 
     if (yamlInput["Foundation"]["outputAnimations"][i]["outputUnits"].IsDefined())
     {

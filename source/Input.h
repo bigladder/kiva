@@ -122,7 +122,10 @@ public:
   boost::posix_time::time_duration frequency;
   bool grid;
   bool contours;
+  bool contourLabels;
   bool gradients;
+  bool axes;
+  bool timestamp;
   int size;
   boost::gregorian::date startDate;
   boost::gregorian::date endDate;
@@ -136,6 +139,13 @@ public:
     C_JET
   };
   ColorScheme colorScheme;
+
+  enum Format
+  {
+    F_PNG,
+    F_TEX
+  };
+  Format format;
 
   enum OutputUnits
   {
