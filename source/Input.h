@@ -136,7 +136,8 @@ public:
   enum ColorScheme
   {
     C_CMR,
-    C_JET
+    C_JET,
+    C_NONE
   };
   ColorScheme colorScheme;
 

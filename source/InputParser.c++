@@ -476,6 +476,8 @@ Input inputParser(std::string inputFile)
         temp.colorScheme = OutputAnimation::C_CMR;
       else if (yamlInput["Foundation"]["outputAnimations"][i]["colorScheme"].as<std::string>() == "JET")
         temp.colorScheme = OutputAnimation::C_JET;
+      else if (yamlInput["Foundation"]["outputAnimations"][i]["colorScheme"].as<std::string>() == "NONE")
+        temp.colorScheme = OutputAnimation::C_NONE;
     }
     else
       temp.colorScheme = OutputAnimation::C_CMR;

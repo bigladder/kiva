@@ -287,7 +287,10 @@ void GroundPlot::createFrame(boost::multi_array<double, 3> &T, std::string timeS
 
   std::string timeStampMinusYear = timeStamp.substr(5,timeStamp.size()-5);
   if (outputAnimation.axes)
-    gr.Puts(0.95, 0.055, temperatureUnit.c_str(), ":AL");
+  {
+    if (outputAnimation.colorScheme != OutputAnimation::C_NONE)
+      gr.Puts(0.9, 0.056, temperatureUnit.c_str(), ":AL");
+  }
 
   if (outputAnimation.timestamp)
     gr.Puts(hText, vText, timeStampMinusYear.c_str(), ":AL");
@@ -319,7 +322,7 @@ void GroundPlot::createFrame(boost::multi_array<double, 3> &T, std::string timeS
       gr.Puts(hText, vText - vTextSpacing, sliceString.c_str(), ":AL");
   }
   }
-  gr.SetPlotFactor(1.2);
+  gr.SetPlotFactor(1.3);
 
   if (outputAnimation.axes)
   {
@@ -328,13 +331,20 @@ void GroundPlot::createFrame(boost::multi_array<double, 3> &T, std::string timeS
     if (outputAnimation.colorScheme == OutputAnimation::C_CMR)
     {
       gr.Colorbar("kUrqyw_");
-      gr.Dens(hDat, vDat, TDat,"kUrqyw");
     }
-    else // if (outputAnimation.colorScheme == OutputAnimation::C_JET)
+    else if (outputAnimation.colorScheme == OutputAnimation::C_JET)
     {
       gr.Colorbar("BbcyrR_");
-      gr.Dens(hDat, vDat, TDat,"BbcyrR");
     }
+  }
+
+  if (outputAnimation.colorScheme == OutputAnimation::C_CMR)
+  {
+    gr.Dens(hDat, vDat, TDat,"kUrqyw");
+  }
+  else if (outputAnimation.colorScheme == OutputAnimation::C_JET)
+  {
+    gr.Dens(hDat, vDat, TDat,"BbcyrR");
   }
 
   gr.Box("k",false);
