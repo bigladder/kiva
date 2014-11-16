@@ -190,12 +190,12 @@ void Domain::setDomain(Foundation &foundation)
             if (cell[i][j][k].surface.orientation == Surface::X_POS ||
               cell[i][j][k].surface.orientation == Surface::X_NEG)
             {
-              cell[i][j][k].area = 2.0*meshZ.deltas[k];
+              cell[i][j][k].area = 2.0*meshZ.deltas[k]*foundation.linearAreaMultiplier;
             }
             else // if (surface.orientation == Surface::Z_POS ||
                // surface.orientation == Surface::Z_NEG)
             {
-              cell[i][j][k].area = 2.0*meshX.deltas[i];
+              cell[i][j][k].area = 2.0*meshX.deltas[i]*foundation.linearAreaMultiplier;
             }
           }
           else  // if (foundation.numberOfDimensions == 3)

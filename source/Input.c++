@@ -21,6 +21,8 @@
 
 #include "Input.h"
 
+static const double PI = 4.0*atan(1.0);
+
 void SimulationControl::setStartTime()
 {
   boost::posix_time::ptime st(startDate,boost::posix_time::hours(0));
@@ -351,55 +353,87 @@ void Foundation::createMeshData()
   if (numberOfDimensions == 2 )
   {
 
-  // TODO: 2D
-  double area = boost::geometry::area(polygon);  // [m2] Area of foundation
-  double perimeter = boost::geometry::perimeter(polygon);  // [m] Perimeter of foundation
+    // TODO: 2D
+    double area = boost::geometry::area(polygon);  // [m2] Area of foundation
+    double perimeter = boost::geometry::perimeter(polygon);  // [m] Perimeter of foundation
 
-  bool ne = false;
-  double areaNeg = 0;
-  double perimeterNeg = 0.0001;
-	if (reductionStrategy == RS_NEG )
-	{
-	  Polygon hull;
-	  boost::geometry::convex_hull(polygon, hull);
-	  double areaHull = boost::geometry::area(hull);
-	  MultiPolygon neg;
-	  boost::geometry::difference(hull,polygon,neg);
-	  areaNeg = boost::geometry::area(neg);
-	  if (areaNeg > 0.0)
-	  {
-	    ne = true;
-	    perimeterNeg = 0;
-	    for (int p = 0; p < neg.size(); ++p)
-	    {
-        Line negLine;
-        boost::geometry::intersection(polygon,neg[p],negLine);
-        perimeterNeg += boost::geometry::length(negLine);
-	    }
-	  }
-	}
+    linearAreaMultiplier = 1.0;
+    bool twoParameters = false;
+    double length1;
+    double length2;
 
-	double length1;
-	double length2;
+    double ap = area/perimeter;
 
-	if (coordinateSystem == CS_CYLINDRICAL)
-	{
-	  if (!ne)
-	    length2 = 2.0*area/perimeter;
-	  else
-	  {
-	    length1 = 2.0*areaNeg/perimeterNeg;
-	    length2 = length1 + 2.0*area/perimeter;
-	  }
-	}
-	else if (coordinateSystem == CS_CARTESIAN)
-    if (!ne)
-  	  length2 = area/perimeter;
-    else
+    if (reductionStrategy == RS_AP)
     {
-      length1 = areaNeg/perimeterNeg;
-      length2 = 2.0*area/perimeter;
+      if (coordinateSystem == CS_CYLINDRICAL)
+      {
+        length2 = 2.0*ap;
+      }
+      else if (coordinateSystem == CS_CARTESIAN)
+      {
+        length2 = ap;
+      }
     }
+
+    if (reductionStrategy == RS_RR)
+    {
+      double rrA = (perimeter - sqrt(perimeter*perimeter - 4*PI*area))/PI;
+      double rrB = (perimeter - PI*rrA)*0.5;
+      length2 = (rrA)*0.5;
+      linearAreaMultiplier = rrB;
+    }
+
+    if (reductionStrategy == RS_AP_APNEG or reductionStrategy == RS_AP_PNEG)
+    {
+      Polygon hull;
+      boost::geometry::convex_hull(polygon, hull);
+      double areaHull = boost::geometry::area(hull);
+      MultiPolygon neg;
+      boost::geometry::difference(hull,polygon,neg);
+      double areaNeg = 0;
+      double perimeterNeg = 0.0001;
+      areaNeg = boost::geometry::area(neg);
+      if (areaNeg > 0.0)
+      {
+        twoParameters = true;
+        perimeterNeg = 0;
+        for (int p = 0; p < neg.size(); ++p)
+        {
+          Line negLine;
+          boost::geometry::intersection(polygon,neg[p],negLine);
+          perimeterNeg += boost::geometry::length(negLine);
+        }
+        double apNeg = areaNeg/perimeterNeg;
+        if (reductionStrategy == RS_AP_APNEG)
+        {
+          if (coordinateSystem == CS_CYLINDRICAL)
+          {
+            length1 = 2.0*apNeg;
+            length2 = length1 + 2.0*ap;
+          }
+          else if (coordinateSystem == CS_CARTESIAN)
+          {
+            length1 = apNeg;
+            length2 = 2.0*ap;
+          }
+        }
+        if (reductionStrategy == RS_AP_PNEG)
+        {
+          length1 = 0.5*perimeterNeg/PI;
+          length2 = 2.0*ap + length1;
+        }
+      }
+    }
+
+    if (reductionStrategy == RS_A_P)
+    {
+      twoParameters = true;
+      length1 = 0.25*perimeter/PI - ap;
+      length2 = ap + 0.5*perimeter/PI;
+    }
+
+
 
     double xMin = 0.0;
     double xMax = length2 + farFieldWidth;
@@ -417,7 +451,7 @@ void Foundation::createMeshData()
       surface.yMax = 1.0;
       surface.setSquarePolygon();
       surface.zMin = zMin;
-      if (ne)
+      if (twoParameters)
         surface.zMax = zGrade;
       else
         surface.zMax = zSlab;
@@ -477,7 +511,7 @@ void Foundation::createMeshData()
           surface.emissivity = wall.interiorEmissivity;
           surfaces.push_back(surface);
         }
-        if (ne)
+        if (twoParameters)
         {
           {
             Surface surface;
@@ -543,7 +577,7 @@ void Foundation::createMeshData()
         surface.emissivity = wall.interiorEmissivity;
         surfaces.push_back(surface);
 
-        if (ne)
+        if (twoParameters)
         {
           Surface surface;
           surface.name = "Interior Wall";
@@ -562,7 +596,7 @@ void Foundation::createMeshData()
       }
 
       // Interior Air Symmetry Temperature
-      if (!ne)
+      if (!twoParameters)
       {
         Surface surface;
         surface.name = "Interior Air Symmetry";
@@ -599,7 +633,7 @@ void Foundation::createMeshData()
         surfaces.push_back(surface);
       }
 
-      if(ne)
+      if(twoParameters)
       {
         Surface surface;
         surface.name = "Exterior Wall";
@@ -688,7 +722,7 @@ void Foundation::createMeshData()
     {
       Surface surface;
       surface.name = "Slab Interior";
-      if (!ne)
+      if (!twoParameters)
       {
         surface.xMin = xMin;
         surface.xMax = xRef2 + xyPerimeterSurface;
@@ -725,7 +759,7 @@ void Foundation::createMeshData()
         surface.emissivity = wall.interiorEmissivity;
         surfaces.push_back(surface);
       }
-      if (ne)
+      if (twoParameters)
       {
         Surface surface;
         surface.name = "Slab Perimeter";
@@ -760,7 +794,7 @@ void Foundation::createMeshData()
       surface.absorptivity = soilAbsorptivity;
       surfaces.push_back(surface);
     }
-    if (ne)
+    if (twoParameters)
     {
       Surface surface;
       surface.name = "Grade";
@@ -782,7 +816,7 @@ void Foundation::createMeshData()
       // Interior Air Top Surface
       Surface surface;
       surface.name = "Interior Air Top";
-      if (!ne)
+      if (!twoParameters)
       {
         surface.xMin = xMin;
         surface.xMax = xRef2 + xyWallInterior;
@@ -819,7 +853,7 @@ void Foundation::createMeshData()
         surface.orientation = Surface::Z_POS;
         surfaces.push_back(surface);
       }
-      if (ne)
+      if (twoParameters)
       {
         // Exterior Air Top Surface
         Surface surface;
@@ -869,7 +903,7 @@ void Foundation::createMeshData()
 
         }
 
-        if (ne)
+        if (twoParameters)
         {
           double position = 0.0;
           double Tin = indoorAirTemperature;
@@ -919,7 +953,7 @@ void Foundation::createMeshData()
           surface.orientation = Surface::Z_POS;
           surfaces.push_back(surface);
         }
-        if (ne)
+        if (twoParameters)
         {
           Surface surface;
           surface.name = "Wall Top";
@@ -953,7 +987,7 @@ void Foundation::createMeshData()
         block.zMax = zIntHIns + interiorHorizontalInsulation.layer.thickness;
         blocks.push_back(block);
       }
-      if (ne)
+      if (twoParameters)
       {
         Block block;
         block.material = interiorHorizontalInsulation.layer.material;
@@ -979,7 +1013,7 @@ void Foundation::createMeshData()
         Block block;
         block.material = slab.layers[n].material;
         block.blockType = Block::SOLID;
-        if (!ne)
+        if (!twoParameters)
         {
           block.xMin = xMin;
           block.xMax = xRef2;
@@ -1032,7 +1066,7 @@ void Foundation::createMeshData()
         blocks.push_back(block);
       }
 
-      if (ne)
+      if (twoParameters)
       {
         {
           Block block;
@@ -1070,7 +1104,7 @@ void Foundation::createMeshData()
       Block block;
       block.material = air;
       block.blockType = Block::INTERIOR_AIR;
-      if (ne)
+      if (twoParameters)
       {
         block.xMin = xRef1 - xyWallInterior;
         block.xMax = xRef2 + xyWallInterior;
@@ -1111,7 +1145,7 @@ void Foundation::createMeshData()
         }
       }
 
-      if (ne)
+      if (twoParameters)
       {
         double xPosition = xRef1;
 
@@ -1150,7 +1184,7 @@ void Foundation::createMeshData()
         block.zMax = zMax;
         blocks.push_back(block);
       }
-      if (ne)
+      if (twoParameters)
       {
         Block block;
         block.material = exteriorVerticalInsulation.layer.material;
@@ -1182,7 +1216,7 @@ void Foundation::createMeshData()
         block.zMax = zExtHIns + exteriorHorizontalInsulation.layer.thickness;
         blocks.push_back(block);
       }
-      if (ne)
+      if (twoParameters)
       {
         Block block;
         block.material = exteriorHorizontalInsulation.layer.material;
@@ -1212,7 +1246,7 @@ void Foundation::createMeshData()
       block.zMax = zMax;
       blocks.push_back(block);
     }
-    if (ne)
+    if (twoParameters)
     {
       Block block;
       block.material = air;
@@ -1229,7 +1263,7 @@ void Foundation::createMeshData()
 
     // Set range types
 
-    if (!ne)
+    if (!twoParameters)
     {
       RangeType xInteriorRange;
       xInteriorRange.range.first = xMin;

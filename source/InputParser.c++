@@ -221,7 +221,13 @@ Input inputParser(std::string inputFile)
   if (yamlInput["Foundation"]["reductionStrategy"].as<std::string>() == "AP")
     foundation1.reductionStrategy = Foundation::RS_AP;
   else if (yamlInput["Foundation"]["reductionStrategy"].as<std::string>() == "NEG")
-    foundation1.reductionStrategy = Foundation::RS_NEG;
+    foundation1.reductionStrategy = Foundation::RS_AP_APNEG;
+  else if (yamlInput["Foundation"]["reductionStrategy"].as<std::string>() == "PNEG")
+    foundation1.reductionStrategy = Foundation::RS_AP_PNEG;
+  else if (yamlInput["Foundation"]["reductionStrategy"].as<std::string>() == "RR")
+    foundation1.reductionStrategy = Foundation::RS_RR;
+  else if (yamlInput["Foundation"]["reductionStrategy"].as<std::string>() == "A-P")
+    foundation1.reductionStrategy = Foundation::RS_A_P;
 
   if  (yamlInput["Foundation"]["numberOfDimensions"].IsDefined())
     foundation1.numberOfDimensions = yamlInput["Foundation"]["numberOfDimensions"].as<int>();
