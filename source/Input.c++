@@ -415,7 +415,7 @@ void Foundation::createMeshData()
           else if (coordinateSystem == CS_CARTESIAN)
           {
             length1 = apNeg;
-            length2 = 2.0*ap;
+            length2 = length1 + 2.0*ap;
           }
         }
         if (reductionStrategy == RS_AP_PNEG)
