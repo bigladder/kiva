@@ -331,6 +331,7 @@ void Foundation::createMeshData()
     }
   }
 
+  double xMin, xMax, yMin, yMax;
 
   Ranges xRanges;
   Ranges yRanges;
@@ -424,6 +425,17 @@ void Foundation::createMeshData()
           length2 = 2.0*ap + length1;
         }
       }
+      else
+      {
+        if (coordinateSystem == CS_CYLINDRICAL)
+        {
+          length2 = 2.0*ap;
+        }
+        else if (coordinateSystem == CS_CARTESIAN)
+        {
+          length2 = ap;
+        }
+      }
     }
 
     if (reductionStrategy == RS_A_P)
@@ -435,8 +447,11 @@ void Foundation::createMeshData()
 
 
 
-    double xMin = 0.0;
-    double xMax = length2 + farFieldWidth;
+    xMin = 0.0;
+    xMax = length2 + farFieldWidth;
+
+    yMin = 0.0;
+    yMax = 1.0;
 
     double xRef2 = length2;
     double xRef1 = length1;
@@ -1329,11 +1344,11 @@ void Foundation::createMeshData()
     double xMaxBB = boundingBox.max_corner().get<0>();
     double yMaxBB = boundingBox.max_corner().get<1>();
 
-    double xMin = xMinBB - farFieldWidth;
-    double yMin = yMinBB - farFieldWidth;
+    xMin = xMinBB - farFieldWidth;
+    yMin = yMinBB - farFieldWidth;
 
-    double xMax = xMaxBB + farFieldWidth;
-    double yMax = yMaxBB + farFieldWidth;
+    xMax = xMaxBB + farFieldWidth;
+    yMax = yMaxBB + farFieldWidth;
 
     if(isGreaterThan(foundationDepth,0.0))
     {
@@ -2235,9 +2250,6 @@ void Foundation::createMeshData()
     double xMaxBB = boundingBox.max_corner().get<0>();
     double yMaxBB = boundingBox.max_corner().get<1>();
 
-    double xMin;
-    double yMin;
-
     if (isXSymm)
       xMin = xMinBB;
     else
@@ -2248,8 +2260,8 @@ void Foundation::createMeshData()
     else
       yMin = yMinBB - farFieldWidth;
 
-    double xMax = xMaxBB + farFieldWidth;
-    double yMax = yMaxBB + farFieldWidth;
+    xMax = xMaxBB + farFieldWidth;
+    yMax = yMaxBB + farFieldWidth;
 
     Box domainBox(Point(xMin,yMin),Point(xMax,yMax));
 
@@ -3152,9 +3164,18 @@ void Foundation::createMeshData()
   {
     for (std::size_t v = 0; v < surfaces[s].polygon.outer().size(); v++)
     {
+      // Make sure points are within the domain
+      double pointX = std::max(std::min(surfaces[s].polygon.outer()[v].get<0>(),xMax),xMin);
+      surfaces[s].polygon.outer()[v].set<0>(pointX);
+      double pointY = std::max(std::min(surfaces[s].polygon.outer()[v].get<1>(),yMax),yMin);
+      surfaces[s].polygon.outer()[v].set<1>(pointY);
+
       xPoints.push_back(surfaces[s].polygon.outer()[v].get<0>());
       yPoints.push_back(surfaces[s].polygon.outer()[v].get<1>());
     }
+    surfaces[s].zMax = std::max(std::min(surfaces[s].zMax,zMax),zMin);
+    surfaces[s].zMin = std::max(std::min(surfaces[s].zMin,zMax),zMin);
+
     zPoints.push_back(surfaces[s].zMax);
     zPoints.push_back(surfaces[s].zMin);
 
@@ -3180,9 +3201,18 @@ void Foundation::createMeshData()
   {
     for (std::size_t v = 0; v < blocks[b].polygon.outer().size(); v++)
     {
+      // Make sure points are within the domain
+      double pointX = std::max(std::min(blocks[b].polygon.outer()[v].get<0>(),xMax),xMin);
+      blocks[b].polygon.outer()[v].set<0>(pointX);
+      double pointY = std::max(std::min(blocks[b].polygon.outer()[v].get<1>(),yMax),yMin);
+      blocks[b].polygon.outer()[v].set<1>(pointY);
+
       xPoints.push_back(blocks[b].polygon.outer()[v].get<0>());
       yPoints.push_back(blocks[b].polygon.outer()[v].get<1>());
     }
+    blocks[b].zMax = std::max(std::min(blocks[b].zMax,zMax),zMin);
+    blocks[b].zMin = std::max(std::min(blocks[b].zMin,zMax),zMin);
+
     zPoints.push_back(blocks[b].zMax);
     zPoints.push_back(blocks[b].zMin);
   }
@@ -3282,6 +3312,23 @@ void Foundation::createMeshData()
   std::vector<Interval> xIntervals;
   std::vector<Interval> yIntervals;
   std::vector<Interval> zIntervals;
+
+  // Make sure ranges are within the domain
+  for (size_t r = 0; r < xRanges.ranges.size(); r++)
+  {
+    xRanges.ranges[r].range.first = std::max(std::min(xRanges.ranges[r].range.first,xMax),xMin);
+    xRanges.ranges[r].range.second = std::max(std::min(xRanges.ranges[r].range.second,xMax),xMin);
+  }
+  for (size_t r = 0; r < yRanges.ranges.size(); r++)
+  {
+    yRanges.ranges[r].range.first = std::max(std::min(yRanges.ranges[r].range.first,yMax),yMin);
+    yRanges.ranges[r].range.second = std::max(std::min(yRanges.ranges[r].range.second,yMax),yMin);
+  }
+  for (size_t r = 0; r < zRanges.ranges.size(); r++)
+  {
+    zRanges.ranges[r].range.first = std::max(std::min(zRanges.ranges[r].range.first,zMax),zMin);
+    zRanges.ranges[r].range.second = std::max(std::min(zRanges.ranges[r].range.second,zMax),zMin);
+  }
 
   for (size_t i = 1; i < xPoints.size(); i++)
   {
