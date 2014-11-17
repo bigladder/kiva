@@ -166,7 +166,7 @@ void Ground::initializeConditions()
 
     lis_vector_duplicate(b,&x);
 
-    lis_vector_set_all(283.15,x);
+    lis_vector_set_all(annualAverageDryBulbTemperature,x);
     lis_solver_create(&solver);
     lis_solver_set_option(&solverOptions[0],solver);
 #endif
