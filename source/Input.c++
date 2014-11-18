@@ -442,7 +442,7 @@ void Foundation::createMeshData()
     {
       twoParameters = true;
       length1 = 0.25*perimeter/PI - ap;
-      length2 = ap + 0.5*perimeter/PI;
+      length2 = ap + 0.25*perimeter/PI;
     }
 
 
