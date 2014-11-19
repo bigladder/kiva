@@ -331,9 +331,14 @@ public:
     RS_AP_APNEG,
     RS_RR,
     RS_A_P,
-    RS_AP_PNEG
+    RS_AP_PNEG,
+    RS_CUSTOM
   };
   ReductionStrategy reductionStrategy;
+
+  bool twoParameters;
+  double reductionLength1;
+  double reductionLength2;
 
   double linearAreaMultiplier;
 

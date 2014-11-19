@@ -359,29 +359,28 @@ void Foundation::createMeshData()
     double perimeter = boost::geometry::perimeter(polygon);  // [m] Perimeter of foundation
 
     linearAreaMultiplier = 1.0;
-    bool twoParameters = false;
-    double length1;
-    double length2;
 
     double ap = area/perimeter;
 
     if (reductionStrategy == RS_AP)
     {
+      twoParameters = false;
       if (coordinateSystem == CS_CYLINDRICAL)
       {
-        length2 = 2.0*ap;
+        reductionLength2 = 2.0*ap;
       }
       else if (coordinateSystem == CS_CARTESIAN)
       {
-        length2 = ap;
+        reductionLength2 = ap;
       }
     }
 
     if (reductionStrategy == RS_RR)
     {
+      twoParameters = false;
       double rrA = (perimeter - sqrt(perimeter*perimeter - 4*PI*area))/PI;
       double rrB = (perimeter - PI*rrA)*0.5;
-      length2 = (rrA)*0.5;
+      reductionLength2 = (rrA)*0.5;
       linearAreaMultiplier = rrB;
     }
 
@@ -410,30 +409,31 @@ void Foundation::createMeshData()
         {
           if (coordinateSystem == CS_CYLINDRICAL)
           {
-            length1 = 2.0*apNeg;
-            length2 = length1 + 2.0*ap;
+            reductionLength1 = 2.0*apNeg;
+            reductionLength2 = reductionLength1 + 2.0*ap;
           }
           else if (coordinateSystem == CS_CARTESIAN)
           {
-            length1 = apNeg;
-            length2 = length1 + 2.0*ap;
+            reductionLength1 = apNeg;
+            reductionLength2 = reductionLength1 + 2.0*ap;
           }
         }
         if (reductionStrategy == RS_AP_PNEG)
         {
-          length1 = 0.5*perimeterNeg/PI;
-          length2 = 2.0*ap + length1;
+          reductionLength1 = 0.5*perimeterNeg/PI;
+          reductionLength2 = 2.0*ap + reductionLength1;
         }
       }
       else
       {
+        twoParameters = false;
         if (coordinateSystem == CS_CYLINDRICAL)
         {
-          length2 = 2.0*ap;
+          reductionLength2 = 2.0*ap;
         }
         else if (coordinateSystem == CS_CARTESIAN)
         {
-          length2 = ap;
+          reductionLength2 = ap;
         }
       }
     }
@@ -441,20 +441,18 @@ void Foundation::createMeshData()
     if (reductionStrategy == RS_A_P)
     {
       twoParameters = true;
-      length1 = 0.25*perimeter/PI - ap;
-      length2 = ap + 0.25*perimeter/PI;
+      reductionLength1 = 0.25*perimeter/PI - ap;
+      reductionLength2 = ap + 0.25*perimeter/PI;
     }
 
-
-
     xMin = 0.0;
-    xMax = length2 + farFieldWidth;
+    xMax = reductionLength2 + farFieldWidth;
 
     yMin = 0.0;
     yMax = 1.0;
 
-    double xRef2 = length2;
-    double xRef1 = length1;
+    double xRef2 = reductionLength2;
+    double xRef1 = reductionLength1;
 
     // Symmetry Surface
     {
@@ -539,7 +537,7 @@ void Foundation::createMeshData()
             surface.zMin = zIntVIns;
             surface.zMax = zMax;
             surface.boundaryConditionType = Surface::INTERIOR_FLUX;
-            surface.orientation = Surface::X_NEG;
+            surface.orientation = Surface::X_POS;
             surface.emissivity = wall.interiorEmissivity;
             surfaces.push_back(surface);
           }
@@ -569,7 +567,7 @@ void Foundation::createMeshData()
             surface.zMin = zSlab;
             surface.zMax = zIntVIns;
             surface.boundaryConditionType = Surface::INTERIOR_FLUX;
-            surface.orientation = Surface::X_NEG;
+            surface.orientation = Surface::X_POS;
             surface.emissivity = wall.interiorEmissivity;
             surfaces.push_back(surface);
           }
@@ -604,7 +602,7 @@ void Foundation::createMeshData()
           surface.zMin = zSlab;
           surface.zMax = zMax;
           surface.boundaryConditionType = Surface::INTERIOR_FLUX;
-          surface.orientation = Surface::X_NEG;
+          surface.orientation = Surface::X_POS;
           surface.emissivity = wall.interiorEmissivity;
           surfaces.push_back(surface);
         }
@@ -660,7 +658,7 @@ void Foundation::createMeshData()
         surface.zMin = zGrade;
         surface.zMax = zMax;
         surface.boundaryConditionType = Surface::EXTERIOR_FLUX;
-        surface.orientation = Surface::X_POS;
+        surface.orientation = Surface::X_NEG;
         surface.emissivity = wall.exteriorEmissivity;
         surface.absorptivity = wall.exteriorAbsorptivity;
         surfaces.push_back(surface);
