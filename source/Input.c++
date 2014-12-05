@@ -318,7 +318,7 @@ void Foundation::createMeshData()
   double zExtHIns = 0.0;
   if (hasExteriorHorizontalInsulation)
   {
-    xyExtHIns = xyWallExterior + exteriorHorizontalInsulation.width;
+    xyExtHIns = wall.totalWidth() + exteriorHorizontalInsulation.width;
     zExtHIns = zMax - exteriorHorizontalInsulation.depth - exteriorHorizontalInsulation.layer.thickness;
 
     if(zExtHIns < zNearDeep)
