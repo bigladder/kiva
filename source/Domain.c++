@@ -130,13 +130,7 @@ void Domain::setDomain(Foundation &foundation)
 
               // Point/Line cells not on the boundary should be
               // zero-thickness cells
-              int numZeroDims = 0;
-              if (isEqual(meshX.deltas[i], 0.0))
-                numZeroDims += 1;
-              if (isEqual(meshY.deltas[j], 0.0))
-                numZeroDims += 1;
-              if (isEqual(meshZ.deltas[k], 0.0))
-                numZeroDims += 1;
+              int numZeroDims = getNumZeroDims(i,j,k);
 
               if (foundation.numberOfDimensions == 3)
               {
@@ -238,13 +232,7 @@ void Domain::setDomain(Foundation &foundation)
     {
       for (std::size_t i = 0; i < nX; i++)
       {
-        int numZeroDims = 0;
-        if (isEqual(meshX.deltas[i], 0.0))
-          numZeroDims += 1;
-        if (isEqual(meshY.deltas[j], 0.0))
-          numZeroDims += 1;
-        if (isEqual(meshZ.deltas[k], 0.0))
-          numZeroDims += 1;
+        int numZeroDims = getNumZeroDims(i,j,k);
 
         if (numZeroDims > 0
             && cell[i][j][k].cellType != Cell::INTERIOR_AIR
@@ -679,6 +667,18 @@ void Domain::setZeroThicknessCellProperties(std::size_t i,
       totalVolume;
 }
 
+int Domain::getNumZeroDims(std::size_t i,std::size_t j,std::size_t k)
+{
+  int numZeroDims = 0;
+  if (isEqual(meshX.deltas[i], 0.0))
+    numZeroDims += 1;
+  if (isEqual(meshY.deltas[j], 0.0))
+    numZeroDims += 1;
+  if (isEqual(meshZ.deltas[k], 0.0))
+    numZeroDims += 1;
+
+  return numZeroDims;
+}
 void Domain::printCellTypes()
 {
   // TODO: Make the ability to output a specific slice in i, j, or k

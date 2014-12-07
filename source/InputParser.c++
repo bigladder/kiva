@@ -484,6 +484,30 @@ Input inputParser(std::string inputFile)
     temp.axes = yamlInput["Foundation"]["outputAnimations"][i]["axes"].as<bool>();
     temp.timestamp = yamlInput["Foundation"]["outputAnimations"][i]["timestamp"].as<bool>();
 
+    if (yamlInput["Foundation"]["outputAnimations"][i]["plotType"].IsDefined())
+    {
+      if (yamlInput["Foundation"]["outputAnimations"][i]["plotType"].as<std::string>() == "TEMPERATURE")
+        temp.plotType = OutputAnimation::P_TEMP;
+      else if (yamlInput["Foundation"]["outputAnimations"][i]["plotType"].as<std::string>() == "HEAT-FLUX")
+        temp.plotType = OutputAnimation::P_FLUX;
+    }
+    else
+      temp.plotType = OutputAnimation::P_TEMP;
+
+    if (yamlInput["Foundation"]["outputAnimations"][i]["fluxDir"].IsDefined())
+    {
+      if (yamlInput["Foundation"]["outputAnimations"][i]["fluxDir"].as<std::string>() == "MAG")
+        temp.fluxDir = OutputAnimation::D_M;
+      else if (yamlInput["Foundation"]["outputAnimations"][i]["fluxDir"].as<std::string>() == "X")
+        temp.fluxDir = OutputAnimation::D_X;
+      else if (yamlInput["Foundation"]["outputAnimations"][i]["fluxDir"].as<std::string>() == "Y")
+        temp.fluxDir = OutputAnimation::D_Y;
+      else if (yamlInput["Foundation"]["outputAnimations"][i]["fluxDir"].as<std::string>() == "Z")
+        temp.fluxDir = OutputAnimation::D_Z;
+    }
+    else
+      temp.fluxDir = OutputAnimation::D_M;
+
     if (yamlInput["Foundation"]["outputAnimations"][i]["colorScheme"].IsDefined())
     {
       if (yamlInput["Foundation"]["outputAnimations"][i]["colorScheme"].as<std::string>() == "CMR")
@@ -534,6 +558,15 @@ Input inputParser(std::string inputFile)
     else
     {
       temp.numberOfContours = 13;
+    }
+
+    if (yamlInput["Foundation"]["outputAnimations"][i]["contourColor"].IsDefined())
+    {
+      temp.contourColor = yamlInput["Foundation"]["outputAnimations"][i]["contourColor"].as<std::string>();
+    }
+    else
+    {
+      temp.contourColor = "H";
     }
 
     temp.size = yamlInput["Foundation"]["outputAnimations"][i]["size"].as<int>();

@@ -123,6 +123,7 @@ public:
   bool grid;
   bool contours;
   bool contourLabels;
+  std::string contourColor;
   bool gradients;
   bool axes;
   bool timestamp;
@@ -132,6 +133,23 @@ public:
   std::pair<double, double> xRange;
   std::pair<double, double> yRange;
   std::pair<double, double> zRange;
+
+  enum PlotType
+  {
+    P_TEMP,
+    P_FLUX
+  };
+
+  PlotType plotType;
+
+  enum FluxDir
+  {
+    D_M,
+    D_X,
+    D_Y,
+    D_Z
+  };
+  FluxDir fluxDir;
 
   enum ColorScheme
   {

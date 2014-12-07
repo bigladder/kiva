@@ -208,39 +208,25 @@ GroundPlot::GroundPlot(OutputAnimation &outputAnimation, Domain &domain, std::ve
 
 }
 
-void GroundPlot::createFrame(boost::multi_array<double, 3> &T, std::string timeStamp)
+void GroundPlot::createFrame(std::string timeStamp)
 {
 
-  std::size_t nI = iMax - iMin + 1;
-  std::size_t nJ = jMax - jMin + 1;
-
-  for(size_t k = kMin; k <= kMax; k++)
-  {
-    for(size_t j = jMin; j <= jMax; j++)
-    {
-      for(size_t i = iMin; i <= iMax; i++)
-      {
-        std::size_t index = (i-iMin)+nI*(j-jMin)+nI*nJ*(k-kMin);
-        if (outputAnimation.outputUnits == OutputAnimation::IP)
-          TDat.a[index] = (T[i][j][k] - 273.15)*9/5 + 32.0;
-        else
-          TDat.a[index] = T[i][j][k] - 273.15;
-      }
-    }
-  }
 
   std::string distanceUnit;
   std::string temperatureUnit;
+  std::string fluxUnit;
 
   if (outputAnimation.outputUnits == OutputAnimation::IP)
   {
     distanceUnit = "ft";
     temperatureUnit = "\\textdegree F";
+    fluxUnit = "W/ft^2";
   }
   else
   {
     distanceUnit = "m";
     temperatureUnit = "\\textdegree C";
+    fluxUnit = "W/m^2";
   }
 
   double hMin = hGrid.a[0];
@@ -289,7 +275,12 @@ void GroundPlot::createFrame(boost::multi_array<double, 3> &T, std::string timeS
   if (outputAnimation.axes)
   {
     if (outputAnimation.colorScheme != OutputAnimation::C_NONE)
-      gr.Puts(0.9, 0.056, temperatureUnit.c_str(), ":AL");
+    {
+      if  (outputAnimation.plotType == OutputAnimation::P_TEMP)
+        gr.Puts(0.9, 0.056, temperatureUnit.c_str(), ":AL");
+      else
+        gr.Puts(0.9, 0.056, fluxUnit.c_str(), ":AL");
+    }
   }
 
   if (outputAnimation.timestamp)
@@ -352,9 +343,9 @@ void GroundPlot::createFrame(boost::multi_array<double, 3> &T, std::string timeS
   if (outputAnimation.contours)
   {
     if (outputAnimation.contourLabels)
-      gr.Cont(cDat, hDat, vDat, TDat,"Ht");
+      gr.Cont(cDat, hDat, vDat, TDat,(outputAnimation.contourColor + "t").c_str());
     else
-      gr.Cont(cDat, hDat, vDat, TDat,"H");
+      gr.Cont(cDat, hDat, vDat, TDat,outputAnimation.contourColor.c_str());
   }
   if (outputAnimation.gradients)
     gr.Grad(hDat, vDat, TDat);

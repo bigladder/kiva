@@ -100,6 +100,7 @@ public:
     double getKYM(std::size_t i,std::size_t j,std::size_t k);
     double getKZP(std::size_t i,std::size_t j,std::size_t k);
     double getKZM(std::size_t i,std::size_t j,std::size_t k);
+    int getNumZeroDims(std::size_t i,std::size_t j,std::size_t k);
     void set2DZeroThicknessCellProperties(std::size_t i,std::size_t j,std::size_t k);
     void set3DZeroThicknessCellProperties(std::size_t i,std::size_t j,std::size_t k);
     void setZeroThicknessCellProperties(std::size_t i, std::size_t j, std::size_t k,

@@ -2065,7 +2065,82 @@ void Ground::plot()
     {
       boost::posix_time::ptime time(simulationControl.startDate,boost::posix_time::seconds(tNow));
       std::string timeStamp = to_simple_string(time);
-      plots[p].createFrame(TNew, timeStamp);
+
+      std::size_t nI =  plots[p].iMax - plots[p].iMin + 1;
+      std::size_t nJ = plots[p].jMax - plots[p].jMin + 1;
+
+      for(size_t k = plots[p].kMin; k <= plots[p].kMax; k++)
+      {
+        for(size_t j = plots[p].jMin; j <= plots[p].jMax; j++)
+        {
+          for(size_t i = plots[p].iMin; i <= plots[p].iMax; i++)
+          {
+            std::size_t index = (i-plots[p].iMin)+nI*(j-plots[p].jMin)+nI*nJ*(k-plots[p].kMin);
+            if (foundation.outputAnimations[p].plotType == OutputAnimation::P_TEMP)
+            {
+              if (foundation.outputAnimations[p].outputUnits == OutputAnimation::IP)
+                plots[p].TDat.a[index] = (TNew[i][j][k] - 273.15)*9/5 + 32.0;
+              else
+                plots[p].TDat.a[index] = TNew[i][j][k] - 273.15;
+            }
+            else
+            {
+              double du = plots[p].distanceUnitConversion;
+              std::vector<double> Qflux = calculateHeatFlux(i,j,k);
+              double Qx = Qflux[0];
+              double Qy = Qflux[1];
+              double Qz = Qflux[2];
+              double Qmag = sqrt(Qx*Qx + Qy*Qy + Qz*Qz);
+
+              if (foundation.outputAnimations[p].fluxDir == OutputAnimation::D_M)
+                plots[p].TDat.a[index] = Qmag/(du*du);
+              else if (foundation.outputAnimations[p].fluxDir == OutputAnimation::D_X)
+                plots[p].TDat.a[index] = Qx/(du*du);
+              else if (foundation.outputAnimations[p].fluxDir == OutputAnimation::D_Y)
+                plots[p].TDat.a[index] = Qy/(du*du);
+              else if (foundation.outputAnimations[p].fluxDir == OutputAnimation::D_Z)
+                plots[p].TDat.a[index] = Qz/(du*du);
+            }
+          }
+        }
+      }
+
+      /*
+      std::ofstream output;
+      output.open("Plot.csv");
+
+      for (std::size_t i = 0; i < nX; i++)
+      {
+
+        output << ", " << i;
+
+      }
+
+      output << "\n";
+
+      for (std::size_t k = nZ - 1; k >= 0 && k < nZ; k--)
+      {
+
+        output << k;
+
+        for (std::size_t i = 0; i < nX; i++)
+        {
+
+          std::vector<double> Qflux = calculateHeatFlux(i,nY/2,k);
+          double Qx = Qflux[0];
+          double Qy = Qflux[1];
+          double Qz = Qflux[2];
+          double Qmag = sqrt(Qx*Qx + Qy*Qy + Qz*Qz);
+
+          output << ", " << Qmag;
+
+        }
+
+        output << "\n";
+      }
+      output.close();*/
+
+      plots[p].createFrame(timeStamp);
     }
   }
 }
@@ -2897,6 +2972,298 @@ double Ground::getSurfaceAverageTemperature(std::string surfaceName)
   return TA/totalArea;
 
 }
+
+std::vector<double> Ground::calculateHeatFlux(size_t i, size_t j, size_t k)
+{
+  std::vector<double> Qflux;
+  double Qx = 0;
+  double Qy = 0;
+  double Qz = 0;
+
+  double CXP = domain.getKXP(i,j,k)/domain.getDXP(i);
+  double CXM = domain.getKXM(i,j,k)/domain.getDXM(i);
+  double CYP = 0;
+  double CYM = 0;
+  double CZP = domain.getKZP(i,j,k)/domain.getDZP(k);
+  double CZM = domain.getKZM(i,j,k)/domain.getDZM(k);
+
+  if (foundation.numberOfDimensions == 3)
+  {
+    CYP = domain.getKYP(i,j,k)/domain.getDYP(j);
+    CYM = domain.getKYP(i,j,k)/domain.getDYM(j);
+  }
+
+  if (domain.getNumZeroDims(i+1,j,k) > 1)
+    CXP = 0;
+
+  if (domain.getNumZeroDims(i-1,j,k) > 1)
+    CXM = 0;
+
+  if (domain.getNumZeroDims(i,j+1,k) > 1)
+    CYP = 0;
+
+  if (domain.getNumZeroDims(i,j-1,k) > 1)
+    CYM = 0;
+
+  if (domain.getNumZeroDims(i,j,k+1) > 1)
+    CZP = 0;
+
+  if (domain.getNumZeroDims(i,j,k-1) > 1)
+    CZM = 0;
+
+  double DTXP = 0;
+  double DTXM = 0;
+  double DTYP = 0;
+  double DTYM = 0;
+  double DTZP = 0;
+  double DTZM = 0;
+
+  if (i != nX - 1)
+    DTXP = TNew[i][j][k]-TNew[i+1][j][k];
+
+  if (i != 0)
+    DTXM = TNew[i][j][k]-TNew[i-1][j][k];
+
+  if (j != nY - 1)
+    DTYP = TNew[i][j][k]-TNew[i][j+1][k];
+
+  if (j != 0)
+    DTYM = TNew[i][j][k]-TNew[i][j-1][k];
+
+  if (k != nZ - 1)
+    DTZP = TNew[i][j][k]-TNew[i][j][k+1];
+
+  if (k != 0)
+    DTZM = TNew[i][j][k]-TNew[i][j][k-1];
+
+  switch (domain.cell[i][j][k].cellType)
+  {
+    case Cell::BOUNDARY:
+      {
+        double tilt;
+        if (domain.cell[i][j][k].surface.orientation == Surface::Z_POS)
+          tilt = 0;
+        else if (domain.cell[i][j][k].surface.orientation == Surface::Z_NEG)
+          tilt = PI;
+        else
+          tilt = PI/2.0;
+
+        switch (domain.cell[i][j][k].surface.boundaryConditionType)
+        {
+          case Surface::INTERIOR_FLUX:
+            {
+              double Tair = foundation.indoorAirTemperature;
+              double q = 0;
+
+              double hc = getConvectionCoeff(TOld[i][j][k],
+                      Tair,0.0,1.52,false,tilt);
+              double hr = getSimpleInteriorIRCoeff(domain.cell[i][j][k].surface.emissivity,
+                                 TOld[i][j][k],Tair);
+
+              switch (domain.cell[i][j][k].surface.orientation)
+              {
+                case Surface::X_NEG:
+                  {
+                    Qx = - ((hc+hr)*(TNew[i][j][k] - Tair) + q);
+                    Qy = CYP*DTYP - CYM*DTYM;
+                    Qz = CZP*DTZP - CZM*DTZM;
+                  }
+                  break;
+                case Surface::X_POS:
+                  {
+                    Qx = ((hc+hr)*(TNew[i][j][k] - Tair) + q);
+                    Qy = CYP*DTYP - CYM*DTYM;
+                    Qz = CZP*DTZP - CZM*DTZM;
+                  }
+                  break;
+                case Surface::Y_NEG:
+                  {
+                    Qx = CXP*DTXP - CXM*DTXM;
+                    Qy = - ((hc+hr)*(TNew[i][j][k] - Tair) + q);
+                    Qz = CZP*DTZP - CZM*DTZM;
+                  }
+                break;
+                case Surface::Y_POS:
+                  {
+                    Qx = CXP*DTXP - CXM*DTXM;
+                    Qy = ((hc+hr)*(TNew[i][j][k] - Tair) + q);
+                    Qz = CZP*DTZP - CZM*DTZM;
+                  }
+                break;
+                case Surface::Z_NEG:
+                  {
+                    Qx = CXP*DTXP - CXM*DTXM;
+                    Qy = CYP*DTYP - CYM*DTYM;
+                    Qz = - ((hc+hr)*(TNew[i][j][k] - Tair) + q);
+                  }
+                break;
+                case Surface::Z_POS:
+                  {
+                    Qx = CXP*DTXP - CXM*DTXM;
+                    Qy = CYP*DTYP - CYM*DTYP;
+                    Qz = ((hc+hr)*(TNew[i][j][k] - Tair) + q);
+                  }
+                break;
+              }
+            }
+            break;
+          case Surface::EXTERIOR_FLUX:
+            {
+              double Tair = getOutdoorTemperature();
+              double v = getLocalWindSpeed();
+              double eSky = weatherData.skyEmissivity.getValue(getSimTime(tNow));
+              double F = getEffectiveExteriorViewFactor(eSky,tilt);
+              double hc = getConvectionCoeff(TOld[i][j][k],Tair,v,foundation.surfaceRoughness,true,tilt);
+              double hr = getExteriorIRCoeff(domain.cell[i][j][k].surface.emissivity,TOld[i][j][k],Tair,eSky,tilt);
+              double q = domain.cell[i][j][k].surface.absorptivity*weatherData.globalHorizontalSolar.getValue(getSimTime(tNow));
+
+              switch (domain.cell[i][j][k].surface.orientation)
+              {
+                case Surface::X_NEG:
+                  {
+                    Qx = - (hc*(TNew[i][j][k] - Tair) + hr*(TNew[i][j][k] - Tair*pow(F,0.25)) + q);
+                    Qy = CYP*DTYP - CYM*DTYM;
+                    Qz = CZP*DTZP - CZM*DTZM;
+                  }
+                  break;
+                case Surface::X_POS:
+                  {
+                    Qx = (hc*(TNew[i][j][k] - Tair) + hr*(TNew[i][j][k] - Tair*pow(F,0.25)) + q);
+                    Qy = CYP*DTYP - CYM*DTYM;
+                    Qz = CZP*DTZP - CZM*DTZM;
+                  }
+                  break;
+                case Surface::Y_NEG:
+                  {
+                    Qx = CXP*DTXP - CXM*DTXM;
+                    Qy = - (hc*(TNew[i][j][k] - Tair) + hr*(TNew[i][j][k] - Tair*pow(F,0.25)) + q);
+                    Qz = CZP*DTZP - CZM*DTZM;
+                  }
+                break;
+                case Surface::Y_POS:
+                  {
+                    Qx = CXP*DTXP - CXM*DTXM;
+                    Qy = (hc*(TNew[i][j][k] - Tair) + hr*(TNew[i][j][k] - Tair*pow(F,0.25)) + q);
+                    Qz = CZP*DTZP - CZM*DTZM;
+                  }
+                break;
+                case Surface::Z_NEG:
+                  {
+                    Qx = CXP*DTXP - CXM*DTXM;
+                    Qy = CYP*DTYP - CYM*DTYM;
+                    Qz = - (hc*(TNew[i][j][k] - Tair) + hr*(TNew[i][j][k] - Tair*pow(F,0.25)) + q);
+                  }
+                break;
+                case Surface::Z_POS:
+                  {
+                    Qx = CXP*DTXP - CXM*DTXM;
+                    Qy = CYP*DTYP - CYM*DTYP;
+                    Qz = (hc*(TNew[i][j][k] - Tair) + hr*(TNew[i][j][k] - Tair*pow(F,0.25)) + q);
+                  }
+                break;
+              }
+            }
+            break;
+          default:
+          {
+            switch (domain.cell[i][j][k].surface.orientation)
+            {
+              case Surface::X_NEG:
+                {
+                  Qx = CXP*DTXP;
+                  Qy = CYP*DTYP - CYM*DTYM;
+                  Qz = CZP*DTZP - CZM*DTZM;
+                }
+              break;
+              case Surface::X_POS:
+                {
+                  Qx = -CXM*DTXM;
+                  Qy = CYP*DTYP - CYM*DTYM;
+                  Qz = CZP*DTZP - CZM*DTZM;
+                }
+              break;
+              case Surface::Y_NEG:
+                {
+                  Qx = CXP*DTXP - CXM*DTXM;
+                  Qy = CYP*DTYP;
+                  Qz = CZP*DTZP - CZM*DTZM;
+                }
+              break;
+              case Surface::Y_POS:
+                {
+                  Qx = CXP*DTXP - CXM*DTXM;
+                  Qy = -CYM*DTYM;
+                  Qz = CZP*DTZP - CZM*DTZM;
+                }
+              break;
+              case Surface::Z_NEG:
+                {
+                  Qx = CXP*DTXP - CXM*DTXM;
+                  Qy = CYP*DTYP - CYM*DTYM;
+                  Qz = CZP*DTZP;
+                }
+              break;
+              case Surface::Z_POS:
+                {
+                  Qx = CXP*DTXP - CXM*DTXM;
+                  Qy = CYP*DTYP - CYM*DTYP;
+                  Qz = -CZM*DTZM;
+                }
+              break;
+            }
+
+          }
+        }
+        break;
+      }
+    case Cell::INTERIOR_AIR:
+      break;
+    case Cell::EXTERIOR_AIR:
+      break;
+    case Cell::ZERO_THICKNESS:
+      {
+        int numZeroDims = domain.getNumZeroDims(i,j,k);
+
+        std::vector<double> Qm;
+        std::vector<double> Qp;
+
+        if (isEqual(domain.meshX.deltas[i], 0.0))
+        {
+          Qm = calculateHeatFlux(i-1,j,k);
+          Qp = calculateHeatFlux(i+1,j,k);
+        }
+        if (isEqual(domain.meshY.deltas[j], 0.0))
+        {
+          Qm = calculateHeatFlux(i,j-1,k);
+          Qp = calculateHeatFlux(i,j+1,k);
+        }
+        if (isEqual(domain.meshZ.deltas[k], 0.0))
+        {
+          Qm = calculateHeatFlux(i,j,k-1);
+          Qp = calculateHeatFlux(i,j,k+1);
+        }
+
+        Qx = (Qm[0] + Qp[0])*0.5;
+        Qy = (Qm[1] + Qp[1])*0.5;
+        Qz = (Qm[2] + Qp[2])*0.5;
+      }
+      break;
+    default:
+      {
+        Qx = CXP*DTXP - CXM*DTXM;
+        Qy = CYP*DTYP - CYM*DTYM;
+        Qz = CZP*DTZP - CZM*DTZM;
+      }
+    break;
+  }
+
+  Qflux.push_back(Qx);
+  Qflux.push_back(Qy);
+  Qflux.push_back(Qz);
+
+  return Qflux;
+}
+
 
 double getArrayValue(boost::multi_array<double, 3> Mat, std::size_t i, std::size_t j, std::size_t k)
 {
