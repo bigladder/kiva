@@ -2132,7 +2132,7 @@ void Ground::plot()
           double Qz = Qflux[2];
           double Qmag = sqrt(Qx*Qx + Qy*Qy + Qz*Qz);
 
-          output << ", " << Qmag;
+          output << ", " << Qflux[3];
 
         }
 
@@ -2973,43 +2973,25 @@ double Ground::getSurfaceAverageTemperature(std::string surfaceName)
 
 }
 
-std::vector<double> Ground::calculateHeatFlux(size_t i, size_t j, size_t k)
+std::vector<double> Ground::calculateHeatFlux(const size_t &i, const size_t &j, const size_t &k)
 {
   std::vector<double> Qflux;
   double Qx = 0;
   double Qy = 0;
   double Qz = 0;
 
-  double CXP = domain.getKXP(i,j,k)/domain.getDXP(i);
-  double CXM = domain.getKXM(i,j,k)/domain.getDXM(i);
+  double CXP = -domain.getKXP(i,j,k)*domain.getDXM(i)/(domain.getDXP(i)+domain.getDXM(i))/domain.getDXP(i);
+  double CXM = -domain.getKXM(i,j,k)*domain.getDXP(i)/(domain.getDXP(i)+domain.getDXM(i))/domain.getDXM(i);
   double CYP = 0;
   double CYM = 0;
-  double CZP = domain.getKZP(i,j,k)/domain.getDZP(k);
-  double CZM = domain.getKZM(i,j,k)/domain.getDZM(k);
+  double CZP = -domain.getKZP(i,j,k)*domain.getDZM(k)/(domain.getDZP(k)+domain.getDZM(k))/domain.getDZP(k);
+  double CZM = -domain.getKZM(i,j,k)*domain.getDZP(k)/(domain.getDZP(k)+domain.getDZM(k))/domain.getDZM(k);
 
   if (foundation.numberOfDimensions == 3)
   {
-    CYP = domain.getKYP(i,j,k)/domain.getDYP(j);
-    CYM = domain.getKYP(i,j,k)/domain.getDYM(j);
+    CYP = -domain.getKYP(i,j,k)*domain.getDYM(j)/(domain.getDYP(j)+domain.getDYM(j))/domain.getDYP(j);
+    CYM = -domain.getKYM(i,j,k)*domain.getDYP(j)/(domain.getDYP(j)+domain.getDYM(j))/domain.getDYM(j);
   }
-
-  if (domain.getNumZeroDims(i+1,j,k) > 1)
-    CXP = 0;
-
-  if (domain.getNumZeroDims(i-1,j,k) > 1)
-    CXM = 0;
-
-  if (domain.getNumZeroDims(i,j+1,k) > 1)
-    CYP = 0;
-
-  if (domain.getNumZeroDims(i,j-1,k) > 1)
-    CYM = 0;
-
-  if (domain.getNumZeroDims(i,j,k+1) > 1)
-    CZP = 0;
-
-  if (domain.getNumZeroDims(i,j,k-1) > 1)
-    CZM = 0;
 
   double DTXP = 0;
   double DTXM = 0;
@@ -3019,19 +3001,19 @@ std::vector<double> Ground::calculateHeatFlux(size_t i, size_t j, size_t k)
   double DTZM = 0;
 
   if (i != nX - 1)
-    DTXP = TNew[i][j][k]-TNew[i+1][j][k];
+    DTXP = TNew[i+1][j][k]-TNew[i][j][k];
 
   if (i != 0)
     DTXM = TNew[i][j][k]-TNew[i-1][j][k];
 
   if (j != nY - 1)
-    DTYP = TNew[i][j][k]-TNew[i][j+1][k];
+    DTYP = TNew[i][j+1][k]-TNew[i][j][k];
 
   if (j != 0)
     DTYM = TNew[i][j][k]-TNew[i][j-1][k];
 
   if (k != nZ - 1)
-    DTZP = TNew[i][j][k]-TNew[i][j][k+1];
+    DTZP = TNew[i][j][k+1]-TNew[i][j][k];
 
   if (k != 0)
     DTZM = TNew[i][j][k]-TNew[i][j][k-1];
@@ -3040,182 +3022,53 @@ std::vector<double> Ground::calculateHeatFlux(size_t i, size_t j, size_t k)
   {
     case Cell::BOUNDARY:
       {
-        double tilt;
-        if (domain.cell[i][j][k].surface.orientation == Surface::Z_POS)
-          tilt = 0;
-        else if (domain.cell[i][j][k].surface.orientation == Surface::Z_NEG)
-          tilt = PI;
-        else
-          tilt = PI/2.0;
-
-        switch (domain.cell[i][j][k].surface.boundaryConditionType)
+        switch (domain.cell[i][j][k].surface.orientation)
         {
-          case Surface::INTERIOR_FLUX:
+          case Surface::X_NEG:
             {
-              double Tair = foundation.indoorAirTemperature;
-              double q = 0;
-
-              double hc = getConvectionCoeff(TOld[i][j][k],
-                      Tair,0.0,1.52,false,tilt);
-              double hr = getSimpleInteriorIRCoeff(domain.cell[i][j][k].surface.emissivity,
-                                 TOld[i][j][k],Tair);
-
-              switch (domain.cell[i][j][k].surface.orientation)
-              {
-                case Surface::X_NEG:
-                  {
-                    Qx = - ((hc+hr)*(TNew[i][j][k] - Tair) + q);
-                    Qy = CYP*DTYP - CYM*DTYM;
-                    Qz = CZP*DTZP - CZM*DTZM;
-                  }
-                  break;
-                case Surface::X_POS:
-                  {
-                    Qx = ((hc+hr)*(TNew[i][j][k] - Tair) + q);
-                    Qy = CYP*DTYP - CYM*DTYM;
-                    Qz = CZP*DTZP - CZM*DTZM;
-                  }
-                  break;
-                case Surface::Y_NEG:
-                  {
-                    Qx = CXP*DTXP - CXM*DTXM;
-                    Qy = - ((hc+hr)*(TNew[i][j][k] - Tair) + q);
-                    Qz = CZP*DTZP - CZM*DTZM;
-                  }
-                break;
-                case Surface::Y_POS:
-                  {
-                    Qx = CXP*DTXP - CXM*DTXM;
-                    Qy = ((hc+hr)*(TNew[i][j][k] - Tair) + q);
-                    Qz = CZP*DTZP - CZM*DTZM;
-                  }
-                break;
-                case Surface::Z_NEG:
-                  {
-                    Qx = CXP*DTXP - CXM*DTXM;
-                    Qy = CYP*DTYP - CYM*DTYM;
-                    Qz = - ((hc+hr)*(TNew[i][j][k] - Tair) + q);
-                  }
-                break;
-                case Surface::Z_POS:
-                  {
-                    Qx = CXP*DTXP - CXM*DTXM;
-                    Qy = CYP*DTYP - CYM*DTYP;
-                    Qz = ((hc+hr)*(TNew[i][j][k] - Tair) + q);
-                  }
-                break;
-              }
+              Qx = CXP*DTXP;
+              Qy = CYP*DTYP + CYM*DTYM;
+              Qz = CZP*DTZP + CZM*DTZM;
             }
-            break;
-          case Surface::EXTERIOR_FLUX:
+          break;
+          case Surface::X_POS:
             {
-              double Tair = getOutdoorTemperature();
-              double v = getLocalWindSpeed();
-              double eSky = weatherData.skyEmissivity.getValue(getSimTime(tNow));
-              double F = getEffectiveExteriorViewFactor(eSky,tilt);
-              double hc = getConvectionCoeff(TOld[i][j][k],Tair,v,foundation.surfaceRoughness,true,tilt);
-              double hr = getExteriorIRCoeff(domain.cell[i][j][k].surface.emissivity,TOld[i][j][k],Tair,eSky,tilt);
-              double q = domain.cell[i][j][k].surface.absorptivity*weatherData.globalHorizontalSolar.getValue(getSimTime(tNow));
-
-              switch (domain.cell[i][j][k].surface.orientation)
-              {
-                case Surface::X_NEG:
-                  {
-                    Qx = - (hc*(TNew[i][j][k] - Tair) + hr*(TNew[i][j][k] - Tair*pow(F,0.25)) + q);
-                    Qy = CYP*DTYP - CYM*DTYM;
-                    Qz = CZP*DTZP - CZM*DTZM;
-                  }
-                  break;
-                case Surface::X_POS:
-                  {
-                    Qx = (hc*(TNew[i][j][k] - Tair) + hr*(TNew[i][j][k] - Tair*pow(F,0.25)) + q);
-                    Qy = CYP*DTYP - CYM*DTYM;
-                    Qz = CZP*DTZP - CZM*DTZM;
-                  }
-                  break;
-                case Surface::Y_NEG:
-                  {
-                    Qx = CXP*DTXP - CXM*DTXM;
-                    Qy = - (hc*(TNew[i][j][k] - Tair) + hr*(TNew[i][j][k] - Tair*pow(F,0.25)) + q);
-                    Qz = CZP*DTZP - CZM*DTZM;
-                  }
-                break;
-                case Surface::Y_POS:
-                  {
-                    Qx = CXP*DTXP - CXM*DTXM;
-                    Qy = (hc*(TNew[i][j][k] - Tair) + hr*(TNew[i][j][k] - Tair*pow(F,0.25)) + q);
-                    Qz = CZP*DTZP - CZM*DTZM;
-                  }
-                break;
-                case Surface::Z_NEG:
-                  {
-                    Qx = CXP*DTXP - CXM*DTXM;
-                    Qy = CYP*DTYP - CYM*DTYM;
-                    Qz = - (hc*(TNew[i][j][k] - Tair) + hr*(TNew[i][j][k] - Tair*pow(F,0.25)) + q);
-                  }
-                break;
-                case Surface::Z_POS:
-                  {
-                    Qx = CXP*DTXP - CXM*DTXM;
-                    Qy = CYP*DTYP - CYM*DTYP;
-                    Qz = (hc*(TNew[i][j][k] - Tair) + hr*(TNew[i][j][k] - Tair*pow(F,0.25)) + q);
-                  }
-                break;
-              }
+              Qx = CXM*DTXM;
+              Qy = CYP*DTYP + CYM*DTYM;
+              Qz = CZP*DTZP + CZM*DTZM;
             }
-            break;
-          default:
-          {
-            switch (domain.cell[i][j][k].surface.orientation)
+          break;
+          case Surface::Y_NEG:
             {
-              case Surface::X_NEG:
-                {
-                  Qx = CXP*DTXP;
-                  Qy = CYP*DTYP - CYM*DTYM;
-                  Qz = CZP*DTZP - CZM*DTZM;
-                }
-              break;
-              case Surface::X_POS:
-                {
-                  Qx = -CXM*DTXM;
-                  Qy = CYP*DTYP - CYM*DTYM;
-                  Qz = CZP*DTZP - CZM*DTZM;
-                }
-              break;
-              case Surface::Y_NEG:
-                {
-                  Qx = CXP*DTXP - CXM*DTXM;
-                  Qy = CYP*DTYP;
-                  Qz = CZP*DTZP - CZM*DTZM;
-                }
-              break;
-              case Surface::Y_POS:
-                {
-                  Qx = CXP*DTXP - CXM*DTXM;
-                  Qy = -CYM*DTYM;
-                  Qz = CZP*DTZP - CZM*DTZM;
-                }
-              break;
-              case Surface::Z_NEG:
-                {
-                  Qx = CXP*DTXP - CXM*DTXM;
-                  Qy = CYP*DTYP - CYM*DTYM;
-                  Qz = CZP*DTZP;
-                }
-              break;
-              case Surface::Z_POS:
-                {
-                  Qx = CXP*DTXP - CXM*DTXM;
-                  Qy = CYP*DTYP - CYM*DTYP;
-                  Qz = -CZM*DTZM;
-                }
-              break;
+              Qx = CXP*DTXP + CXM*DTXM;
+              Qy = CYP*DTYP;
+              Qz = CZP*DTZP + CZM*DTZM;
             }
-
-          }
+          break;
+          case Surface::Y_POS:
+            {
+              Qx = CXP*DTXP + CXM*DTXM;
+              Qy = CYM*DTYM;
+              Qz = CZP*DTZP + CZM*DTZM;
+            }
+          break;
+          case Surface::Z_NEG:
+            {
+              Qx = CXP*DTXP + CXM*DTXM;
+              Qy = CYP*DTYP + CYM*DTYM;
+              Qz = CZP*DTZP;
+            }
+          break;
+          case Surface::Z_POS:
+            {
+              Qx = CXP*DTXP + CXM*DTXM;
+              Qy = CYP*DTYP + CYM*DTYM;
+              Qz = CZM*DTZM;
+            }
+          break;
         }
-        break;
       }
+      break;
     case Cell::INTERIOR_AIR:
       break;
     case Cell::EXTERIOR_AIR:
@@ -3250,9 +3103,9 @@ std::vector<double> Ground::calculateHeatFlux(size_t i, size_t j, size_t k)
       break;
     default:
       {
-        Qx = CXP*DTXP - CXM*DTXM;
-        Qy = CYP*DTYP - CYM*DTYM;
-        Qz = CZP*DTZP - CZM*DTZM;
+        Qx = CXP*DTXP + CXM*DTXM;
+        Qy = CYP*DTYP + CYM*DTYM;
+        Qz = CZP*DTZP + CZM*DTZM;
       }
     break;
   }

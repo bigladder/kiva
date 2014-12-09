@@ -202,7 +202,7 @@ private:
 
   double getSurfaceEffectiveTemperature(std::string surfaceName, double constructionRValue);
 
-  std::vector<double> calculateHeatFlux(size_t i, size_t j, size_t k);
+  std::vector<double> calculateHeatFlux(const size_t &i, const size_t &j, const size_t &k);
 
 };
 
