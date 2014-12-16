@@ -55,7 +55,7 @@ private:
     MeshData data;
 
 public:
-    std::vector<double> dividers;
+    std::vector<double> dividers; // center is between divider[i] and divider[i+1]
     std::vector<double> deltas;
     std::vector<double> centers;
 

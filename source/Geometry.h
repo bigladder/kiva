@@ -72,6 +72,10 @@ double getYmax(Polygon poly, std::size_t vertex);
 bool comparePointsX(Point first, Point second);
 bool comparePointsY(Point first, Point second);
 
+double getDistance(Point a, Point b);
+
+double getAngle(Point a, Point b, Point c);
+
 
 
 
