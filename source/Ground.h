@@ -66,14 +66,19 @@ class Ground
 private:
 
   double timestep;
-  Foundation &foundation;
   SimulationControl &simulationControl;
   WeatherData &weatherData;
+
+  bool preprocess;
 
   double tNow;
   double annualAverageDryBulbTemperature;
 
+public:
   Domain domain;
+  Foundation &foundation;
+
+private:
 
   // Data structures
 
@@ -110,6 +115,8 @@ private:
 
   boost::multi_array<double, 3> TOld; // solution, n
 
+  std::vector<std::pair<double,double>> boundaryLayer;
+
   std::vector<GroundPlot> plots;
   std::ofstream outputFile;
 
@@ -130,7 +137,8 @@ public:
   Ground(WeatherData &weatherData,
       Foundation &foundation,
       SimulationControl &simulationControl,
-      std::string outputFileName);
+      std::string outputFileName,
+      bool preprocess=false);
 
   // Destructor
   virtual ~Ground();
@@ -203,7 +211,12 @@ private:
   double getSurfaceEffectiveTemperature(std::string surfaceName, double constructionRValue);
 
   std::vector<double> calculateHeatFlux(const size_t &i, const size_t &j, const size_t &k);
+  void calculateBoundaryLayer();
+  double getBoundaryValue(double dist);
 
+  double getBoundaryDistance(double val);
+
+  void setNewBoundaryGeometry();
 };
 
 

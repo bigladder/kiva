@@ -28,13 +28,23 @@ static const double PI = 4.0*atan(1.0);
 static const bool TDMA = true;
 
 Ground::Ground(WeatherData &weatherData, Foundation &foundation,
-               SimulationControl &simulationControl, std::string outputFileName) :
+               SimulationControl &simulationControl, std::string outputFileName, bool preprocess) :
                foundation(foundation), simulationControl(simulationControl),
-               weatherData(weatherData)
+               weatherData(weatherData), preprocess(preprocess)
 {
-  // set up output file
-  outputFile.open(outputFileName.c_str());
-  outputFile << "Time Stamp" << printOutputHeaders() << std::endl;
+  if (!preprocess)
+  {
+    // set up output file
+    outputFile.open(outputFileName.c_str());
+    outputFile << "Time Stamp" << printOutputHeaders() << std::endl;
+  }
+
+  if (foundation.reductionStrategy == Foundation::RS_BOUNDARY)
+  {
+    calculateBoundaryLayer();
+    setNewBoundaryGeometry();
+  }
+
 
   // Build Domain Object
   buildDomain();
@@ -67,7 +77,8 @@ void Ground::buildDomain()
   if (foundation.deepGroundBoundary == Foundation::DGB_AUTO)
     foundation.deepGroundTemperature = weatherData.dryBulbTemp.getAverage();
 
-  std::cout << "Creating Domain..." << std::endl;
+  if (!preprocess)
+    std::cout << "Creating Domain..." << std::endl;
   foundation.createMeshData();
 
   // Build matrices for PDE term coefficients
@@ -77,12 +88,15 @@ void Ground::buildDomain()
   nY = domain.meshY.centers.size();
   nZ = domain.meshZ.centers.size();
 
-  std::cout << "  X Cells: " << nX << std::endl;
-  std::cout << "  Y Cells: " << nY << std::endl;
-  std::cout << "  Z Cells: " << nZ << std::endl;
-  std::cout << "  Total Cells: " << nX*nY*nZ << std::endl;
+  if (!preprocess)
+  {
+    std::cout << "  X Cells: " << nX << std::endl;
+    std::cout << "  Y Cells: " << nY << std::endl;
+    std::cout << "  Z Cells: " << nZ << std::endl;
+    std::cout << "  Total Cells: " << nX*nY*nZ << std::endl;
 
-  //domain.printCellTypes();
+    //domain.printCellTypes();
+  }
 }
 
 void Ground::initializeConditions()
@@ -183,7 +197,8 @@ void Ground::initializeConditions()
 
   if (foundation.numericalScheme != Foundation::NS_STEADY_STATE)
   {
-    std::cout << "Initializing Temperatures..." << std::endl;
+    if (!preprocess)
+        std::cout << "Initializing Temperatures..." << std::endl;
 
     // Calculate initial time in seconds (simulation start minus warmup and acceleration periods)
     double simulationTimestep = simulationControl.timestep.total_seconds();
@@ -2052,9 +2067,11 @@ void Ground::calculate(double t)
     break;
   }
 
-  plot();
-
-  printStatus(t);
+  if (!preprocess)
+  {
+    plot();
+    printStatus(t);
+  }
 }
 
 void Ground::plot()
@@ -3114,6 +3131,261 @@ std::vector<double> Ground::calculateHeatFlux(const size_t &i, const size_t &j, 
   return Qflux;
 }
 
+void Ground::calculateBoundaryLayer()
+{
+  WeatherData wd = weatherData;
+  Foundation fd = foundation;
+  SimulationControl sc = simulationControl;
+
+  wd.windSpeed[0] = 0;
+  wd.dryBulbTemp[0] = 273.15;
+  fd.outdoorTemperatureMethod = Foundation::OTM_CONSTANT_TEMPERATURE;
+  fd.outdoorDryBulbTemperature = 273.15;
+  fd.coordinateSystem = Foundation::CS_CARTESIAN;
+  fd.numberOfDimensions = 2;
+  fd.reductionStrategy = Foundation::RS_AP;
+  fd.numericalScheme = Foundation::NS_STEADY_STATE;
+  fd.initializationMethod = Foundation::IM_STEADY_STATE;
+  fd.farFieldWidth = 100;
+  fd.warmupDays = 0;
+  fd.implicitAccelPeriods = 0;
+  fd.indoorAirTemperature = 293.15;
+  fd.soilAbsorptivity = 0.0;
+  fd.soilEmissivity = 0.0;
+  fd.wall.exteriorEmissivity = 0.0;
+  fd.wall.exteriorAbsorptivity = 0.0;
+  fd.outputReport = OutputReport();
+  fd.outputAnimations = std::vector<OutputAnimation>();
+  sc.endDate = sc.startDate + boost::gregorian::days(1);
+  sc.timestep = boost::posix_time::hours(36);
+
+  Ground pre(wd,fd,sc,"",true);
+  pre.calculate(0.0);
+
+  std::vector<double> x2s;
+  std::vector<double> fluxSums;
+
+
+  double fluxSum = 0.0;
+
+  double x1_0;
+
+  bool firstIndex = true;
+
+  size_t i_min = pre.domain.meshX.getNearestIndex(boost::geometry::area(foundation.polygon)/
+      boost::geometry::perimeter(foundation.polygon));
+
+  size_t k = pre.domain.meshZ.getNearestIndex(0.0);
+
+  size_t j = pre.nY/2;
+
+  for (size_t i = i_min; i < pre.nX; i++)
+  {
+    double Qz = pre.calculateHeatFlux(i,j,k)[2];
+    double x = pre.domain.meshX.centers[i];
+    double x1 = pre.domain.meshX.dividers[i];
+    double x2 = pre.domain.meshX.dividers[i+1];
+
+    if (Qz > 0.0)
+    {
+      fluxSum += std::max(Qz,0.0)*(x2-x1);
+
+      if (firstIndex)
+        x1_0 = x1;
+      x2s.push_back(x2);
+      fluxSums.push_back(fluxSum);
+
+      firstIndex = false;
+    }
+
+  }
+
+  std::ofstream output;
+  output.open("Boundary.csv");
+
+  output << 0.0 << ", " << 0.0 << "\n";
+
+  boundaryLayer.push_back(std::make_pair(0,0));
+
+  for (std::size_t i; i < fluxSums.size() - 1; i++) // last cell is a zero-thickness cell, so don't include it.
+  {
+    output << x2s[i] - x1_0 << ", " << fluxSums[i]/fluxSum << "\n";
+    boundaryLayer.push_back(std::make_pair(x2s[i] - x1_0,fluxSums[i]/fluxSum));
+  }
+
+}
+
+double Ground::getBoundaryValue(double dist)
+{
+  double val;
+  if (dist > boundaryLayer[boundaryLayer.size()-1].first)
+    val = 1.0;
+  else
+  {
+    for (std::size_t i = 0; i < boundaryLayer.size()-1; i++)
+    {
+      if (dist >= boundaryLayer[i].first && dist < boundaryLayer[i+1].first)
+      {
+        double m = (boundaryLayer[i+1].first - boundaryLayer[i].first)/
+            (boundaryLayer[i+1].second - boundaryLayer[i].second);
+        val = (dist - boundaryLayer[i].first)/m + boundaryLayer[i].second;
+        continue;
+      }
+    }
+  }
+  return val;
+}
+
+double Ground::getBoundaryDistance(double val)
+{
+  double dist;
+  if (val > 1.0 || val < 0.0)
+  {
+    std::cerr << "ERROR: Boundary value passed not between 0.0 and 1.0." << std::endl;
+    exit (EXIT_FAILURE);
+  }
+  else
+  {
+    for (std::size_t i = 0; i < boundaryLayer.size()-1; i++)
+    {
+      if (val >= boundaryLayer[i].second && val < boundaryLayer[i+1].second)
+      {
+        double m = (boundaryLayer[i+1].second - boundaryLayer[i].second)/
+            (boundaryLayer[i+1].first - boundaryLayer[i].first);
+        dist = (val - boundaryLayer[i].second)/m + boundaryLayer[i].first;
+        continue;
+      }
+    }
+  }
+  return dist;
+}
+
+void Ground::setNewBoundaryGeometry()
+{
+  double area = boost::geometry::area(foundation.polygon);
+  double perimeter = boost::geometry::perimeter(foundation.polygon);
+
+  std::size_t nV = foundation.polygon.outer().size();
+  for (std::size_t v = 0; v < nV; v++)
+  {
+    Point b = foundation.polygon.outer()[v];
+
+    Point a;
+    if (v == 0)
+      a = foundation.polygon.outer()[nV-1];
+    else
+      a = foundation.polygon.outer()[v-1];
+
+    Point c;
+    if (v == nV -1)
+      c = foundation.polygon.outer()[0];
+    else
+      c = foundation.polygon.outer()[v+1];
+
+    Point d;
+    if (v == nV -2)
+      d = foundation.polygon.outer()[0];
+    else if (v == nV -1)
+      d = foundation.polygon.outer()[1];
+    else
+      d = foundation.polygon.outer()[v+2];
+
+    // Correct U-turns
+    if (isEqual(getAngle(a,b,c) + getAngle(b,c,d),PI))
+    {
+      double AB = getDistance(a,b);
+      double BC = getDistance(b,c);
+      double CD = getDistance(c,d);
+      double edgeDistance = BC;
+      double reductionDistance = std::min(AB,CD);
+      double uPerimeter = AB + BC + CD;
+      double reductionValue = 1 - getBoundaryValue(edgeDistance);
+      perimeter -= reductionValue*(AB+CD);
+      //area += reductionValue*reductionDistance*edgeDistance;
+    }
+
+    double alpha = getAngle(a,b,c);
+    double A = getDistance(a,b)/2;
+    double B = getDistance(b,c)/2;
+
+    /*
+    // Double
+    double s = getBoundaryDistance(0.5);
+    double f = s/sin(alpha/2);
+    */
+
+    /*
+    // cos(alpha/2)
+    double f = getBoundaryDistance(1 - fabs(cos(alpha/2)));
+    */
+
+    // 1 + cos(alpha/2)
+    double f = getBoundaryDistance(1 - 1/(1 + fabs(cos(alpha/2))));
+    //double f = getBoundaryDistance(0.5);
+
+    if (sin(alpha) > 0)
+    {
+      // Fillet
+      double r = f/(1/sin(alpha/2)-1);
+      double d = r/tan(alpha/2);
+
+      if (A < d && B > d)
+      {
+        B = A*cos(alpha) + sqrt(r*r - (r-A*sin(alpha))*(r-A*sin(alpha)));
+      }
+      else if (B < d && A > d)
+      {
+        A = B*cos(alpha) + sqrt(r*r - (r-B*sin(alpha))*(r-B*sin(alpha)));
+      }
+      else
+      {
+        A = std::min(A,d);
+        B = std::min(B,d);
+      }
+
+      double C = sqrt(A*A + B*B - 2*A*B*cos(alpha));
+      double theta = 2.*asin((0.5*C)/r);
+
+      area += (A*B*sin(alpha)/2)-r*r/2*(theta-sin(theta));
+      perimeter += theta*r - (A + B);
+
+      /* // Chamfer
+      double d = f/cos(alpha/2);
+      if (A < d || B < d)
+      {
+        A = std::min(A,B);
+        B = std::min(A,B);
+      }
+      else
+      {
+        A = d;
+        B = d;
+      }
+      double C = sqrt(A*A + B*B - 2*A*B*cos(alpha));
+
+      std::cout << "Add area " << v << ": " << A*B*sin(alpha)/2 << std::endl;
+
+      area += A*B*sin(alpha)/2;
+      perimeter += C - (A + B);*/
+
+      /* // Angle
+      double C1 = sqrt(A*A + f*f - 2*A*f*cos(alpha/2));
+
+      double C2 = sqrt(B*B + f*f - 2*B*f*cos(alpha/2));
+
+      std::cout << "Add area " << v << ": " << A*f*sin(alpha/2)/2 + B*f*sin(alpha/2)/2 << std::endl;
+
+      area += A*f*sin(alpha/2)/2 + B*f*sin(alpha/2)/2;
+      perimeter += (C1 + C2) - (A + B);*/
+    }
+
+  }
+
+  foundation.reductionStrategy = Foundation::RS_CUSTOM;
+  foundation.twoParameters = false;
+  foundation.reductionLength2 = area/perimeter;
+
+}
 
 double getArrayValue(boost::multi_array<double, 3> Mat, std::size_t i, std::size_t j, std::size_t k)
 {

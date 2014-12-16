@@ -21,6 +21,9 @@
 
 #include "Geometry.h"
 
+static const double PI = 4.0*atan(1.0);
+
+
 bool isRectilinear(Polygon poly)
 {
   for (std::size_t v = 0; v < poly.outer().size(); v++)
@@ -519,6 +522,43 @@ bool comparePointsX(Point first, Point second)
 bool comparePointsY(Point first, Point second)
 {
   return (first.get<1>() < second.get<1>());
+}
+
+double getDistance(Point a, Point b)
+{
+  double ax = a.get<0>();
+  double ay = a.get<1>();
+  double bx = b.get<0>();
+  double by = b.get<1>();
+  double x = bx - ax;
+  double y = by - ay;
+  return sqrt(x*x + y*y);
+}
+
+double getAngle(Point a, Point b, Point c)
+{
+  double angle;
+  // angle at point b
+  double A = getDistance(a,b);
+  double B = getDistance(b,c);
+  double C = getDistance(c,a);
+
+  double ax = a.get<0>();
+  double ay = a.get<1>();
+  double bx = b.get<0>();
+  double by = b.get<1>();
+  double cx = c.get<0>();
+  double cy = c.get<1>();
+
+  double sign = (bx - ax)*(cy - ay) - (cx - ax)*(by - ay);
+
+  angle = acos((A*A+B*B-C*C)/(2*A*B));
+
+  if (sign < 0)
+    angle += PI;
+
+  return angle;
+
 }
 
 #endif /* GEOMETRY_CPP_ */

@@ -228,6 +228,8 @@ Input inputParser(std::string inputFile)
     foundation1.reductionStrategy = Foundation::RS_RR;
   else if (yamlInput["Foundation"]["reductionStrategy"].as<std::string>() == "A-P")
     foundation1.reductionStrategy = Foundation::RS_A_P;
+  else if (yamlInput["Foundation"]["reductionStrategy"].as<std::string>() == "BOUNDARY")
+    foundation1.reductionStrategy = Foundation::RS_BOUNDARY;
   else if (yamlInput["Foundation"]["reductionStrategy"].as<std::string>() == "CUSTOM")
   {
     foundation1.reductionStrategy = Foundation::RS_CUSTOM;
