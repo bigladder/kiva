@@ -3026,47 +3026,44 @@ std::vector<double> Ground::calculateHeatFlux(const size_t &i, const size_t &j, 
         {
           case Surface::X_NEG:
             {
-              Qx = CXP*DTXP;
-              Qy = CYP*DTYP + CYM*DTYM;
-              Qz = CZP*DTZP + CZM*DTZM;
+              CXP = -domain.getKXP(i,j,k)/domain.getDXP(i);
+              CXM = 0;
             }
           break;
           case Surface::X_POS:
             {
-              Qx = CXM*DTXM;
-              Qy = CYP*DTYP + CYM*DTYM;
-              Qz = CZP*DTZP + CZM*DTZM;
+              CXP = 0;
+              CXM = -domain.getKXM(i,j,k)/domain.getDXM(i);
             }
           break;
           case Surface::Y_NEG:
             {
-              Qx = CXP*DTXP + CXM*DTXM;
-              Qy = CYP*DTYP;
-              Qz = CZP*DTZP + CZM*DTZM;
+              CYP = -domain.getKYP(i,j,k)/domain.getDYP(j);
+              CYM = 0;
             }
           break;
           case Surface::Y_POS:
             {
-              Qx = CXP*DTXP + CXM*DTXM;
-              Qy = CYM*DTYM;
-              Qz = CZP*DTZP + CZM*DTZM;
+              CYP = 0;
+              CYM = -domain.getKYM(i,j,k)/domain.getDYM(j);
             }
           break;
           case Surface::Z_NEG:
             {
-              Qx = CXP*DTXP + CXM*DTXM;
-              Qy = CYP*DTYP + CYM*DTYM;
-              Qz = CZP*DTZP;
+              CZP = -domain.getKZP(i,j,k)/domain.getDZP(k);
+              CZM = 0;
             }
           break;
           case Surface::Z_POS:
             {
-              Qx = CXP*DTXP + CXM*DTXM;
-              Qy = CYP*DTYP + CYM*DTYM;
-              Qz = CZM*DTZM;
+              CZP = 0;
+              CZM = -domain.getKZM(i,j,k)/domain.getDZM(k);
             }
           break;
         }
+        Qx = CXP*DTXP + CXM*DTXM;
+        Qy = CYP*DTYP + CYM*DTYM;
+        Qz = CZP*DTZP + CZM*DTZM;
       }
       break;
     case Cell::INTERIOR_AIR:
