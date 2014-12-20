@@ -3298,34 +3298,20 @@ void Ground::setNewBoundaryGeometry()
       double CD = getDistance(c,d);
       double edgeDistance = BC;
       double reductionDistance = std::min(AB,CD);
-      double uPerimeter = AB + BC + CD;
       double reductionValue = 1 - getBoundaryValue(edgeDistance);
       perimeter -= reductionValue*(AB+CD);
-      //area += reductionValue*reductionDistance*edgeDistance;
     }
 
     double alpha = getAngle(a,b,c);
-    double A = getDistance(a,b)/2;
-    double B = getDistance(b,c)/2;
+    double A = getDistance(a,b);
+    double B = getDistance(b,c);
 
-    /*
-    // Double
-    double s = getBoundaryDistance(0.5);
-    double f = s/sin(alpha/2);
-    */
-
-    /*
-    // cos(alpha/2)
-    double f = getBoundaryDistance(1 - fabs(cos(alpha/2)));
-    */
-
-    // 1 + cos(alpha/2)
-    double f = getBoundaryDistance(1 - 1/(1 + fabs(cos(alpha/2))));
-    //double f = getBoundaryDistance(0.5);
 
     if (sin(alpha) > 0)
     {
-      // Fillet
+      double f = getBoundaryDistance(1-sin(alpha/2)/(1+cos(alpha/2)))/sin(alpha/2);
+
+      /* // Fillet
       double r = f/(1/sin(alpha/2)-1);
       double d = r/tan(alpha/2);
 
@@ -3347,9 +3333,9 @@ void Ground::setNewBoundaryGeometry()
       double theta = 2.*asin((0.5*C)/r);
 
       area += (A*B*sin(alpha)/2)-r*r/2*(theta-sin(theta));
-      perimeter += theta*r - (A + B);
+      perimeter += theta*r - (A + B);*/
 
-      /* // Chamfer
+      // Chamfer
       double d = f/cos(alpha/2);
       if (A < d || B < d)
       {
@@ -3363,21 +3349,40 @@ void Ground::setNewBoundaryGeometry()
       }
       double C = sqrt(A*A + B*B - 2*A*B*cos(alpha));
 
-      std::cout << "Add area " << v << ": " << A*B*sin(alpha)/2 << std::endl;
-
-      area += A*B*sin(alpha)/2;
-      perimeter += C - (A + B);*/
+      //area += A*B*sin(alpha)/2;
+      perimeter += C - (A + B);
 
       /* // Angle
       double C1 = sqrt(A*A + f*f - 2*A*f*cos(alpha/2));
 
       double C2 = sqrt(B*B + f*f - 2*B*f*cos(alpha/2));
 
-      std::cout << "Add area " << v << ": " << A*f*sin(alpha/2)/2 + B*f*sin(alpha/2)/2 << std::endl;
-
       area += A*f*sin(alpha/2)/2 + B*f*sin(alpha/2)/2;
       perimeter += (C1 + C2) - (A + B);*/
     }
+    /*
+    else // convex corners
+    {
+      double f = -getBoundaryDistance(1 - (1 + cos(alpha/2))/sin(alpha/2));
+
+      // Chamfer
+      double d = f/cos(alpha/2);
+      if (A < d || B < d)
+      {
+        A = std::min(A,B);
+        B = std::min(A,B);
+      }
+      else
+      {
+        A = d;
+        B = d;
+      }
+      double C = sqrt(A*A + B*B - 2*A*B*cos(alpha));
+
+      area += A*B*sin(alpha)/2;
+      perimeter += C - (A + B);
+
+    }*/
 
   }
 
