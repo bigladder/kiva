@@ -479,7 +479,7 @@ void Ground::calculateADEUpwardSweep()
 
           case Surface::INTERIOR_TEMPERATURE:
 
-            U[i][j][k] = foundation.indoorAirTemperature;
+            U[i][j][k] = getIndoorTemperature();
             break;
 
           case Surface::EXTERIOR_TEMPERATURE:
@@ -489,7 +489,7 @@ void Ground::calculateADEUpwardSweep()
 
           case Surface::INTERIOR_FLUX:
             {
-            double Tair = foundation.indoorAirTemperature;
+            double Tair = getIndoorTemperature();
             double q = domain.cell[i][j][k].heatGain;
 
             double hc = getConvectionCoeff(TOld[i][j][k],
@@ -570,7 +570,7 @@ void Ground::calculateADEUpwardSweep()
           }
           break;
         case Cell::INTERIOR_AIR:
-          U[i][j][k] = foundation.indoorAirTemperature;
+          U[i][j][k] = getIndoorTemperature();
           break;
         case Cell::EXTERIOR_AIR:
           U[i][j][k] = getOutdoorTemperature();
@@ -681,7 +681,7 @@ void Ground::calculateADEDownwardSweep()
 
           case Surface::INTERIOR_TEMPERATURE:
 
-            V[i][j][k] = foundation.indoorAirTemperature;
+            V[i][j][k] = getIndoorTemperature();
             break;
 
           case Surface::EXTERIOR_TEMPERATURE:
@@ -691,7 +691,7 @@ void Ground::calculateADEDownwardSweep()
 
           case Surface::INTERIOR_FLUX:
             {
-            double Tair = foundation.indoorAirTemperature;
+            double Tair = getIndoorTemperature();
             double q = 0;
 
             double hc = getConvectionCoeff(TOld[i][j][k],
@@ -773,7 +773,7 @@ void Ground::calculateADEDownwardSweep()
           break;
 
         case Cell::INTERIOR_AIR:
-          V[i][j][k] = foundation.indoorAirTemperature;
+          V[i][j][k] = getIndoorTemperature();
           break;
         case Cell::EXTERIOR_AIR:
           V[i][j][k] = getOutdoorTemperature();
@@ -883,7 +883,7 @@ void Ground::calculateExplicit()
 
           case Surface::INTERIOR_TEMPERATURE:
 
-            TNew[i][j][k] = foundation.indoorAirTemperature;
+            TNew[i][j][k] = getIndoorTemperature();
             break;
 
           case Surface::EXTERIOR_TEMPERATURE:
@@ -893,7 +893,7 @@ void Ground::calculateExplicit()
 
           case Surface::INTERIOR_FLUX:
             {
-            double Tair = foundation.indoorAirTemperature;
+            double Tair = getIndoorTemperature();
             double q = 0;
 
             double hc = getConvectionCoeff(TOld[i][j][k],
@@ -974,7 +974,7 @@ void Ground::calculateExplicit()
           }
           break;
         case Cell::INTERIOR_AIR:
-          TNew[i][j][k] = foundation.indoorAirTemperature;
+          TNew[i][j][k] = getIndoorTemperature();
           break;
 
         case Cell::EXTERIOR_AIR:
@@ -1142,7 +1142,7 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
             break;
           case Surface::INTERIOR_TEMPERATURE:
             A = 1.0;
-            bVal = foundation.indoorAirTemperature;
+            bVal = getIndoorTemperature();
 
             setAmatValue(index,index,A);
             setbValue(index,bVal);
@@ -1156,7 +1156,7 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
             break;
           case Surface::INTERIOR_FLUX:
             {
-            double Tair = foundation.indoorAirTemperature;
+            double Tair = getIndoorTemperature();
             double q = 0;
 
             double hc = getConvectionCoeff(TOld[i][j][k],
@@ -1298,7 +1298,7 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
           break;
         case Cell::INTERIOR_AIR:
           A = 1.0;
-          bVal = foundation.indoorAirTemperature;
+          bVal = getIndoorTemperature();
 
           setAmatValue(index,index,A);
           setbValue(index,bVal);
@@ -1630,7 +1630,7 @@ void Ground::calculateADI(int dim)
             break;
           case Surface::INTERIOR_TEMPERATURE:
             A = 1.0;
-            bVal = foundation.indoorAirTemperature;
+            bVal = getIndoorTemperature();
 
             setAmatValue(index,index,A);
             setbValue(index,bVal);
@@ -1644,7 +1644,7 @@ void Ground::calculateADI(int dim)
             break;
           case Surface::INTERIOR_FLUX:
             {
-            double Tair = foundation.indoorAirTemperature;
+            double Tair = getIndoorTemperature();
             double q = 0;
 
             double hc = getConvectionCoeff(TOld[i][j][k],
@@ -1882,7 +1882,7 @@ void Ground::calculateADI(int dim)
           break;
         case Cell::INTERIOR_AIR:
           A = 1.0;
-          bVal = foundation.indoorAirTemperature;
+          bVal = getIndoorTemperature();
 
           setAmatValue(index,index,A);
           setbValue(index,bVal);
@@ -2377,6 +2377,14 @@ double Ground::getOutdoorTemperature()
     return foundation.outdoorDryBulbTemperature;
 }
 
+double Ground::getIndoorTemperature()
+{
+  if (foundation.indoorTemperatureMethod == Foundation::ITM_FILE)
+    return foundation.indoorAirTemperatureFile.data.getValue(getSimTime(tNow));
+  else // if (foundation.indoorTemperatureMethod == Foundation::ITM_CONSTANT_TEMPERATURE)
+    return foundation.indoorAirTemperature;
+}
+
 double Ground::getLocalWindSpeed()
 {
   double vWS = weatherData.windSpeed.getValue(getSimTime(tNow));
@@ -2868,7 +2876,7 @@ double Ground::getSurfaceAverageHeatFlux(std::string surfaceName)
       else
         tilt = PI/2.0;
 
-      double Tair = foundation.indoorAirTemperature;
+      double Tair = getIndoorTemperature();
 
       for (std::size_t index = 0; index < foundation.surfaces[s].indices.size(); index++)
       {
@@ -2898,7 +2906,7 @@ double Ground::getSurfaceEffectiveTemperature(std::string surfaceName, double co
   double TA = 0;
   double totalArea = 0;
 
-  double Tair = foundation.indoorAirTemperature;
+  double Tair = getIndoorTemperature();
 
   // Find surface(s)
   for (size_t s = 0; s < foundation.surfaces.size(); s++)

@@ -209,8 +209,27 @@ Input inputParser(std::string inputFile)
     foundation1.deepGroundBoundary = Foundation::DGB_ZERO_FLUX;
   }
 
-  foundation1.indoorAirTemperature = yamlInput["Foundation"]["indoorAirTemperature"].as<double>();
-
+  if  (yamlInput["Foundation"]["indoorTemperatureMethod"].IsDefined())
+  {
+    if (yamlInput["Foundation"]["indoorTemperatureMethod"].as<std::string>() == "FILE")
+    {
+      foundation1.indoorTemperatureMethod = Foundation::ITM_FILE;
+      foundation1.indoorAirTemperatureFile.fileName = yamlInput["Foundation"]["indoorAirTemperatureFile"]["name"].as<std::string>();
+      foundation1.indoorAirTemperatureFile.firstIndex.first = yamlInput["Foundation"]["indoorAirTemperatureFile"]["index"][0].as<int>();
+      foundation1.indoorAirTemperatureFile.firstIndex.second = yamlInput["Foundation"]["indoorAirTemperatureFile"]["index"][1].as<int>();
+      foundation1.indoorAirTemperatureFile.readData();
+    }
+    else if (yamlInput["Foundation"]["indoorTemperatureMethod"].as<std::string>() == "CONSTANT")
+    {
+      foundation1.indoorTemperatureMethod = Foundation::ITM_CONSTANT_TEMPERATURE;
+      foundation1.indoorAirTemperature = yamlInput["Foundation"]["indoorAirTemperature"].as<double>();
+    }
+  }
+  else
+  {
+    foundation1.indoorTemperatureMethod = Foundation::ITM_CONSTANT_TEMPERATURE;
+    foundation1.indoorAirTemperature = yamlInput["Foundation"]["indoorAirTemperature"].as<double>();
+  }
 
   // Geometry
   if (yamlInput["Foundation"]["coordinateSystem"].as<std::string>() == "CARTESIAN")

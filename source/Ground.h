@@ -200,6 +200,8 @@ private:
 
   double getOutdoorTemperature();
 
+  double getIndoorTemperature();
+
   double getLocalWindSpeed();
 
   void setSolarBoundaryConditions();

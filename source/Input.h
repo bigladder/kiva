@@ -19,12 +19,15 @@
 #ifndef INPUT_HPP_
 #define INPUT_HPP_
 
+#include <fstream>
+
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/date_time/gregorian/gregorian.hpp>
 
 #include "Mesher.h"
 #include "Functions.h"
 #include "Geometry.h"
+#include "WeatherData.h"
 
 class SimulationControl
 {
@@ -265,7 +268,16 @@ public:
   void setSquarePolygon();
 };
 
+class DataFile
+{
+public:
+  std::string fileName;
+  std::pair<int, int> firstIndex;
+  HourlyData data;
 
+  void readData();
+
+};
 
 class RangeType
 {
@@ -319,6 +331,15 @@ public:
   DeepGroundBoundary deepGroundBoundary;
 
   double indoorAirTemperature; // [K]
+  DataFile indoorAirTemperatureFile;
+
+  enum IndoorTemperatureMethod
+  {
+    ITM_FILE,
+    ITM_CONSTANT_TEMPERATURE
+  };
+
+  IndoorTemperatureMethod indoorTemperatureMethod;
 
   Material soil;
   double soilAbsorptivity;  // [frac]

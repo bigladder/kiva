@@ -111,6 +111,40 @@ void Surface::setSquarePolygon()
   polygon.outer().push_back(Point(xMax,yMin));
 }
 
+void DataFile::readData()
+{
+  std::ifstream file(fileName.c_str());
+
+  if (!file.is_open())
+  {
+      // Print an error and exit
+      std::cerr << "Unable to read data file" << std::endl;
+      exit(1);
+  }
+
+  // While there's still stuff left to read
+  std::string line;
+  std::vector <std::string> columns;
+
+  typedef boost::tokenizer< boost::escaped_list_separator<char> > Tokenizer;
+  int row = 0;
+
+  while (std::getline(file,line,'\r'))
+  {
+    row += 1;
+    Tokenizer tok(line, boost::escaped_list_separator<char>("\\",",","\""));
+
+    columns.assign(tok.begin(), tok.end());
+
+    if (row > firstIndex.first)
+    {
+      data.push_back(double(boost::lexical_cast<double>(columns[firstIndex.second])));
+    }
+    columns.clear();
+  }
+  file.close();
+}
+
 inline bool compareRanges(RangeType first,  RangeType second)
 {
   return (first.range.first < second.range.first);
