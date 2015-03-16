@@ -209,18 +209,70 @@ Input inputParser(std::string inputFile)
     foundation1.deepGroundBoundary = Foundation::DGB_ZERO_FLUX;
   }
 
-  foundation1.indoorAirTemperature = yamlInput["Foundation"]["indoorAirTemperature"].as<double>();
-
+  if  (yamlInput["Foundation"]["indoorTemperatureMethod"].IsDefined())
+  {
+    if (yamlInput["Foundation"]["indoorTemperatureMethod"].as<std::string>() == "FILE")
+    {
+      foundation1.indoorTemperatureMethod = Foundation::ITM_FILE;
+      foundation1.indoorAirTemperatureFile.fileName = yamlInput["Foundation"]["indoorAirTemperatureFile"]["name"].as<std::string>();
+      foundation1.indoorAirTemperatureFile.firstIndex.first = yamlInput["Foundation"]["indoorAirTemperatureFile"]["index"][0].as<int>();
+      foundation1.indoorAirTemperatureFile.firstIndex.second = yamlInput["Foundation"]["indoorAirTemperatureFile"]["index"][1].as<int>();
+      foundation1.indoorAirTemperatureFile.readData();
+    }
+    else if (yamlInput["Foundation"]["indoorTemperatureMethod"].as<std::string>() == "CONSTANT")
+    {
+      foundation1.indoorTemperatureMethod = Foundation::ITM_CONSTANT_TEMPERATURE;
+      foundation1.indoorAirTemperature = yamlInput["Foundation"]["indoorAirTemperature"].as<double>();
+    }
+  }
+  else
+  {
+    foundation1.indoorTemperatureMethod = Foundation::ITM_CONSTANT_TEMPERATURE;
+    foundation1.indoorAirTemperature = yamlInput["Foundation"]["indoorAirTemperature"].as<double>();
+  }
 
   // Geometry
-  if (yamlInput["Foundation"]["coordinateSystem"].as<std::string>() == "2DAXIAL")
-    foundation1.coordinateSystem = Foundation::CS_2DAXIAL;
-  else if (yamlInput["Foundation"]["coordinateSystem"].as<std::string>() == "2DLINEAR")
-    foundation1.coordinateSystem = Foundation::CS_2DLINEAR;
-  else if (yamlInput["Foundation"]["coordinateSystem"].as<std::string>() == "3D")
-    foundation1.coordinateSystem = Foundation::CS_3D;
-  else if (yamlInput["Foundation"]["coordinateSystem"].as<std::string>() == "3DSYMMETRY")
-    foundation1.coordinateSystem = Foundation::CS_3D_SYMMETRY;
+  if (yamlInput["Foundation"]["coordinateSystem"].as<std::string>() == "CARTESIAN")
+    foundation1.coordinateSystem = Foundation::CS_CARTESIAN;
+  else if (yamlInput["Foundation"]["coordinateSystem"].as<std::string>() == "CYLINDRICAL")
+    foundation1.coordinateSystem = Foundation::CS_CYLINDRICAL;
+
+  if (yamlInput["Foundation"]["reductionStrategy"].as<std::string>() == "AP")
+    foundation1.reductionStrategy = Foundation::RS_AP;
+  else if (yamlInput["Foundation"]["reductionStrategy"].as<std::string>() == "NEG")
+    foundation1.reductionStrategy = Foundation::RS_AP_APNEG;
+  else if (yamlInput["Foundation"]["reductionStrategy"].as<std::string>() == "PNEG")
+    foundation1.reductionStrategy = Foundation::RS_AP_PNEG;
+  else if (yamlInput["Foundation"]["reductionStrategy"].as<std::string>() == "RR")
+    foundation1.reductionStrategy = Foundation::RS_RR;
+  else if (yamlInput["Foundation"]["reductionStrategy"].as<std::string>() == "A-P")
+    foundation1.reductionStrategy = Foundation::RS_A_P;
+  else if (yamlInput["Foundation"]["reductionStrategy"].as<std::string>() == "BOUNDARY")
+    foundation1.reductionStrategy = Foundation::RS_BOUNDARY;
+  else if (yamlInput["Foundation"]["reductionStrategy"].as<std::string>() == "CUSTOM")
+  {
+    foundation1.reductionStrategy = Foundation::RS_CUSTOM;
+    if (yamlInput["Foundation"]["length1"].IsDefined())
+    {
+      foundation1.twoParameters = true;
+      foundation1.reductionLength1 = yamlInput["Foundation"]["length1"].as<double>();
+    }
+    else
+    {
+      foundation1.twoParameters = false;
+    }
+    foundation1.reductionLength2 = yamlInput["Foundation"]["length2"].as<double>();
+  }
+
+  if (yamlInput["Foundation"]["numberOfDimensions"].IsDefined())
+    foundation1.numberOfDimensions = yamlInput["Foundation"]["numberOfDimensions"].as<int>();
+  else
+    foundation1.numberOfDimensions = 2;
+
+  if  (yamlInput["Foundation"]["useSymmetry"].IsDefined())
+    foundation1.useSymmetry = yamlInput["Foundation"]["useSymmetry"].as<bool>();
+  else
+    foundation1.useSymmetry = true;
 
   for (size_t i=0;i<yamlInput["Foundation"]["polygon"].size();i++)
   {
@@ -252,6 +304,7 @@ Input inputParser(std::string inputFile)
   if  (yamlInput["Foundation"]["mesh"].IsDefined())
   {
     foundation1.mesh.minCellDim = yamlInput["Foundation"]["mesh"]["minCellDim"].as<double>();
+    foundation1.mesh.maxNearGrowthCoeff = yamlInput["Foundation"]["mesh"]["maxNearGrowthCoeff"].as<double>();
     foundation1.mesh.maxDepthGrowthCoeff = yamlInput["Foundation"]["mesh"]["maxDepthGrowthCoeff"].as<double>();
     foundation1.mesh.maxInteriorGrowthCoeff = yamlInput["Foundation"]["mesh"]["maxInteriorGrowthCoeff"].as<double>();
     foundation1.mesh.maxExteriorGrowthCoeff = yamlInput["Foundation"]["mesh"]["maxExteriorGrowthCoeff"].as<double>();
@@ -259,6 +312,7 @@ Input inputParser(std::string inputFile)
   else
   {
     foundation1.mesh.minCellDim = 0.05;
+    foundation1.mesh.maxNearGrowthCoeff = 1.25;
     foundation1.mesh.maxDepthGrowthCoeff = 1.25;
     foundation1.mesh.maxInteriorGrowthCoeff = 1.25;
     foundation1.mesh.maxExteriorGrowthCoeff = 1.25;
@@ -447,6 +501,95 @@ Input inputParser(std::string inputFile)
     temp.grid = yamlInput["Foundation"]["outputAnimations"][i]["grid"].as<bool>();
     temp.gradients = yamlInput["Foundation"]["outputAnimations"][i]["gradients"].as<bool>();
     temp.contours = yamlInput["Foundation"]["outputAnimations"][i]["contours"].as<bool>();
+    temp.contourLabels = yamlInput["Foundation"]["outputAnimations"][i]["contourLabels"].as<bool>();
+    temp.axes = yamlInput["Foundation"]["outputAnimations"][i]["axes"].as<bool>();
+    temp.timestamp = yamlInput["Foundation"]["outputAnimations"][i]["timestamp"].as<bool>();
+
+    if (yamlInput["Foundation"]["outputAnimations"][i]["plotType"].IsDefined())
+    {
+      if (yamlInput["Foundation"]["outputAnimations"][i]["plotType"].as<std::string>() == "TEMPERATURE")
+        temp.plotType = OutputAnimation::P_TEMP;
+      else if (yamlInput["Foundation"]["outputAnimations"][i]["plotType"].as<std::string>() == "HEAT-FLUX")
+        temp.plotType = OutputAnimation::P_FLUX;
+    }
+    else
+      temp.plotType = OutputAnimation::P_TEMP;
+
+    if (yamlInput["Foundation"]["outputAnimations"][i]["fluxDir"].IsDefined())
+    {
+      if (yamlInput["Foundation"]["outputAnimations"][i]["fluxDir"].as<std::string>() == "MAG")
+        temp.fluxDir = OutputAnimation::D_M;
+      else if (yamlInput["Foundation"]["outputAnimations"][i]["fluxDir"].as<std::string>() == "X")
+        temp.fluxDir = OutputAnimation::D_X;
+      else if (yamlInput["Foundation"]["outputAnimations"][i]["fluxDir"].as<std::string>() == "Y")
+        temp.fluxDir = OutputAnimation::D_Y;
+      else if (yamlInput["Foundation"]["outputAnimations"][i]["fluxDir"].as<std::string>() == "Z")
+        temp.fluxDir = OutputAnimation::D_Z;
+    }
+    else
+      temp.fluxDir = OutputAnimation::D_M;
+
+    if (yamlInput["Foundation"]["outputAnimations"][i]["colorScheme"].IsDefined())
+    {
+      if (yamlInput["Foundation"]["outputAnimations"][i]["colorScheme"].as<std::string>() == "CMR")
+        temp.colorScheme = OutputAnimation::C_CMR;
+      else if (yamlInput["Foundation"]["outputAnimations"][i]["colorScheme"].as<std::string>() == "JET")
+        temp.colorScheme = OutputAnimation::C_JET;
+      else if (yamlInput["Foundation"]["outputAnimations"][i]["colorScheme"].as<std::string>() == "NONE")
+        temp.colorScheme = OutputAnimation::C_NONE;
+    }
+    else
+      temp.colorScheme = OutputAnimation::C_CMR;
+
+    if (yamlInput["Foundation"]["outputAnimations"][i]["format"].IsDefined())
+    {
+      if (yamlInput["Foundation"]["outputAnimations"][i]["format"].as<std::string>() == "PNG")
+        temp.format = OutputAnimation::F_PNG;
+      else if (yamlInput["Foundation"]["outputAnimations"][i]["format"].as<std::string>() == "TEX")
+        temp.format = OutputAnimation::F_TEX;
+    }
+    else
+      temp.format = OutputAnimation::F_PNG;
+
+    if (yamlInput["Foundation"]["outputAnimations"][i]["outputUnits"].IsDefined())
+    {
+      if (yamlInput["Foundation"]["outputAnimations"][i]["outputUnits"].as<std::string>() == "IP")
+        temp.outputUnits = OutputAnimation::IP;
+      else if (yamlInput["Foundation"]["outputAnimations"][i]["outputUnits"].as<std::string>() == "SI")
+        temp.outputUnits = OutputAnimation::SI;
+    }
+    else
+      temp.outputUnits = OutputAnimation::SI;
+
+    if (yamlInput["Foundation"]["outputAnimations"][i]["temperatureRange"].IsDefined())
+    {
+      temp.minimumTemperature = yamlInput["Foundation"]["outputAnimations"][i]["temperatureRange"][0].as<double>();
+      temp.maximumTemperature = yamlInput["Foundation"]["outputAnimations"][i]["temperatureRange"][1].as<double>();
+    }
+    else
+    {
+      temp.minimumTemperature = -20;
+      temp.maximumTemperature = 40;
+    }
+
+    if (yamlInput["Foundation"]["outputAnimations"][i]["numberOfContours"].IsDefined())
+    {
+      temp.numberOfContours = yamlInput["Foundation"]["outputAnimations"][i]["numberOfContours"].as<int>();
+    }
+    else
+    {
+      temp.numberOfContours = 13;
+    }
+
+    if (yamlInput["Foundation"]["outputAnimations"][i]["contourColor"].IsDefined())
+    {
+      temp.contourColor = yamlInput["Foundation"]["outputAnimations"][i]["contourColor"].as<std::string>();
+    }
+    else
+    {
+      temp.contourColor = "H";
+    }
+
     temp.size = yamlInput["Foundation"]["outputAnimations"][i]["size"].as<int>();
 
     if (yamlInput["Foundation"]["outputAnimations"][i]["startDate"].IsDefined())

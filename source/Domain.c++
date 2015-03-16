@@ -72,8 +72,7 @@ void Domain::setDomain(Foundation &foundation)
         cell[i][j][k].cellType = Cell::NORMAL;
 
         // Next set interior zero-width cells
-        if (foundation.coordinateSystem == Foundation::CS_3D ||
-          foundation.coordinateSystem == Foundation::CS_3D_SYMMETRY)
+        if (foundation.numberOfDimensions == 3)
         {
           if (isEqual(meshX.deltas[i], 0.0) ||
             isEqual(meshZ.deltas[k], 0.0) ||
@@ -131,16 +130,9 @@ void Domain::setDomain(Foundation &foundation)
 
               // Point/Line cells not on the boundary should be
               // zero-thickness cells
-              int numZeroDims = 0;
-              if (isEqual(meshX.deltas[i], 0.0))
-                numZeroDims += 1;
-              if (isEqual(meshY.deltas[j], 0.0))
-                numZeroDims += 1;
-              if (isEqual(meshZ.deltas[k], 0.0))
-                numZeroDims += 1;
+              int numZeroDims = getNumZeroDims(i,j,k);
 
-              if (foundation.coordinateSystem == Foundation::CS_3D ||
-                foundation.coordinateSystem == Foundation::CS_3D_SYMMETRY)
+              if (foundation.numberOfDimensions == 3)
               {
                 if ((numZeroDims > 1) &&
                   i != 0 && i != nX - 1 &&
@@ -171,7 +163,8 @@ void Domain::setDomain(Foundation &foundation)
         // for boundary cells, set cell area
         if (cell[i][j][k].cellType == Cell::BOUNDARY)
         {
-          if (foundation.coordinateSystem == Foundation::CS_2DAXIAL)
+          if (foundation.numberOfDimensions == 2 &&
+              foundation.coordinateSystem == Foundation::CS_CYLINDRICAL)
           {
             if (cell[i][j][k].surface.orientation == Surface::X_POS ||
               cell[i][j][k].surface.orientation == Surface::X_NEG)
@@ -181,23 +174,25 @@ void Domain::setDomain(Foundation &foundation)
             else // if (surface.orientation == Surface::Z_POS ||
                // surface.orientation == Surface::Z_NEG)
             {
-              cell[i][j][k].area = 2.0*PI*meshX.deltas[i]*meshX.centers[i];
+              cell[i][j][k].area = PI*(meshX.dividers[i+1]*meshX.dividers[i+1] -
+            		  meshX.dividers[i]*meshX.dividers[i] );
             }
           }
-          else if (foundation.coordinateSystem == Foundation::CS_2DLINEAR)
+          else if (foundation.numberOfDimensions == 2 &&
+                   foundation.coordinateSystem == Foundation::CS_CARTESIAN)
           {
             if (cell[i][j][k].surface.orientation == Surface::X_POS ||
               cell[i][j][k].surface.orientation == Surface::X_NEG)
             {
-              cell[i][j][k].area = meshZ.deltas[k];
+              cell[i][j][k].area = 2.0*meshZ.deltas[k]*foundation.linearAreaMultiplier;
             }
             else // if (surface.orientation == Surface::Z_POS ||
                // surface.orientation == Surface::Z_NEG)
             {
-              cell[i][j][k].area = meshX.deltas[i];
+              cell[i][j][k].area = 2.0*meshX.deltas[i]*foundation.linearAreaMultiplier;
             }
           }
-          else  // if (foundation.coordinateSystem == Foundation::CS_3D)
+          else  // if (foundation.numberOfDimensions == 3)
           {
             if (cell[i][j][k].surface.orientation == Surface::X_POS ||
               cell[i][j][k].surface.orientation == Surface::X_NEG)
@@ -215,7 +210,7 @@ void Domain::setDomain(Foundation &foundation)
               cell[i][j][k].area = meshX.deltas[i]*meshY.deltas[j];
             }
 
-            if (foundation.coordinateSystem == Foundation::CS_3D_SYMMETRY)
+            if (foundation.useSymmetry)
             {
               if (foundation.isXSymm)
                 cell[i][j][k].area = 2*cell[i][j][k].area;
@@ -237,20 +232,13 @@ void Domain::setDomain(Foundation &foundation)
     {
       for (std::size_t i = 0; i < nX; i++)
       {
-        int numZeroDims = 0;
-        if (isEqual(meshX.deltas[i], 0.0))
-          numZeroDims += 1;
-        if (isEqual(meshY.deltas[j], 0.0))
-          numZeroDims += 1;
-        if (isEqual(meshZ.deltas[k], 0.0))
-          numZeroDims += 1;
+        int numZeroDims = getNumZeroDims(i,j,k);
 
         if (numZeroDims > 0
             && cell[i][j][k].cellType != Cell::INTERIOR_AIR
             && cell[i][j][k].cellType != Cell::EXTERIOR_AIR)
         {
-          if (foundation.coordinateSystem == Foundation::CS_3D ||
-            foundation.coordinateSystem == Foundation::CS_3D_SYMMETRY)
+          if (foundation.numberOfDimensions == 3)
           {
             if (i != 0 && i != nX - 1 &&
               j != 0 && j != nY - 1 &&
@@ -278,7 +266,7 @@ void Domain::setDomain(Foundation &foundation)
         // PDE Coefficients
 
         // Radial X terms
-        if (foundation.coordinateSystem == Foundation::CS_2DAXIAL)
+        if (foundation.coordinateSystem == Foundation::CS_CYLINDRICAL)
         {
           cell[i][j][k].cxp_c = (getDXM(i)*getKXP(i,j,k))/
               ((getDXM(i) + getDXP(i))*getDXP(i));
@@ -304,8 +292,7 @@ void Domain::setDomain(Foundation &foundation)
             ((getDZM(k) + getDZP(k))*getDZM(k));
 
         // Cartesian Y terms
-        if (foundation.coordinateSystem == Foundation::CS_3D ||
-          foundation.coordinateSystem == Foundation::CS_3D_SYMMETRY)
+        if (foundation.numberOfDimensions == 3)
         {
           cell[i][j][k].cyp = (2*getKYP(i,j,k))/
               ((getDYM(j) + getDYP(j))*getDYP(j));
@@ -680,6 +667,18 @@ void Domain::setZeroThicknessCellProperties(std::size_t i,
       totalVolume;
 }
 
+int Domain::getNumZeroDims(std::size_t i,std::size_t j,std::size_t k)
+{
+  int numZeroDims = 0;
+  if (isEqual(meshX.deltas[i], 0.0))
+    numZeroDims += 1;
+  if (isEqual(meshY.deltas[j], 0.0))
+    numZeroDims += 1;
+  if (isEqual(meshZ.deltas[k], 0.0))
+    numZeroDims += 1;
+
+  return numZeroDims;
+}
 void Domain::printCellTypes()
 {
   // TODO: Make the ability to output a specific slice in i, j, or k

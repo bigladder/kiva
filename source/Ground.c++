@@ -28,13 +28,23 @@ static const double PI = 4.0*atan(1.0);
 static const bool TDMA = true;
 
 Ground::Ground(WeatherData &weatherData, Foundation &foundation,
-               SimulationControl &simulationControl, std::string outputFileName) :
+               SimulationControl &simulationControl, std::string outputFileName, bool preprocess) :
                foundation(foundation), simulationControl(simulationControl),
-               weatherData(weatherData)
+               weatherData(weatherData), preprocess(preprocess)
 {
-  // set up output file
-  outputFile.open(outputFileName.c_str());
-  outputFile << "Time Stamp" << printOutputHeaders() << "\n";
+  if (!preprocess)
+  {
+    // set up output file
+    outputFile.open(outputFileName.c_str());
+    outputFile << "Time Stamp" << printOutputHeaders() << std::endl;
+  }
+
+  if (foundation.reductionStrategy == Foundation::RS_BOUNDARY)
+  {
+    calculateBoundaryLayer();
+    setNewBoundaryGeometry();
+  }
+
 
   // Build Domain Object
   buildDomain();
@@ -67,7 +77,8 @@ void Ground::buildDomain()
   if (foundation.deepGroundBoundary == Foundation::DGB_AUTO)
     foundation.deepGroundTemperature = weatherData.dryBulbTemp.getAverage();
 
-  std::cout << "Creating Domain..." << "\n";
+  if (!preprocess)
+    std::cout << "Creating Domain..." << std::endl;
   foundation.createMeshData();
 
   // Build matrices for PDE term coefficients
@@ -77,7 +88,15 @@ void Ground::buildDomain()
   nY = domain.meshY.centers.size();
   nZ = domain.meshZ.centers.size();
 
-  //domain.printCellTypes();
+  if (!preprocess)
+  {
+    std::cout << "  X Cells: " << nX << std::endl;
+    std::cout << "  Y Cells: " << nY << std::endl;
+    std::cout << "  Z Cells: " << nZ << std::endl;
+    std::cout << "  Total Cells: " << nX*nY*nZ << std::endl;
+
+    //domain.printCellTypes();
+  }
 }
 
 void Ground::initializeConditions()
@@ -161,7 +180,7 @@ void Ground::initializeConditions()
 
     lis_vector_duplicate(b,&x);
 
-    lis_vector_set_all(283.15,x);
+    lis_vector_set_all(annualAverageDryBulbTemperature,x);
     lis_solver_create(&solver);
     lis_solver_set_option(&solverOptions[0],solver);
 #endif
@@ -178,7 +197,8 @@ void Ground::initializeConditions()
 
   if (foundation.numericalScheme != Foundation::NS_STEADY_STATE)
   {
-    std::cout << "Initializing Temperatures..." << "\n";
+    if (!preprocess)
+        std::cout << "Initializing Temperatures..." << std::endl;
 
     // Calculate initial time in seconds (simulation start minus warmup and acceleration periods)
     double simulationTimestep = simulationControl.timestep.total_seconds();
@@ -266,8 +286,7 @@ void Ground::initializePlots()
     if (!foundation.outputAnimations[p].endDateSet)
       foundation.outputAnimations[p].endDate = simulationControl.endDate;
 
-    if (foundation.coordinateSystem == Foundation::CS_3D ||
-      foundation.coordinateSystem == Foundation::CS_3D_SYMMETRY)
+    if (foundation.numberOfDimensions == 3)
     {
       if (!foundation.outputAnimations[p].xRangeSet)
       {
@@ -335,7 +354,7 @@ void Ground::initializePlots()
 
 void Ground::simulate()
 {
-  std::cout << "Beginning Simulation..." << "\n";
+  std::cout << "Beginning Simulation..." << std::endl;
 
   boost::posix_time::ptime simStart = simulationControl.startTime;
   boost::posix_time::ptime simEnd(simulationControl.endDate + boost::gregorian::days(1));
@@ -354,13 +373,13 @@ void Ground::simulate()
 
     if (t - prevOutputTime >= foundation.outputReport.minFrequency.total_seconds())
     {
-      outputFile << to_simple_string(getSimTime(t)) << printOutputLine() << "\n";
+      outputFile << to_simple_string(getSimTime(t)) << printOutputLine() << std::endl;
       prevOutputTime = t;
     }
 
   }
 
-  std::cout << getSimTime(tend - timestep) << " (100%)\n";
+  std::cout << "  " << getSimTime(tend - timestep) << " (100%)" << std::endl;
 
 }
 
@@ -460,7 +479,7 @@ void Ground::calculateADEUpwardSweep()
 
           case Surface::INTERIOR_TEMPERATURE:
 
-            U[i][j][k] = foundation.indoorAirTemperature;
+            U[i][j][k] = getIndoorTemperature();
             break;
 
           case Surface::EXTERIOR_TEMPERATURE:
@@ -470,7 +489,7 @@ void Ground::calculateADEUpwardSweep()
 
           case Surface::INTERIOR_FLUX:
             {
-            double Tair = foundation.indoorAirTemperature;
+            double Tair = getIndoorTemperature();
             double q = domain.cell[i][j][k].heatGain;
 
             double hc = getConvectionCoeff(TOld[i][j][k],
@@ -551,7 +570,7 @@ void Ground::calculateADEUpwardSweep()
           }
           break;
         case Cell::INTERIOR_AIR:
-          U[i][j][k] = foundation.indoorAirTemperature;
+          U[i][j][k] = getIndoorTemperature();
           break;
         case Cell::EXTERIOR_AIR:
           U[i][j][k] = getOutdoorTemperature();
@@ -569,8 +588,7 @@ void Ground::calculateADEUpwardSweep()
           double CYM = domain.cell[i][j][k].cym*theta;
           double Q = domain.cell[i][j][k].heatGain*theta;
 
-          if (foundation.coordinateSystem == Foundation::CS_3D ||
-            foundation.coordinateSystem == Foundation::CS_3D_SYMMETRY)
+          if (foundation.numberOfDimensions == 3)
             U[i][j][k] = (UOld[i][j][k]*(1.0 - CXP - CZP - CYP)
                 - U[i-1][j][k]*CXM
                 + UOld[i+1][j][k]*CXP
@@ -663,7 +681,7 @@ void Ground::calculateADEDownwardSweep()
 
           case Surface::INTERIOR_TEMPERATURE:
 
-            V[i][j][k] = foundation.indoorAirTemperature;
+            V[i][j][k] = getIndoorTemperature();
             break;
 
           case Surface::EXTERIOR_TEMPERATURE:
@@ -673,7 +691,7 @@ void Ground::calculateADEDownwardSweep()
 
           case Surface::INTERIOR_FLUX:
             {
-            double Tair = foundation.indoorAirTemperature;
+            double Tair = getIndoorTemperature();
             double q = 0;
 
             double hc = getConvectionCoeff(TOld[i][j][k],
@@ -755,7 +773,7 @@ void Ground::calculateADEDownwardSweep()
           break;
 
         case Cell::INTERIOR_AIR:
-          V[i][j][k] = foundation.indoorAirTemperature;
+          V[i][j][k] = getIndoorTemperature();
           break;
         case Cell::EXTERIOR_AIR:
           V[i][j][k] = getOutdoorTemperature();
@@ -773,8 +791,7 @@ void Ground::calculateADEDownwardSweep()
           double CYM = domain.cell[i][j][k].cym*theta;
           double Q = domain.cell[i][j][k].heatGain*theta;
 
-          if (foundation.coordinateSystem == Foundation::CS_3D ||
-            foundation.coordinateSystem == Foundation::CS_3D_SYMMETRY)
+          if (foundation.numberOfDimensions == 3)
             V[i][j][k] = (VOld[i][j][k]*(1.0 + CXM + CZM + CYM)
                 - VOld[i-1][j][k]*CXM
                 + V[i+1][j][k]*CXP
@@ -866,7 +883,7 @@ void Ground::calculateExplicit()
 
           case Surface::INTERIOR_TEMPERATURE:
 
-            TNew[i][j][k] = foundation.indoorAirTemperature;
+            TNew[i][j][k] = getIndoorTemperature();
             break;
 
           case Surface::EXTERIOR_TEMPERATURE:
@@ -876,7 +893,7 @@ void Ground::calculateExplicit()
 
           case Surface::INTERIOR_FLUX:
             {
-            double Tair = foundation.indoorAirTemperature;
+            double Tair = getIndoorTemperature();
             double q = 0;
 
             double hc = getConvectionCoeff(TOld[i][j][k],
@@ -957,7 +974,7 @@ void Ground::calculateExplicit()
           }
           break;
         case Cell::INTERIOR_AIR:
-          TNew[i][j][k] = foundation.indoorAirTemperature;
+          TNew[i][j][k] = getIndoorTemperature();
           break;
 
         case Cell::EXTERIOR_AIR:
@@ -976,8 +993,7 @@ void Ground::calculateExplicit()
           double CYM = domain.cell[i][j][k].cym*theta;
           double Q = domain.cell[i][j][k].heatGain*theta;
 
-          if (foundation.coordinateSystem == Foundation::CS_3D ||
-            foundation.coordinateSystem == Foundation::CS_3D_SYMMETRY)
+          if (foundation.numberOfDimensions == 3)
             TNew[i][j][k] = TOld[i][j][k]*(1.0 + CXM + CZM + CYM - CXP - CZP - CYP)
                 - TOld[i-1][j][k]*CXM
                 + TOld[i+1][j][k]*CXP
@@ -1126,7 +1142,7 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
             break;
           case Surface::INTERIOR_TEMPERATURE:
             A = 1.0;
-            bVal = foundation.indoorAirTemperature;
+            bVal = getIndoorTemperature();
 
             setAmatValue(index,index,A);
             setbValue(index,bVal);
@@ -1140,7 +1156,7 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
             break;
           case Surface::INTERIOR_FLUX:
             {
-            double Tair = foundation.indoorAirTemperature;
+            double Tair = getIndoorTemperature();
             double q = 0;
 
             double hc = getConvectionCoeff(TOld[i][j][k],
@@ -1282,7 +1298,7 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
           break;
         case Cell::INTERIOR_AIR:
           A = 1.0;
-          bVal = foundation.indoorAirTemperature;
+          bVal = getIndoorTemperature();
 
           setAmatValue(index,index,A);
           setbValue(index,bVal);
@@ -1306,8 +1322,7 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
             double CYM = domain.cell[i][j][k].cym;
             double Q = domain.cell[i][j][k].heatGain;
 
-            if (foundation.coordinateSystem == Foundation::CS_3D ||
-              foundation.coordinateSystem == Foundation::CS_3D_SYMMETRY)
+            if (foundation.numberOfDimensions == 3)
             {
               A = (CXM + CZM + CYM - CXP - CZP - CYP);
               Aim = -CXM;
@@ -1374,8 +1389,7 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
             double CYM = domain.cell[i][j][k].cym*theta;
             double Q = domain.cell[i][j][k].heatGain*theta;
 
-            if (foundation.coordinateSystem == Foundation::CS_3D ||
-              foundation.coordinateSystem == Foundation::CS_3D_SYMMETRY)
+            if (foundation.numberOfDimensions == 3)
             {
               A = (1.0 + f*(CXP + CZP + CYP - CXM - CZM - CYM));
               Aim = f*CXM;
@@ -1616,7 +1630,7 @@ void Ground::calculateADI(int dim)
             break;
           case Surface::INTERIOR_TEMPERATURE:
             A = 1.0;
-            bVal = foundation.indoorAirTemperature;
+            bVal = getIndoorTemperature();
 
             setAmatValue(index,index,A);
             setbValue(index,bVal);
@@ -1630,7 +1644,7 @@ void Ground::calculateADI(int dim)
             break;
           case Surface::INTERIOR_FLUX:
             {
-            double Tair = foundation.indoorAirTemperature;
+            double Tair = getIndoorTemperature();
             double q = 0;
 
             double hc = getConvectionCoeff(TOld[i][j][k],
@@ -1868,7 +1882,7 @@ void Ground::calculateADI(int dim)
           break;
         case Cell::INTERIOR_AIR:
           A = 1.0;
-          bVal = foundation.indoorAirTemperature;
+          bVal = getIndoorTemperature();
 
           setAmatValue(index,index,A);
           setbValue(index,bVal);
@@ -1883,8 +1897,7 @@ void Ground::calculateADI(int dim)
         default:
           {
           double theta;
-          if (foundation.coordinateSystem == Foundation::CS_3D ||
-            foundation.coordinateSystem == Foundation::CS_3D_SYMMETRY)
+          if (foundation.numberOfDimensions == 3)
           {
             theta = timestep/
                 (3*domain.cell[i][j][k].density*domain.cell[i][j][k].specificHeat);
@@ -1905,8 +1918,7 @@ void Ground::calculateADI(int dim)
 
           double f = foundation.fADI;
 
-          if (foundation.coordinateSystem == Foundation::CS_3D ||
-            foundation.coordinateSystem == Foundation::CS_3D_SYMMETRY)
+          if (foundation.numberOfDimensions == 3)
           {
             if (dim == 1) // x
             {
@@ -2040,8 +2052,7 @@ void Ground::calculate(double t)
     break;
   case Foundation::NS_ADI:
     calculateADI(1);
-    if (foundation.coordinateSystem == Foundation::CS_3D ||
-      foundation.coordinateSystem == Foundation::CS_3D_SYMMETRY)
+    if (foundation.numberOfDimensions == 3)
       calculateADI(2);
     calculateADI(3);
     break;
@@ -2056,9 +2067,11 @@ void Ground::calculate(double t)
     break;
   }
 
-  plot();
-
-  printStatus(t);
+  if (!preprocess)
+  {
+    plot();
+    printStatus(t);
+  }
 }
 
 void Ground::plot()
@@ -2069,7 +2082,82 @@ void Ground::plot()
     {
       boost::posix_time::ptime time(simulationControl.startDate,boost::posix_time::seconds(tNow));
       std::string timeStamp = to_simple_string(time);
-      plots[p].createFrame(TNew, timeStamp);
+
+      std::size_t nI =  plots[p].iMax - plots[p].iMin + 1;
+      std::size_t nJ = plots[p].jMax - plots[p].jMin + 1;
+
+      for(size_t k = plots[p].kMin; k <= plots[p].kMax; k++)
+      {
+        for(size_t j = plots[p].jMin; j <= plots[p].jMax; j++)
+        {
+          for(size_t i = plots[p].iMin; i <= plots[p].iMax; i++)
+          {
+            std::size_t index = (i-plots[p].iMin)+nI*(j-plots[p].jMin)+nI*nJ*(k-plots[p].kMin);
+            if (foundation.outputAnimations[p].plotType == OutputAnimation::P_TEMP)
+            {
+              if (foundation.outputAnimations[p].outputUnits == OutputAnimation::IP)
+                plots[p].TDat.a[index] = (TNew[i][j][k] - 273.15)*9/5 + 32.0;
+              else
+                plots[p].TDat.a[index] = TNew[i][j][k] - 273.15;
+            }
+            else
+            {
+              double du = plots[p].distanceUnitConversion;
+              std::vector<double> Qflux = calculateHeatFlux(i,j,k);
+              double Qx = Qflux[0];
+              double Qy = Qflux[1];
+              double Qz = Qflux[2];
+              double Qmag = sqrt(Qx*Qx + Qy*Qy + Qz*Qz);
+
+              if (foundation.outputAnimations[p].fluxDir == OutputAnimation::D_M)
+                plots[p].TDat.a[index] = Qmag/(du*du);
+              else if (foundation.outputAnimations[p].fluxDir == OutputAnimation::D_X)
+                plots[p].TDat.a[index] = Qx/(du*du);
+              else if (foundation.outputAnimations[p].fluxDir == OutputAnimation::D_Y)
+                plots[p].TDat.a[index] = Qy/(du*du);
+              else if (foundation.outputAnimations[p].fluxDir == OutputAnimation::D_Z)
+                plots[p].TDat.a[index] = Qz/(du*du);
+            }
+          }
+        }
+      }
+
+      /*
+      std::ofstream output;
+      output.open("Plot.csv");
+
+      for (std::size_t i = 0; i < nX; i++)
+      {
+
+        output << ", " << i;
+
+      }
+
+      output << "\n";
+
+      for (std::size_t k = nZ - 1; k >= 0 && k < nZ; k--)
+      {
+
+        output << k;
+
+        for (std::size_t i = 0; i < nX; i++)
+        {
+
+          std::vector<double> Qflux = calculateHeatFlux(i,nY/2,k);
+          double Qx = Qflux[0];
+          double Qy = Qflux[1];
+          double Qz = Qflux[2];
+          double Qmag = sqrt(Qx*Qx + Qy*Qy + Qz*Qz);
+
+          output << ", " << Qflux[3];
+
+        }
+
+        output << "\n";
+      }
+      output.close();*/
+
+      plots[p].createFrame(timeStamp);
     }
   }
 }
@@ -2083,11 +2171,11 @@ void Ground::printStatus(double t)
   {
     if (initPeriod)
     {
-      std::cout << simTime << "\n";
+      std::cout << "  " << simTime << std::endl;
     }
     else
     {
-      std::cout << simTime << " (" << percentComplete << "%)\n";
+      std::cout << "  " << simTime << " (" << percentComplete << "%)" << std::endl;
     }
 
     prevStatusUpdate = currentTime;
@@ -2161,7 +2249,7 @@ void Ground::solveLinearSystem()
       std::cout << "Warning: Solution did not converge after ";
       std::cout << iters << " iterations." << "\n";
       std::cout << "  The final residual was: " << residual << "\n";
-      std::cout << "  Solver status: " << status << "\n";
+      std::cout << "  Solver status: " << status << std::endl;
 
     }
     //lis_output(Amat,b,x,LIS_FMT_MM,"Matrix.mtx");
@@ -2241,15 +2329,15 @@ double Ground::getInitialTemperature(double t, double z)
     boost::posix_time::ptime tYearStart(dayBegin);
     boost::posix_time::time_duration tSinceYearStart = tp - tYearStart;
     double trel = tSinceYearStart.total_seconds();
-    double tshift = 0;  // Assume min temperature occurs at the beginning of the year
+    double tshift = weatherData.hourOfMinimumTemperature*60.0*60.0;
     double seconds_in_day = 60.0*60.0*24.0;
-    double Tamp = (maxDryBulb - minDryBulb) / 2.0;
+    double Tamp = (weatherData.maximumAverageMontlyTemperature - weatherData.minimumAverageMontlyTemperature) / 2.0;
     double diff = foundation.soil.conductivity/(foundation.soil.density*foundation.soil.specificHeat);
 
+    //std::cout << "Amplitude: " << Tamp << std::endl;
+
     return annualAverageDryBulbTemperature
-        - Tamp*exp(z*pow(PI/(365*seconds_in_day*diff),0.5))
-        *cos(2*PI/(365*seconds_in_day)*(trel - tshift
-        - z/2*pow((365*seconds_in_day)/(PI*diff),0.5)));
+        - Tamp*exp(z*sqrt(PI/(365*seconds_in_day*diff)))*cos((2*PI)/(365*seconds_in_day)*(trel - tshift + z*0.5*sqrt((365*seconds_in_day)/(PI*diff))));
   }
   else //if (foundation.initializationMethod == Foundation::IM_CONSTANT_TEMPERATURE)
     return foundation.initialTemperature;
@@ -2287,6 +2375,14 @@ double Ground::getOutdoorTemperature()
     return weatherData.dryBulbTemp.getValue(getSimTime(tNow));
   else // if (foundation.outdoorTemperatureMethod == Foundation::OTM_CONSTANT_TEMPERATURE)
     return foundation.outdoorDryBulbTemperature;
+}
+
+double Ground::getIndoorTemperature()
+{
+  if (foundation.indoorTemperatureMethod == Foundation::ITM_FILE)
+    return foundation.indoorAirTemperatureFile.data.getValue(getSimTime(tNow));
+  else // if (foundation.indoorTemperatureMethod == Foundation::ITM_CONSTANT_TEMPERATURE)
+    return foundation.indoorAirTemperature;
 }
 
 double Ground::getLocalWindSpeed()
@@ -2341,8 +2437,7 @@ void Ground::setSolarBoundaryConditions()
       {
         tilt = PI/2.0;
 
-        if (foundation.coordinateSystem == Foundation::CS_2DAXIAL ||
-                 foundation.coordinateSystem == Foundation::CS_2DLINEAR)
+        if (foundation.numberOfDimensions == 2)
         {
           // incidence is the average incidence on the exterior of a vertical cylinder
           // 2*(int(cos(alt)*cos(x),x,0,PI/2))/(2*PI)
@@ -2372,7 +2467,7 @@ void Ground::setSolarBoundaryConditions()
             aziSurf = aziXNeg;
           }
 
-          if (foundation.coordinateSystem == Foundation::CS_3D)
+          if (foundation.numberOfDimensions == 3 && !foundation.useSymmetry)
           {
             // incidence = cos(alt)*cos(azi-aziSurf)*sin(tilt)+sin(alt)*cos(tilt)
             // simplifies for tilt = PI/2 to = cos(alt)*cos(azi-aziSurf)
@@ -2594,7 +2689,39 @@ std::string Ground::printOutputLine()
       else
         valueString = "null";
     }
-      else if (foundation.outputReport[o].variableID == 8)
+    else if (foundation.outputReport[o].variableID == 8)
+    {
+      // "Slab Average Heat Flux [W/m2]"
+      double coreArea = getSurfaceArea("Slab Interior");
+      double coreTotal = getSurfaceAverageHeatFlux("Slab Interior")*coreArea;
+      double perimeterArea = 0.0;
+      double perimeterTotal = 0.0;
+      if (foundation.hasPerimeterSurface)
+      {
+        perimeterArea = getSurfaceArea("Slab Perimeter");
+        perimeterTotal = getSurfaceAverageHeatFlux("Slab Perimeter")*perimeterArea;
+      }
+
+      value = (coreTotal + perimeterTotal)/(coreArea + perimeterArea);
+      valueString = boost::lexical_cast<std::string>(value);
+    }
+    else if (foundation.outputReport[o].variableID == 9)
+    {
+      // "Slab Average Temperature [K]"
+      double coreArea = getSurfaceArea("Slab Interior");
+      double coreTotal = getSurfaceAverageTemperature("Slab Interior")*coreArea;
+      double perimeterArea = 0.0;
+      double perimeterTotal = 0.0;
+      if (foundation.hasPerimeterSurface)
+      {
+        perimeterArea = getSurfaceArea("Slab Perimeter");
+        perimeterTotal = getSurfaceAverageTemperature("Slab Perimeter")*perimeterArea;
+      }
+
+      value = (coreTotal + perimeterTotal)/(coreArea + perimeterArea);
+      valueString = boost::lexical_cast<std::string>(value);
+    }
+    else if (foundation.outputReport[o].variableID == 10)
     {
       // "Slab Total Heat Transfer Rate [W]"
       double coreTotal = getSurfaceAverageHeatFlux("Slab Interior")*
@@ -2607,8 +2734,7 @@ std::string Ground::printOutputLine()
       value = coreTotal + perimeterTotal;
       valueString = boost::lexical_cast<std::string>(value);
     }
-
-    else if (foundation.outputReport[o].variableID == 9)
+    else if (foundation.outputReport[o].variableID == 11)
     {
       // "Wall Average Heat Flux [W/m2]"
       if (foundation.foundationDepth > 0.0)
@@ -2620,7 +2746,7 @@ std::string Ground::printOutputLine()
         valueString = "null";
 
     }
-    else if (foundation.outputReport[o].variableID == 10)
+    else if (foundation.outputReport[o].variableID == 12)
     {
       // "Wall Average Temperature [K]"
       if (foundation.foundationDepth > 0.0)
@@ -2631,7 +2757,7 @@ std::string Ground::printOutputLine()
       else
         valueString = "null";
     }
-    else if (foundation.outputReport[o].variableID == 11)
+    else if (foundation.outputReport[o].variableID == 13)
     {
       // "Wall Average Effective Temperature [C]"
       if (foundation.foundationDepth > 0.0)
@@ -2642,7 +2768,7 @@ std::string Ground::printOutputLine()
       else
         valueString = "null";
     }
-    else if (foundation.outputReport[o].variableID == 12)
+    else if (foundation.outputReport[o].variableID == 14)
     {
       // "Wall Total Heat Transfer Rate [W]"
       if (foundation.foundationDepth > 0.0)
@@ -2654,9 +2780,59 @@ std::string Ground::printOutputLine()
       else
         valueString = "null";
     }
-    else if (foundation.outputReport[o].variableID == 13)
+    else if (foundation.outputReport[o].variableID == 15)
     {
-      // "Total Heat Transfer Rate [W]"
+      // "Foundation Average Heat Flux [W/m2]"
+      double coreArea = getSurfaceArea("Slab Interior");
+      double coreTotal = getSurfaceAverageHeatFlux("Slab Interior")*coreArea;
+
+      double perimeterArea = 0.0;
+      double perimeterTotal = 0.0;
+      if (foundation.hasPerimeterSurface)
+      {
+        perimeterArea = getSurfaceArea("Slab Perimeter");
+        perimeterTotal = getSurfaceAverageHeatFlux("Slab Perimeter")*perimeterArea;
+      }
+
+      double wallArea = 0.0;
+      double wallTotal = 0.0;
+      if (foundation.foundationDepth > 0.0)
+      {
+        wallArea = getSurfaceArea("Interior Wall");
+        wallTotal = getSurfaceAverageHeatFlux("Interior Wall")*wallArea;
+      }
+
+      value = (coreTotal + perimeterTotal + wallTotal)/(coreArea + perimeterArea + wallArea);
+      valueString = boost::lexical_cast<std::string>(value);
+    }
+    else if (foundation.outputReport[o].variableID == 16)
+    {
+      // "Foundation Average Temperature [K]"
+      double coreArea = getSurfaceArea("Slab Interior");
+      double coreTotal = getSurfaceAverageTemperature("Slab Interior")*coreArea;
+
+      double perimeterArea = 0.0;
+      double perimeterTotal = 0.0;
+      if (foundation.hasPerimeterSurface)
+      {
+        perimeterArea = getSurfaceArea("Slab Perimeter");
+        perimeterTotal = getSurfaceAverageTemperature("Slab Perimeter")*perimeterArea;
+      }
+
+      double wallArea = 0.0;
+      double wallTotal = 0.0;
+      if (foundation.foundationDepth > 0.0)
+      {
+        wallArea = getSurfaceArea("Interior Wall");
+        wallTotal = getSurfaceAverageTemperature("Interior Wall")*wallArea;
+      }
+
+      value = (coreTotal + perimeterTotal + wallTotal)/(coreArea + perimeterArea + wallArea);
+      valueString = boost::lexical_cast<std::string>(value);
+    }
+    else if (foundation.outputReport[o].variableID == 17)
+    {
+      // "Foundation Total Heat Transfer Rate [W]"
       double coreTotal = getSurfaceAverageHeatFlux("Slab Interior")*
           getSurfaceArea("Slab Interior");
       double perimeterTotal = 0.0;
@@ -2700,7 +2876,7 @@ double Ground::getSurfaceAverageHeatFlux(std::string surfaceName)
       else
         tilt = PI/2.0;
 
-      double Tair = foundation.indoorAirTemperature;
+      double Tair = getIndoorTemperature();
 
       for (std::size_t index = 0; index < foundation.surfaces[s].indices.size(); index++)
       {
@@ -2730,7 +2906,7 @@ double Ground::getSurfaceEffectiveTemperature(std::string surfaceName, double co
   double TA = 0;
   double totalArea = 0;
 
-  double Tair = foundation.indoorAirTemperature;
+  double Tair = getIndoorTemperature();
 
   // Find surface(s)
   for (size_t s = 0; s < foundation.surfaces.size(); s++)
@@ -2819,6 +2995,408 @@ double Ground::getSurfaceAverageTemperature(std::string surfaceName)
   }
 
   return TA/totalArea;
+
+}
+
+std::vector<double> Ground::calculateHeatFlux(const size_t &i, const size_t &j, const size_t &k)
+{
+  std::vector<double> Qflux;
+  double Qx = 0;
+  double Qy = 0;
+  double Qz = 0;
+
+  double CXP = -domain.getKXP(i,j,k)*domain.getDXM(i)/(domain.getDXP(i)+domain.getDXM(i))/domain.getDXP(i);
+  double CXM = -domain.getKXM(i,j,k)*domain.getDXP(i)/(domain.getDXP(i)+domain.getDXM(i))/domain.getDXM(i);
+  double CYP = 0;
+  double CYM = 0;
+  double CZP = -domain.getKZP(i,j,k)*domain.getDZM(k)/(domain.getDZP(k)+domain.getDZM(k))/domain.getDZP(k);
+  double CZM = -domain.getKZM(i,j,k)*domain.getDZP(k)/(domain.getDZP(k)+domain.getDZM(k))/domain.getDZM(k);
+
+  if (foundation.numberOfDimensions == 3)
+  {
+    CYP = -domain.getKYP(i,j,k)*domain.getDYM(j)/(domain.getDYP(j)+domain.getDYM(j))/domain.getDYP(j);
+    CYM = -domain.getKYM(i,j,k)*domain.getDYP(j)/(domain.getDYP(j)+domain.getDYM(j))/domain.getDYM(j);
+  }
+
+  double DTXP = 0;
+  double DTXM = 0;
+  double DTYP = 0;
+  double DTYM = 0;
+  double DTZP = 0;
+  double DTZM = 0;
+
+  if (i != nX - 1)
+    DTXP = TNew[i+1][j][k]-TNew[i][j][k];
+
+  if (i != 0)
+    DTXM = TNew[i][j][k]-TNew[i-1][j][k];
+
+  if (j != nY - 1)
+    DTYP = TNew[i][j+1][k]-TNew[i][j][k];
+
+  if (j != 0)
+    DTYM = TNew[i][j][k]-TNew[i][j-1][k];
+
+  if (k != nZ - 1)
+    DTZP = TNew[i][j][k+1]-TNew[i][j][k];
+
+  if (k != 0)
+    DTZM = TNew[i][j][k]-TNew[i][j][k-1];
+
+  switch (domain.cell[i][j][k].cellType)
+  {
+    case Cell::BOUNDARY:
+      {
+        switch (domain.cell[i][j][k].surface.orientation)
+        {
+          case Surface::X_NEG:
+            {
+              CXP = -domain.getKXP(i,j,k)/domain.getDXP(i);
+              CXM = 0;
+            }
+          break;
+          case Surface::X_POS:
+            {
+              CXP = 0;
+              CXM = -domain.getKXM(i,j,k)/domain.getDXM(i);
+            }
+          break;
+          case Surface::Y_NEG:
+            {
+              CYP = -domain.getKYP(i,j,k)/domain.getDYP(j);
+              CYM = 0;
+            }
+          break;
+          case Surface::Y_POS:
+            {
+              CYP = 0;
+              CYM = -domain.getKYM(i,j,k)/domain.getDYM(j);
+            }
+          break;
+          case Surface::Z_NEG:
+            {
+              CZP = -domain.getKZP(i,j,k)/domain.getDZP(k);
+              CZM = 0;
+            }
+          break;
+          case Surface::Z_POS:
+            {
+              CZP = 0;
+              CZM = -domain.getKZM(i,j,k)/domain.getDZM(k);
+            }
+          break;
+        }
+        Qx = CXP*DTXP + CXM*DTXM;
+        Qy = CYP*DTYP + CYM*DTYM;
+        Qz = CZP*DTZP + CZM*DTZM;
+      }
+      break;
+    case Cell::INTERIOR_AIR:
+      break;
+    case Cell::EXTERIOR_AIR:
+      break;
+    case Cell::ZERO_THICKNESS:
+      {
+        int numZeroDims = domain.getNumZeroDims(i,j,k);
+
+        std::vector<double> Qm;
+        std::vector<double> Qp;
+
+        if (isEqual(domain.meshX.deltas[i], 0.0))
+        {
+          Qm = calculateHeatFlux(i-1,j,k);
+          Qp = calculateHeatFlux(i+1,j,k);
+        }
+        if (isEqual(domain.meshY.deltas[j], 0.0))
+        {
+          Qm = calculateHeatFlux(i,j-1,k);
+          Qp = calculateHeatFlux(i,j+1,k);
+        }
+        if (isEqual(domain.meshZ.deltas[k], 0.0))
+        {
+          Qm = calculateHeatFlux(i,j,k-1);
+          Qp = calculateHeatFlux(i,j,k+1);
+        }
+
+        Qx = (Qm[0] + Qp[0])*0.5;
+        Qy = (Qm[1] + Qp[1])*0.5;
+        Qz = (Qm[2] + Qp[2])*0.5;
+      }
+      break;
+    default:
+      {
+        Qx = CXP*DTXP + CXM*DTXM;
+        Qy = CYP*DTYP + CYM*DTYM;
+        Qz = CZP*DTZP + CZM*DTZM;
+      }
+    break;
+  }
+
+  Qflux.push_back(Qx);
+  Qflux.push_back(Qy);
+  Qflux.push_back(Qz);
+
+  return Qflux;
+}
+
+void Ground::calculateBoundaryLayer()
+{
+  WeatherData wd = weatherData;
+  Foundation fd = foundation;
+  SimulationControl sc = simulationControl;
+
+  wd.windSpeed[0] = 0;
+  wd.dryBulbTemp[0] = 273.15;
+  fd.outdoorTemperatureMethod = Foundation::OTM_CONSTANT_TEMPERATURE;
+  fd.outdoorDryBulbTemperature = 273.15;
+  fd.coordinateSystem = Foundation::CS_CARTESIAN;
+  fd.numberOfDimensions = 2;
+  fd.reductionStrategy = Foundation::RS_AP;
+  fd.numericalScheme = Foundation::NS_STEADY_STATE;
+  fd.initializationMethod = Foundation::IM_STEADY_STATE;
+  fd.farFieldWidth = 100;
+  fd.warmupDays = 0;
+  fd.implicitAccelPeriods = 0;
+  fd.indoorAirTemperature = 293.15;
+  fd.soilAbsorptivity = 0.0;
+  fd.soilEmissivity = 0.0;
+  fd.wall.exteriorEmissivity = 0.0;
+  fd.wall.exteriorAbsorptivity = 0.0;
+  fd.outputReport = OutputReport();
+  fd.outputAnimations = std::vector<OutputAnimation>();
+  sc.endDate = sc.startDate + boost::gregorian::days(1);
+  sc.timestep = boost::posix_time::hours(36);
+
+  Ground pre(wd,fd,sc,"",true);
+  pre.calculate(0.0);
+
+  std::vector<double> x2s;
+  std::vector<double> fluxSums;
+
+
+  double fluxSum = 0.0;
+
+  double x1_0;
+
+  bool firstIndex = true;
+
+  size_t i_min = pre.domain.meshX.getNearestIndex(boost::geometry::area(foundation.polygon)/
+      boost::geometry::perimeter(foundation.polygon));
+
+  size_t k = pre.domain.meshZ.getNearestIndex(0.0);
+
+  size_t j = pre.nY/2;
+
+  for (size_t i = i_min; i < pre.nX; i++)
+  {
+    double Qz = pre.calculateHeatFlux(i,j,k)[2];
+    double x = pre.domain.meshX.centers[i];
+    double x1 = pre.domain.meshX.dividers[i];
+    double x2 = pre.domain.meshX.dividers[i+1];
+
+    if (Qz > 0.0)
+    {
+      fluxSum += std::max(Qz,0.0)*(x2-x1);
+
+      if (firstIndex)
+        x1_0 = x1;
+      x2s.push_back(x2);
+      fluxSums.push_back(fluxSum);
+
+      firstIndex = false;
+    }
+
+  }
+
+  //std::ofstream output;
+  //output.open("Boundary.csv");
+
+  //output << 0.0 << ", " << 0.0 << "\n";
+
+  boundaryLayer.push_back(std::make_pair(0,0));
+
+  for (std::size_t i; i < fluxSums.size() - 1; i++) // last cell is a zero-thickness cell, so don't include it.
+  {
+    //output << x2s[i] - x1_0 << ", " << fluxSums[i]/fluxSum << "\n";
+    boundaryLayer.push_back(std::make_pair(x2s[i] - x1_0,fluxSums[i]/fluxSum));
+  }
+
+}
+
+double Ground::getBoundaryValue(double dist)
+{
+  double val;
+  if (dist > boundaryLayer[boundaryLayer.size()-1].first)
+    val = 1.0;
+  else
+  {
+    for (std::size_t i = 0; i < boundaryLayer.size()-1; i++)
+    {
+      if (dist >= boundaryLayer[i].first && dist < boundaryLayer[i+1].first)
+      {
+        double m = (boundaryLayer[i+1].first - boundaryLayer[i].first)/
+            (boundaryLayer[i+1].second - boundaryLayer[i].second);
+        val = (dist - boundaryLayer[i].first)/m + boundaryLayer[i].second;
+        continue;
+      }
+    }
+  }
+  return val;
+}
+
+double Ground::getBoundaryDistance(double val)
+{
+  double dist;
+  if (val > 1.0 || val < 0.0)
+  {
+    std::cerr << "ERROR: Boundary value passed not between 0.0 and 1.0." << std::endl;
+    exit (EXIT_FAILURE);
+  }
+  else
+  {
+    for (std::size_t i = 0; i < boundaryLayer.size()-1; i++)
+    {
+      if (val >= boundaryLayer[i].second && val < boundaryLayer[i+1].second)
+      {
+        double m = (boundaryLayer[i+1].second - boundaryLayer[i].second)/
+            (boundaryLayer[i+1].first - boundaryLayer[i].first);
+        dist = (val - boundaryLayer[i].second)/m + boundaryLayer[i].first;
+        continue;
+      }
+    }
+  }
+  return dist;
+}
+
+void Ground::setNewBoundaryGeometry()
+{
+  double area = boost::geometry::area(foundation.polygon);
+  double perimeter = boost::geometry::perimeter(foundation.polygon);
+
+  std::size_t nV = foundation.polygon.outer().size();
+  for (std::size_t v = 0; v < nV; v++)
+  {
+    Point b = foundation.polygon.outer()[v];
+
+    Point a;
+    if (v == 0)
+      a = foundation.polygon.outer()[nV-1];
+    else
+      a = foundation.polygon.outer()[v-1];
+
+    Point c;
+    if (v == nV -1)
+      c = foundation.polygon.outer()[0];
+    else
+      c = foundation.polygon.outer()[v+1];
+
+    Point d;
+    if (v == nV -2)
+      d = foundation.polygon.outer()[0];
+    else if (v == nV -1)
+      d = foundation.polygon.outer()[1];
+    else
+      d = foundation.polygon.outer()[v+2];
+
+    // Correct U-turns
+    if (isEqual(getAngle(a,b,c) + getAngle(b,c,d),PI))
+    {
+      double AB = getDistance(a,b);
+      double BC = getDistance(b,c);
+      double CD = getDistance(c,d);
+      double edgeDistance = BC;
+      double reductionDistance = std::min(AB,CD);
+      double reductionValue = 1 - getBoundaryValue(edgeDistance);
+      perimeter -= reductionValue*(AB+CD);
+    }
+
+    double alpha = getAngle(a,b,c);
+    double A = getDistance(a,b);
+    double B = getDistance(b,c);
+
+
+    if (sin(alpha) > 0)
+    {
+      double f = getBoundaryDistance(1-sin(alpha/2)/(1+cos(alpha/2)))/sin(alpha/2);
+
+      /* // Fillet
+      double r = f/(1/sin(alpha/2)-1);
+      double d = r/tan(alpha/2);
+
+      if (A < d && B > d)
+      {
+        B = A*cos(alpha) + sqrt(r*r - (r-A*sin(alpha))*(r-A*sin(alpha)));
+      }
+      else if (B < d && A > d)
+      {
+        A = B*cos(alpha) + sqrt(r*r - (r-B*sin(alpha))*(r-B*sin(alpha)));
+      }
+      else
+      {
+        A = std::min(A,d);
+        B = std::min(B,d);
+      }
+
+      double C = sqrt(A*A + B*B - 2*A*B*cos(alpha));
+      double theta = 2.*asin((0.5*C)/r);
+
+      area += (A*B*sin(alpha)/2)-r*r/2*(theta-sin(theta));
+      perimeter += theta*r - (A + B);*/
+
+      // Chamfer
+      double d = f/cos(alpha/2);
+      if (A < d || B < d)
+      {
+        A = std::min(A,B);
+        B = std::min(A,B);
+      }
+      else
+      {
+        A = d;
+        B = d;
+      }
+      double C = sqrt(A*A + B*B - 2*A*B*cos(alpha));
+
+      //area += A*B*sin(alpha)/2;
+      perimeter += C - (A + B);
+
+      /* // Angle
+      double C1 = sqrt(A*A + f*f - 2*A*f*cos(alpha/2));
+
+      double C2 = sqrt(B*B + f*f - 2*B*f*cos(alpha/2));
+
+      area += A*f*sin(alpha/2)/2 + B*f*sin(alpha/2)/2;
+      perimeter += (C1 + C2) - (A + B);*/
+    }
+    /*
+    else // convex corners
+    {
+      double f = -getBoundaryDistance(1 - (1 + cos(alpha/2))/sin(alpha/2));
+
+      // Chamfer
+      double d = f/cos(alpha/2);
+      if (A < d || B < d)
+      {
+        A = std::min(A,B);
+        B = std::min(A,B);
+      }
+      else
+      {
+        A = d;
+        B = d;
+      }
+      double C = sqrt(A*A + B*B - 2*A*B*cos(alpha));
+
+      area += A*B*sin(alpha)/2;
+      perimeter += C - (A + B);
+
+    }*/
+
+  }
+
+  foundation.reductionStrategy = Foundation::RS_CUSTOM;
+  foundation.twoParameters = false;
+  foundation.reductionLength2 = area/perimeter;
 
 }
 

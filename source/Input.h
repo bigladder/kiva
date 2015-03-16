@@ -19,12 +19,15 @@
 #ifndef INPUT_HPP_
 #define INPUT_HPP_
 
+#include <fstream>
+
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/date_time/gregorian/gregorian.hpp>
 
 #include "Mesher.h"
 #include "Functions.h"
 #include "Geometry.h"
+#include "WeatherData.h"
 
 class SimulationControl
 {
@@ -106,6 +109,7 @@ class Mesh
 {
 public:
 
+  double maxNearGrowthCoeff;
   double maxExteriorGrowthCoeff;
   double maxInteriorGrowthCoeff;
   double maxDepthGrowthCoeff;
@@ -121,13 +125,61 @@ public:
   boost::posix_time::time_duration frequency;
   bool grid;
   bool contours;
+  bool contourLabels;
+  std::string contourColor;
   bool gradients;
+  bool axes;
+  bool timestamp;
   int size;
   boost::gregorian::date startDate;
   boost::gregorian::date endDate;
   std::pair<double, double> xRange;
   std::pair<double, double> yRange;
   std::pair<double, double> zRange;
+
+  enum PlotType
+  {
+    P_TEMP,
+    P_FLUX
+  };
+
+  PlotType plotType;
+
+  enum FluxDir
+  {
+    D_M,
+    D_X,
+    D_Y,
+    D_Z
+  };
+  FluxDir fluxDir;
+
+  enum ColorScheme
+  {
+    C_CMR,
+    C_JET,
+    C_NONE
+  };
+  ColorScheme colorScheme;
+
+  enum Format
+  {
+    F_PNG,
+    F_TEX
+  };
+  Format format;
+
+  enum OutputUnits
+  {
+    IP,
+    SI
+  };
+  OutputUnits outputUnits;
+
+  double minimumTemperature;
+  double maximumTemperature;
+
+  int numberOfContours;
 
   bool startDateSet;
   bool endDateSet;
@@ -216,7 +268,16 @@ public:
   void setSquarePolygon();
 };
 
+class DataFile
+{
+public:
+  std::string fileName;
+  std::pair<int, int> firstIndex;
+  HourlyData data;
 
+  void readData();
+
+};
 
 class RangeType
 {
@@ -270,6 +331,15 @@ public:
   DeepGroundBoundary deepGroundBoundary;
 
   double indoorAirTemperature; // [K]
+  DataFile indoorAirTemperatureFile;
+
+  enum IndoorTemperatureMethod
+  {
+    ITM_FILE,
+    ITM_CONSTANT_TEMPERATURE
+  };
+
+  IndoorTemperatureMethod indoorTemperatureMethod;
 
   Material soil;
   double soilAbsorptivity;  // [frac]
@@ -285,12 +355,32 @@ public:
   // Geometry
   enum CoordinateSystem
   {
-    CS_2DAXIAL,
-    CS_2DLINEAR,
-    CS_3D,
-    CS_3D_SYMMETRY
+    CS_CARTESIAN,
+    CS_CYLINDRICAL
   };
   CoordinateSystem coordinateSystem;
+
+  int numberOfDimensions;  // 2 or 3
+
+  bool useSymmetry;
+
+  enum ReductionStrategy
+  {
+    RS_AP,
+    RS_AP_APNEG,
+    RS_RR,
+    RS_A_P,
+    RS_AP_PNEG,
+    RS_CUSTOM,
+    RS_BOUNDARY
+  };
+  ReductionStrategy reductionStrategy;
+
+  bool twoParameters;
+  double reductionLength1;
+  double reductionLength2;
+
+  double linearAreaMultiplier;
 
   Polygon polygon;
   bool isXSymm, isYSymm;
@@ -388,10 +478,6 @@ public:
   OutputReport outputReport;
 
   // Derived variables
-  double area;  // [m2] Area of foundation
-  double perimeter;  // [m] Perimeter of foundation
-  double effectiveLength;
-
   MeshData xMeshData;
   MeshData yMeshData;
   MeshData zMeshData;

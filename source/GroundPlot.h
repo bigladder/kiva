@@ -49,9 +49,8 @@ enum SliceType
 class GroundPlot
 {
 private:
-  mglData TDat, hDat, vDat, cDat, hGrid, vGrid, TGrid;
+  mglData hDat, vDat, cDat, hGrid, vGrid, TGrid;
 
-  std::size_t iMin, iMax, jMin, jMax, kMin, kMax;
 
   double slice;
   double xMin, xMax, yMin, yMax;
@@ -69,10 +68,15 @@ public:
   std::vector<Block> blocks;
   SliceType sliceType;
 
+  mglData TDat;
+  std::size_t iMin, iMax, jMin, jMax, kMin, kMax;
+
+  double distanceUnitConversion;
+
   double tStart, tEnd;
   double nextPlotTime;
   GroundPlot(OutputAnimation &outputAnimation, Domain &domain, std::vector<Block> &blocks);
-  void createFrame(boost::multi_array<double, 3> &T, std::string timeStamp);
+  void createFrame(std::string timeStamp);
   bool makeNewFrame(double tNow);
 };
 

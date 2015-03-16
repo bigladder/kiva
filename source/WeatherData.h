@@ -63,6 +63,12 @@ public:
   double longitude;
   double elevation;
 
+  double hourOfMinimumTemperature;
+  std::vector<double> dailyAverageTemperatures;
+  std::vector<double> monthlyAverageTemperatures;
+  double minimumAverageMontlyTemperature;
+  double maximumAverageMontlyTemperature;
+
   HourlyData dryBulbTemp;
   //HourlyData wetBulbTemp;
   HourlyData dewPointTemp;

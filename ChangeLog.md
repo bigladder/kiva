@@ -1,3 +1,17 @@
+0.2.1 Released ????
+-------------------
+### Features:
+* Microsecond resolution for elapsed time listed in stdout
+* More output variables:
+  * Slab Average Heat Flux [W/m2]
+  * Slab Average Temperature [K]
+  * Foundation Average Heat Flux [W/m2]
+  * Foundation Average Temperature [K]
+
+### Fixes:
+* Fixes for symmetric simulations.
+
+
 0.2.0 Released 11 June 2014
 ---------------------------
 

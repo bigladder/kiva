@@ -47,6 +47,14 @@ bool isEqual(double first, double second)
     return false;
 }
 
+bool isEqual(double first, double second, double epsilon)
+{
+  if(fabs(first - second) < epsilon)
+    return true;
+  else
+    return false;
+}
+
 bool isGreaterThan(double first, double second)
 {
   if(first - second > EPSILON)

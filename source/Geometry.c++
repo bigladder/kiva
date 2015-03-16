@@ -21,6 +21,9 @@
 
 #include "Geometry.h"
 
+static const double PI = 4.0*atan(1.0);
+
+
 bool isRectilinear(Polygon poly)
 {
   for (std::size_t v = 0; v < poly.outer().size(); v++)
@@ -323,7 +326,25 @@ bool isXSymmetric(Polygon poly)
   // Mirror right polygon across the centroid
   right = mirrorX(right,centroidX);
 
+  MultiPolygon intersection;
+
+  boost::geometry::intersection(left,right,intersection);
+
+  return (isEqual(boost::geometry::area(left),boost::geometry::area(intersection),1e-4));
+
+
+  /* Weird stuff needed for equals statement...
+   * Turns out the equals statement has a pretty tight tolerance
+   *
+  boost::geometry::unique(left);
+  boost::geometry::unique(right);
+
+  boost::geometry::append(left[0], Point(left[0].outer()[0].get<0>(),left[0].outer()[0].get<1>()));
+  boost::geometry::append(right[0], Point(right[0].outer()[0].get<0>(),right[0].outer()[0].get<1>()));
+
   return boost::geometry::equals(left,right);
+  */
+
 }
 
 bool isYSymmetric(Polygon poly)
@@ -351,17 +372,37 @@ bool isYSymmetric(Polygon poly)
   // Mirror top polygon across the centroid
   top = mirrorY(top,centroidY);
 
+  MultiPolygon intersection;
+
+  boost::geometry::intersection(bottom,top,intersection);
+
+  return (isEqual(boost::geometry::area(bottom),boost::geometry::area(intersection),1e-4));
+
+  /* Weird stuff needed for equals statement...
+   * Turns out the equals statement has a pretty tight tolerance
+   *
+  boost::geometry::unique(bottom);
+  boost::geometry::unique(top);
+
+  boost::geometry::append(bottom[0], Point(bottom[0].outer()[0].get<0>(),bottom[0].outer()[0].get<1>()));
+  boost::geometry::append(top[0], Point(top[0].outer()[0].get<0>(),top[0].outer()[0].get<1>()));
+
   return boost::geometry::equals(top,bottom);
+  */
 }
 
 Polygon symmetricUnit(Polygon poly)
 {
   MultiPolygon symPolys;
+  symPolys.push_back(poly);
 
   Box bb;
   boost::geometry::envelope(poly,bb);
 
-  if (isXSymmetric(poly))
+  bool isXsymm = isXSymmetric(poly);
+  bool isYsymm = isYSymmetric(poly);
+
+  if (isXsymm)
   {
     // Find centroid
     Point centroid;
@@ -375,11 +416,11 @@ Polygon symmetricUnit(Polygon poly)
     MultiPolygon xSymPolys;
     Polygon right;
     boost::geometry::convert(bbRight,right);
-    boost::geometry::intersection(poly,right,xSymPolys);
+    boost::geometry::intersection(symPolys[0],right,xSymPolys);
     symPolys = xSymPolys;
   }
 
-  if (isYSymmetric(poly))
+  if (isYsymm)
   {
     // Find centroid
     Point centroid;
@@ -481,6 +522,43 @@ bool comparePointsX(Point first, Point second)
 bool comparePointsY(Point first, Point second)
 {
   return (first.get<1>() < second.get<1>());
+}
+
+double getDistance(Point a, Point b)
+{
+  double ax = a.get<0>();
+  double ay = a.get<1>();
+  double bx = b.get<0>();
+  double by = b.get<1>();
+  double x = bx - ax;
+  double y = by - ay;
+  return sqrt(x*x + y*y);
+}
+
+double getAngle(Point a, Point b, Point c)
+{
+  double angle;
+  // angle at point b
+  double A = getDistance(a,b);
+  double B = getDistance(b,c);
+  double C = getDistance(c,a);
+
+  double ax = a.get<0>();
+  double ay = a.get<1>();
+  double bx = b.get<0>();
+  double by = b.get<1>();
+  double cx = c.get<0>();
+  double cy = c.get<1>();
+
+  double sign = (bx - ax)*(cy - ay) - (cx - ax)*(by - ay);
+
+  angle = acos((A*A+B*B-C*C)/(2*A*B));
+
+  if (sign < 0)
+    angle += PI;
+
+  return angle;
+
 }
 
 #endif /* GEOMETRY_CPP_ */

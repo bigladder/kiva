@@ -32,7 +32,12 @@ GroundPlot::GroundPlot(OutputAnimation &outputAnimation, Domain &domain, std::ve
 
   frameNumber = 0;
 
-  std::size_t contourLevels = 13;
+  if (outputAnimation.outputUnits == OutputAnimation::IP)
+    distanceUnitConversion = 3.28084;
+  else
+    distanceUnitConversion = 1;
+
+  std::size_t contourLevels = outputAnimation.numberOfContours;
 
   if (isEqual(outputAnimation.xRange.first,outputAnimation.xRange.second))
   {
@@ -164,27 +169,27 @@ GroundPlot::GroundPlot(OutputAnimation &outputAnimation, Domain &domain, std::ve
   TGrid = TGridRef;
   cDat = cDatRef;
 
-  hGrid.a[0] = hAxis.mesh.centers[hAxis.nMin]/0.3048;
+  hGrid.a[0] = hAxis.mesh.centers[hAxis.nMin]*distanceUnitConversion;
 
   for(size_t i = 0; i < hAxis.nN - 1; i++)
   {
-    hDat.a[i] = hAxis.mesh.centers[i + hAxis.nMin]/0.3048;
-    hGrid.a[i + 1] = hAxis.mesh.dividers[i + hAxis.nMin + 1]/0.3048;
+    hDat.a[i] = hAxis.mesh.centers[i + hAxis.nMin]*distanceUnitConversion;
+    hGrid.a[i + 1] = hAxis.mesh.dividers[i + hAxis.nMin + 1]*distanceUnitConversion;
   }
 
-  hDat.a[hAxis.nN - 1] = hAxis.mesh.centers[hAxis.nMax]/0.3048;
-  hGrid.a[hAxis.nN] = hAxis.mesh.centers[hAxis.nMax]/0.3048;
+  hDat.a[hAxis.nN - 1] = hAxis.mesh.centers[hAxis.nMax]*distanceUnitConversion;
+  hGrid.a[hAxis.nN] = hAxis.mesh.centers[hAxis.nMax]*distanceUnitConversion;
 
-  vGrid.a[0] = vAxis.mesh.centers[vAxis.nMin]/0.3048;
+  vGrid.a[0] = vAxis.mesh.centers[vAxis.nMin]*distanceUnitConversion;
 
   for(size_t j = 0; j < vAxis.nN - 1; j++)
   {
-    vDat.a[j] = vAxis.mesh.centers[j + vAxis.nMin]/0.3048;
-    vGrid.a[j + 1] = vAxis.mesh.dividers[j + vAxis.nMin + 1]/0.3048;
+    vDat.a[j] = vAxis.mesh.centers[j + vAxis.nMin]*distanceUnitConversion;
+    vGrid.a[j + 1] = vAxis.mesh.dividers[j + vAxis.nMin + 1]*distanceUnitConversion;
   }
 
-  vDat.a[vAxis.nN - 1] = vAxis.mesh.centers[vAxis.nMax]/0.3048;
-  vGrid.a[vAxis.nN] = vAxis.mesh.centers[vAxis.nMax]/0.3048;
+  vDat.a[vAxis.nN - 1] = vAxis.mesh.centers[vAxis.nMax]*distanceUnitConversion;
+  vGrid.a[vAxis.nN] = vAxis.mesh.centers[vAxis.nMax]*distanceUnitConversion;
 
   for(size_t j = 0; j <= vAxis.nN; j++)
   {
@@ -194,33 +199,34 @@ GroundPlot::GroundPlot(OutputAnimation &outputAnimation, Domain &domain, std::ve
     }
   }
 
+  double min = outputAnimation.minimumTemperature;
+  double max = outputAnimation.maximumTemperature;
+  double step = (max - min) / (contourLevels - 1);
+
   for (size_t n = 0; n < contourLevels; n++)
-  {
-    double mid = 50.0;
-    double range = 120.0;
-    double step = range / (contourLevels - 1);
-    cDat.a[n] = mid - range/2 + double(n)*step;
-  }
+      cDat.a[n] = min + double(n)*step;
 
 }
 
-void GroundPlot::createFrame(boost::multi_array<double, 3> &T, std::string timeStamp)
+void GroundPlot::createFrame(std::string timeStamp)
 {
 
-  std::size_t nI = iMax - iMin + 1;
-  std::size_t nJ = jMax - jMin + 1;
 
-  for(size_t k = kMin; k <= kMax; k++)
+  std::string distanceUnit;
+  std::string temperatureUnit;
+  std::string fluxUnit;
+
+  if (outputAnimation.outputUnits == OutputAnimation::IP)
   {
-    for(size_t j = jMin; j <= jMax; j++)
-    {
-      for(size_t i = iMin; i <= iMax; i++)
-      {
-        std::size_t index = (i-iMin)+nI*(j-jMin)+nI*nJ*(k-kMin);
-        double TinF = (T[i][j][k] - 273.15)*9/5 + 32.0;
-        TDat.a[index] = TinF;
-      }
-    }
+    distanceUnit = "ft";
+    temperatureUnit = "\\textdegree F";
+    fluxUnit = "W/ft^2";
+  }
+  else
+  {
+    distanceUnit = "m";
+    temperatureUnit = "\\textdegree C";
+    fluxUnit = "W/m^2";
   }
 
   double hMin = hGrid.a[0];
@@ -243,6 +249,7 @@ void GroundPlot::createFrame(boost::multi_array<double, 3> &T, std::string timeS
   double vTextSpacing = 0.05;
 
   mglGraph gr;
+  gr.LoadFont("heros");
 
   // Plot
   gr.Clf(1,1,1);
@@ -250,9 +257,9 @@ void GroundPlot::createFrame(boost::multi_array<double, 3> &T, std::string timeS
   int height = outputAnimation.size;
   int width = height*aspect;
 
+
   gr.SetSize(width,height);
 
-  gr.LoadFont("none");
   gr.SetFontSize(2.0);
   gr.SetRange('x', hGrid);
   gr.SetRange('y', vGrid);
@@ -260,17 +267,91 @@ void GroundPlot::createFrame(boost::multi_array<double, 3> &T, std::string timeS
   gr.SetRange('z', Tmin, Tmax);
   gr.SetTicks('c', Tstep, nT, Tmin);
   gr.Aspect(hRange, vRange);
-  gr.Axis("yU");
-  gr.Axis("x");
-  gr.Colorbar("_");
+
+
+  // Timestamp
+
+  std::string timeStampMinusYear = timeStamp.substr(5,timeStamp.size()-5);
+  if (outputAnimation.axes)
+  {
+    if (outputAnimation.colorScheme != OutputAnimation::C_NONE)
+    {
+      if  (outputAnimation.plotType == OutputAnimation::P_TEMP)
+        gr.Puts(0.9, 0.056, temperatureUnit.c_str(), ":AL");
+      else
+        gr.Puts(0.9, 0.056, fluxUnit.c_str(), ":AL");
+    }
+  }
+
+  if (outputAnimation.timestamp)
+    gr.Puts(hText, vText, timeStampMinusYear.c_str(), ":AL");
+
+  switch (sliceType)
+  {
+  case XZ_2D:
+  {
+  }
+  break;
+  case XY:
+  {
+    std::string sliceString = "Z = " + str(boost::format("%0.2f") % (slice*distanceUnitConversion)) + " " + distanceUnit;
+    if (outputAnimation.axes)
+      gr.Puts(hText, vText - vTextSpacing, sliceString.c_str(), ":AL");
+  }
+  break;
+  case XZ:
+  {
+    std::string sliceString = "Y = " + str(boost::format("%0.2f") % (slice*distanceUnitConversion)) + " " + distanceUnit;
+    if (outputAnimation.axes)
+      gr.Puts(hText, vText - vTextSpacing, sliceString.c_str(), ":AL");
+  }
+  break;
+  case YZ:
+  {
+    std::string sliceString = "X = " + str(boost::format("%0.2f") % (slice*distanceUnitConversion)) + " " + distanceUnit;
+    if (outputAnimation.axes)
+      gr.Puts(hText, vText - vTextSpacing, sliceString.c_str(), ":AL");
+  }
+  }
+  gr.SetPlotFactor(1.3);
+
+  if (outputAnimation.axes)
+  {
+    gr.Axis("yU");
+    gr.Axis("x");
+    if (outputAnimation.colorScheme == OutputAnimation::C_CMR)
+    {
+      gr.Colorbar("kUrqyw_");
+    }
+    else if (outputAnimation.colorScheme == OutputAnimation::C_JET)
+    {
+      gr.Colorbar("BbcyrR_");
+    }
+  }
+
+  if (outputAnimation.colorScheme == OutputAnimation::C_CMR)
+  {
+    gr.Dens(hDat, vDat, TDat,"kUrqyw");
+  }
+  else if (outputAnimation.colorScheme == OutputAnimation::C_JET)
+  {
+    gr.Dens(hDat, vDat, TDat,"BbcyrR");
+  }
+
   gr.Box("k",false);
-  gr.Dens(hDat, vDat, TDat);
+
   if (outputAnimation.contours)
-    gr.Cont(cDat, hDat, vDat, TDat,"H");
+  {
+    if (outputAnimation.contourLabels)
+      gr.Cont(cDat, hDat, vDat, TDat,(outputAnimation.contourColor + "t").c_str());
+    else
+      gr.Cont(cDat, hDat, vDat, TDat,outputAnimation.contourColor.c_str());
+  }
   if (outputAnimation.gradients)
     gr.Grad(hDat, vDat, TDat);
   if (outputAnimation.grid)
     gr.Grid(hGrid, vGrid, TGrid, "W");
+
 
   // Draw blocks
   for (size_t b = 0; b < blocks.size(); b++)
@@ -278,28 +359,28 @@ void GroundPlot::createFrame(boost::multi_array<double, 3> &T, std::string timeS
     switch (sliceType)
     {
     case XZ_2D:
-      {
-      mglPoint bl = mglPoint(std::min(std::max(blocks[b].xMin/0.3048, hMin),hMax),
-                   std::min(std::max(blocks[b].zMin/0.3048, vMin),vMax),
+    {
+      mglPoint bl = mglPoint(std::min(std::max(blocks[b].xMin*distanceUnitConversion, hMin),hMax),
+                   std::min(std::max(blocks[b].zMin*distanceUnitConversion, vMin),vMax),
                    210.0);
-      mglPoint br = mglPoint(std::max(std::min(blocks[b].xMax/0.3048, hMax),hMin),
-                   std::min(std::max(blocks[b].zMin/0.3048, vMin),vMax),
+      mglPoint br = mglPoint(std::max(std::min(blocks[b].xMax*distanceUnitConversion, hMax),hMin),
+                   std::min(std::max(blocks[b].zMin*distanceUnitConversion, vMin),vMax),
                    210.0);
-      mglPoint tr = mglPoint(std::max(std::min(blocks[b].xMax/0.3048, hMax),hMin),
-                   std::max(std::min(blocks[b].zMax/0.3048, vMax),vMin),
+      mglPoint tr = mglPoint(std::max(std::min(blocks[b].xMax*distanceUnitConversion, hMax),hMin),
+                   std::max(std::min(blocks[b].zMax*distanceUnitConversion, vMax),vMin),
                    210.0);
-      mglPoint tl = mglPoint(std::min(std::max(blocks[b].xMin/0.3048, hMin),hMax),
-                   std::max(std::min(blocks[b].zMax/0.3048, vMax),vMin),
+      mglPoint tl = mglPoint(std::min(std::max(blocks[b].xMin*distanceUnitConversion, hMin),hMax),
+                   std::max(std::min(blocks[b].zMax*distanceUnitConversion, vMax),vMin),
                    210.0);
 
       gr.Line(bl, br, "k");
       gr.Line(br, tr, "k");
       gr.Line(tr, tl, "k");
       gr.Line(tl, bl, "k");
-      }
-      break;
+    }
+    break;
     case XY:
-      {
+    {
       // Find intersection with viewing window
       Polygon view;
       view.outer().push_back(Point(hMin,vMin));
@@ -317,20 +398,16 @@ void GroundPlot::createFrame(boost::multi_array<double, 3> &T, std::string timeS
         std::size_t nV = intersection[p].outer().size();
         for (std::size_t v = 0; v < nV - 1; v++)
         {
-          gr.Line(mglPoint(intersection[p].outer()[v].get<0>()/0.3048,intersection[p].outer()[v].get<1>()/0.3048,210.0),
-              mglPoint(intersection[p].outer()[v+1].get<0>()/0.3048,intersection[p].outer()[v+1].get<1>()/0.3048,210.0),
+          gr.Line(mglPoint(intersection[p].outer()[v].get<0>()*distanceUnitConversion,intersection[p].outer()[v].get<1>()*distanceUnitConversion,210.0),
+              mglPoint(intersection[p].outer()[v+1].get<0>()*distanceUnitConversion,intersection[p].outer()[v+1].get<1>()*distanceUnitConversion,210.0),
               "k");
         }
-        gr.Line(mglPoint(intersection[p].outer()[nV - 1].get<0>()/0.3048,intersection[p].outer()[nV - 1].get<1>()/0.3048,210.0),
-            mglPoint(intersection[p].outer()[0].get<0>()/0.3048,intersection[p].outer()[0].get<1>()/0.3048,210.0),
+        gr.Line(mglPoint(intersection[p].outer()[nV - 1].get<0>()*distanceUnitConversion,intersection[p].outer()[nV - 1].get<1>()*distanceUnitConversion,210.0),
+            mglPoint(intersection[p].outer()[0].get<0>()*distanceUnitConversion,intersection[p].outer()[0].get<1>()*distanceUnitConversion,210.0),
             "k");
       }
-
-      std::string sliceString = "Z = " + str(boost::format("%0.2f") % (slice/0.3048)) + " ft";
-      gr.Puts(hText, vText - vTextSpacing, sliceString.c_str(), ":AL");
-
-      }
-      break;
+    }
+    break;
     case XZ:
       {
       // Find intersecting point pairs with slicing plane
@@ -348,21 +425,21 @@ void GroundPlot::createFrame(boost::multi_array<double, 3> &T, std::string timeS
       {
         // Use point pairs and zmin/max to draw rectangles similar to 2D
         // case.
-        double p1 = intersection[p].get<0>()/0.3048;
-        double p2 = intersection[p+1].get<0>()/0.3048;
+        double p1 = intersection[p].get<0>()*distanceUnitConversion;
+        double p2 = intersection[p+1].get<0>()*distanceUnitConversion;
 
 
         mglPoint bl = mglPoint(std::min(std::max(p1, hMin),hMax),
-                     std::min(std::max(blocks[b].zMin/0.3048, vMin),vMax),
+                     std::min(std::max(blocks[b].zMin*distanceUnitConversion, vMin),vMax),
                      210.0);
         mglPoint br = mglPoint(std::max(std::min(p2, hMax),hMin),
-                     std::min(std::max(blocks[b].zMin/0.3048, vMin),vMax),
+                     std::min(std::max(blocks[b].zMin*distanceUnitConversion, vMin),vMax),
                      210.0);
         mglPoint tr = mglPoint(std::max(std::min(p2, hMax),hMin),
-                     std::max(std::min(blocks[b].zMax/0.3048, vMax),vMin),
+                     std::max(std::min(blocks[b].zMax*distanceUnitConversion, vMax),vMin),
                      210.0);
         mglPoint tl = mglPoint(std::min(std::max(p1, hMin),hMax),
-                     std::max(std::min(blocks[b].zMax/0.3048, vMax),vMin),
+                     std::max(std::min(blocks[b].zMax*distanceUnitConversion, vMax),vMin),
                      210.0);
 
         gr.Line(bl, br, "k");
@@ -372,10 +449,6 @@ void GroundPlot::createFrame(boost::multi_array<double, 3> &T, std::string timeS
 
         p += 1; // skip one point, on to the next pair
       }
-
-      std::string sliceString = "Y = " + str(boost::format("%0.2f") % (slice/0.3048)) + " ft";
-      gr.Puts(hText, vText - vTextSpacing, sliceString.c_str(), ":AL");
-
       }
       break;
     case YZ:
@@ -395,21 +468,21 @@ void GroundPlot::createFrame(boost::multi_array<double, 3> &T, std::string timeS
       {
         // Use point pairs and zmin/max to draw rectangles similar to 2D
         // case.
-        double p1 = intersection[p].get<1>()/0.3048;
-        double p2 = intersection[p+1].get<1>()/0.3048;
+        double p1 = intersection[p].get<1>()*distanceUnitConversion;
+        double p2 = intersection[p+1].get<1>()*distanceUnitConversion;
 
 
         mglPoint bl = mglPoint(std::min(std::max(p1, hMin),hMax),
-                     std::min(std::max(blocks[b].zMin/0.3048, vMin),vMax),
+                     std::min(std::max(blocks[b].zMin*distanceUnitConversion, vMin),vMax),
                      210.0);
         mglPoint br = mglPoint(std::max(std::min(p2, hMax),hMin),
-                     std::min(std::max(blocks[b].zMin/0.3048, vMin),vMax),
+                     std::min(std::max(blocks[b].zMin*distanceUnitConversion, vMin),vMax),
                      210.0);
         mglPoint tr = mglPoint(std::max(std::min(p2, hMax),hMin),
-                     std::max(std::min(blocks[b].zMax/0.3048, vMax),vMin),
+                     std::max(std::min(blocks[b].zMax*distanceUnitConversion, vMax),vMin),
                      210.0);
         mglPoint tl = mglPoint(std::min(std::max(p1, hMin),hMax),
-                     std::max(std::min(blocks[b].zMax/0.3048, vMax),vMin),
+                     std::max(std::min(blocks[b].zMax*distanceUnitConversion, vMax),vMin),
                      210.0);
 
         gr.Line(bl, br, "k");
@@ -419,22 +492,15 @@ void GroundPlot::createFrame(boost::multi_array<double, 3> &T, std::string timeS
 
         p += 1; // skip one point, on to the next pair
       }
-
-      std::string sliceString = "X = " + str(boost::format("%0.2f") % (slice/0.3048)) + " ft";
-      gr.Puts(hText, vText - vTextSpacing, sliceString.c_str(), ":AL");
-
       }
       break;
     }
   }
 
-  gr.Puts(0.85, 0.055, "\\textdegree F", ":AL");
-
-  // Timestamp
-
-  gr.Puts(hText, vText, timeStamp.c_str(), ":AL");
-
-  gr.WritePNG((outputAnimation.name + "_frames/" + outputAnimation.name + str(boost::format("%04d") % frameNumber) + ".png").c_str(),"",false);
+  if (outputAnimation.format == OutputAnimation::F_PNG)
+    gr.WritePNG((outputAnimation.name + "_frames/" + outputAnimation.name + str(boost::format("%04d") % frameNumber) + ".png").c_str(),"",false);
+  else if (outputAnimation.format == OutputAnimation::F_TEX)
+    gr.WriteTEX((outputAnimation.name + "_frames/" + outputAnimation.name + str(boost::format("%04d") % frameNumber) + ".tex").c_str());
 
   frameNumber += 1;
   nextPlotTime += outputAnimation.frequency.total_seconds();
