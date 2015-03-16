@@ -3208,16 +3208,16 @@ void Ground::calculateBoundaryLayer()
 
   }
 
-  std::ofstream output;
-  output.open("Boundary.csv");
+  //std::ofstream output;
+  //output.open("Boundary.csv");
 
-  output << 0.0 << ", " << 0.0 << "\n";
+  //output << 0.0 << ", " << 0.0 << "\n";
 
   boundaryLayer.push_back(std::make_pair(0,0));
 
   for (std::size_t i; i < fluxSums.size() - 1; i++) // last cell is a zero-thickness cell, so don't include it.
   {
-    output << x2s[i] - x1_0 << ", " << fluxSums[i]/fluxSum << "\n";
+    //output << x2s[i] - x1_0 << ", " << fluxSums[i]/fluxSum << "\n";
     boundaryLayer.push_back(std::make_pair(x2s[i] - x1_0,fluxSums[i]/fluxSum));
   }
 
