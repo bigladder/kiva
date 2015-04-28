@@ -1,1 +1,2 @@
 #define VERSION_NUMBER "@VERSION_NUMBER@"
+#define YEAR "@YEAR@"

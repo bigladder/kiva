@@ -14,7 +14,7 @@ execute_process(COMMAND git describe --tags --long
 
 if(${CMAKE_BUILD_TYPE} MATCHES "Debug")
   set (kiva_version "${kiva_version}-Debug")
-endif(${CMAKE_BUILD_TYPE} MATCHES "Debug")               
+endif(${CMAKE_BUILD_TYPE} MATCHES "Debug")
 
 if(${git_exit_status} MATCHES "0")
   set(VERSION_NUMBER ${kiva_version})
@@ -22,6 +22,8 @@ if(${git_exit_status} MATCHES "0")
 else()
   message("Error finding version number.")
 endif(${git_exit_status} MATCHES "0")
+
+string(TIMESTAMP YEAR %Y)
 
 configure_file (
     "${PROJECT_SOURCE_DIR}/source/Version.h.in"
@@ -77,7 +79,7 @@ set(kiva_lib boost_date_time
              boost_program_options
              mgl
              yaml-cpp )
-             
+
 if (${ENABLE_ITERATIVE_SOLVER})
   set(kiva_lib ${kiva_lib} lis )
 else (${ENABLE_ITERATIVE_SOLVER})
@@ -85,7 +87,7 @@ else (${ENABLE_ITERATIVE_SOLVER})
                            amd
                            cholmod
                            colamd
-                           suitesparseconfig ) 
+                           suitesparseconfig )
 endif (${ENABLE_ITERATIVE_SOLVER})
 
 if (${ENABLE_OPENGL})

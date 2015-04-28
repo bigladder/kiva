@@ -1,5 +1,5 @@
 /* Mesher.c++ is part of Kiva (Written by Neal Kruis)
- * Copyright (C) 2012-2013 Big Ladder Software <info@bigladdersoftware.com>
+ * Copyright (C) 2012-2015 Big Ladder Software <info@bigladdersoftware.com>
  * All rights reserved.
  *
  * Kiva is free software: you can redistribute it and/or modify
