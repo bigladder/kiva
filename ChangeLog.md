@@ -1,7 +1,10 @@
-0.2.1 Released ????
--------------------
+0.2.1 Released 16 March 2015
+----------------------------
 ### Features:
-* Microsecond resolution for elapsed time listed in stdout
+* Introduces new two-dimensional approximation methods.
+* Added ability to plot heat flux in addition to temperature.
+* Added the ability to read indoor air temperatures from a CSV file.
+* Microsecond resolution for elapsed time listed in stdout.
 * More output variables:
   * Slab Average Heat Flux [W/m2]
   * Slab Average Temperature [K]
