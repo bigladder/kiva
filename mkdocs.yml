@@ -6,6 +6,6 @@ site_author: Neal Kruis
 repo_url: https://github.com/nealkruis/kiva/
 
 pages:
-- Home: index.md
+- Home: README.md
 
 copyright: Copyright &copy; 2015 <a href="http://bigladdersoftware.com">Big Ladder Software</a>
