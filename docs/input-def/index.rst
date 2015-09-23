@@ -6,4 +6,4 @@ Kiva input is specified in a hierarchical YAML file. This file has two objects a
 .. toctree::
    :maxdepth: 2
 
-   input-def/simulation-control
+   simulation-control

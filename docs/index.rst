@@ -11,6 +11,6 @@ Contents:
    :maxdepth: 2
 
    getting-started
-   input-def/input-def
+   input-def/index
    testing
    references
