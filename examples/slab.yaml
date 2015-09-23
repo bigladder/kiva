@@ -4,7 +4,7 @@ Simulation Control:
   Timestep: 60 # [min]
 
 Materials:
-  Typical Soil:  # alpha: 4.54115E-7
+  Typical Soil:
     Conductivity: 0.864  # [W/m-K]
     Density: 1510.0  # [kg/m3]
     Specific Heat: 1260.0  # [J/kg-K]
