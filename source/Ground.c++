@@ -36,7 +36,7 @@ Ground::Ground(WeatherData &weatherData, Foundation &foundation,
   {
     // set up output file
     outputFile.open(outputFileName.c_str());
-    outputFile << "Time Stamp" << printOutputHeaders() << std::endl;
+    outputFile << "Timestamp" << printOutputHeaders() << std::endl;
   }
 
   if (foundation.reductionStrategy == Foundation::RS_BOUNDARY)
@@ -3406,4 +3406,3 @@ double getArrayValue(boost::multi_array<double, 3> Mat, std::size_t i, std::size
 }
 
 #endif
-

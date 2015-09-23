@@ -6,3 +6,4 @@ build/
 source/Version.h
 sandbox.*
 sandbox/
+test/*/

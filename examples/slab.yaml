@@ -1,0 +1,73 @@
+Simulation Control:
+  Start Date: 2015-Jan-1
+  End Date: 2015-Dec-31
+  Timestep: 60 # [min]
+
+Materials:
+  Typical Soil:  # alpha: 4.54115E-7
+    Conductivity: 0.864  # [W/m-K]
+    Density: 1510.0  # [kg/m3]
+    Specific Heat: 1260.0  # [J/kg-K]
+  Concrete:
+    Conductivity: 1.98  # [W/m-K]
+    Density: 1900.0  # [kg/m3]
+    Specific Heat: 665.0  # [J/kg-K]
+  XPS:
+    Conductivity: 0.029  # [W/m-K]
+    Density: 28.0  # [kg/m3]
+    Specific Heat: 1450.0  # [J/kg-K]
+
+Foundation:
+  Indoor Air Temperature: 295.372 # [K]
+  Soil: Typical Soil  # Material reference
+  Polygon:
+    - [0, 0]
+    - [0, 20]
+    - [20, 20]
+    - [20, 0]
+  Foundation Depth: 0.0  # [m]
+  Perimeter Surface Width: 0.4064  # [m]
+
+  Slab:
+    Layers:
+      -
+        Material: Concrete
+        Thickness: 0.2032
+  Wall:
+    Layers:
+      -
+        Material: Concrete
+        Thickness: 0.3048
+    Height Above Grade: 0.3048  # [m]
+    Height: 0.508  # [m]
+  Interior Vertical Insulation:
+    Depth: 0.2032
+    Material: XPS
+    Thickness: 0.0508
+  Interior Horizontal Insulation:
+    Depth: 0.2032
+    Width: 0.4064
+    Material: XPS
+    Thickness: 0.0508
+
+  Output Report:
+    Minimum Frequency: 60  # [min]
+    Reports:
+      - 0 # Slab Core Average Heat Flux [W/m2]
+      - 1 # Slab Core Average Temperature [K]
+      - 2 # Slab Core Average Effective Temperature [C]
+      - 3 # Slab Core Total Heat Transfer Rate [W]
+      - 4 # Slab Perimeter Average Heat Flux [W/m2]
+      - 5 # Slab Perimeter Average Temperature [K]
+      - 6 # Slab Perimeter Average Effective Temperature [C]
+      - 7 # Slab Perimeter Total Heat Transfer Rate [W]
+      - 8 # Slab Average Heat Flux [W/m2]
+      - 9 # Slab Average Temperature [K]
+      - 10 # Slab Total Heat Transfer Rate [W]
+      #- 11 # Wall Average Heat Flux [W/m2]
+      #- 12 # Wall Average Temperature [K]
+      #- 13 # Wall Average Effective Temperature [C]
+      #- 14 # Wall Total Heat Transfer Rate [W]
+      #- 15 # Foundation Average Heat Flux [W/m2]
+      #- 16 # Foundation Average Temperature [K]
+      #- 17 # Foundation Total Heat Transfer Rate [W]
