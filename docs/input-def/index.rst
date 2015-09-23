@@ -7,3 +7,4 @@ Kiva input is specified in a hierarchical YAML file. This file has two objects a
    :maxdepth: 2
 
    simulation-control
+   materials
