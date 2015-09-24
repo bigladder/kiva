@@ -6,9 +6,9 @@ from datetime import datetime
 from subprocess import Popen, PIPE
 
 def get_version():
-"""
-Returns project version as string from 'git describe' command.
-"""
+    """
+    Returns project version as string from 'git describe' command.
+    """
     pipe = Popen('git describe --tags --always', stdout=PIPE, shell=True)
     version = pipe.stdout.read()
 
