@@ -17,8 +17,10 @@ Start Date
 
 Specifies the start date of the simulation. Simulation begins at 12:00am of this day.
 
-**Required:** Yes
-**Type:** Date String (eg: YYYY-Mon-DD, YYYY/MM/DD)
+=============   =========================================
+**Required:**   Yes
+**Type:**       Date String (eg: YYYY-Mon-DD, YYYY/MM/DD)
+=============   =========================================
 
 End Date
 --------

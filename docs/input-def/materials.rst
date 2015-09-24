@@ -28,12 +28,9 @@ Conductivity
 
 Thermal conductivity of the material.
 
-Required
-    Yes
-Type
-    Numeric
-Units
-    W/m-K
+- **Required:** Yes
+- **Type:** Numeric
+- **Units:** W/m-K
 
 Density
 -------

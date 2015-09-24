@@ -31,20 +31,10 @@ html_theme = 'sphinx_rtd_theme'
 
 html_static_path = ['_static']
 htmlhelp_basename = 'Kivadoc'
+html_split_index = True
+html_theme_options = {'collapsiblesidebar': True}
 
-latex_elements = {
-# The paper size ('letterpaper' or 'a4paper').
-#'papersize': 'letterpaper',
-
-# The font size ('10pt', '11pt' or '12pt').
-#'pointsize': '10pt',
-
-# Additional stuff for the LaTeX preamble.
-#'preamble': '',
-
-# Latex figure (float) alignment
-#'figure_align': 'htbp',
-}
+latex_elements = {}
 
 latex_documents = [
   (master_doc, 'Kiva.tex', u'Kiva Documentation',
