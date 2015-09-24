@@ -2,6 +2,20 @@ import sys
 import os
 import shlex
 from recommonmark.parser import CommonMarkParser
+from datetime import datetime
+from subprocess import Popen, PIPE
+
+def get_version():
+"""
+Returns project version as string from 'git describe' command.
+"""
+pipe = Popen('git describe --tags --always', stdout=PIPE, shell=True)
+version = pipe.stdout.read()
+
+if version:
+    return version
+else:
+    return 'X.Y'
 
 extensions = [
     'sphinx.ext.mathjax',
@@ -14,11 +28,11 @@ source_suffix = ['.rst', '.md']
 master_doc = 'index'
 
 project = u'Kiva'
-copyright = u'2015, Big Ladder Software'
+copyright = str(datetime.now().year) + u', <a href="http://bigladdersoftware.com/">Big Ladder Software</a>'
 author = u'Neal Kruis'
 
-version = '0.2.1'
-release = '0.2.1'
+version = get_version().lstrip('v')
+release = version
 exclude_patterns = ['_build']
 pygments_style = 'sphinx'
 

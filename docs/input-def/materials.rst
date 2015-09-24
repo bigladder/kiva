@@ -28,26 +28,30 @@ Conductivity
 
 Thermal conductivity of the material.
 
-- **Required:** Yes
-- **Type:** Numeric
-- **Units:** W/m-K
+=============   =======
+**Required:**   Yes
+**Type:**       Numeric
+**Units:**      W/m-K
+=============   =======
 
 Density
 -------
 
 Density of the material.
 
-**Required:** Yes
-
-**Type:** Numeric
-
-**Units:** kg/m\ :sup:`3`
+=============   ==============
+**Required:**   Yes
+**Type:**       Numeric
+**Units:**      kg/m\ :sup:`3`
+=============   ==============
 
 Specific Heat
 -------------
 
 Specific heat of the material.
 
-**Required:** Yes
-**Type:** Numeric
-**Units:** J/kg-K
+=============   =======
+**Required:**   Yes
+**Type:**       Numeric
+**Units:**      J/kg-K
+=============   =======

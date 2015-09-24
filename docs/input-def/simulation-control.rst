@@ -27,14 +27,18 @@ End Date
 
 Specifies the end date of the simulation. Simulation ends one timestep previous to 12:00am of the following day.
 
-**Required:** Yes
-**Type:** Date String (eg: YYYY-Mon-DD, YYYY/MM/DD)
+=============   =========================================
+**Required:**   Yes
+**Type:**       Date String (eg: YYYY-Mon-DD, YYYY/MM/DD)
+=============   =========================================
 
 Timestep
 --------
 
 Timestep duration in minutes used in calculations.
 
-**Required:** Yes
-**Type:** Integer
-**Units:** Minutes
+=============   =======
+**Required:**   Yes
+**Type:**       Integer
+**Units:**      Minutes
+=============   =======
