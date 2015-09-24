@@ -27,12 +27,12 @@ language = 'en'
 todo_include_todos = False
 
 
-html_theme = 'sphinx_rtd_theme'
+html_theme = 'pydoctheme'
 
 html_static_path = ['_static']
 htmlhelp_basename = 'Kivadoc'
 html_split_index = True
-html_theme_options = {'collapsiblesidebar': True}
+#html_theme_options = {'collapsiblesidebar': True}
 
 latex_elements = {}
 
