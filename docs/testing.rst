@@ -6,14 +6,12 @@ Kiva has been tested against the *International Energy Agency Building Energy Si
 **Steady-State Results:**
 
 .. figure:: https://raw.githubusercontent.com/nealkruis/kiva_data/develop/BESTEST/figures/bestest_ss.png
-:align: center
 
    IEA BESTEST Steady-State Test Case Results
 
 **Harmonic (Unsteady) Results:**
 
 .. figure:: https://raw.githubusercontent.com/nealkruis/kiva_data/develop/BESTEST/figures/bestest_harmonic.png
-:align: center
 
    IEA BESTEST Harmonic Test Case Results
 
