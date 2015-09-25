@@ -456,7 +456,7 @@ end
       Size: <%= plot_size %>
       Color Scheme: <%= plot_color_scheme %>
       Unit System: <%= plot_units %>
-      Temperature Range: [<%= plot_min_temp %>, <%= plot_max_temp %>]
+      Output Range: [<%= plot_min_temp %>, <%= plot_max_temp %>]
       Z Range: [<%= z_slice %>,<%= z_slice %>]
     <% if (z_slice_x_range.length == 2) %>
       X Range: [<%= z_slice_x_range[0] %>, <%= z_slice_x_range[1] %>]
@@ -483,7 +483,7 @@ end
       Size: <%= plot_size %>
       Color Scheme: <%= plot_color_scheme %>
       Unit System: <%= plot_units %>
-      Temperature Range: [<%= plot_min_temp %>, <%= plot_max_temp %>]
+      Output Range: [<%= plot_min_temp %>, <%= plot_max_temp %>]
       X Range: [<%= x_slice %>,<%= x_slice %>]
     <% if (x_slice_y_range.length == 2) %>
       Y Range: [<%= x_slice_y_range[0] %>, <%= x_slice_y_range[1] %>]
@@ -511,7 +511,7 @@ end
       Size: <%= plot_size %>
       Color Scheme: <%= plot_color_scheme %>
       Output Units: <%= plot_units %>
-      Temperature Range: [<%= plot_min_temp %>, <%= plot_max_temp %>]
+      Output Range: [<%= plot_min_temp %>, <%= plot_max_temp %>]
       Y Range: [<%= y_slice %>,<%= y_slice %>]
  <% if (y_slice_x_range.length == 2) %>
       X Range: [<%= y_slice_x_range[0] %>, <%= y_slice_x_range[1] %>]

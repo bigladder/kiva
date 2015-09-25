@@ -643,10 +643,10 @@ Input inputParser(std::string inputFile)
     else
       temp.outputUnits = OutputAnimation::SI;
 
-    if (yamlInput["Foundation"]["Output Snapshots"][i]["Temperature Range"].IsDefined())
+    if (yamlInput["Foundation"]["Output Snapshots"][i]["Output Range"].IsDefined())
     {
-      temp.minimumTemperature = yamlInput["Foundation"]["Output Snapshots"][i]["Temperature Range"][0].as<double>();
-      temp.maximumTemperature = yamlInput["Foundation"]["Output Snapshots"][i]["Temperature Range"][1].as<double>();
+      temp.minimumTemperature = yamlInput["Foundation"]["Output Snapshots"][i]["Output Range"][0].as<double>();
+      temp.maximumTemperature = yamlInput["Foundation"]["Output Snapshots"][i]["Output Range"][1].as<double>();
     }
     else
     {
