@@ -12,5 +12,6 @@ Contents:
 
    getting-started
    input-def/index
+   methodology
    testing
    references
