@@ -5,7 +5,6 @@ The description of the foundation design is provided within the two-dimensional 
 
 .. figure:: ./images/context.png
    :scale: 25 %
-	 :align: center
 
    Two-dimensional context for ``Foundation`` object definition
 
