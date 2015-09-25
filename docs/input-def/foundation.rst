@@ -3,13 +3,13 @@ Foundation
 
 The description of the foundation design is provided within the two-dimensional context. This profile is applied along the entire perimeter of the foundation.
 
-.. figure:: ./images/context.png
+.. figure:: ../images/context.png
 
    Two-dimensional context for ``Foundation`` object definition
 
 The foundation insulation and structural components are defined by (up to) six sub-objects. These objects allow the user to flexibly describe any foundation construction.
 
-.. figure:: ./images/components.png
+.. figure:: ../images/components.png
 
    Insulation and structural design components
 
@@ -67,7 +67,7 @@ The foundation shape is defined by the description of a single polygon. The peri
 
 The polygon is specified by a list of x-y Cartesian vertices tracing the foundation perimeter in a clockwise fashion. When simulating in three-dimensions, the polygon must be rectilinear (comprised only of right angles).
 
-.. figure:: ./images/polygon.png
+.. figure:: ../images/polygon.png
 
    Plan view illustrating foundation shape vertex definition and far-field boundary.
 
@@ -131,7 +131,7 @@ This defines the costruction of the floor slab in the foundation. This is not re
 Layers
 ^^^^^^
 
-Layers are specified as a list of material references, and thickness values from the outtermost layer to the innermost.
+Layers are specified as a list of material references, and thickness values from the outtermost layer to the innermost layer (at the floor surface).
 
 =============   ===========================================
 **Required:**   Yes
@@ -175,8 +175,40 @@ Interior emissivity of the slab used for interior long-wave radiation calculatio
 Wall
 ----
 
+This defines the costruction of the foundation wall. This is not required. If there is no wall defined for a given foundation, then the wall is exposed soil.
+
+**Example:**
+
+.. code-block:: yaml
+
+  Wall:
+    Layers:
+      -
+        Material: XPS # Material reference
+        Thickness: 0.0508 # [m]
+      -
+        Material: Concrete # Material reference
+        Thickness: 0.2032 # [m]
+      -
+        Material: XPS # Material reference
+        Thickness: 0.0508 # [m]
+
+=============   ===============
+**Required:**   No
+**Type:**       Compound object
+=============   ===============
+
 Height
 ^^^^^^
+
+The height of the wall describes the distance from the wall top to the bottom of the foundation footer (the footer is not modeled separately). This value should generally be greater than that of the `Foundation Depth`_ combined with the total thickness of the slab.
+
+=============   =======
+**Required:**   Yes
+**Type:**       Numeric
+**Units:**      m
+=============   =======
+
 
 Height Above Grade
 ^^^^^^^^^^^^^^^^^^
@@ -186,7 +218,7 @@ defines the height of the wall top relative to the grade (z = 0).
 Layers
 ^^^^^^
 
-Layers is a list of combinations of materials and thicknesses.
+Layers are specified as a list of material references, and thickness values from the outtermost layer to the innermost layer (at the interior wall surface).
 
 Material
 """"""""
