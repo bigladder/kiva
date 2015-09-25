@@ -13,7 +13,7 @@ def get_version():
     version = pipe.stdout.read()
 
     if version:
-        return version
+        return version.rstrip().lstrip('v')
     else:
         return 'X.Y'
 
@@ -31,7 +31,7 @@ project = u'Kiva'
 copyright = str(datetime.now().year) + u', Big Ladder Software'
 author = u'Neal Kruis'
 
-version = get_version().lstrip('v')
+version = get_version()
 release = version
 exclude_patterns = ['_build']
 pygments_style = 'sphinx'
@@ -42,7 +42,6 @@ todo_include_todos = False
 
 
 html_theme = 'sphinx_rtd_theme'
-html_theme_options = {"collapse_navigation": "true"}
 
 html_static_path = ['_static']
 htmlhelp_basename = 'Kivadoc'
