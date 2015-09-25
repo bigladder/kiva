@@ -1,10 +1,9 @@
 Getting Started
 ===============
 
-Kiva is a command line tool. You can execute Kiva from the command line as follows:
+Kiva is a command line tool. You can execute Kiva from the command line as follows::
 
-::
-    kiva input.yaml weather.epw output.csv
+  kiva input.yaml weather.epw output.csv
 
 Kiva will simulate the foundation defined in ``input.yaml`` using the weather conditions specfified in ``weather.epw`` and generate time series results in ``output.csv``.
 
