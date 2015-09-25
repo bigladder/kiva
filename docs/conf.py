@@ -45,7 +45,7 @@ html_theme = 'sphinx_rtd_theme'
 
 html_static_path = ['_static']
 htmlhelp_basename = 'Kivadoc'
-html_split_index = True
+#html_split_index = True
 #html_theme_options = {'collapsiblesidebar': True}
 
 latex_elements = {}
