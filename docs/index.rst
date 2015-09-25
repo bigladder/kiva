@@ -14,4 +14,4 @@ Contents:
    input-def/index
    methodology
    testing
-   references
+   bibliography
