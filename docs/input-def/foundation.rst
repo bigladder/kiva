@@ -131,7 +131,7 @@ This defines the costruction of the floor slab in the foundation. This is not re
 Layers
 ^^^^^^
 
-Layers are specified as a list of material references, and thickness values from the outtermost layer to the innermost layer (at the floor surface).
+Layers are specified as a list of material references, and thickness values from the outtermost layer to the innermost layer (at the floor surface). A layer of insulation can be added to model whole-slab insulation.
 
 =============   ===========================================
 **Required:**   Yes
@@ -182,6 +182,8 @@ This defines the costruction of the foundation wall. This is not required. If th
 .. code-block:: yaml
 
   Wall:
+    Height: 2.95 # [m]
+    Height Above Grade: 0.3048  # [m]
     Layers:
       -
         Material: XPS # Material reference
@@ -213,7 +215,14 @@ The height of the wall describes the distance from the wall top to the bottom of
 Height Above Grade
 ^^^^^^^^^^^^^^^^^^
 
-defines the height of the wall top relative to the grade (z = 0).
+The height of the wall top relative to the grade (z = 0).
+
+=============   =======
+**Required:**   Yes
+**Type:**       Numeric
+**Units:**      m
+=============   =======
+
 
 Layers
 ^^^^^^
@@ -223,88 +232,352 @@ Layers are specified as a list of material references, and thickness values from
 Material
 """"""""
 
+Material composing the layer.
+
+=============   ==================
+**Required:**   Yes
+**Type:**       Material reference
+=============   ==================
+
 Thickness
 """""""""
+
+Thickness of the layer.
+
+=============   =======
+**Required:**   Yes
+**Type:**       Numeric
+**Units:**      m
+=============   =======
 
 Interior Emissivity
 ^^^^^^^^^^^^^^^^^^^
 
+Interior emissivity of the wall used for interior long-wave radiation calculations.
+
+=============   =======
+**Required:**   No
+**Type:**       Numeric
+**Units:**      m
+**Default:**    0.8
+=============   =======
+
 Exterior Emissivity
 ^^^^^^^^^^^^^^^^^^^
+
+Exterior emissivity of the wall used for exterior long-wave radiation calculations.
+
+=============   =======
+**Required:**   No
+**Type:**       Numeric
+**Units:**      m
+**Default:**    0.8
+=============   =======
 
 Exterior Absorptivity
 ^^^^^^^^^^^^^^^^^^^^^
 
+Exterior absorptivity of the wall used for calculating absorbed solar radiation.
+
+=============   =======
+**Required:**   No
+**Type:**       Numeric
+**Units:**      m
+**Default:**    0.8
+=============   =======
+
 Interior Horizontal Insulation
 ------------------------------
+
+This defines the position, dimensions, and material of interior horizontal insulation. Interior horizontal insulation begins at the wall’s interior surface and extends inward and downward to a user-specified width and thickness at a user-specified depth at or below the `Foundation Depth`_.
+
+**Example:**
+
+.. code-block:: yaml
+
+  Interior Horizontal Insulation:
+    Material: XPS # Material reference
+    Thickness: 0.0508 # [m]
+    Depth: 0.2032  # [m]
+    Width: 0.4064 # [m]
+
+=============   ===============
+**Required:**   No
+**Type:**       Compound object
+=============   ===============
+
 
 Material
 ^^^^^^^^
 
+Insulation material reference.
+
+=============   ==================
+**Required:**   Yes
+**Type:**       Material reference
+=============   ==================
+
 Thickness
 ^^^^^^^^^
+
+Thickness of the insulation.
+
+=============   =======
+**Required:**   Yes
+**Type:**       Numeric
+**Units:**      m
+=============   =======
 
 Depth
 ^^^^^
 
+Depth of the insulation measured from the wall top to the top of the insulation.
+
+=============   =======
+**Required:**   Yes
+**Type:**       Numeric
+**Units:**      m
+=============   =======
+
 Width
 ^^^^^
+
+Width of the insulation extending from the interior wall surface.
+
+=============   =======
+**Required:**   Yes
+**Type:**       Numeric
+**Units:**      m
+=============   =======
 
 Interior Vertical Insulation
 ----------------------------
 
+This defines the position, dimensions, and material of interior vertical insulation. Interior vertical insulation begins at the wall top and extends downward and inward to a user-specified depth and thickness. The depth can be specified to model partial interior wall insulation.
+
+**Example:**
+
+.. code-block:: yaml
+
+  Interior Vertical Insulation:
+    Material: XPS # Material reference
+    Thickness: 0.0508 # [m]
+    Depth: 0.6096  # [m]
+
+=============   ===============
+**Required:**   No
+**Type:**       Compound object
+=============   ===============
+
 Material
 ^^^^^^^^
+
+Insulation material reference.
+
+=============   ==================
+**Required:**   Yes
+**Type:**       Material reference
+=============   ==================
 
 Thickness
 ^^^^^^^^^
 
+Thickness of the insulation.
+
+=============   =======
+**Required:**   Yes
+**Type:**       Numeric
+**Units:**      m
+=============   =======
+
 Depth
 ^^^^^
+
+Depth of the insulation measured from the wall top to the bottom of the insulation.
+
+=============   =======
+**Required:**   Yes
+**Type:**       Numeric
+**Units:**      m
+=============   =======
 
 Exterior Horizontal Insulation
 ------------------------------
 
+This defines the position, dimensions, and material of exterior horizontal insulation. Exterior horizontal insulation begins at the wall’s exterior surface and extends outward and downward to a user-specified width and thickness at a user-specified depth at or below the grade level.
+
+**Example:**
+
+.. code-block:: yaml
+
+  Exterior Horizontal Insulation:
+    Material: XPS # Material reference
+    Thickness: 0.0508 # [m]
+    Depth: 0.3048  # [m]
+    Width: 0.6096 # [m]
+
+=============   ===============
+**Required:**   No
+**Type:**       Compound object
+=============   ===============
+
+
 Material
 ^^^^^^^^
+
+Insulation material reference.
+
+=============   ==================
+**Required:**   Yes
+**Type:**       Material reference
+=============   ==================
 
 Thickness
 ^^^^^^^^^
 
+Thickness of the insulation.
+
+=============   =======
+**Required:**   Yes
+**Type:**       Numeric
+**Units:**      m
+=============   =======
+
 Depth
 ^^^^^
+
+Depth of the insulation measured from the wall top to the top of the insulation.
+
+=============   =======
+**Required:**   Yes
+**Type:**       Numeric
+**Units:**      m
+=============   =======
 
 Width
 ^^^^^
 
+Width of the insulation extending from the interior wall surface.
+
+=============   =======
+**Required:**   Yes
+**Type:**       Numeric
+**Units:**      m
+=============   =======
+
+
 Exterior Vertical Insulation
 ----------------------------
+
+This defines the position, dimensions, and material of exterior vertical insulation. Exterior vertical insulation begins at the wall top and extends downward and outward to a user-specified depth and thickness.
+
+**Example:**
+
+.. code-block:: yaml
+
+  Exterior Vertical Insulation:
+    Material: XPS # Material reference
+    Thickness: 0.0508 # [m]
+    Depth: 2.0  # [m]
+
+=============   ===============
+**Required:**   No
+**Type:**       Compound object
+=============   ===============
 
 Material
 ^^^^^^^^
 
+Insulation material reference.
+
+=============   ==================
+**Required:**   Yes
+**Type:**       Material reference
+=============   ==================
+
 Thickness
 ^^^^^^^^^
+
+Thickness of the insulation.
+
+=============   =======
+**Required:**   Yes
+**Type:**       Numeric
+**Units:**      m
+=============   =======
 
 Depth
 ^^^^^
 
+Depth of the insulation measured from the wall top to the bottom of the insulation.
+
+=============   =======
+**Required:**   Yes
+**Type:**       Numeric
+**Units:**      m
+=============   =======
+
 Indoor Air Temperature Method
 -----------------------------
+
+Allows the user to choose between having a constant indoor temperature for the duration of the simulaiton or to reference temperatures from a file.
+
+=============   ========================
+**Required:**   No
+**Type:**       Enumeration
+**Values:**     ``FILE`` or ``CONSTANT``
+**Default:**    ``CONSTANT``
+=============   ========================
 
 Indoor Air Temperature File
 ---------------------------
 
+If `Indoor Air Temperature Method`_ is ``FILE`` the indoor dry-bulb temperature will be set using hourly values defined in a comma separted value (CSV) file.
+
+**Example:**
+
+.. code-block:: yaml
+
+  Indoor Air Temperature File:
+    Name: ../path/to/file.csv
+    Index: [1,1]
+
+=============   ===============
+**Required:**   No
+**Type:**       Compound object
+=============   ===============
+
+
 Name
 ^^^^
+
+Path (relative or absolute) file.
+
+=============   ====
+**Required:**   Yes
+**Type:**       Path
+=============   ====
 
 Index
 ^^^^^
 
-List of two values, row/column.
+A list of two values corresponding to the row and column where the hourly data begins in the file. A value of ``[0, 0]`` starts at the first row and first column. A value of ``[0,1]`` starts at the first row and second column.
+
+=============   ====================
+**Required:**   Yes
+**Type:**       List [2] of integers
+=============   ====================
 
 Indoor Air Temperature
 ----------------------
+
+If `Indoor Air Temperature Method`_ is ``CONSTANT`` the indoor dry-bulb temperature will be set using this value. If `Indoor Air Temperature Method`_ is ``FILE``, then this is not required.
+
+=============   =======
+**Required:**   Depends
+**Type:**       Numeric
+**Units:**      K
+=============   =======
 
 Outdoor Temperature Method
 --------------------------
