@@ -7,37 +7,170 @@ The description of the foundation design is provided within the two-dimensional 
 
    Two-dimensional context for ``Foundation`` object definition
 
+The foundation insulation and structural components are defined by (up to) six sub-objects. These objects allow the user to flexibly describe any foundation construction.
+
+.. figure:: ./images/components.png
+
+   Insulation and structural design components
+
+**Example:**
+
+.. code-block:: yaml
+
+  Foundation:
+    Foundation Depth: 0.0 # [m]
+    Polygon:
+      - [0, 0] # [m, m]
+      - [0, 20] # [m, m]
+      - [20, 20] # [m, m]
+      - [20, 0] # [m, m]
+    Soil: Typical Soil # Material reference
+    Slab:
+      Layers:
+        -
+          Material: Concrete # Material reference
+          Thickness: 0.2032 # [m]
+    Wall:
+      Layers:
+        -
+          Material: Concrete # Material reference
+          Thickness: 0.3048 # [m]
+      Height Above Grade: 0.3048  # [m]
+      Height: 0.508 # [m]
+    Interior Horizontal Insulation:
+      Depth: 0.2032 # [m]
+      Width: 0.4064 # [m]
+      Material: XPS # Material reference
+      Thickness: 0.0508
+    Interior Vertical Insulation:
+      Depth: 0.2032 # [m]
+      Material: XPS # Material reference
+      Thickness: 0.0508 # [m]
+    Indoor Air Temperature: 295.372 # [K]
+
 
 Foundation Depth
 ----------------
 
-This defines the depth of the foundation relative to the wall top.
+``Foundation Depth`` defines the distance from the wall top to the floor. This value is used to characterize the type of foundation (slab, crawlspace, or basement). For example, a value of zero would represent a sla and a value near 2 meters would represent a basement.
+
+=============   =======
+**Required:**   Yes
+**Type:**       Numeric
+**Units:**      m
+=============   =======
 
 Polygon
 -------
 
-List of points...
+The foundation shape is defined by the description of a single polygon. The perimeter of this polygon defines the location of the interior surface of the foundation wall. The positioning of the foundation insulation and structural components are translated into three-dimensional space internally.
+
+The polygon is specified by a list of x-y Cartesian vertices tracing the foundation perimeter in a clockwise fashion. When simulating in three-dimensions, the polygon must be rectilinear (comprised only of right angles).
+
+.. figure:: ./images/polygon.png
+
+   Plan view illustrating foundation shape vertex definition and far-field boundary.
+
+**Example:**
+
+.. code-block:: yaml
+
+    Polygon:
+      - [0, 20]
+      - [15, 20]
+      - [15, 30]
+      - [30, 30]
+      - [30, 17]
+      - [22, 17]
+      - [22, 0]
+      - [12, 0]
+      - [12, 10]
+      - [0, 10]
+
+=============   =================================
+**Required:**   Yes
+**Type:**       List [N] of lists [2] of numerics
+**Units:**      m
+=============   =================================
+
 
 Soil
 ----
+
+Represents the soil surrounding the building foundation.
+
+=============   ==================
+**Required:**   Yes
+**Type:**       Material reference
+=============   ==================
 
 
 Slab
 ----
 
+This defines the costruction of the floor slab in the foundation. This is not required. If there is no slab defined for a given foundation, then the floor is exposed soil.
+
+**Example:**
+
+.. code-block:: yaml
+
+  Slab:
+    Layers:
+      -
+        Material: XPS # Material reference
+        Thickness: 0.0508 # [m]
+      -
+        Material: Concrete # Material reference
+        Thickness: 0.2032 # [m]
+
+=============   ===============
+**Required:**   No
+**Type:**       Compound object
+=============   ===============
+
 Layers
 ^^^^^^
 
-Layers is a list of combinations of materials and thicknesses.
+Layers are specified as a list of material references, and thickness values from the outtermost layer to the innermost.
+
+=============   ===========================================
+**Required:**   Yes
+**Type:**       List of layers (a material and a thickness)
+=============   ===========================================
 
 Material
 """"""""
 
+Material composing the layer.
+
+=============   ==================
+**Required:**   Yes
+**Type:**       Material reference
+=============   ==================
+
 Thickness
 """""""""
 
+Thickness of the layer.
+
+=============   =======
+**Required:**   Yes
+**Type:**       Numeric
+**Units:**      m
+=============   =======
+
+
 Emissivity
 ^^^^^^^^^^
+
+Interior emissivity of the slab used for interior long-wave radiation calculations.
+
+=============   =======
+**Required:**   No
+**Type:**       Numeric
+**Units:**      m
+**Default:**    0.8
+=============   =======
 
 Wall
 ----
@@ -48,6 +181,7 @@ Height
 Height Above Grade
 ^^^^^^^^^^^^^^^^^^
 
+defines the height of the wall top relative to the grade (z = 0).
 
 Layers
 ^^^^^^
@@ -153,9 +287,6 @@ Far-Field Width
 Deep-Ground Depth
 -----------------
 
-Orientation
------------
-
 Deep-Ground Boundary Condition
 ------------------------------
 
@@ -191,6 +322,9 @@ Wall Top Boundary Condition
 
 Wall Top Temperature Difference
 -------------------------------
+
+Orientation
+-----------
 
 
 Number of Dimensions
