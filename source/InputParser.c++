@@ -74,26 +74,20 @@ Input inputParser(std::string inputFile)
     foundation1.surfaceRoughness = yamlInput["Foundation"]["Surface Roughness"].as<double>();
   }
   else {
-    foundation1.surfaceRoughness = 30;
+    foundation1.surfaceRoughness = 0.3;
   }
 
   // Local wind speed characteristics
-  if (yamlInput["Foundation"]["Vegetation Height"].IsDefined()) {
-    foundation1.vegetationHeight = yamlInput["Foundation"]["Vegetation Height"].as<double>();
-  }
-  else {
-    foundation1.vegetationHeight = 0.3;
-  }
 
   if (yamlInput["Foundation"]["Delta Local"].IsDefined()) {
-    foundation1.deltaLocal = yamlInput["Foundation"]["Delta Local"].as<double>();
+    foundation1.deltaLocal = yamlInput["Foundation"]["Local Boundary Layer Thickness"].as<double>();
   }
   else {
     foundation1.deltaLocal = 370;
   }
 
   if (yamlInput["Foundation"]["Alpha Local"].IsDefined()) {
-    foundation1.alphaLocal = yamlInput["Foundation"]["Alpha Local"].as<double>();
+    foundation1.alphaLocal = yamlInput["Foundation"]["Local Terrain Exponent"].as<double>();
   }
   else {
     foundation1.alphaLocal = 0.22;

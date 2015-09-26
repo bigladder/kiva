@@ -165,12 +165,12 @@ Emissivity
 
 Interior emissivity of the slab used for interior long-wave radiation calculations.
 
-=============   =======
+=============   =============
 **Required:**   No
 **Type:**       Numeric
-**Units:**      m
+**Units:**      dimensionless
 **Default:**    0.8
-=============   =======
+=============   =============
 
 Wall
 ----
@@ -255,36 +255,36 @@ Interior Emissivity
 
 Interior emissivity of the wall used for interior long-wave radiation calculations.
 
-=============   =======
+=============   =============
 **Required:**   No
 **Type:**       Numeric
-**Units:**      m
+**Units:**      dimensionless
 **Default:**    0.8
-=============   =======
+=============   =============
 
 Exterior Emissivity
 ^^^^^^^^^^^^^^^^^^^
 
 Exterior emissivity of the wall used for exterior long-wave radiation calculations.
 
-=============   =======
+=============   =============
 **Required:**   No
 **Type:**       Numeric
-**Units:**      m
+**Units:**      dimensionless
 **Default:**    0.8
-=============   =======
+=============   =============
 
 Exterior Absorptivity
 ^^^^^^^^^^^^^^^^^^^^^
 
 Exterior absorptivity of the wall used for calculating absorbed solar radiation.
 
-=============   =======
+=============   =============
 **Required:**   No
 **Type:**       Numeric
-**Units:**      m
+**Units:**      dimensionless
 **Default:**    0.8
-=============   =======
+=============   =============
 
 Interior Horizontal Insulation
 ------------------------------
@@ -582,54 +582,225 @@ If `Indoor Air Temperature Method`_ is ``CONSTANT`` the indoor dry-bulb temperat
 Outdoor Temperature Method
 --------------------------
 
+Allows the user to choose between having a constant outdoor temperature for the duration of the simulaiton or to reference temperatures from the weather file.
+
+=============   ================================
+**Required:**   No
+**Type:**       Enumeration
+**Values:**     ``WEATHER-FILE`` or ``CONSTANT``
+**Default:**    ``WEATHER-FILE``
+=============   ================================
+
 Outdoor Dry-Bulb Temperature
 ----------------------------
 
+If `Outdoor Temperature Method`_ is ``CONSTANT`` the outdoor dry-bulb temperature will be set using this value. If `Outdoor Temperature Method`_ is ``WEATHER-FILE``, then this is not required.
+
+=============   =======
+**Required:**   Depends
+**Type:**       Numeric
+**Units:**      K
+=============   =======
 
 Far-Field Width
 ---------------
 
+Distance from the interior wall surface to the edge of the domain.
+
+=============   =======
+**Required:**   No
+**Type:**       Numeric
+**Units:**      m
+**Default:**    40
+=============   =======
+
 Deep-Ground Depth
 -----------------
+
+Distance from the grade level to the bottom of the domain.
+
+=============   =======
+**Required:**   No
+**Type:**       Numeric
+**Units:**      m
+**Default:**    40
+=============   =======
 
 Deep-Ground Boundary Condition
 ------------------------------
 
+Specifies the type of boundary condition to apply at the deep-ground boundary. Options are:
+
+- ``ZERO-FLUX``, which applies a zero heat flux boundary,
+- ``AUTO``, which applies a constant temperature equal to the average outdoor dry-bulb temperature from the weather file, and
+- ``CONSTANT-TEMP``, which applies a user-specified constant temperature (see `Deep-Ground Temperature`_).
+
+=============   =============================================
+**Required:**   No
+**Type:**       Enumeration
+**Values:**     ``ZERO-FLUX``, ``AUTO``, or ``CONSTANT-TEMP``
+**Default:**    ``ZERO-FLUX``
+=============   =============================================
+
+Deep-Ground Temperature
+-----------------------
+
+If `Deep-Ground Boundary Condition`_ is ``CONSTANT-TEMP``, then this value specifies the temperature applied to the deep-ground boundary.
+
+=============   =======
+**Required:**   Depends
+**Type:**       Numeric
+**Units:**      K
+=============   =======
+
 Convection Calculation Method
 -----------------------------
+
+Specifies how convection coefficients are calculated. Options are:
+
+- ``AUTO``, which calculates dynamic convection coefficients based on temperature difference, wind speed, and wind direction.
+- ``CONSTANT``, which applies a user-specified convection coefficients to interior and exterior surfaces (see `Interior Convection Coefficient`_ and `Exterior Convection Coefficient`_). This is used primariliy for IEA BESTEST calculations.
+
+=============   ========================
+**Required:**   No
+**Type:**       Enumeration
+**Values:**     ``AUTO`` or ``CONSTANT``
+**Default:**    ``AUTO``
+=============   ========================
 
 Interior Convection Coefficient
 -------------------------------
 
+If `Convection Calculation Method`_ is ``CONSTANT``, then this value specifies the convection coefficient applied to interior surface boundaries (slab floor, interior foundation wall, and interior insulation).
+
+=============   ===============
+**Required:**   Depends
+**Type:**       Numeric
+**Units:**      W/m\ :sup:`2`-K
+=============   ===============
+
 Exterior Convection Coefficient
 -------------------------------
+
+If `Convection Calculation Method`_ is ``CONSTANT``, then this value specifies the convection coefficient applied to exterior surface boundaries (grade, exterior foundation wall, and exterior insulation).
+
+=============   ===============
+**Required:**   Depends
+**Type:**       Numeric
+**Units:**      W/m\ :sup:`2`-K
+=============   ===============
 
 Soil Absorptivity
 -----------------
 
+Solar absorptivity of the soil or grade surface.
+
+=============   =============
+**Required:**   No
+**Type:**       Numeric
+**Units:**      dimensionless
+**Default:**    0.8
+=============   =============
+
 Soil Emissivity
 ---------------
+
+Long-wave emissivity of the soil or grade surface.
+
+=============   =============
+**Required:**   No
+**Type:**       Numeric
+**Units:**      dimensionless
+**Default:**    0.8
+=============   =============
 
 Surface Roughness
 -----------------
 
-Vegetation Height
------------------
+Represents the relief of the surface. This value is used to calculate forced convection and the wind speed near the grade surface. Roughness values in the table below are converted from the more qualitative rougness values used in DOE-2 and EnergyPlus. Estimates for soil, gravel, and grass are also shown.
 
-Delta Local
------------
+===============  =============
+Example Surface  Roughness [m]
+===============  =============
+Glass                0.0000
+Smooth Plaster       0.0044
+Clear Pine           0.0052
+Concrete             0.0208
+Brick                0.0268
+Stucco               0.0468
+Soil                 0.0500
+Gravel               0.1200
+Grass                0.3000
+===============  =============
 
-Alpha Local
------------
+=============   =======
+**Required:**   No
+**Type:**       Numeric
+**Units:**      m
+**Default:**    0.3
+=============   =======
+
+Local Boundary Layer Thickness
+------------------------------
+
+Local boundary layer thickness used for calculating local wind speeds from weather file wind speeds.
+
+=============   =======
+**Required:**   No
+**Type:**       Numeric
+**Units:**      m
+**Default:**    370
+=============   =======
+
+Local Terrain Exponent
+----------------------
+
+Local terrain exponent used for calculating local wind speeds from weather file wind speeds.
+
+=============   =============
+**Required:**   No
+**Type:**       Numeric
+**Units:**      dimensionless
+**Default:**    0.22
+=============   =============
 
 Wall Top Boundary Condition
 ---------------------------
 
+Specifies how the boundary condition along the wall top is calculated. Options are:
+
+- ``ZERO-FLUX``, which applies a zero heat flux boundary condition along the wall top. This implies that heat flux above the wall top is one dimensional and does not flow through the wall top boundary.
+- ``LINEAR-DT``, which applies a linear change in temperature across the wall top (see `Wall Top Temperature Difference`_). This is used only to represent the constraints of the IEA BESTEST analytical solution in case GC10a.
+
+=============   ==============================
+**Required:**   No
+**Type:**       Enumeration
+**Values:**     ``ZERO-FLUX`` or ``LINEAR-DT``
+**Default:**    ``ZERO-FLUX``
+=============   ==============================
+
 Wall Top Temperature Difference
 -------------------------------
 
+If `Wall Top Boundary Condition`_ is ``LINEAR-DT``, then this value specifies the change in temperature across the wall. This is used only to represent the constraints of the IEA BESTEST analytical solution in case GC10a. The actual temperatures are determined based on the values of  `Indoor Air Temperature`_ and `Outdoor Dry-Bulb Temperature`_.
+
+=============   =======
+**Required:**   Depends
+**Type:**       Numeric
+**Units:**      K
+=============   =======
+
 Orientation
 -----------
+
+Defines the orientation of the building clockwise relative to North (East = $\pi/2$, South = $\pi$, West = $3\pi/2$). This is used to calculate the solar incidence and wind direction relative to exterior vertical foundation surfaces.
+
+=============   =======
+**Required:**   No
+**Type:**       Numeric
+**Units:**      radians
+**Default:**    0.0
+=============   =======
 
 
 Number of Dimensions

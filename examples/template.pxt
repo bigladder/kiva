@@ -235,12 +235,11 @@ Materials:
 
 Foundation:
   Soil: <%= soil_type %>  # Material reference
-  Vegetation Height: 0.3  # [m]
-  Delta Local: 370  # [m]
-  Alpha Local: 0.22
+  Local Boundary Layer Thickness: 370  # [m]
+  Local Terrain Exponent: 0.22
   Soil Absorptivity: <%= absorptivity %>  # 0-1
   Soil Emissivity: <%= absorptivity %>  # 0-1
-  Surface Roughness: 30
+  Surface Roughness: 0.3 # [m]
 <% if !(bestest) %>
   Slab:
     Layers:

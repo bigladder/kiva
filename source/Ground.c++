@@ -2393,7 +2393,7 @@ double Ground::getLocalWindSpeed()
   double deltaLocal = foundation.deltaLocal;  // [m]
   double alphaLocal = foundation.alphaLocal;
   double zWS = 10;  // [m]
-  double zLocal = foundation.vegetationHeight;  // [m]
+  double zLocal = foundation.surfaceRoughness;  // [m]
 
   double vLocal = vWS*pow(deltaWS/zWS,alphaWS)*pow(zLocal/deltaLocal,alphaLocal);
 
