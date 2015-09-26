@@ -793,7 +793,7 @@ If `Wall Top Boundary Condition`_ is ``LINEAR-DT``, then this value specifies th
 Orientation
 -----------
 
-Defines the orientation of the building clockwise relative to North (East = $\pi/2$, South = $\pi$, West = $3\pi/2$). This is used to calculate the solar incidence and wind direction relative to exterior vertical foundation surfaces.
+Defines the orientation of the building clockwise relative to North (East = :math:`\pi/2`, South = :math:`\pi`, West = :math:`3\pi/2`). This is used to calculate the solar incidence and wind direction relative to exterior vertical foundation surfaces.
 
 =============   =======
 **Required:**   No
