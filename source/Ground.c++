@@ -36,7 +36,7 @@ Ground::Ground(WeatherData &weatherData, Foundation &foundation,
   {
     // set up output file
     outputFile.open(outputFileName.c_str());
-    outputFile << "Time Stamp" << printOutputHeaders() << std::endl;
+    outputFile << "Timestamp" << printOutputHeaders() << std::endl;
   }
 
   if (foundation.reductionStrategy == Foundation::RS_BOUNDARY)
@@ -2393,7 +2393,7 @@ double Ground::getLocalWindSpeed()
   double deltaLocal = foundation.deltaLocal;  // [m]
   double alphaLocal = foundation.alphaLocal;
   double zWS = 10;  // [m]
-  double zLocal = foundation.vegetationHeight;  // [m]
+  double zLocal = foundation.surfaceRoughness;  // [m]
 
   double vLocal = vWS*pow(deltaWS/zWS,alphaWS)*pow(zLocal/deltaLocal,alphaLocal);
 
@@ -3406,4 +3406,3 @@ double getArrayValue(boost::multi_array<double, 3> Mat, std::size_t i, std::size
 }
 
 #endif
-

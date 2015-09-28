@@ -1,3 +1,5 @@
+[![Documentation Status](https://readthedocs.org/projects/kiva/badge/?version=latest)](http://kiva.readthedocs.org/en/latest/?badge=latest)
+
 Kiva
 ====
 
@@ -5,15 +7,10 @@ Kiva is a free and open source ground heat transfer calculation tool written in 
 to calculate heat loss and gain on a timestep basis from building foundations. The goal is
 to create a tool that can integrate the multi-dimensional heat transfer into standard building energy simulation engines.
 
-Testing and Validation
-----------------------
-Kiva has been tested against the International Energy Agency Building Energy Simulation Test (IEA BESTEST) in-depth diagnorstic cases for ground coupled heat transfer related to slab-on-grade construction. The results of which match very closely with the analytical truth standard and the verified numerical truth standards:
+Documentation
+-------------
 
-### Steady-State Results:
-![Alt Text](https://raw.githubusercontent.com/nealkruis/kiva_data/develop/BESTEST/figures/bestest_ss.png "IEA BESTEST Steady-State Test Case Results")
-
-### Harmonic (Unsteady) Results:
-![Alt Text](https://raw.githubusercontent.com/nealkruis/kiva_data/develop/BESTEST/figures/bestest_harmonic.png "IEA BESTEST Harmonic Test Case Results")
+See the [online documentation](http://kiva.readthedocs.org/en/latest/) for information on using Kiva and creating Kiva input files.
 
 Contributing
 ------------
@@ -46,5 +43,5 @@ For the UMFPACK (direct solver) alternative, you will need the following instead
 1. [SuiteSparse](http://www.cise.ufl.edu/research/sparse/umfpack/) (with openBLAS set in SuiteSparse_config.mk)
  - [OpenBLAS](http://xianyi.github.io/OpenBLAS/)
 
-If you'd like to contribute to this code or if you have questions, send an email to Neal 
+If you'd like to contribute to this code or if you have questions, send an email to Neal
 Kruis (neal.kruis AT bigladdersoftware DOT com).

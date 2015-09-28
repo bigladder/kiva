@@ -27,8 +27,8 @@ GroundPlot::GroundPlot(OutputAnimation &outputAnimation, Domain &domain, std::ve
   outputAnimation(outputAnimation), blocks(blocks)
 {
 
-  boost::filesystem::remove_all(outputAnimation.name + "_frames");
-  boost::filesystem::create_directory(outputAnimation.name + "_frames");
+  boost::filesystem::remove_all(outputAnimation.dir);
+  boost::filesystem::create_directory(outputAnimation.dir);
 
   frameNumber = 0;
 
@@ -498,9 +498,9 @@ void GroundPlot::createFrame(std::string timeStamp)
   }
 
   if (outputAnimation.format == OutputAnimation::F_PNG)
-    gr.WritePNG((outputAnimation.name + "_frames/" + outputAnimation.name + str(boost::format("%04d") % frameNumber) + ".png").c_str(),"",false);
+    gr.WritePNG((outputAnimation.dir + "/" + str(boost::format("%04d") % frameNumber) + ".png").c_str(),"",false);
   else if (outputAnimation.format == OutputAnimation::F_TEX)
-    gr.WriteTEX((outputAnimation.name + "_frames/" + outputAnimation.name + str(boost::format("%04d") % frameNumber) + ".tex").c_str());
+    gr.WriteTEX((outputAnimation.dir + "/" + str(boost::format("%04d") % frameNumber) + ".tex").c_str());
 
   frameNumber += 1;
   nextPlotTime += outputAnimation.frequency.total_seconds();
@@ -516,5 +516,3 @@ bool GroundPlot::makeNewFrame(double tNow)
     return false;
 }
 #endif
-
-

@@ -1,3 +1,11 @@
+0.3.0 Released ????
+-------------------
+### Features:
+* Better naming conventions for input fields
+* More informed default values
+* User documentation
+* Example files
+
 0.2.1 Released 16 March 2015
 ----------------------------
 ### Features:
@@ -14,20 +22,18 @@
 ### Fixes:
 * Fixes for symmetric simulations.
 
-
 0.2.0 Released 11 June 2014
 ---------------------------
-
 ### Features:
-* Change to LIS (Library of Iterative Solvers) for linear algebra solutions. 
+* Change to LIS (Library of Iterative Solvers) for linear algebra solutions.
   User can select solver options.
 * Add ability to model partial wall insulation for basements.
 * Add ability to simulate shading using graphics hardware acceleration.
-* New initialization scheme separates initialization into initial conditions, 
-  implicit acceleration and warm-up periods. All three may be used for a single 
+* New initialization scheme separates initialization into initial conditions,
+  implicit acceleration and warm-up periods. All three may be used for a single
   initialization.
-* Allow user to specify the minimum output frequency (e.g., output every hour 
-  even if timestep is smaller). 
+* Allow user to specify the minimum output frequency (e.g., output every hour
+  even if timestep is smaller).
 * Generalize hourly output format.
 * Allow user to specify exterior grade roughness (e.g., for grass or asphalt).
 
@@ -41,13 +47,13 @@
 * Change "excavation depth" variable to "foundation depth".
 
 ### Fixes:
-* Calculate incident solar on vertical surfaces (previously used horizontal 
+* Calculate incident solar on vertical surfaces (previously used horizontal
   value).
 * Fix interpretation of weather file data.
 * Implicit acceleration is now less memory-intensive.
-* Use Tridiagonal Matrix Algorithm for ADI calculations (dramatically improves 
+* Use Tridiagonal Matrix Algorithm for ADI calculations (dramatically improves
   runtime).
-* Fix problem where interior cells were not growing towards the center in 3D 
+* Fix problem where interior cells were not growing towards the center in 3D
   simulations.
 * Fix windward convection algorithm typo.
 * Fix block outlines in 3D slice plots.

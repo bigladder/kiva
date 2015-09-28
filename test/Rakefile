@@ -1,0 +1,29 @@
+require 'fileutils'
+
+tests =
+[
+['slab','USA_DC_Washington'],
+['basement','USA_IL_Chicago']
+]
+
+
+def run(example, weather)
+	FileUtils::mkdir_p("#{example}-#{weather}")
+	system("../build/kiva ../examples/#{example}.yaml ../weather/#{weather}.epw #{example}-#{weather}/output.csv")
+end
+
+
+
+desc "Run tests"
+task :test do
+	i = 1
+	for t in tests
+		puts "Running test #{i} of #{tests.length}..."
+		puts "\n"
+		run(t[0],t[1])
+		i += 1
+		puts "\n"
+	end
+end
+
+task :default => :test

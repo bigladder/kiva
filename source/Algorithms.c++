@@ -41,6 +41,9 @@ double getDOE2ConvectionCoeff(double tilt,
    * Medium Smooth = 1.13
    * Smooth = 1.11
    * Very Smooth = 1.0
+   *
+   * These values correspond roughly to the relief in milimeters. We ask
+   * for rougness in meters instead, so we multiply by 100.
   */
 
   double hn;
@@ -73,7 +76,7 @@ double getDOE2ConvectionCoeff(double tilt,
     hcGlass = sqrt(pow(hn,2) + pow(pow(3.55*Vair,0.617),2));
   }
 
-  double hf = roughness*(hcGlass - hn);
+  double hf = roughness*100*(hcGlass - hn); // convert meters to milimeters
   return hn + hf;
 }
 

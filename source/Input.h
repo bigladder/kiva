@@ -121,7 +121,7 @@ class OutputAnimation
 {
 public:
 
-  std::string name;
+  std::string dir;
   boost::posix_time::time_duration frequency;
   bool grid;
   bool contours;
@@ -344,10 +344,9 @@ public:
   Material soil;
   double soilAbsorptivity;  // [frac]
   double soilEmissivity;  // [frac]
-  double surfaceRoughness;  // dimensionless (roughly corresponsds to millimeters of relief)
+  double surfaceRoughness;  // [m]
 
   // Local wind speed characteristics
-  double vegetationHeight;  // [m]
   double deltaLocal;  // [m]
   double alphaLocal;  // [-]
 
