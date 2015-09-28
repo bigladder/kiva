@@ -62,6 +62,8 @@ Foundation Depth
 **Units:**      m
 =============   =======
 
+.. _polygon:
+
 Polygon
 -------
 
@@ -570,6 +572,8 @@ A list of two values corresponding to the row and column where the hourly data b
 **Type:**       List [2] of integers
 =============   ====================
 
+.. _in_temp:
+
 Indoor Air Temperature
 ----------------------
 
@@ -592,6 +596,8 @@ Allows the user to choose between having a constant outdoor temperature for the 
 **Values:**     ``WEATHER-FILE`` or ``CONSTANT``
 **Default:**    ``WEATHER-FILE``
 =============   ================================
+
+.. _out_temp:
 
 Outdoor Dry-Bulb Temperature
 ----------------------------

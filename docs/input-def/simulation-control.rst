@@ -1,3 +1,5 @@
+.. _simulation_control:
+
 Simulation Control
 ==================
 
@@ -11,6 +13,8 @@ This defines the settings of the simulation period and timestep.
       Start Date: 2015-Jan-1
 			End Date: 2015-Dec-31
 			Timestep: 60 # [min]
+
+.. _start_date:
 
 Start Date
 ----------
@@ -31,6 +35,8 @@ Specifies the end date of the simulation. Simulation ends one timestep previous 
 **Required:**   Yes
 **Type:**       Date string
 =============   ===========
+
+.. _timestep:
 
 Timestep
 --------

@@ -109,7 +109,7 @@ Specifies how the boundary condition along the wall top is calculated. Options a
 Wall Top Temperature Difference
 -------------------------------
 
-If `Wall Top Boundary Condition`_ is ``LINEAR-DT``, then this value specifies the change in temperature across the wall. This is used only to represent the constraints of the IEA BESTEST analytical solution in case GC10a. The actual temperatures are determined based on the values of  `Indoor Air Temperature`_ and `Outdoor Dry-Bulb Temperature`_.
+If `Wall Top Boundary Condition`_ is ``LINEAR-DT``, then this value specifies the change in temperature across the wall. This is used only to represent the constraints of the IEA BESTEST analytical solution in case GC10a. The actual temperatures are determined based on the values of :ref:`in_temp` and :ref:`out_temp`.
 
 =============   =======
 **Required:**   Depends
@@ -146,13 +146,13 @@ Two-Dimensional Approximation
 
 These are methods of approximating three-dimensional foundation heat transfer using a two-dimensional coordinate system. Options are:
 
-- ``AP``: Creates an infinite rectangle (`Coordinate System`_ = ``CARTESIAN``) or a circle (`Coordinate System`_ = ``CYLINDRICAL``) with the same *area-to-perimeter* ratio as the three-dimensional `Polygon`_.
+- ``AP``: Creates an infinite rectangle (`Coordinate System`_ = ``CARTESIAN``) or a circle (`Coordinate System`_ = ``CYLINDRICAL``) with the same *area-to-perimeter* ratio as the three-dimensional :ref:`polygon`.
 
-- ``RR``: Creates the straight section (`Coordinate System`_ = ``CARTESIAN``) or a rounded cap (`Coordinate System`_ = ``CYLINDRICAL``) of a rounded rectangle with the same area and perimeter as the three-dimensional `Polygon`_.
+- ``RR``: Creates the straight section (`Coordinate System`_ = ``CARTESIAN``) or a rounded cap (`Coordinate System`_ = ``CYLINDRICAL``) of a rounded rectangle with the same area and perimeter as the three-dimensional :ref:`polygon`.
 
-- ``BOUNDARY``: Creates an infinite rectangle (`Coordinate System`_ = ``CARTESIAN``) or a circle (`Coordinate System`_ = ``CYLINDRICAL``) with an adjusted *area-to-perimeter* ratio from the three-dimensional `Polygon`_. Adjustments are made to represent concave corners of the `Polygon`_.
+- ``BOUNDARY``: Creates an infinite rectangle (`Coordinate System`_ = ``CARTESIAN``) or a circle (`Coordinate System`_ = ``CYLINDRICAL``) with an adjusted *area-to-perimeter* ratio from the three-dimensional :ref:`polygon`. Adjustments are made to represent concave corners of the :ref:`polygon`.
 
-- ``CUSTOM``: Creates an infinite rectangle (or parallel infinite rectangles) (`Coordinate System`_ = ``CARTESIAN``) or a circle (or concentric circles) (`Coordinate System`_ = ``CYLINDRICAL``) based on the specification of `Length 1`_ and `Length 2`_. This is an experimental  feature where the three-dimensional `Polygon`_ is not used directly to define the approximation.
+- ``CUSTOM``: Creates an infinite rectangle (or parallel infinite rectangles) (`Coordinate System`_ = ``CARTESIAN``) or a circle (or concentric circles) (`Coordinate System`_ = ``CYLINDRICAL``) based on the specification of `Length 1`_ and `Length 2`_. This is an experimental  feature where the three-dimensional :ref:`polygon` is not used directly to define the approximation.
 
 =============   ===========================================
 **Required:**   No
@@ -428,6 +428,6 @@ This specifies the number of timesteps (of the size specified by `Accelerated In
 Number of Warmup Days in Initialization
 ---------------------------------------
 
-Additional days of initialization can be calculated using the `Timestep`_ and `Numerical Scheme`_ defined by the user. This input specifies the number of days the domain is simulated under these conditions after the accelerated initialization timesteps, but prior to the `Start Date`_ specified in the `Simulation Control`_.
+Additional days of initialization can be calculated using the :ref:`timestep` and `Numerical Scheme`_ defined by the user. This input specifies the number of days the domain is simulated under these conditions after the accelerated initialization timesteps, but prior to the :ref:`start_date` specified in the :ref:`simulation_control`.
 
 .. [3] The Scalable Software Infrastructure Project. 2014. *Lis User Guide*. The Scalable Software Infrastructure Project, Fukuoka, Japan.
