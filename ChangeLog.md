@@ -1,5 +1,5 @@
-0.3.0 Released ????
--------------------
+0.3.0 Released 28 September 2015
+--------------------------------
 ### Features:
 * Better naming conventions for input fields
 * More informed default values
