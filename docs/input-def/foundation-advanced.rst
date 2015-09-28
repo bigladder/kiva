@@ -1,7 +1,7 @@
 Foundation (Advanced)
 =====================
 
-These are additional inputs that can be used to further define the `Foundation`_ object. These inputs are largely intended for advanced research or testing purposes.
+These are additional inputs that can be used to further define the :ref:`foundation` object. These inputs are largely intended for advanced research or testing purposes.
 
 Far-Field Width
 ---------------

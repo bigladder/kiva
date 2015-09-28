@@ -1,3 +1,5 @@
+.. _foundation:
+
 Foundation
 ==========
 
@@ -790,7 +792,7 @@ When `Perimeter Surface Width`_ is not specified, the entire slab is considered 
 Output Snapshots
 ----------------
 
-Output snapshots are used to graphically visualize domain temperatures and/or heat fluxes. Each series of snapshots is part of a list within the `Ouput Snapshots`_ object. A series consists of potentially many snapshots taken of a slice of the domain at a user-specified frequency between a start and end date.
+Output snapshots are used to graphically visualize domain temperatures and/or heat fluxes. Each series of snapshots is part of a list within the `Output Snapshots`_ object. A series consists of potentially many snapshots taken of a slice of the domain at a user-specified frequency between a start and end date.
 
 .. figure:: ../images/snapshot-profile.png
 
