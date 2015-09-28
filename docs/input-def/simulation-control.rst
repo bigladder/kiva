@@ -15,22 +15,22 @@ This defines the settings of the simulation period and timestep.
 Start Date
 ----------
 
-Specifies the start date of the simulation. Simulation begins at 12:00am of this day.
+Specifies the start date of the simulation. Simulation begins at 12:00am of this day. This is specified as a date string (e.g., YYYY-Mon-DD, YYYY/MM/DD).
 
-=============   =========================================
+=============   ===========
 **Required:**   Yes
-**Type:**       Date String (eg: YYYY-Mon-DD, YYYY/MM/DD)
-=============   =========================================
+**Type:**       Date string
+=============   ===========
 
 End Date
 --------
 
-Specifies the end date of the simulation. Simulation ends one timestep previous to 12:00am of the following day.
+Specifies the end date of the simulation. Simulation ends one timestep previous to 12:00am of the following day. This is specified as a date string (e.g., YYYY-Mon-DD, YYYY/MM/DD).
 
-=============   =========================================
+=============   ===========
 **Required:**   Yes
-**Type:**       Date String (eg: YYYY-Mon-DD, YYYY/MM/DD)
-=============   =========================================
+**Type:**       Date string
+=============   ===========
 
 Timestep
 --------

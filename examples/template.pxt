@@ -437,7 +437,7 @@ end
 <% if (plot) %>
   <% if (number_of_dimensions == 3) %>
     -
-      Name: "Z-slice"
+      Directory: "Z-slice"
       File Format: <%= plot_format %>
       Plot Type: <%= plot_type %>
     <% if plot_type == "HEAT-FLUX" %>
@@ -464,7 +464,7 @@ end
       Y Range: [<%= z_slice_y_range[0] %>, <%= z_slice_y_range[1] %>]
     <% end %>
     -
-      Name: "X-Slice"
+      Directory: "X-Slice"
       File Format: <%= plot_format %>
       Plot Type: <%= plot_type %>
     <% if plot_type == "HEAT-FLUX" %>
@@ -492,7 +492,7 @@ end
     <% end %>
   <% end %>
     -
-      Name: "Y-Slice"
+      Directory: "Y-Slice"
       Plot Type: <%= plot_type %>
     <% if plot_type == "HEAT-FLUX" %>
       Flux Direction: <%= plot_flux_dir %>

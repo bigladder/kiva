@@ -572,14 +572,63 @@ Input inputParser(std::string inputFile)
   for(size_t i=0;i<yamlInput["Foundation"]["Output Snapshots"].size();i++)
   {
     OutputAnimation temp;
-    temp.name = yamlInput["Foundation"]["Output Snapshots"][i]["Name"].as<std::string>();
-    temp.frequency = boost::posix_time::hours(yamlInput["Foundation"]["Output Snapshots"][i]["Frequency"].as<long>());
-    temp.grid = yamlInput["Foundation"]["Output Snapshots"][i]["Grid"].as<bool>();
-    temp.gradients = yamlInput["Foundation"]["Output Snapshots"][i]["Gradients"].as<bool>();
-    temp.contours = yamlInput["Foundation"]["Output Snapshots"][i]["Contours"].as<bool>();
-    temp.contourLabels = yamlInput["Foundation"]["Output Snapshots"][i]["Contour Labels"].as<bool>();
-    temp.axes = yamlInput["Foundation"]["Output Snapshots"][i]["Axes"].as<bool>();
-    temp.timestamp = yamlInput["Foundation"]["Output Snapshots"][i]["Timestamp"].as<bool>();
+    temp.dir = yamlInput["Foundation"]["Output Snapshots"][i]["Directory"].as<std::string>();
+
+    if (yamlInput["Foundation"]["Output Snapshots"][i]["Size"].IsDefined()) {
+      temp.size = yamlInput["Foundation"]["Output Snapshots"][i]["Size"].as<int>();
+    }
+    else {
+      temp.size = 800;
+    }
+
+    if (yamlInput["Foundation"]["Output Snapshots"][i]["Frequency"].IsDefined()) {
+      temp.frequency = boost::posix_time::hours(yamlInput["Foundation"]["Output Snapshots"][i]["Frequency"].as<long>());
+    }
+    else {
+      temp.frequency = boost::posix_time::hours(36);
+    }
+
+    if (yamlInput["Foundation"]["Output Snapshots"][i]["Mesh"].IsDefined()) {
+      temp.grid = yamlInput["Foundation"]["Output Snapshots"][i]["Mesh"].as<bool>();
+    }
+    else {
+      temp.grid = false;
+    }
+
+    if (yamlInput["Foundation"]["Output Snapshots"][i]["Gradients"].IsDefined()) {
+      temp.gradients = yamlInput["Foundation"]["Output Snapshots"][i]["Gradients"].as<bool>();
+    }
+    else {
+      temp.gradients = false;
+    }
+
+    if (yamlInput["Foundation"]["Output Snapshots"][i]["Contours"].IsDefined()) {
+      temp.contours = yamlInput["Foundation"]["Output Snapshots"][i]["Contours"].as<bool>();
+    }
+    else {
+      temp.contours = true;
+    }
+
+    if (yamlInput["Foundation"]["Output Snapshots"][i]["Contour Labels"].IsDefined()) {
+      temp.contourLabels = yamlInput["Foundation"]["Output Snapshots"][i]["Contour Labels"].as<bool>();
+    }
+    else {
+      temp.contourLabels = false;
+    }
+
+    if (yamlInput["Foundation"]["Output Snapshots"][i]["Axes"].IsDefined()) {
+      temp.axes = yamlInput["Foundation"]["Output Snapshots"][i]["Axes"].as<bool>();
+    }
+    else {
+      temp.axes = true;
+    }
+
+    if (yamlInput["Foundation"]["Output Snapshots"][i]["Timestamp"].IsDefined()) {
+      temp.timestamp = yamlInput["Foundation"]["Output Snapshots"][i]["Timestamp"].as<bool>();
+    }
+    else {
+      temp.timestamp = true;
+    }
 
     if (yamlInput["Foundation"]["Output Snapshots"][i]["Plot Type"].IsDefined())
     {
@@ -665,8 +714,6 @@ Input inputParser(std::string inputFile)
     {
       temp.contourColor = "H";
     }
-
-    temp.size = yamlInput["Foundation"]["Output Snapshots"][i]["Size"].as<int>();
 
     if (yamlInput["Foundation"]["Output Snapshots"][i]["Start Date"].IsDefined())
     {

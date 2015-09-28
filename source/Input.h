@@ -121,7 +121,7 @@ class OutputAnimation
 {
 public:
 
-  std::string name;
+  std::string dir;
   boost::posix_time::time_duration frequency;
   bool grid;
   bool contours;

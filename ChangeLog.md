@@ -1,7 +1,8 @@
-0.2.2 Released ????
+0.3.0 Released ????
 -------------------
 ### Features:
 * Better naming conventions for input fields
+* More informed default values
 * User documentation
 * Example files
 
