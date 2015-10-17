@@ -536,7 +536,7 @@ Allows the user to choose between having a constant indoor temperature for the d
 Indoor Air Temperature File
 ---------------------------
 
-If `Indoor Air Temperature Method`_ is ``FILE`` the indoor dry-bulb temperature will be set using hourly values defined in a comma separted value (CSV) file.
+If `Indoor Air Temperature Method`_ is ``FILE`` the indoor dry-bulb temperature (in Kelvin) will be set using hourly values defined in a comma separted value (CSV) file.
 
 **Example:**
 
@@ -585,8 +585,8 @@ If `Indoor Air Temperature Method`_ is ``CONSTANT`` the indoor dry-bulb temperat
 **Units:**      K
 =============   =======
 
-Outdoor Temperature Method
---------------------------
+Outdoor Air Temperature Method
+------------------------------
 
 Allows the user to choose between having a constant outdoor temperature for the duration of the simulaiton or to reference temperatures from the weather file.
 
@@ -599,10 +599,10 @@ Allows the user to choose between having a constant outdoor temperature for the 
 
 .. _out_temp:
 
-Outdoor Dry-Bulb Temperature
-----------------------------
+Outdoor Air Temperature
+-----------------------
 
-If `Outdoor Temperature Method`_ is ``CONSTANT`` the outdoor dry-bulb temperature will be set using this value. If `Outdoor Temperature Method`_ is ``WEATHER-FILE``, then this is not required.
+If `Outdoor Air Temperature Method`_ is ``CONSTANT`` the outdoor dry-bulb temperature will be set using this value. If `Outdoor Air Temperature Method`_ is ``WEATHER-FILE``, then this is not required.
 
 =============   =======
 **Required:**   Depends

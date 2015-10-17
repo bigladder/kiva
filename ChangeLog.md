@@ -1,3 +1,9 @@
+0.3.1 Released 16 October 2015
+------------------------------
+### Fixes:
+* Make indoor/outdoor air temperature fileds more consistent
+* Cross-platform CSV line ending support
+
 0.3.0 Released 28 September 2015
 --------------------------------
 ### Features:

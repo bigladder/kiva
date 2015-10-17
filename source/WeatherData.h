@@ -22,12 +22,15 @@
 #include <fstream>
 #include <cmath>
 #include <numeric>
+#include <iostream>
 
 #include <boost/tokenizer.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/date_time/gregorian/gregorian.hpp>
+
+#include "Functions.h"
 
 class HourlyData: public std::vector<double>
 {

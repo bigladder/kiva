@@ -274,9 +274,9 @@ Input inputParser(std::string inputFile)
     foundation1.deepGroundBoundary = Foundation::DGB_ZERO_FLUX;
   }
 
-  if  (yamlInput["Foundation"]["Indoor Temperature Method"].IsDefined())
+  if  (yamlInput["Foundation"]["Indoor Air Temperature Method"].IsDefined())
   {
-    if (yamlInput["Foundation"]["Indoor Temperature Method"].as<std::string>() == "FILE")
+    if (yamlInput["Foundation"]["Indoor Air Temperature Method"].as<std::string>() == "FILE")
     {
       foundation1.indoorTemperatureMethod = Foundation::ITM_FILE;
       foundation1.indoorAirTemperatureFile.fileName = yamlInput["Foundation"]["Indoor Air Temperature File"]["Name"].as<std::string>();
@@ -284,7 +284,7 @@ Input inputParser(std::string inputFile)
       foundation1.indoorAirTemperatureFile.firstIndex.second = yamlInput["Foundation"]["Indoor Air Temperature File"]["Index"][1].as<int>();
       foundation1.indoorAirTemperatureFile.readData();
     }
-    else if (yamlInput["Foundation"]["Indoor Temperature Method"].as<std::string>() == "CONSTANT")
+    else if (yamlInput["Foundation"]["Indoor Air Temperature Method"].as<std::string>() == "CONSTANT")
     {
       foundation1.indoorTemperatureMethod = Foundation::ITM_CONSTANT_TEMPERATURE;
       foundation1.indoorAirTemperature = yamlInput["Foundation"]["Indoor Air Temperature"].as<double>();
@@ -378,15 +378,45 @@ Input inputParser(std::string inputFile)
   // Meshing
   if  (yamlInput["Foundation"]["Mesh"].IsDefined())
   {
-    foundation1.mesh.minCellDim = yamlInput["Foundation"]["Mesh"]["Minimum Cell Dimension"].as<double>();
-    foundation1.mesh.maxNearGrowthCoeff = yamlInput["Foundation"]["Mesh"]["Maximum Near-Field Growth Coefficient"].as<double>();
-    foundation1.mesh.maxDepthGrowthCoeff = yamlInput["Foundation"]["Mesh"]["Maximum Deep-Field Growth Coefficient"].as<double>();
-    foundation1.mesh.maxInteriorGrowthCoeff = yamlInput["Foundation"]["Mesh"]["Maximum Interior-Field Growth Coefficient"].as<double>();
-    foundation1.mesh.maxExteriorGrowthCoeff = yamlInput["Foundation"]["Mesh"]["Maximum Far-Field Growth Coefficient"].as<double>();
+  
+    if  (yamlInput["Foundation"]["Mesh"]["Minimum Cell Dimension"].IsDefined()) {
+      foundation1.mesh.minCellDim = yamlInput["Foundation"]["Mesh"]["Minimum Cell Dimension"].as<double>();
+    }
+    else {
+      foundation1.mesh.minCellDim = 0.05;
+    }
+  
+    if  (yamlInput["Foundation"]["Mesh"]["Maximum Near-Field Growth Coefficient"].IsDefined()) {
+      foundation1.mesh.maxNearGrowthCoeff = yamlInput["Foundation"]["Mesh"]["Maximum Near-Field Growth Coefficient"].as<double>();
+    }
+    else {
+      foundation1.mesh.maxNearGrowthCoeff = 1.5;
+    }
+    
+    if  (yamlInput["Foundation"]["Mesh"]["Maximum Deep-Field Growth Coefficient"].IsDefined()) {
+      foundation1.mesh.maxDepthGrowthCoeff = yamlInput["Foundation"]["Mesh"]["Maximum Deep-Field Growth Coefficient"].as<double>();
+    }
+    else {
+      foundation1.mesh.maxDepthGrowthCoeff = 1.5;
+    }
+    
+    if  (yamlInput["Foundation"]["Mesh"]["Maximum Interior-Field Growth Coefficient"].IsDefined()) {
+      foundation1.mesh.maxInteriorGrowthCoeff = yamlInput["Foundation"]["Mesh"]["Maximum Interior-Field Growth Coefficient"].as<double>();
+    }
+    else {
+      foundation1.mesh.maxInteriorGrowthCoeff = 1.5;
+    }
+
+    if  (yamlInput["Foundation"]["Mesh"]["Maximum Far-Field Growth Coefficient"].IsDefined()) {
+      foundation1.mesh.maxExteriorGrowthCoeff = yamlInput["Foundation"]["Mesh"]["Maximum Far-Field Growth Coefficient"].as<double>();
+    }
+    else {
+      foundation1.mesh.maxExteriorGrowthCoeff = 1.5;
+    }
   }
   else
   {
-    foundation1.mesh.minCellDim = 0.02;
+    foundation1.mesh.minCellDim = 0.05;
     foundation1.mesh.maxNearGrowthCoeff = 1.5;
     foundation1.mesh.maxDepthGrowthCoeff = 1.5;
     foundation1.mesh.maxInteriorGrowthCoeff = 1.5;
@@ -518,14 +548,14 @@ Input inputParser(std::string inputFile)
     foundation1.convectionCalculationMethod = Foundation::CCM_AUTO;
   }
 
-  if  (yamlInput["Foundation"]["Outdoor Temperature Method"].IsDefined())
+  if  (yamlInput["Foundation"]["Outdoor Air Temperature Method"].IsDefined())
   {
-    if (yamlInput["Foundation"]["Outdoor Temperature Method"].as<std::string>() == "WEATHER-FILE")
+    if (yamlInput["Foundation"]["Outdoor Air Temperature Method"].as<std::string>() == "WEATHER-FILE")
       foundation1.outdoorTemperatureMethod = Foundation::OTM_WEATHER_FILE;
-    else if (yamlInput["Foundation"]["Outdoor Temperature Method"].as<std::string>() == "CONSTANT")
+    else if (yamlInput["Foundation"]["Outdoor Air Temperature Method"].as<std::string>() == "CONSTANT")
     {
       foundation1.outdoorTemperatureMethod = Foundation::OTM_CONSTANT_TEMPERATURE;
-      foundation1.outdoorDryBulbTemperature = yamlInput["Foundation"]["Outdoor Dry-Bulb Temperature"].as<double>();
+      foundation1.outdoorDryBulbTemperature = yamlInput["Foundation"]["Outdoor Air Temperature"].as<double>();
     }
   }
   else
