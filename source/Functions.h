@@ -19,6 +19,7 @@
 #ifndef Functions_HPP
 #define Functions_HPP
 
+#include <fstream>
 #include <math.h>
 #include <algorithm>
 #include <vector>
@@ -34,5 +35,6 @@ bool isOdd(int N);
 void solveTDM(const std::vector<double>& a1, const std::vector<double>& a2,
           std::vector<double>& a3, std::vector<double>& b,
               std::vector<double>& x);
+std::istream& safeGetline(std::istream& is, std::string& t);
 
 #endif

@@ -129,7 +129,7 @@ void DataFile::readData()
   typedef boost::tokenizer< boost::escaped_list_separator<char> > Tokenizer;
   int row = 0;
 
-  while (std::getline(file,line,'\r'))
+  while (!safeGetline(file,line).eof())
   {
     row += 1;
     Tokenizer tok(line, boost::escaped_list_separator<char>("\\",",","\""));

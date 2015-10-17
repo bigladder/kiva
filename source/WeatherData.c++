@@ -135,7 +135,7 @@ void WeatherData::importEPW(std::string epwFile)
   int dayOfYear = 1;
   int previousDayOfMonth = 1;
 
-  while (getline(inf,line))
+  while (!safeGetline(inf,line).eof())
   {
     row += 1;
     Tokenizer tok(line, boost::escaped_list_separator<char>("\\",",","\""));
