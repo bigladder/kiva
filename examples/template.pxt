@@ -420,10 +420,10 @@ end
   Wall Top Boundary Condition: ZERO-FLUX  # ZERO-FLUX | LINEAR-DT
 <% end %>
 <% if outdoor_temp == nil %>
-  Outdoor Temperature Method: WEATHER-FILE # WEATHER-FILE | CONSTANT
+  Outdoor Air Temperature Method: WEATHER-FILE # WEATHER-FILE | CONSTANT
 <% else %>
-  Outdoor Temperature Method: CONSTANT # WEATHER-FILE | CONSTANT
-  Outdoor Dry-Bulb Temperature: <%= outdoor_temp + 273.15 %>
+  Outdoor Air Temperature Method: CONSTANT # WEATHER-FILE | CONSTANT
+  Outdoor Air Temperature: <%= outdoor_temp + 273.15 %>
 <% end %>
 
   Output Report:
