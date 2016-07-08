@@ -17,5 +17,7 @@ set( CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}" )
 option( ENABLE_ITERATIVE_SOLVER "Use LIS as an iterative solver instead of UMFPACK" ON )
 option( ENABLE_OPENGL "Use OpenGL to perform shading calculations." OFF )
 
-add_subdirectory(source)
+include_directories( ${CMAKE_SOURCE_DIR}/src/core/ )
 
+add_subdirectory(src/core)
+add_subdirectory(src/kiva)
