@@ -430,4 +430,11 @@ Number of Warmup Days in Initialization
 
 Additional days of initialization can be calculated using the :ref:`timestep` and `Numerical Scheme`_ defined by the user. This input specifies the number of days the domain is simulated under these conditions after the accelerated initialization timesteps, but prior to the :ref:`start_date` specified in the :ref:`simulation_control`.
 
+=============   =======
+**Required:**   No
+**Type:**       Integer
+**Units:**      days
+**Default:**    365
+=============   =======
+
 .. [3] The Scalable Software Infrastructure Project. 2014. *Lis User Guide*. The Scalable Software Infrastructure Project, Fukuoka, Japan.
