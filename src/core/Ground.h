@@ -19,8 +19,6 @@
 #ifndef GROUND_HPP_
 #define GROUND_HPP_
 
-//#define USE_LIS_SOLVER
-
 #include "Mesher.h"
 #include "Domain.h"
 #include "WeatherData.h"
@@ -44,22 +42,7 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/multi_array.hpp>
 
-#if defined(USE_LIS_SOLVER)
-
 #include "lis.h"
-
-#else
-
-#include <boost/numeric/ublas/matrix.hpp>
-#include <boost/numeric/ublas/matrix_sparse.hpp>
-
-#include <boost/numeric/bindings/traits/ublas_vector.hpp>
-#include <boost/numeric/bindings/traits/ublas_sparse.hpp>
-#include <boost/numeric/bindings/umfpack/umfpack.hpp>
-
-namespace umf = boost::numeric::bindings::umfpack;
-
-#endif
 
 class Ground
 {
@@ -96,22 +79,12 @@ private:
   std::vector<double> x_; // solution
 
   // Implicit
-#if defined(USE_LIS_SOLVER)
   LIS_MATRIX Amat;
   LIS_VECTOR b, x;
 
   LIS_SOLVER solver;
 
   std::vector<char> solverOptions;
-#else
-    boost::numeric::ublas::compressed_matrix<double,
-                    boost::numeric::ublas::column_major, 0,
-                    boost::numeric::ublas::unbounded_array<int>,
-                    boost::numeric::ublas::unbounded_array<double> > Amat;
-
-    boost::numeric::ublas::vector<double> b, x;
-#endif
-
 
   boost::multi_array<double, 3> TOld; // solution, n
 

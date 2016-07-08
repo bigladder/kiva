@@ -37,11 +37,5 @@ Kiva has a number of library dependencies which you will need in order to compil
  - glfw
  - glm
 
-For the UMFPACK (direct solver) alternative, you will need the following instead of Lis.
-
-1. [Boost Numeric Bindings](http://mathema.tician.de/software/boost-numeric-bindings)
-1. [SuiteSparse](http://www.cise.ufl.edu/research/sparse/umfpack/) (with openBLAS set in SuiteSparse_config.mk)
- - [OpenBLAS](http://xianyi.github.io/OpenBLAS/)
-
 If you'd like to contribute to this code or if you have questions, send an email to Neal
 Kruis (neal.kruis AT bigladdersoftware DOT com).

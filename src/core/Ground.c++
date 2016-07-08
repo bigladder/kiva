@@ -19,8 +19,6 @@
 #ifndef Ground_CPP
 #define Ground_CPP
 
-//#define USE_LIS_SOLVER
-
 #include "Ground.h"
 
 static const double PI = 4.0*atan(1.0);
@@ -60,12 +58,10 @@ Ground::~Ground()
 
   outputFile.close();
 
-#if defined(USE_LIS_SOLVER)
   lis_matrix_destroy(Amat);
   lis_vector_destroy(x);
   lis_vector_destroy(b);
   lis_solver_destroy(solver); // for whatever reason, this causes a crash
-#endif
 
 }
 
@@ -123,20 +119,18 @@ void Ground::initializeConditions()
     x_.resize(nX*nY*nZ);
   }
 
-#if defined(USE_LIS_SOLVER)
-    std::string solverOptionsString = "-i ";
-    solverOptionsString.append(foundation.solver);
-    solverOptionsString.append(" -p ");
-    solverOptionsString.append(foundation.preconditioner);
-    solverOptionsString.append(" -maxiter ");
-    solverOptionsString.append(std::to_string(foundation.maxIterations));
-    solverOptionsString.append(" -initx_zeros false -tol ");
-    solverOptionsString.append(std::to_string(foundation.tolerance));
+  std::string solverOptionsString = "-i ";
+  solverOptionsString.append(foundation.solver);
+  solverOptionsString.append(" -p ");
+  solverOptionsString.append(foundation.preconditioner);
+  solverOptionsString.append(" -maxiter ");
+  solverOptionsString.append(std::to_string(foundation.maxIterations));
+  solverOptionsString.append(" -initx_zeros false -tol ");
+  solverOptionsString.append(std::to_string(foundation.tolerance));
 
-    std::vector<char> solverChars(solverOptionsString.begin(),solverOptionsString.end());
-    solverChars.push_back('\0');
-    solverOptions = solverChars;
-#endif
+  std::vector<char> solverChars(solverOptionsString.begin(),solverOptionsString.end());
+  solverChars.push_back('\0');
+  solverOptions = solverChars;
 
   if (foundation.numericalScheme == Foundation::NS_CRANK_NICOLSON ||
       foundation.numericalScheme == Foundation::NS_IMPLICIT ||
@@ -146,7 +140,6 @@ void Ground::initializeConditions()
       (foundation.numericalScheme == Foundation::NS_ADI && !(TDMA)))
   {
 
-#if defined(USE_LIS_SOLVER)
     lis_matrix_create(LIS_COMM_WORLD,&Amat);
     lis_matrix_set_size(Amat,nX*nY*nZ,nX*nY*nZ);
 
@@ -158,20 +151,11 @@ void Ground::initializeConditions()
     lis_vector_set_all(283.15,x);
     lis_solver_create(&solver);
     lis_solver_set_option(&solverOptions[0],solver);
-#else
-        Amat = boost::numeric::ublas::compressed_matrix<double,
-        boost::numeric::ublas::column_major, 0,
-        boost::numeric::ublas::unbounded_array<int>,
-        boost::numeric::ublas::unbounded_array<double> >(nX*nY*nZ,nX*nY*nZ);  // Coefficient Matrix
-        b = boost::numeric::ublas::vector<double> (nX*nY*nZ);  // constant and unknown vectors
-        x = boost::numeric::ublas::vector<double> (nX*nY*nZ);  // constant and unknown vectors
-#endif
 
   }
   else
   {
     // Create a place holder matrix/vector system of size 1 to avoid problems when destroying the LIS components
-#if defined(USE_LIS_SOLVER)
     lis_matrix_create(LIS_COMM_WORLD,&Amat);
     lis_matrix_set_size(Amat,1,1);
 
@@ -183,7 +167,6 @@ void Ground::initializeConditions()
     lis_vector_set_all(annualAverageDryBulbTemperature,x);
     lis_solver_create(&solver);
     lis_solver_set_option(&solverOptions[0],solver);
-#endif
   }
 
   TNew.resize(boost::extents[nX][nY][nZ]);
@@ -2197,11 +2180,7 @@ void Ground::setAmatValue(const int i,const int j,const double val)
   }
   else
   {
-#if defined(USE_LIS_SOLVER)
     lis_matrix_set_value(LIS_INS_VALUE,i,j,val,Amat);
-#else
-    Amat(i,j) = val;
-#endif
   }
 }
 
@@ -2213,11 +2192,7 @@ void Ground::setbValue(const int i,const double val)
   }
   else
   {
-#if defined(USE_LIS_SOLVER)
-  lis_vector_set_value(LIS_INS_VALUE,i,val,b);
-#else
-  b(i) = val;
-#endif
+    lis_vector_set_value(LIS_INS_VALUE,i,val,b);
   }
 }
 
@@ -2229,7 +2204,6 @@ void Ground::solveLinearSystem()
   }
   else
   {
-#if defined(USE_LIS_SOLVER)
     lis_matrix_set_type(Amat,LIS_MATRIX_CSR);
     lis_matrix_assemble(Amat);
 
@@ -2253,9 +2227,6 @@ void Ground::solveLinearSystem()
 
     }
     //lis_output(Amat,b,x,LIS_FMT_MM,"Matrix.mtx");
-#else
-    umf::umf_solve(Amat,x,b);
-#endif
   }
 }
 
@@ -2271,22 +2242,17 @@ void Ground::clearAmat()
   }
   else
   {
-#if defined(USE_LIS_SOLVER)
-  lis_matrix_destroy(Amat);
-  lis_matrix_create(LIS_COMM_WORLD,&Amat);
-  lis_matrix_set_size(Amat,nX*nY*nZ,nX*nY*nZ);
+    lis_matrix_destroy(Amat);
+    lis_matrix_create(LIS_COMM_WORLD,&Amat);
+    lis_matrix_set_size(Amat,nX*nY*nZ,nX*nY*nZ);
 
-  lis_vector_destroy(b);
-  lis_vector_create(LIS_COMM_WORLD,&b);
-  lis_vector_set_size(b,0,nX*nY*nZ);
+    lis_vector_destroy(b);
+    lis_vector_create(LIS_COMM_WORLD,&b);
+    lis_vector_set_size(b,0,nX*nY*nZ);
 
-  lis_solver_destroy(solver);
-  lis_solver_create(&solver);
-  lis_solver_set_option(&solverOptions[0],solver);
-
-#else
-  Amat.clear();
-#endif
+    lis_solver_destroy(solver);
+    lis_solver_create(&solver);
+    lis_solver_set_option(&solverOptions[0],solver);
   }
 }
 
@@ -2298,13 +2264,9 @@ double Ground::getxValue(const int i)
   }
   else
   {
-#if defined(USE_LIS_SOLVER)
-  double xVal;
-  lis_vector_get_value(x,i,&xVal);
-  return xVal;
-#else
-  return x(i);
-#endif
+    double xVal;
+    lis_vector_get_value(x,i,&xVal);
+    return xVal;
   }
 }
 

@@ -1,3 +1,10 @@
+0.4.0 Released ????
+-------------------
+### Fixes:
+
+### Features:
+* Separate core functionality into a linked library
+
 0.3.1 Released 16 October 2015
 ------------------------------
 ### Fixes:

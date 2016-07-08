@@ -1,7 +1,3 @@
-if (${ENABLE_ITERATIVE_SOLVER})
-  add_definitions(-D USE_LIS_SOLVER )
-endif (${ENABLE_ITERATIVE_SOLVER})
-
 execute_process(COMMAND git describe --tags --long
                 WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
                 RESULT_VARIABLE git_exit_status
@@ -40,10 +36,7 @@ set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${kiva_link_flags}")
 
 set(kiva_lib boost_date_time
              boost_program_options
-             yaml-cpp )
-
-if (${ENABLE_ITERATIVE_SOLVER})
-  set(kiva_lib ${kiva_lib} lis )
-endif (${ENABLE_ITERATIVE_SOLVER})
+             yaml-cpp
+             lis )
 
 target_link_libraries(kiva ${kiva_lib} kivalib)

@@ -24,9 +24,7 @@
 #include <boost/date_time/gregorian/gregorian.hpp>
 #include <boost/program_options.hpp>
 
-#if defined(USE_LIS_SOLVER)
 #include "lis.h"
-#endif
 
 #include "Version.h"
 #include "InputParser.h"
@@ -38,9 +36,7 @@ namespace po = boost::program_options;
 
 int main(int argc, char *argv[])
 {
-#if defined(USE_LIS_SOLVER)
   lis_initialize(&argc, &argv);
-#endif
 
   std::string versionInfo = "kiva ";
   versionInfo.append(VERSION_NUMBER);
@@ -133,28 +129,19 @@ int main(int argc, char *argv[])
       std::cout << usageInfo << "\n";
       std::cout << generic;
 
-#if defined(USE_LIS_SOLVER)
       lis_finalize();
-#endif
       return 1;
     }
 
-#if defined(USE_LIS_SOLVER)
     lis_finalize();
-#endif
     return 0;
 
   }
   catch(std::exception& e)
   {
     std::cout << e.what() << std::endl;
-#if defined(USE_LIS_SOLVER)
     lis_finalize();
-#endif
     return 1;
   }
 
 }
-
-
-
