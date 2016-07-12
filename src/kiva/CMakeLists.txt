@@ -6,14 +6,14 @@ execute_process(COMMAND git describe --tags --long
 
 if(${CMAKE_BUILD_TYPE} MATCHES "Debug")
   set (kiva_version "${kiva_version}-Debug")
-endif(${CMAKE_BUILD_TYPE} MATCHES "Debug")
+endif()
 
 if(${git_exit_status} MATCHES "0")
   set(VERSION_NUMBER ${kiva_version})
   message("Building Kiva version: ${VERSION_NUMBER}")
 else()
   message("Error finding version number.")
-endif(${git_exit_status} MATCHES "0")
+endif()
 
 string(TIMESTAMP YEAR %Y)
 
@@ -29,14 +29,20 @@ set(kiva_src Main.c++
 
 add_executable(kiva ${kiva_src})
 
-set(kiva_link_flags "-fopenmp")
+set(kiva_link_flags "")
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -fopenmp")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+
+if(${ENABLE_OPENMP})
+  set(kiva_link_flags "${kiva_link_flags} -fopenmp")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
+endif()
+
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${kiva_link_flags}")
 
-set(kiva_lib boost_date_time
+set(links boost_date_time
              boost_program_options
              yaml-cpp
              lis )
 
-target_link_libraries(kiva ${kiva_lib} kivalib)
+target_link_libraries(kiva ${links} libkiva)

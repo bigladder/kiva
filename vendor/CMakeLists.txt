@@ -1,0 +1,4 @@
+add_subdirectory(boost-1.61.0)
+add_subdirectory(lis-1.5.66)
+add_subdirectory(mathgl-2.3.5.1)
+add_subdirectory(yaml-cpp-0.5.3)
