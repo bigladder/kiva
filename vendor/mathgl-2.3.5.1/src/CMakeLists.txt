@@ -13,7 +13,7 @@ set(mgl_hdr
 	../include/mgl2/base.h		../include/mgl2/prim.h		../include/mgl2/canvas_cf.h
 	../include/mgl2/font.h		../include/mgl2/canvas.h	../include/mgl2/surf.h
 	../include/mgl2/mgl_cf.h	../include/mgl2/type.h		${MathGL_BINARY_DIR}/include/mgl2/config.h
-${MathGL_BINARY_DIR}/include/mgl2/dllexport.h	cont.hpp
+	${MathGL_BINARY_DIR}/include/mgl2/dllexport.h	cont.hpp
 	../include/mgl2/cont.h		../include/mgl2/mgl.h		../include/mgl2/vect.h
 	../include/mgl2/data.h		../include/mgl2/volume.h	../include/mgl2/data_cf.h
 	../include/mgl2/define.h	../include/mgl2/other.h		../include/mgl2/eval.h
@@ -44,7 +44,7 @@ endif(MGL_HAVE_OPENGL)
 
 include(GenerateExportHeader)
 mgl_add_lib(mgl ${mgl_src} ${mgl_hdr})
-generate_export_header(mgl EXPORT_FILE_NAME ../include/mgl2/dllexport.h)
+generate_export_header(mgl EXPORT_FILE_NAME ${MathGL_BINARY_DIR}/include/mgl2/dllexport.h)
 
 target_link_libraries(mgl ${MGL_DEP_LIBS})
 target_link_libraries(mgl-static ${MGL_DEP_LIBS})
@@ -55,5 +55,3 @@ if(MGL_HAVE_MPI)
 	target_link_libraries(mgl-mpi-static ${MPI_LIBRARIES} )
 	target_include_directories(mgl-mpi SYSTEM PUBLIC ${MPI_CXX_INCLUDE_PATH})
 endif(MGL_HAVE_MPI)
-
-install(FILES ${MathGL_BINARY_DIR}/include/mgl2/dllexport.h DESTINATION ${MGL_INCLUDE_PATH})

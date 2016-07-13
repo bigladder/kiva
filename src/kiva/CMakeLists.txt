@@ -41,8 +41,8 @@ endif()
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${kiva_link_flags}")
 
 set(links boost_date_time
-             boost_program_options
-             yaml-cpp
-             lis )
+          boost_program_options
+          yaml-cpp
+          lis )
 
 target_link_libraries(kiva ${links} libkiva)

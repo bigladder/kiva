@@ -54,12 +54,6 @@ function(mgl_add_lib mgl_tmp_lib)
                set_target_properties(${mgllib}-static PROPERTIES OUTPUT_NAME "${mgllib}${mgl_lib_static}${mgl_lib_end}")
        endif(enable-mgl2)
 
-       install(
-               TARGETS ${mgllib} ${mgllib}-static
-               RUNTIME DESTINATION bin
-               ARCHIVE DESTINATION ${MGL_LIB_INSTALL_DIR}
-               LIBRARY DESTINATION ${MGL_LIB_INSTALL_DIR}
-       )
 endfunction(mgl_add_lib mgl_tmp_lib)
 
 MACRO(MGL_DEPENDENT_OPTION option doc default depends1 force1 depends2 force2)
@@ -119,8 +113,6 @@ if(enable-pthread AND enable-openmp)
 	message(SEND_ERROR "You can't enable POSIX threads and OpenMP at the same time!")
 endif(enable-pthread AND enable-openmp)
 
-CMAKE_DEPENDENT_OPTION(enable-zlib "Enable zlib support" ON "NOT enable-all" ON)
-CMAKE_DEPENDENT_OPTION(enable-png "Enable png support" ON "NOT enable-all" ON)
 CMAKE_DEPENDENT_OPTION(enable-jpeg "Enable jpeg support" OFF "NOT enable-all" ON)
 CMAKE_DEPENDENT_OPTION(enable-pdf "Enable pdf support" OFF "NOT enable-all" ON)
 CMAKE_DEPENDENT_OPTION(enable-gif "Enable gif support" OFF "NOT enable-all" ON)
@@ -133,6 +125,7 @@ if(MSVC AND MSVC_VERSION GREATER 1899)
 endif(MSVC AND MSVC_VERSION GREATER 1899)
 
 include_directories( ${MathGL_SOURCE_DIR}/include ${MathGL_BINARY_DIR}/include)
+
 set(MGL_INCLUDE_PATH "${CMAKE_INSTALL_PREFIX}/include/mgl2")
 set(MGL_CGI_PATH "${CMAKE_INSTALL_PREFIX}/share/mathgl" CACHE STRING "Set CGI install directory")
 set(MGL_DEF_FONT "STIX" CACHE STRING "Set default font name")
@@ -232,8 +225,6 @@ else(NOT MSVC AND enable-rvalue)
 	set(MGL_HAVE_RVAL 0)
 endif(NOT MSVC AND enable-rvalue)
 
-
-
 if(enable-double)
 	set(MGL_USE_DOUBLE 1)
 else(enable-double)
@@ -264,7 +255,6 @@ else(enable-mpi)
 	set(MGL_HAVE_MPI 0)
 endif(enable-mpi)
 
-
 if(enable-pthr-widget OR enable-pthread)
 	if(enable-pthread)
 		set(MGL_HAVE_PTHREAD 1)
@@ -288,7 +278,6 @@ set(MGL_HAVE_HDF4 0)
 set(MGL_HAVE_HDF5 0)
 set(MGL_HAVE_FLTK 0)
 
-
 if(enable-jpeg)
 	set(MGL_HAVE_JPEG 1)
 	include(FindJPEG)
@@ -301,34 +290,15 @@ else(enable-jpeg)
 	set(MGL_HAVE_JPEG 0)
 endif(enable-jpeg)
 
+set(MGL_HAVE_ZLIB 1)
+set(MGL_DEP_LIBS zlibstatic ${MGL_DEP_LIBS})
+include_directories(../zlib-1.2.8/)
+include_directories(${MathGL_BINARY_DIR}/../zlib-1.2.8/)
 
-if(enable-zlib)
-	set(MGL_HAVE_ZLIB 1)
-	include(FindZLIB)
-	if(NOT ZLIB_FOUND)
-		message(SEND_ERROR "Couldn't find ZLib library.")
-	endif(NOT ZLIB_FOUND)
-	set(MGL_DEP_LIBS ${ZLIB_LIBRARIES} ${MGL_DEP_LIBS})
-	include_directories(${ZLIB_INCLUDE_DIR})
-else(enable-zlib)
-	set(MGL_HAVE_ZLIB 0)
-endif(enable-zlib)
-
-if(enable-png)
-	set(MGL_HAVE_PNG 1)
-	if(NOT MGL_HAVE_ZLIB)
-		message(SEND_ERROR "You have to enable ZLib if you plan to use PNG export.")
-	endif(NOT MGL_HAVE_ZLIB)
-	include(FindPNG)
-	if(NOT PNG_FOUND)
-		message(SEND_ERROR "Couldn't find PNG library.")
-	endif(NOT PNG_FOUND)
-	set(MGL_DEP_LIBS ${PNG_LIBRARIES} ${MGL_DEP_LIBS})
-	include_directories(${PNG_INCLUDE_DIR})
-else(enable-png)
-	set(MGL_HAVE_PNG 0)
-endif(enable-png)
-
+set(MGL_HAVE_PNG 1)
+set(MGL_DEP_LIBS png_static ${MGL_DEP_LIBS})
+include_directories(../libpng-1.6.23/)
+include_directories(${MathGL_BINARY_DIR}/../libpng-1.6.23/)
 
 if(enable-pdf)
 	set(MGL_HAVE_PDF 1)
@@ -397,10 +367,3 @@ endif(WIN32)
 
 add_subdirectory( src )
 add_subdirectory( include )
-
-
-if(WIN32)
-	install(FILES ${CMAKE_SOURCE_DIR}/FindMathGL2.cmake DESTINATION ${CMAKE_INSTALL_PREFIX} RENAME mathgl2-config.cmake)
-else(WIN32)
-	install(FILES ${CMAKE_SOURCE_DIR}/FindMathGL2.cmake DESTINATION ${MGL_LIB_INSTALL_DIR}/cmake/mathgl2/ RENAME mathgl2-config.cmake)
-endif(WIN32)

@@ -17,10 +17,20 @@ set( CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}" )
 option(ENABLE_OPENMP "Use OpenMP" OFF)
 option( ENABLE_OPENGL "Use OpenGL to perform shading calculations." OFF )
 
+if(CMAKE_COMPILER_IS_GNUCXX OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+endif()
+
+if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated-register -Wno-deprecated-declarations")
+endif()
+
+
 include_directories( ${CMAKE_SOURCE_DIR}/src/libkiva/)
 include_directories( ${CMAKE_SOURCE_DIR}/vendor/boost-1.61.0/)
 include_directories( ${CMAKE_SOURCE_DIR}/vendor/lis-1.5.66/include/)
 include_directories( ${CMAKE_SOURCE_DIR}/vendor/mathgl-2.3.5.1/include/)
+include_directories( ${CMAKE_BINARY_DIR}/vendor/mathgl-2.3.5.1/include/)
 include_directories( ${CMAKE_SOURCE_DIR}/vendor/yaml-cpp-0.5.3/include/)
 
 add_subdirectory(vendor)

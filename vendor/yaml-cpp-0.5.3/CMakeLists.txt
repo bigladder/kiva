@@ -112,8 +112,8 @@ endif()
 include_directories(${YAML_CPP_SOURCE_DIR}/src)
 include_directories(${YAML_CPP_SOURCE_DIR}/include)
 
-find_package(Boost REQUIRED)
-include_directories(${Boost_INCLUDE_DIRS})
+#find_package(Boost REQUIRED)
+#include_directories(${Boost_INCLUDE_DIRS})
 
 
 ###
