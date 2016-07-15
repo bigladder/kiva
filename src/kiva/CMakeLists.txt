@@ -31,8 +31,6 @@ add_executable(kiva ${kiva_src})
 
 set(kiva_link_flags "")
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-
 if(${ENABLE_OPENMP})
   set(kiva_link_flags "${kiva_link_flags} -fopenmp")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")

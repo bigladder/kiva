@@ -36,8 +36,6 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   endif()
 endif()
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-
 if(${ENABLE_OPENMP})
   set(kiva_link_flags "${kiva_link_flags} -fopenmp")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
@@ -48,7 +46,7 @@ set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${kiva_link_flags}")
 set(links boost_date_time
           boost_filesystem
           boost_system
-          mgl
+          mgl-static
           lis )
 
 if(${ENABLE_OPENGL})
