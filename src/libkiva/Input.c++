@@ -418,7 +418,7 @@ void Foundation::createMeshData()
       linearAreaMultiplier = rrB;
     }
 
-    if (reductionStrategy == RS_AP_APNEG or reductionStrategy == RS_AP_PNEG)
+    if (reductionStrategy == RS_AP_APNEG || reductionStrategy == RS_AP_PNEG)
     {
       Polygon hull;
       boost::geometry::convex_hull(polygon, hull);

@@ -22,7 +22,7 @@
 #define HAS_X87_FPU 1
 
 /* Define to 1 if you have the <complex.h> header file. */
-#define HAVE_COMPLEX_H 1
+//#define HAVE_COMPLEX_H 1
 
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #define HAVE_DLFCN_H 1

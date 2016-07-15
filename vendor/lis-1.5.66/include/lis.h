@@ -7,8 +7,8 @@
    2. Redistributions in binary form must reproduce the above copyright
       notice, this list of conditions and the following disclaimer in the
       documentation and/or other materials provided with the distribution.
-   3. Neither the name of the project nor the names of its contributors 
-      may be used to endorse or promote products derived from this software 
+   3. Neither the name of the project nor the names of its contributors
+      may be used to endorse or promote products derived from this software
       without specific prior written permission.
 
    THIS SOFTWARE IS PROVIDED BY THE SCALABLE SOFTWARE INFRASTRUCTURE PROJECT
@@ -258,8 +258,8 @@
 
 
 #if defined(_DEBUG)
-#define LIS_DEBUG_FUNC_IN lis_debug_trace_func(1,__FUNC__)
-#define LIS_DEBUG_FUNC_OUT lis_debug_trace_func(0,__FUNC__)
+#define LIS_DEBUG_FUNC_IN //lis_debug_trace_func(1,__FUNC__)
+#define LIS_DEBUG_FUNC_OUT //lis_debug_trace_func(0,__FUNC__)
 #else
 #define LIS_DEBUG_FUNC_IN
 #define LIS_DEBUG_FUNC_OUT
@@ -380,7 +380,7 @@ typedef unsigned int LIS_UNSIGNED_INT;
 	#include <mpi.h>
 	typedef MPI_Comm LIS_Comm;
 	#define LIS_COMM_WORLD	((LIS_Comm)MPI_COMM_WORLD)
-#if defined(_LONG__LONG) 
+#if defined(_LONG__LONG)
 	#define LIS_MPI_INT     MPI_LONG_LONG_INT
 	#define LIS_MPI_Fint    MPI_Fint
 #else
@@ -664,7 +664,7 @@ typedef struct LIS_SOLVER_STRUCT *LIS_SOLVER;
 struct LIS_ESOLVER_STRUCT
 {
         LIS_MATRIX A;
-        LIS_VECTOR x,xx,d; 
+        LIS_VECTOR x,xx,d;
         LIS_SCALAR *evalue;
         LIS_VECTOR *evector;
 	LIS_SCALAR *resid;
@@ -674,7 +674,7 @@ struct LIS_ESOLVER_STRUCT
 	LIS_INT options[LIS_EOPTIONS_LEN];
 	LIS_SCALAR params[LIS_EPARAMS_LEN];
 	LIS_INT retcode;
-        LIS_INT *iter;       
+        LIS_INT *iter;
 	LIS_INT *iter2;
         double time;
         LIS_INT *nesol;
@@ -725,10 +725,10 @@ extern "C"
 /* Vector Operations        */
 /****************************/
 
-	extern LIS_INT lis_vector_create(LIS_Comm comm, LIS_VECTOR *vec); 
-	extern LIS_INT lis_vector_set_size(LIS_VECTOR vec, LIS_INT local_n, LIS_INT global_n); 
+	extern LIS_INT lis_vector_create(LIS_Comm comm, LIS_VECTOR *vec);
+	extern LIS_INT lis_vector_set_size(LIS_VECTOR vec, LIS_INT local_n, LIS_INT global_n);
 /*NEH support for extended "solve_kernel" workflow*/
-	extern LIS_INT lis_vector_psd_reset_scale(LIS_VECTOR vec); 
+	extern LIS_INT lis_vector_psd_reset_scale(LIS_VECTOR vec);
 	extern LIS_INT lis_vector_destroy(LIS_VECTOR vec);
 	extern LIS_INT lis_vector_duplicate(void *vin, LIS_VECTOR *vout);
 	extern LIS_INT lis_vector_get_size(LIS_VECTOR v, LIS_INT *local_n, LIS_INT *global_n);
@@ -786,7 +786,7 @@ extern "C"
 	extern LIS_INT lis_matrix_convert(LIS_MATRIX Ain, LIS_MATRIX Aout);
 	extern LIS_INT lis_matrix_copy(LIS_MATRIX Ain, LIS_MATRIX Aout);
 	extern LIS_INT lis_matrix_set_blocksize(LIS_MATRIX A, LIS_INT bnr, LIS_INT bnc, LIS_INT row[], LIS_INT col[]);
-	extern LIS_INT lis_matrix_unset(LIS_MATRIX A);  
+	extern LIS_INT lis_matrix_unset(LIS_MATRIX A);
 
 	extern LIS_INT lis_matrix_malloc_csr(LIS_INT n, LIS_INT nnz, LIS_INT **ptr, LIS_INT **index, LIS_SCALAR **value);
 	extern LIS_INT lis_matrix_set_value_csr(LIS_INT flag, LIS_INT i, LIS_INT j, LIS_SCALAR value, LIS_MATRIX A);

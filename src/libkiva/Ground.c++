@@ -3177,7 +3177,7 @@ void Ground::calculateBoundaryLayer()
 
   boundaryLayer.push_back(std::make_pair(0,0));
 
-  for (std::size_t i; i < fluxSums.size() - 1; i++) // last cell is a zero-thickness cell, so don't include it.
+  for (std::size_t i = 0; i < fluxSums.size() - 1; i++) // last cell is a zero-thickness cell, so don't include it.
   {
     //output << x2s[i] - x1_0 << ", " << fluxSums[i]/fluxSum << "\n";
     boundaryLayer.push_back(std::make_pair(x2s[i] - x1_0,fluxSums[i]/fluxSum));

@@ -82,8 +82,10 @@ ADD_LIBRARY( lis
 #SET_TARGET_PROPERTIES(lis PROPERTIES LINKER_LANGUAGE C)
 
 # Link the standard C math library
-find_library(M_LIB m)
-TARGET_LINK_LIBRARIES( lis ${M_LIB} )
+if(NOT MSVC)
+	find_library(M_LIB m)
+	TARGET_LINK_LIBRARIES( lis ${M_LIB} )
+endif()
 
 # Link MPI
 IF (LIS_ENABLE_MPI)

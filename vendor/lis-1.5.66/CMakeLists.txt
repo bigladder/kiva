@@ -1,10 +1,13 @@
 # Lis: a Library of Iterative Solvers for Linear Systems (http://www.ssisc.org/lis/)
 
 cmake_minimum_required(VERSION 2.8.7)
-project( Lis C Fortran)
+project( Lis )
 
-INCLUDE(CMakeFortranInformation)
-INCLUDE(FortranCInterface)
+if( NOT MSVC)
+	enable_language(Fortran)
+  INCLUDE(CMakeFortranInformation)
+  INCLUDE(FortranCInterface)
+endif()
 INCLUDE(cmake/CheckTypeSizes.cmake)
 INCLUDE(cmake/FindIncludeHeader.cmake)
 
