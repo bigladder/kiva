@@ -1,20 +1,5 @@
-/* WeatherData.h is part of Kiva (Written by Neal Kruis)
- * Copyright (C) 2012-2015 Big Ladder Software <info@bigladdersoftware.com>
- * All rights reserved.
- *
- * Kiva is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Kiva is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with Kiva.  If not, see <http://www.gnu.org/licenses/>.
- */
+/* Copyright (c) 2012-2016 Big Ladder Software. All rights reserved.
+* See the LICENSE file for additional terms and conditions. */
 
 #ifndef WEATHERDATA_H_
 #define WEATHERDATA_H_
@@ -30,7 +15,7 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/date_time/gregorian/gregorian.hpp>
 
-#include "Functions.h"
+#include "Functions.hpp"
 
 class HourlyData: public std::vector<double>
 {
@@ -108,4 +93,3 @@ private:
 };
 
 #endif /* WEATHERDATA_H_ */
-

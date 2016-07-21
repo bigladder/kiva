@@ -235,8 +235,6 @@ Materials:
 
 Foundation:
   Soil: <%= soil_type %>  # Material reference
-  Local Boundary Layer Thickness: 370  # [m]
-  Local Terrain Exponent: 0.22
   Soil Absorptivity: <%= absorptivity %>  # 0-1
   Soil Emissivity: <%= absorptivity %>  # 0-1
   Surface Roughness: 0.3 # [m]
@@ -291,16 +289,6 @@ Foundation:
 <% end %>
 
   Foundation Depth: <%= foundation_depth %>  # [m]
-  Far-Field Width: <%= far_field_width %>  # [m]
-  Deep-Ground Depth: <%= deep_ground_depth %>  # [m]
-<% if (bestest) %>
-  Deep-Ground Boundary Condition: CONSTANT-TEMP  # AUTO | CONSTANT-TEMP | ZERO-FLUX
-  Deep-Ground Temperature: <%= bestest_deep_ground_temp + 273.15 %>  # [K]
-<% else %>
-  Deep-Ground Boundary Condition: ZERO-FLUX  # AUTO | CONSTANT-TEMP | ZERO-FLUX
-<% end %>
-
-  Indoor Air Temperature: <%= interior_temp + 273.15 %>  # [K]
 
   Coordinate System: <%= coord_system %>  # CARTESIAN | CYLINDRICAL
   Number of Dimensions: <%= number_of_dimensions %> # 2 or 3
@@ -392,17 +380,21 @@ end
   Preconditioner: <%= linear_solver_pc %>
   Maximum Iterations: <%= linear_solver_max_iter %>
   Tolerance: <%= linear_solver_tolerance %>
-  Initialization Method: <%= init_method %>  # KUSUDA | CONSTANT | STEADY-STATE
-<% if (init_method == "CONSTANT") %>
-  Initial Temperature: <%= init_temp + 273.15 %>
+
+Boundaries:
+  Far-Field Width: <%= far_field_width %>  # [m]
+  Deep-Ground Depth: <%= deep_ground_depth %>  # [m]
+<% if (bestest) %>
+  Deep-Ground Boundary Condition: CONSTANT-TEMP  # AUTO | CONSTANT-TEMP | ZERO-FLUX
+  Deep-Ground Temperature: <%= bestest_deep_ground_temp + 273.15 %>  # [K]
+<% else %>
+  Deep-Ground Boundary Condition: ZERO-FLUX  # AUTO | CONSTANT-TEMP | ZERO-FLUX
 <% end %>
-<% if (imp_periods > 0) %>
-  Accelerated Initialization Timestep: <%= imp_timestep %>  # hours
-  Number of Accelearted Initialization Timesteps: <%= imp_periods %>
-<% end %>
-<% if (warmup_days > 0) %>
-  Number of Warmup Days in Initialization: <%= warmup_days %> # days
-<% end %>
+
+  Indoor Air Temperature: <%= interior_temp + 273.15 %>  # [K]
+  Local Boundary Layer Thickness: 370  # [m]
+  Local Terrain Exponent: 0.22
+
 <% if (bestest) %>
   Convection Calculation Method: CONSTANT # AUTO | CONSTANT
   Interior Convective Coefficient: <%= bestest_int_conv %>
@@ -410,7 +402,6 @@ end
 <% else %>
   Convection Calculation Method: AUTO # AUTO | CONSTANT
 <% end %>
-
 <% if (bestest) %>
   Wall Top Boundary Condition: <%= bestest_wall_boundary %>  # ZERO-FLUX | LINEAR-DT
   <% if (bestest_wall_boundary == "LINEAR-DT") %>
@@ -426,6 +417,20 @@ end
   Outdoor Air Temperature: <%= outdoor_temp + 273.15 %>
 <% end %>
 
+Initialization:
+  Initialization Method: <%= init_method %>  # KUSUDA | CONSTANT | STEADY-STATE
+<% if (init_method == "CONSTANT") %>
+  Initial Temperature: <%= init_temp + 273.15 %>
+<% end %>
+<% if (imp_periods > 0) %>
+  Accelerated Initialization Timestep: <%= imp_timestep %>  # hours
+  Number of Accelearted Initialization Timesteps: <%= imp_periods %>
+<% end %>
+<% if (warmup_days > 0) %>
+  Number of Warmup Days in Initialization: <%= warmup_days %> # days
+<% end %>
+
+Output:
   Output Report:
     Minimum Reporting Frequency: 60  # [min]
     Reports:

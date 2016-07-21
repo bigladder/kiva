@@ -2,27 +2,52 @@ if(${ENABLE_OPENGL})
   add_definitions(-D ENABLE_OPENGL )
 endif()
 
-set(kiva_src Algorithms.c++
-             Algorithms.h
-             Domain.c++
-             Domain.h
-             Functions.c++
-             Functions.h
-             Geometry.c++
-             Geometry.h
-             Ground.c++
-             Ground.h
-             GroundPlot.c++
-             GroundPlot.h
-             Input.c++
-             Input.h
-             Mesher.c++
-             Mesher.h
-             WeatherData.c++
-             WeatherData.h )
+execute_process(COMMAND git describe --tags --long
+                WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+                RESULT_VARIABLE git_exit_status
+                OUTPUT_VARIABLE kiva_version
+                OUTPUT_STRIP_TRAILING_WHITESPACE)
+
+if(${CMAKE_BUILD_TYPE} MATCHES "Debug")
+  set (kiva_version "${kiva_version}-Debug")
+endif()
+
+if(${git_exit_status} MATCHES "0")
+  set(VERSION_NUMBER ${kiva_version})
+  message("Building Kiva version: ${VERSION_NUMBER}")
+else()
+  message("Error finding version number.")
+endif()
+
+string(TIMESTAMP YEAR %Y)
+
+configure_file (
+    "${PROJECT_SOURCE_DIR}/src/libkiva/Version.hpp.in"
+    "${PROJECT_BINARY_DIR}/src/libkiva/Version.hpp"
+)
+
+include_directories(${PROJECT_BINARY_DIR}/src/libkiva/)
+
+set(kiva_src Algorithms.cpp
+             Algorithms.hpp
+             BoundaryConditions.cpp
+             BoundaryConditions.hpp
+             Domain.cpp
+             Domain.hpp
+             Foundation.cpp
+             Foundation.hpp
+             Functions.cpp
+             Functions.hpp
+             Geometry.cpp
+             Geometry.hpp
+             Ground.cpp
+             Ground.hpp
+             Mesher.cpp
+             Mesher.hpp
+             Version.hpp )
 
 if (${ENABLE_OPENGL})
-  set(kiva_src ${kiva_src} PixelCounter.c++ PixelCounter.h )
+  set(kiva_src ${kiva_src} PixelCounter.cpp PixelCounter.hpp )
 endif ()
 
 add_library(libkiva ${kiva_src})
@@ -43,11 +68,7 @@ endif()
 
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${kiva_link_flags}")
 
-set(links boost_date_time
-          boost_filesystem
-          boost_system
-          mgl-static
-          lis )
+set(links lis)
 
 if(${ENABLE_OPENGL})
   set(links ${links} GLEW glfw3 )

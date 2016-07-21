@@ -1,25 +1,10 @@
-/* GroundPlot.c++ is part of Kiva (Written by Neal Kruis)
- * Copyright (C) 2012-2015 Big Ladder Software <info@bigladdersoftware.com>
- * All rights reserved.
- *
- * Kiva is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Kiva is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with Kiva.  If not, see <http://www.gnu.org/licenses/>.
- */
+/* Copyright (c) 2012-2016 Big Ladder Software. All rights reserved.
+* See the LICENSE file for additional terms and conditions. */
 
 #ifndef GroundPlot_CPP
 #define GroundPlot_CPP
 
-#include "GroundPlot.h"
+#include "GroundPlot.hpp"
 
 static const double EPSILON = 1E-5;
 
@@ -503,14 +488,12 @@ void GroundPlot::createFrame(std::string timeStamp)
     gr.WriteTEX((outputAnimation.dir + "/" + str(boost::format("%04d") % frameNumber) + ".tex").c_str());
 
   frameNumber += 1;
-  nextPlotTime += outputAnimation.frequency.total_seconds();
+  nextPlotTime += outputAnimation.frequency;
 }
 
-bool GroundPlot::makeNewFrame(double tNow)
+bool GroundPlot::makeNewFrame(boost::posix_time::ptime t)
 {
-  if (isGreaterOrEqual(tNow, nextPlotTime) &&
-    isGreaterOrEqual(tNow, tStart) &&
-    isLessOrEqual(tNow, tEnd))
+  if ((t >= nextPlotTime) && (t >= tStart) && (t <= tEnd))
     return true;
   else
     return false;

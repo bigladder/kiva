@@ -1,20 +1,5 @@
-/* Main.c++ is part of Kiva (Written by Neal Kruis)
- * Copyright (C) 2012-2015 Big Ladder Software <info@bigladdersoftware.com>
- * All rights reserved.
- *
- * Kiva is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Kiva is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with Kiva.  If not, see <http://www.gnu.org/licenses/>.
- */
+/* Copyright (c) 2012-2016 Big Ladder Software. All rights reserved.
+* See the LICENSE file for additional terms and conditions. */
 
 #include <iostream>
 #include <fstream>
@@ -26,11 +11,10 @@
 
 #include "lis.h"
 
-#include "Version.h"
-#include "InputParser.h"
-#include "WeatherData.h"
-#include "Input.h"
-#include "Ground.h"
+#include "Version.hpp"
+#include "InputParser.hpp"
+#include "WeatherData.hpp"
+#include "Simulator.hpp"
 
 namespace po = boost::program_options;
 
@@ -110,10 +94,9 @@ int main(int argc, char *argv[])
       input.simulationControl.setStartTime();
 
       // initialize
-      Ground ground(weather,input.foundations[0],input.simulationControl,
-          vm["output-file"].as<std::string>());
+      Simulator simulator(weather,input,vm["output-file"].as<std::string>());
 
-      ground.simulate();
+      simulator.simulate();
 
       boost::posix_time::ptime finishCalc = boost::posix_time::microsec_clock::local_time();
       std::cout << "Finished Program: " << finishCalc << std::endl;
@@ -124,7 +107,7 @@ int main(int argc, char *argv[])
     }
     else if (!vm.empty())
     {
-      std::cout << "ERROR: Incorrect number of arguments\n\n";
+      std::cerr << "ERROR: Incorrect number of arguments\n\n";
 
       std::cout << usageInfo << "\n";
       std::cout << generic;
@@ -139,7 +122,7 @@ int main(int argc, char *argv[])
   }
   catch(std::exception& e)
   {
-    std::cout << e.what() << std::endl;
+    std::cerr << e.what() << std::endl;
     lis_finalize();
     return 1;
   }

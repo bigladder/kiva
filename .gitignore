@@ -4,7 +4,6 @@ builds/
 ._.DS_Store
 .project
 .pydevproject
-src/kiva/Version.h
 sandbox.*
 sandbox/
 test/*/

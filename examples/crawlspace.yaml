@@ -18,10 +18,6 @@ Materials:
     Specific Heat: 1450.0  # [J/kg-K]
 
 Foundation:
-  Indoor Air Temperature Method: FILE
-  Indoor Air Temperature File:
-    Name: ../examples/indoor-temps.csv
-    Index: [0,1]
   Soil: Typical Soil  # Material reference
   Polygon:
     - [0, 0]
@@ -47,6 +43,13 @@ Foundation:
     Material: XPS
     Thickness: 0.0508
 
+Boundaries:
+  Indoor Air Temperature Method: FILE
+  Indoor Air Temperature File:
+    Name: ../examples/indoor-temps.csv
+    Index: [0,1]
+
+Output:
   Output Report:
     Minimum Frequency: 60  # [min]
     Reports:

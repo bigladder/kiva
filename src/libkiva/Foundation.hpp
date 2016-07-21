@@ -1,46 +1,12 @@
-/* Input.h is part of Kiva (Written by Neal Kruis)
- * Copyright (C) 2012-2015 Big Ladder Software <info@bigladdersoftware.com>
- * All rights reserved.
- *
- * Kiva is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Kiva is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with Kiva.  If not, see <http://www.gnu.org/licenses/>.
- */
+/* Copyright (c) 2012-2016 Big Ladder Software. All rights reserved.
+* See the LICENSE file for additional terms and conditions. */
 
-#ifndef INPUT_HPP_
-#define INPUT_HPP_
+#ifndef FOUNDATION_HPP_
+#define FOUNDATION_HPP_
 
-#include <fstream>
-
-#include <boost/date_time/posix_time/posix_time.hpp>
-#include <boost/date_time/gregorian/gregorian.hpp>
-
-#include "Mesher.h"
-#include "Functions.h"
-#include "Geometry.h"
-#include "WeatherData.h"
-
-class SimulationControl
-{
-public:
-  // Simulation Control
-  boost::gregorian::date startDate;
-  boost::gregorian::date endDate;
-  boost::posix_time::time_duration timestep;
-  std::string weatherFile;
-  boost::posix_time::ptime startTime;
-
-  void setStartTime();
-};
+#include "Mesher.hpp"
+#include "Functions.hpp"
+#include "Geometry.hpp"
 
 class Material
 {
@@ -117,97 +83,6 @@ public:
 
 };
 
-class OutputAnimation
-{
-public:
-
-  std::string dir;
-  boost::posix_time::time_duration frequency;
-  bool grid;
-  bool contours;
-  bool contourLabels;
-  std::string contourColor;
-  bool gradients;
-  bool axes;
-  bool timestamp;
-  int size;
-  boost::gregorian::date startDate;
-  boost::gregorian::date endDate;
-  std::pair<double, double> xRange;
-  std::pair<double, double> yRange;
-  std::pair<double, double> zRange;
-
-  enum PlotType
-  {
-    P_TEMP,
-    P_FLUX
-  };
-
-  PlotType plotType;
-
-  enum FluxDir
-  {
-    D_M,
-    D_X,
-    D_Y,
-    D_Z
-  };
-  FluxDir fluxDir;
-
-  enum ColorScheme
-  {
-    C_CMR,
-    C_JET,
-    C_NONE
-  };
-  ColorScheme colorScheme;
-
-  enum Format
-  {
-    F_PNG,
-    F_TEX
-  };
-  Format format;
-
-  enum OutputUnits
-  {
-    IP,
-    SI
-  };
-  OutputUnits outputUnits;
-
-  double minimumTemperature;
-  double maximumTemperature;
-
-  int numberOfContours;
-
-  bool startDateSet;
-  bool endDateSet;
-  bool xRangeSet;
-  bool yRangeSet;
-  bool zRangeSet;
-
-};
-
-class OutputVariable
-{
-private:
-  std::vector<std::string> headers;
-
-public:
-  int variableID;
-  std::string headerText;
-
-  OutputVariable(int varID);
-
-};
-
-class OutputReport: public std::vector<OutputVariable>
-{
-public:
-  boost::posix_time::time_duration minFrequency;
-};
-
 class Block
 {
 public:
@@ -268,17 +143,6 @@ public:
   void setSquarePolygon();
 };
 
-class DataFile
-{
-public:
-  std::string fileName;
-  std::pair<int, int> firstIndex;
-  HourlyData data;
-
-  void readData();
-
-};
-
 class RangeType
 {
 public:
@@ -317,10 +181,10 @@ public:
   double deepGroundDepth;  // [m]
   double farFieldWidth;  // [m] distance from outside of wall to the edge
                // of the domain
-  double deepGroundTemperature;  // [K]
   double foundationDepth; // [m] below top of wall
   double orientation;  // [radians] from north
 
+  double deepGroundTemperature;  // [K]
   enum DeepGroundBoundary
   {
     DGB_AUTO,
@@ -330,26 +194,20 @@ public:
 
   DeepGroundBoundary deepGroundBoundary;
 
-  double indoorAirTemperature; // [K]
-  DataFile indoorAirTemperatureFile;
-
-  enum IndoorTemperatureMethod
+  double wallTopInteriorTemperature;
+  double wallTopTemperatureDifference;
+  enum WallTopBoundary
   {
-    ITM_FILE,
-    ITM_CONSTANT_TEMPERATURE
+    WTB_ZERO_FLUX,
+    WTB_LINEAR_DT
   };
 
-  IndoorTemperatureMethod indoorTemperatureMethod;
+  WallTopBoundary wallTopBoundary;
 
   Material soil;
   double soilAbsorptivity;  // [frac]
   double soilEmissivity;  // [frac]
   double surfaceRoughness;  // [m]
-
-  // Local wind speed characteristics
-  double deltaLocal;  // [m]
-  double alphaLocal;  // [-]
-
 
   // Geometry
   enum CoordinateSystem
@@ -428,20 +286,6 @@ public:
   double tolerance;
   int maxIterations;
 
-  double initialTemperature;
-  enum InitializationMethod
-  {
-    IM_KUSUDA,
-    IM_CONSTANT_TEMPERATURE,
-    IM_STEADY_STATE
-  };
-
-  long warmupDays;
-  long implicitAccelTimestep;
-  long implicitAccelPeriods;
-
-  InitializationMethod initializationMethod;
-
   double interiorConvectiveCoefficient;
   double exteriorConvectiveCoefficient;
   enum ConvectionCalculationMethod
@@ -451,30 +295,6 @@ public:
   };
 
   ConvectionCalculationMethod convectionCalculationMethod;
-
-  double outdoorDryBulbTemperature;
-  enum OutdoorTemperatureMethod
-  {
-    OTM_WEATHER_FILE,
-    OTM_CONSTANT_TEMPERATURE
-  };
-
-  OutdoorTemperatureMethod outdoorTemperatureMethod;
-
-  double wallTopTemperatureDifference;
-  enum WallTopBoundary
-  {
-    WTB_ZERO_FLUX,
-    WTB_LINEAR_DT
-  };
-
-  WallTopBoundary wallTopBoundary;
-
-  // Output Animations
-  std::vector<OutputAnimation> outputAnimations;
-
-  // Output Report
-  OutputReport outputReport;
 
   // Derived variables
   MeshData xMeshData;
@@ -487,11 +307,4 @@ public:
 };
 
 
-class Input
-{
-public:
-  SimulationControl simulationControl;
-  std::vector <Foundation> foundations;
-};
-
-#endif /* INPUT_HPP_ */
+#endif /* FOUNDATION_HPP_ */
