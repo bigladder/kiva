@@ -25,6 +25,8 @@ Simulator::Simulator(WeatherData &weatherData, Input &input, std::string outputF
     ground.setNewBoundaryGeometry();
   }
 
+  ground.buildDomain();
+  
   std::cout << "  X Cells: " << ground.nX << std::endl;
   std::cout << "  Y Cells: " << ground.nY << std::endl;
   std::cout << "  Z Cells: " << ground.nZ << std::endl;

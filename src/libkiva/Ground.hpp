@@ -37,9 +37,11 @@ public:
   boost::multi_array<double, 3> TNew; // solution, n+1
   boost::multi_array<double, 3> TOld; // solution, n
 
+  void buildDomain();
+
   void calculateBoundaryLayer();
   void setNewBoundaryGeometry();
-  void calculate(BoundaryConditions& boundaryConidtions, double timestep=0.0);
+  void calculate(BoundaryConditions& boundaryConidtions, double ts=0.0);
 
   std::vector<double> calculateHeatFlux(const size_t &i, const size_t &j, const size_t &k);
   double getSurfaceAverageHeatFlux(std::string surfaceName);
@@ -78,9 +80,6 @@ private:
   std::vector<char> solverOptions;
 
 private:
-
-  // Initializers (Called from constructor)
-  void buildDomain();
 
   // Calculators (Called from main calculator)
   void calculateADE();

@@ -12,8 +12,19 @@ static const bool TDMA = true;
 
 Ground::Ground(Foundation &foundation) : foundation(foundation)
 {
-  // Build Domain Object
 
+}
+
+Ground::~Ground()
+{
+  lis_matrix_destroy(Amat);
+  lis_vector_destroy(x);
+  lis_vector_destroy(b);
+  lis_solver_destroy(solver); // for whatever reason, this causes a crash
+}
+
+void Ground::buildDomain()
+{
   // Create mesh
   foundation.createMeshData();
 
@@ -56,51 +67,20 @@ Ground::Ground(Foundation &foundation) : foundation(foundation)
   solverChars.push_back('\0');
   solverOptions = solverChars;
 
-/*  if (foundation.numericalScheme == Foundation::NS_CRANK_NICOLSON ||
-      foundation.numericalScheme == Foundation::NS_IMPLICIT ||
-      foundation.numericalScheme == Foundation::NS_STEADY_STATE ||
-      (foundation.numericalScheme == Foundation::NS_ADI && !(TDMA)))
-  {*/
+  lis_matrix_create(LIS_COMM_WORLD,&Amat);
+  lis_matrix_set_size(Amat,nX*nY*nZ,nX*nY*nZ);
 
-    lis_matrix_create(LIS_COMM_WORLD,&Amat);
-    lis_matrix_set_size(Amat,nX*nY*nZ,nX*nY*nZ);
+  lis_vector_create(LIS_COMM_WORLD,&b);
+  lis_vector_set_size(b,0,nX*nY*nZ);
 
-    lis_vector_create(LIS_COMM_WORLD,&b);
-    lis_vector_set_size(b,0,nX*nY*nZ);
+  lis_vector_duplicate(b,&x);
 
-    lis_vector_duplicate(b,&x);
-
-    lis_vector_set_all(283.15,x);  // TODO Set better default
-    lis_solver_create(&solver);
-    lis_solver_set_option(&solverOptions[0],solver);
-
-/*  }
-  else
-  {
-    // Create a place holder matrix/vector system of size 1 to avoid problems when destroying the LIS components
-    lis_matrix_create(LIS_COMM_WORLD,&Amat);
-    lis_matrix_set_size(Amat,1,1);
-
-    lis_vector_create(LIS_COMM_WORLD,&b);
-    lis_vector_set_size(b,0,1);
-
-    lis_vector_duplicate(b,&x);
-
-    lis_vector_set_all(283.15,x);
-    lis_solver_create(&solver);
-    lis_solver_set_option(&solverOptions[0],solver);
-  }*/
+  lis_vector_set_all(283.15,x);  // TODO Set better default
+  lis_solver_create(&solver);
+  lis_solver_set_option(&solverOptions[0],solver);
 
   TNew.resize(boost::extents[nX][nY][nZ]);
   TOld.resize(boost::extents[nX][nY][nZ]);
-}
-
-Ground::~Ground()
-{
-  lis_matrix_destroy(Amat);
-  lis_vector_destroy(x);
-  lis_vector_destroy(b);
-  lis_solver_destroy(solver); // for whatever reason, this causes a crash
 }
 
 void Ground::calculateADE()
@@ -1754,9 +1734,10 @@ void Ground::calculateADI(int dim)
   clearAmat();
 }
 
-void Ground::calculate(BoundaryConditions& boundaryConidtions, double timestep)
+void Ground::calculate(BoundaryConditions& boundaryConidtions, double ts)
 {
   bcs = boundaryConidtions;
+  timestep = ts;
   // update boundary conditions
   setSolarBoundaryConditions();
 
@@ -2207,6 +2188,7 @@ void Ground::calculateBoundaryLayer()
   fd.farFieldWidth = 100;
 
   Ground pre(fd);
+  pre.buildDomain();
   pre.calculate(preBCs);
 
   std::vector<double> x2s;
