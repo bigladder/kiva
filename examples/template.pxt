@@ -237,7 +237,7 @@ Foundation:
   Soil: <%= soil_type %>  # Material reference
   Soil Absorptivity: <%= absorptivity %>  # 0-1
   Soil Emissivity: <%= absorptivity %>  # 0-1
-  Surface Roughness: 0.3 # [m]
+  Surface Roughness: 0.03 # [m]
 <% if !(bestest) %>
   Slab:
     Layers:

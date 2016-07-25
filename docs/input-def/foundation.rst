@@ -48,8 +48,6 @@ The foundation insulation and structural components are defined by (up to) six s
       Depth: 0.2032 # [m]
       Material: XPS # Material reference
       Thickness: 0.0508 # [m]
-    Indoor Air Temperature: 295.372 # [K]
-
 
 Foundation Depth
 ----------------
@@ -553,22 +551,22 @@ Represents the relief of the surface. This value is used to calculate forced con
 ===============  =============
 Example Surface  Roughness [m]
 ===============  =============
-Glass                0.0000
-Smooth Plaster       0.0044
-Clear Pine           0.0052
-Concrete             0.0208
-Brick                0.0268
-Stucco               0.0468
-Soil                 0.0500
-Gravel               0.1200
-Grass                0.3000
+Glass                0.00000
+Smooth Plaster       0.00044
+Clear Pine           0.00052
+Concrete             0.00208
+Brick                0.00268
+Stucco               0.00468
+Soil                 0.00500
+Gravel               0.01200
+Grass                0.03000
 ===============  =============
 
 =============   =======
 **Required:**   No
 **Type:**       Numeric
 **Units:**      m
-**Default:**    0.3
+**Default:**    0.03
 =============   =======
 
 Orientation

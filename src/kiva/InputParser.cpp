@@ -60,7 +60,7 @@ Input inputParser(std::string inputFile)
     foundation.surfaceRoughness = yamlInput["Foundation"]["Surface Roughness"].as<double>();
   }
   else {
-    foundation.surfaceRoughness = 0.3;
+    foundation.surfaceRoughness = 0.03;
   }
 
   // Slab
