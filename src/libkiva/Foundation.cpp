@@ -330,67 +330,6 @@ void Foundation::createMeshData()
       linearAreaMultiplier = rrB;
     }
 
-    if (reductionStrategy == RS_AP_APNEG || reductionStrategy == RS_AP_PNEG)
-    {
-      Polygon hull;
-      boost::geometry::convex_hull(polygon, hull);
-      double areaHull = boost::geometry::area(hull);
-      MultiPolygon neg;
-      boost::geometry::difference(hull,polygon,neg);
-      double areaNeg = 0;
-      double perimeterNeg = 0.0001;
-      areaNeg = boost::geometry::area(neg);
-      if (areaNeg > 0.0)
-      {
-        twoParameters = true;
-        perimeterNeg = 0;
-        for (int p = 0; p < neg.size(); ++p)
-        {
-          Line negLine;
-          boost::geometry::intersection(polygon,neg[p],negLine);
-          perimeterNeg += boost::geometry::length(negLine);
-        }
-        double apNeg = areaNeg/perimeterNeg;
-        if (reductionStrategy == RS_AP_APNEG)
-        {
-          if (coordinateSystem == CS_CYLINDRICAL)
-          {
-            reductionLength1 = 2.0*apNeg;
-            reductionLength2 = reductionLength1 + 2.0*ap;
-          }
-          else if (coordinateSystem == CS_CARTESIAN)
-          {
-            reductionLength1 = apNeg;
-            reductionLength2 = reductionLength1 + 2.0*ap;
-          }
-        }
-        if (reductionStrategy == RS_AP_PNEG)
-        {
-          reductionLength1 = 0.5*perimeterNeg/PI;
-          reductionLength2 = 2.0*ap + reductionLength1;
-        }
-      }
-      else
-      {
-        twoParameters = false;
-        if (coordinateSystem == CS_CYLINDRICAL)
-        {
-          reductionLength2 = 2.0*ap;
-        }
-        else if (coordinateSystem == CS_CARTESIAN)
-        {
-          reductionLength2 = ap;
-        }
-      }
-    }
-
-    if (reductionStrategy == RS_A_P)
-    {
-      twoParameters = true;
-      reductionLength1 = 0.25*perimeter/PI - ap;
-      reductionLength2 = ap + 0.25*perimeter/PI;
-    }
-
     xMin = 0.0;
     xMax = reductionLength2 + farFieldWidth;
 

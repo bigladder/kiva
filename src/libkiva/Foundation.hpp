@@ -224,10 +224,7 @@ public:
   enum ReductionStrategy
   {
     RS_AP,
-    RS_AP_APNEG,
     RS_RR,
-    RS_A_P,
-    RS_AP_PNEG,
     RS_CUSTOM,
     RS_BOUNDARY
   };

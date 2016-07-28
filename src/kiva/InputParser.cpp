@@ -225,14 +225,8 @@ Input inputParser(std::string inputFile)
   if (yamlInput["Foundation"]["Two-Dimensional Approximation"].IsDefined()) {
     if (yamlInput["Foundation"]["Two-Dimensional Approximation"].as<std::string>() == "AP")
       foundation.reductionStrategy = Foundation::RS_AP;
-    else if (yamlInput["Foundation"]["Two-Dimensional Approximation"].as<std::string>() == "NEG")
-      foundation.reductionStrategy = Foundation::RS_AP_APNEG;
-    else if (yamlInput["Foundation"]["Two-Dimensional Approximation"].as<std::string>() == "PNEG")
-      foundation.reductionStrategy = Foundation::RS_AP_PNEG;
     else if (yamlInput["Foundation"]["Two-Dimensional Approximation"].as<std::string>() == "RR")
       foundation.reductionStrategy = Foundation::RS_RR;
-    else if (yamlInput["Foundation"]["Two-Dimensional Approximation"].as<std::string>() == "A-P")
-      foundation.reductionStrategy = Foundation::RS_A_P;
     else if (yamlInput["Foundation"]["Two-Dimensional Approximation"].as<std::string>() == "BOUNDARY")
       foundation.reductionStrategy = Foundation::RS_BOUNDARY;
     else if (yamlInput["Foundation"]["Two-Dimensional Approximation"].as<std::string>() == "CUSTOM")

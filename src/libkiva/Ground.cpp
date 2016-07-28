@@ -2339,30 +2339,6 @@ void Ground::setNewBoundaryGeometry()
     {
       double f = getBoundaryDistance(1-sin(alpha/2)/(1+cos(alpha/2)))/sin(alpha/2);
 
-      /* // Fillet
-      double r = f/(1/sin(alpha/2)-1);
-      double d = r/tan(alpha/2);
-
-      if (A < d && B > d)
-      {
-        B = A*cos(alpha) + sqrt(r*r - (r-A*sin(alpha))*(r-A*sin(alpha)));
-      }
-      else if (B < d && A > d)
-      {
-        A = B*cos(alpha) + sqrt(r*r - (r-B*sin(alpha))*(r-B*sin(alpha)));
-      }
-      else
-      {
-        A = std::min(A,d);
-        B = std::min(B,d);
-      }
-
-      double C = sqrt(A*A + B*B - 2*A*B*cos(alpha));
-      double theta = 2.*asin((0.5*C)/r);
-
-      area += (A*B*sin(alpha)/2)-r*r/2*(theta-sin(theta));
-      perimeter += theta*r - (A + B);*/
-
       // Chamfer
       double d = f/cos(alpha/2);
       if (A < d || B < d)
@@ -2377,40 +2353,9 @@ void Ground::setNewBoundaryGeometry()
       }
       double C = sqrt(A*A + B*B - 2*A*B*cos(alpha));
 
-      //area += A*B*sin(alpha)/2;
       perimeter += C - (A + B);
 
-      /* // Angle
-      double C1 = sqrt(A*A + f*f - 2*A*f*cos(alpha/2));
-
-      double C2 = sqrt(B*B + f*f - 2*B*f*cos(alpha/2));
-
-      area += A*f*sin(alpha/2)/2 + B*f*sin(alpha/2)/2;
-      perimeter += (C1 + C2) - (A + B);*/
     }
-    /*
-    else // convex corners
-    {
-      double f = -getBoundaryDistance(1 - (1 + cos(alpha/2))/sin(alpha/2));
-
-      // Chamfer
-      double d = f/cos(alpha/2);
-      if (A < d || B < d)
-      {
-        A = std::min(A,B);
-        B = std::min(A,B);
-      }
-      else
-      {
-        A = d;
-        B = d;
-      }
-      double C = sqrt(A*A + B*B - 2*A*B*cos(alpha));
-
-      area += A*B*sin(alpha)/2;
-      perimeter += C - (A + B);
-
-    }*/
 
   }
 
