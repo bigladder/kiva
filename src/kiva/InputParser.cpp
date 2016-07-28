@@ -298,7 +298,7 @@ Input inputParser(std::string inputFile)
       foundation.mesh.minCellDim = yamlInput["Foundation"]["Mesh"]["Minimum Cell Dimension"].as<double>();
     }
     else {
-      foundation.mesh.minCellDim = 0.05;
+      foundation.mesh.minCellDim = 0.02;
     }
 
     if  (yamlInput["Foundation"]["Mesh"]["Maximum Near-Field Growth Coefficient"].IsDefined()) {
@@ -510,7 +510,8 @@ Input inputParser(std::string inputFile)
     else if (yamlInput["Boundaries"]["Wall Top Boundary Condition"].as<std::string>() == "LINEAR-DT")
     {
       foundation.wallTopBoundary = Foundation::WTB_LINEAR_DT;
-      foundation.wallTopTemperatureDifference = yamlInput["Boundaries"]["Wall Top Temperature Difference"].as<double>();
+      foundation.wallTopInteriorTemperature = yamlInput["Boundaries"]["Wall Top Interior Temperature"].as<double>();
+      foundation.wallTopExteriorTemperature = yamlInput["Boundaries"]["Wall Top Exterior Temperature"].as<double>();
     }
   }
   else

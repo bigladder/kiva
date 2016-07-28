@@ -6,5 +6,4 @@ builds/
 .pydevproject
 sandbox.*
 sandbox/
-test/*/
 *.pptx

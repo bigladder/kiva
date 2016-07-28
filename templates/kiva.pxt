@@ -405,7 +405,8 @@ Boundaries:
 <% if (bestest) %>
   Wall Top Boundary Condition: <%= bestest_wall_boundary %>  # ZERO-FLUX | LINEAR-DT
   <% if (bestest_wall_boundary == "LINEAR-DT") %>
-  Wall Top Temperature Difference: <%= bestest_wall_dt %>  # [K]
+  Wall Top Interior Temperature: <%= interior_temp + 273.15 %>  # [K]
+  Wall Top Exterior Temperature: <%= outdoor_temp + 273.15 %>  # [K]
   <% end %>
 <% else %>
   Wall Top Boundary Condition: ZERO-FLUX  # ZERO-FLUX | LINEAR-DT

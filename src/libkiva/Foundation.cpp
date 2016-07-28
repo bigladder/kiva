@@ -838,8 +838,10 @@ void Foundation::createMeshData()
       {
         double position = 0.0;
         double& Tin = wallTopInteriorTemperature;
+        double& Tout = wallTopExteriorTemperature;
+        double Tdiff = (Tin - Tout);
         std::size_t N = xyWallExterior/mesh.minCellDim;
-        double temperature = Tin - (1.0/N)/2*wallTopTemperatureDifference;
+        double temperature = Tin - (1.0/N)/2*Tdiff;
 
         for (std::size_t n = 1; n <= N; n++)
         {
@@ -858,16 +860,17 @@ void Foundation::createMeshData()
           surfaces.push_back(surface);
 
           position += xyWallExterior/N;
-          temperature -= (1.0/N)*wallTopTemperatureDifference;
+          temperature -= (1.0/N)*Tdiff;
 
         }
 
         if (twoParameters)
         {
-          double position = 0.0;
           double& Tin = wallTopInteriorTemperature;
+          double& Tout = wallTopExteriorTemperature;
+          double Tdiff = (Tin - Tout);
           std::size_t N = xyWallExterior/mesh.minCellDim;
-          double temperature = Tin - (1.0/N)/2*wallTopTemperatureDifference;
+          double temperature = Tin - (1.0/N)/2*Tdiff;
 
           for (std::size_t n = 1; n <= N; n++)
           {
@@ -886,7 +889,7 @@ void Foundation::createMeshData()
             surfaces.push_back(surface);
 
             position += xyWallExterior/N;
-            temperature -= (1.0/N)*wallTopTemperatureDifference;
+            temperature -= (1.0/N)*Tdiff;
 
           }
 
@@ -1757,8 +1760,10 @@ void Foundation::createMeshData()
       {
         double position = 0.0;
         double& Tin = wallTopInteriorTemperature;
+        double& Tout = wallTopExteriorTemperature;
+        double Tdiff = (Tin - Tout);
         std::size_t N = xyWallExterior/mesh.minCellDim;
-        double temperature = Tin - (1.0/N)/2*wallTopTemperatureDifference;
+        double temperature = Tin - (1.0/N)/2*Tdiff;
 
         for (std::size_t n = 1; n <= N; n++)
         {
@@ -1785,7 +1790,7 @@ void Foundation::createMeshData()
           surfaces.push_back(surface);
 
           position += xyWallExterior/N;
-          temperature -= (1.0/N)*wallTopTemperatureDifference;
+          temperature -= (1.0/N)*Tdiff;
         }
       }
     }
@@ -2624,8 +2629,10 @@ void Foundation::createMeshData()
       {
         double position = 0.0;
         double& Tin = wallTopInteriorTemperature;
+        double& Tout = wallTopExteriorTemperature;
+        double Tdiff = (Tin - Tout);
         std::size_t N = xyWallExterior/mesh.minCellDim;
-        double temperature = Tin - (1.0/N)/2*wallTopTemperatureDifference;
+        double temperature = Tin - (1.0/N)/2*Tdiff;
 
         for (std::size_t n = 1; n <= N; n++)
         {
@@ -2655,7 +2662,7 @@ void Foundation::createMeshData()
           surfaces.push_back(surface);
 
           position += xyWallExterior/N;
-          temperature -= (1.0/N)*wallTopTemperatureDifference;
+          temperature -= (1.0/N)*Tdiff;
         }
       }
     }

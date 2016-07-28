@@ -195,7 +195,7 @@ public:
   DeepGroundBoundary deepGroundBoundary;
 
   double wallTopInteriorTemperature;
-  double wallTopTemperatureDifference;
+  double wallTopExteriorTemperature;
   enum WallTopBoundary
   {
     WTB_ZERO_FLUX,

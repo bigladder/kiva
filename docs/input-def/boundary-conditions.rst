@@ -219,10 +219,21 @@ Specifies how the boundary condition along the wall top is calculated. Options a
 **Default:**    ``ZERO-FLUX``
 =============   ==============================
 
-Wall Top Temperature Difference
--------------------------------
+Wall Top Interior Temperature
+-----------------------------
 
-If `Wall Top Boundary Condition`_ is ``LINEAR-DT``, then this value specifies the change in temperature across the wall. This is used only to represent the constraints of the IEA BESTEST analytical solution in case GC10a. The actual temperatures are determined based on the values of :ref:`in_temp` and :ref:`out_temp`.
+If `Wall Top Boundary Condition`_ is ``LINEAR-DT``, then this value specifies the interior temperature at the wall top. This is used only to represent the constraints of the IEA BESTEST analytical solution in case GC10a.
+
+=============   =======
+**Required:**   Depends
+**Type:**       Numeric
+**Units:**      K
+=============   =======
+
+Wall Top Exterior Temperature
+-----------------------------
+
+If `Wall Top Boundary Condition`_ is ``LINEAR-DT``, then this value specifies the exterior temperature at the wall top. This is used only to represent the constraints of the IEA BESTEST analytical solution in case GC10a.
 
 =============   =======
 **Required:**   Depends

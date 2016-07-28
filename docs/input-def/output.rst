@@ -266,7 +266,7 @@ Specifies the range of output shown in the snapshots. The units of the range dep
 **Required:**   No
 **Type:**       List [2] of numerics
 **Units:**      Depends
-**Default:**    "Z" extents of the domain
+**Default:**    [-20, 40]
 =============   ==================================
 
 Color Scheme
