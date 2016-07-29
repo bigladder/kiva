@@ -9,4 +9,7 @@ Kiva input is specified in a hierarchical YAML file. This file has three objects
    simulation-control
    materials
    foundation
+   boundary-conditions
+   initialization
    foundation-advanced
+   output

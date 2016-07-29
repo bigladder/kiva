@@ -10,7 +10,7 @@ tests =
 
 def run(example, weather)
 	FileUtils::mkdir_p("#{example}-#{weather}")
-	system("../build/kiva ../examples/#{example}.yaml ../weather/#{weather}.epw #{example}-#{weather}/output.csv")
+	system("../builds/debug/kiva ../examples/#{example}.yaml ../weather/#{weather}.epw #{example}-#{weather}/output.csv")
 end
 
 
