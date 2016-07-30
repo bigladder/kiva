@@ -30,7 +30,6 @@ include_directories(${PROJECT_BINARY_DIR}/src/libkiva/)
 
 set(kiva_src Algorithms.cpp
              Algorithms.hpp
-             BoundaryConditions.cpp
              BoundaryConditions.hpp
              Domain.cpp
              Domain.hpp
@@ -42,6 +41,7 @@ set(kiva_src Algorithms.cpp
              Geometry.hpp
              Ground.cpp
              Ground.hpp
+             GroundOutput.hpp
              Mesher.cpp
              Mesher.hpp
              Version.hpp )

@@ -15,6 +15,12 @@ Ground::Ground(Foundation &foundation) : foundation(foundation)
 
 }
 
+Ground::Ground(Foundation &foundation, GroundOutput::OutputMap &outputMap)
+  : foundation(foundation), groundOutput(outputMap)
+{
+
+}
+
 Ground::~Ground()
 {
   lis_matrix_destroy(Amat);
@@ -1891,107 +1897,14 @@ double Ground::getConvectionCoeff(double Tsurf,
   }
 }
 
-double Ground::getSurfaceAverageHeatFlux(std::string surfaceName)
-{
-  double totalHeatTransferRate = 0;
-  double totalArea = 0;
-
-  // Find surface(s)
-  for (size_t s = 0; s < foundation.surfaces.size(); s++)
-  {
-    if (foundation.surfaces[s].name == surfaceName)
-    {
-      // Find tilt
-      double tilt;
-      if (foundation.surfaces[s].orientation == Surface::Z_POS)
-        tilt = 0.0;
-      else if (foundation.surfaces[s].orientation == Surface::Z_NEG)
-        tilt = PI;
-      else
-        tilt = PI/2.0;
-
-      double& Tair = bcs.indoorTemp;
-
-      for (std::size_t index = 0; index < foundation.surfaces[s].indices.size(); index++)
-      {
-        std::size_t i = boost::get<0>(foundation.surfaces[s].indices[index]);
-        std::size_t j = boost::get<1>(foundation.surfaces[s].indices[index]);
-        std::size_t k = boost::get<2>(foundation.surfaces[s].indices[index]);
-
-        double h = getConvectionCoeff(TNew[i][j][k],Tair,0.0,1.52,false,tilt)
-             + getSimpleInteriorIRCoeff(domain.cell[i][j][k].surface.emissivity,
-                 TNew[i][j][k],Tair);
-
-        double A = domain.cell[i][j][k].area;
-
-        totalArea += A;
-        totalHeatTransferRate += h*A*(Tair - TNew[i][j][k]);
-
-      }
-    }
-  }
-
-  return totalHeatTransferRate/totalArea;
-}
-
-double Ground::getSurfaceEffectiveTemperature(std::string surfaceName, double constructionRValue)
-{
-  double totalHeatTransferRate = 0;
-  double TA = 0;
-  double totalArea = 0;
-
-  double& Tair = bcs.indoorTemp;
-
-  // Find surface(s)
-  for (size_t s = 0; s < foundation.surfaces.size(); s++)
-  {
-    if (foundation.surfaces[s].name == surfaceName)
-    {
-      // Find tilt
-      double tilt;
-      if (foundation.surfaces[s].orientation == Surface::Z_POS)
-        tilt = 0.0;
-      else if (foundation.surfaces[s].orientation == Surface::Z_NEG)
-        tilt = PI;
-      else
-        tilt = PI/2.0;
-
-
-      for (std::size_t index = 0; index < foundation.surfaces[s].indices.size(); index++)
-      {
-        std::size_t i = boost::get<0>(foundation.surfaces[s].indices[index]);
-        std::size_t j = boost::get<1>(foundation.surfaces[s].indices[index]);
-        std::size_t k = boost::get<2>(foundation.surfaces[s].indices[index]);
-
-        double h = getConvectionCoeff(TNew[i][j][k],Tair,0.0,1.52,false,tilt)
-             + getSimpleInteriorIRCoeff(domain.cell[i][j][k].surface.emissivity,
-                 TNew[i][j][k],Tair);
-
-        double A = domain.cell[i][j][k].area;
-
-        totalArea += A;
-        totalHeatTransferRate += h*A*(Tair - TNew[i][j][k]);
-        TA += TNew[i][j][k]*A;
-
-      }
-    }
-  }
-
-  double Tavg = TA/totalArea;
-
-  double hAvg = totalHeatTransferRate/(totalArea*(Tair - Tavg));
-
-  return Tair - (totalHeatTransferRate/totalArea)*(constructionRValue+1/hAvg) - 273.15;
-}
-
-double Ground::getSurfaceArea(std::string surfaceName)
+double Ground::getSurfaceArea(Surface::SurfaceType surfaceType)
 {
   double totalArea = 0;
 
   // Find surface(s)
   for (size_t s = 0; s < foundation.surfaces.size(); s++)
   {
-    if (foundation.surfaces[s].name == surfaceName)
+    if (foundation.surfaces[s].type == surfaceType)
     {
       Surface surface;
       surface = foundation.surfaces[s];
@@ -2003,33 +1916,81 @@ double Ground::getSurfaceArea(std::string surfaceName)
   return totalArea;
 }
 
-double Ground::getSurfaceAverageTemperature(std::string surfaceName)
-{
-  double TA = 0;
-  double totalArea = 0;
+void Ground::calculateSurfaceAverages(){
+  for (auto output : groundOutput.outputMap) {
+    Surface::SurfaceType surface = output.first;
+    std::vector<GroundOutput::OutputType> outTypes = output.second;
 
-  // Find surface(s)
-  for (size_t s = 0; s < foundation.surfaces.size(); s++)
-  {
-    if (foundation.surfaces[s].name == surfaceName)
-    {
-      for (std::size_t index = 0; index < foundation.surfaces[s].indices.size(); index++)
+    double constructionRValue = 0.0;
+    double surfaceArea = foundation.surfaceAreas[surface];
+
+    if (surface == Surface::ST_SLAB_CORE) {
+      constructionRValue = foundation.slab.totalResistance();
+    }
+    else if (surface == Surface::ST_SLAB_PERIM) {
+      constructionRValue = foundation.slab.totalResistance();
+    }
+    else if (surface == Surface::ST_WALL_INT) {
+      constructionRValue = foundation.wall.totalResistance();
+    }
+
+    double totalHeatTransferRate = 0;
+    double TA = 0;
+    double totalArea = 0;
+
+    double& Tair = bcs.indoorTemp;
+
+    if (foundation.hasSurface[surface]) {
+      // Find surface(s)
+      for (size_t s = 0; s < foundation.surfaces.size(); s++)
       {
-        std::size_t i = boost::get<0>(foundation.surfaces[s].indices[index]);
-        std::size_t j = boost::get<1>(foundation.surfaces[s].indices[index]);
-        std::size_t k = boost::get<2>(foundation.surfaces[s].indices[index]);
+        if (foundation.surfaces[s].type == surface)
+        {
+          // Find tilt
+          double tilt;
+          if (foundation.surfaces[s].orientation == Surface::Z_POS)
+            tilt = 0.0;
+          else if (foundation.surfaces[s].orientation == Surface::Z_NEG)
+            tilt = PI;
+          else
+            tilt = PI/2.0;
 
-        double A = domain.cell[i][j][k].area;
 
-        totalArea += A;
-        TA += TNew[i][j][k]*A;
+          for (std::size_t index = 0; index < foundation.surfaces[s].indices.size(); index++)
+          {
+            std::size_t i = boost::get<0>(foundation.surfaces[s].indices[index]);
+            std::size_t j = boost::get<1>(foundation.surfaces[s].indices[index]);
+            std::size_t k = boost::get<2>(foundation.surfaces[s].indices[index]);
 
+            double h = getConvectionCoeff(TNew[i][j][k],Tair,0.0,1.52,false,tilt)
+                 + getSimpleInteriorIRCoeff(domain.cell[i][j][k].surface.emissivity,
+                     TNew[i][j][k],Tair);
+
+            double& A = domain.cell[i][j][k].area;
+
+            totalArea += A;
+            totalHeatTransferRate += h*A*(Tair - TNew[i][j][k]);
+            TA += TNew[i][j][k]*A;
+
+          }
+        }
       }
     }
+
+    double Tavg = TA/totalArea;
+    groundOutput.outputValues[{surface,GroundOutput::OT_TEMP}] = Tavg;
+    groundOutput.outputValues[{surface,GroundOutput::OT_FLUX}] = totalHeatTransferRate/totalArea;
+    groundOutput.outputValues[{surface,GroundOutput::OT_RATE}] = totalHeatTransferRate/totalArea*surfaceArea;
+
+    double hAvg = totalHeatTransferRate/(totalArea*(Tair - Tavg));
+
+    groundOutput.outputValues[{surface,GroundOutput::OT_EFF_TEMP}] = Tair - (totalHeatTransferRate/totalArea)*(constructionRValue+1/hAvg) - 273.15;
   }
+}
 
-  return TA/totalArea;
-
+double Ground::getSurfaceAverageValue(std::pair<Surface::SurfaceType, GroundOutput::OutputType> output)
+{
+  return groundOutput.outputValues[output];
 }
 
 std::vector<double> Ground::calculateHeatFlux(const size_t &i, const size_t &j, const size_t &k)
@@ -2369,8 +2330,8 @@ void Ground::setSolarBoundaryConditions()
 {
   for (std::size_t s = 0; s < foundation.surfaces.size() ; s++)
   {
-    if (foundation.surfaces[s].name == "Grade"
-        || foundation.surfaces[s].name == "Exterior Wall")
+    if (foundation.surfaces[s].type == Surface::ST_GRADE
+        || foundation.surfaces[s].type == Surface::ST_WALL_EXT)
     {
 
       double& azi = bcs.solarAzimuth;

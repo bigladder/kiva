@@ -282,6 +282,7 @@ Input inputParser(std::string inputFile)
   else
   {
     foundation.hasPerimeterSurface = false;
+    foundation.perimeterSurfaceWidth = 0.0;
   }
 
   // Meshing
@@ -561,21 +562,25 @@ Input inputParser(std::string inputFile)
   // OUTPUT
 
   // CSV Reports
-  for(size_t i=0;i<yamlInput["Output"]["Output Report"]["Reports"].size();i++)
+  if  (yamlInput["Output"]["Output Report"].IsDefined())
   {
-    OutputVariable temp(yamlInput["Output"]["Output Report"]["Reports"][i].as<int>());
-    output.outputReport.push_back(temp);
-  }
+    for(size_t i=0;i<yamlInput["Output"]["Output Report"]["Reports"].size();i++)
+    {
+      OutputVariable temp(yamlInput["Output"]["Output Report"]["Reports"][i].as<int>());
+      output.outputReport.push_back(temp);
+    }
 
-  if  (yamlInput["Output"]["Output Report"]["Minimum Reporting Frequency"].IsDefined())
-  {
-    output.outputReport.minFrequency =
-        boost::posix_time::minutes(
-            yamlInput["Output"]["Output Report"]["Minimum Reporting Frequency"].as<long>());
-  }
-  else
-  {
-    output.outputReport.minFrequency = boost::posix_time::minutes(60);
+    if  (yamlInput["Output"]["Output Report"]["Minimum Reporting Frequency"].IsDefined())
+    {
+      output.outputReport.minFrequency =
+          boost::posix_time::minutes(
+              yamlInput["Output"]["Output Report"]["Minimum Reporting Frequency"].as<long>());
+    }
+    else
+    {
+      output.outputReport.minFrequency = boost::posix_time::minutes(60);
+    }
+    output.outputReport.setOutputMap();
   }
 
   // Animations/Plots
