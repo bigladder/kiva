@@ -1,3 +1,5 @@
+project(libkiva)
+
 if(${ENABLE_OPENGL})
   add_definitions(-D ENABLE_OPENGL )
 endif()
@@ -22,11 +24,9 @@ endif()
 string(TIMESTAMP YEAR %Y)
 
 configure_file (
-    "${PROJECT_SOURCE_DIR}/src/libkiva/Version.hpp.in"
-    "${PROJECT_BINARY_DIR}/src/libkiva/Version.hpp"
+    "${PROJECT_SOURCE_DIR}/Version.hpp.in"
+    "${PROJECT_BINARY_DIR}/Version.hpp"
 )
-
-include_directories(${PROJECT_BINARY_DIR}/src/libkiva/)
 
 set(kiva_src Algorithms.cpp
              Algorithms.hpp
