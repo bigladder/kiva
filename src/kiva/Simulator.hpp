@@ -13,6 +13,7 @@
 
 #include "BoundaryConditions.hpp"
 #include "Ground.hpp"
+#include "GroundOutput.hpp"
 #include "GroundPlot.hpp"
 #include "WeatherData.hpp"
 

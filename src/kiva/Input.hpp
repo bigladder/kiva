@@ -13,6 +13,7 @@
 #include "Foundation.hpp"
 #include "Functions.hpp"
 #include "Geometry.hpp"
+#include "GroundOutput.hpp"
 #include "WeatherData.hpp"
 
 class SimulationControl
@@ -121,11 +122,74 @@ public:
 class OutputVariable
 {
 private:
-  std::vector<std::string> headers;
+  std::vector<std::string> headers{
+    "Slab Core Average Heat Flux [W/m2]",                // 0
+    "Slab Core Average Temperature [K]",                 // 1
+    "Slab Core Average Effective Temperature [C]",       // 2
+    "Slab Core Total Heat Transfer Rate [W]",            // 3
+    "Slab Perimeter Average Heat Flux [W/m2]",           // 4
+    "Slab Perimeter Average Temperature [K]",            // 5
+    "Slab Perimeter Average Effective Temperature [C]",  // 6
+    "Slab Perimeter Total Heat Transfer Rate [W]",       // 7
+    "Slab Average Heat Flux [W/m2]",                     // 8
+    "Slab Average Temperature [K]",                      // 9
+    "Slab Total Heat Transfer Rate [W]",                 // 10
+    "Wall Average Heat Flux [W/m2]",                     // 11
+    "Wall Average Temperature [K]",                      // 12
+    "Wall Average Effective Temperature [C]",            // 13
+    "Wall Total Heat Transfer Rate [W]",                 // 14
+    "Foundation Average Heat Flux [W/m2]",               // 15
+    "Foundation Average Temperature [K]",                // 16
+    "Foundation Total Heat Transfer Rate [W]"            // 17
+  };
+
+  std::vector<std::vector<Surface::SurfaceType>> surfaceTypes{
+    {Surface::ST_SLAB_CORE},
+    {Surface::ST_SLAB_CORE},
+    {Surface::ST_SLAB_CORE},
+    {Surface::ST_SLAB_CORE},
+    {Surface::ST_SLAB_PERIM},
+    {Surface::ST_SLAB_PERIM},
+    {Surface::ST_SLAB_PERIM},
+    {Surface::ST_SLAB_PERIM},
+    {Surface::ST_SLAB_CORE,Surface::ST_SLAB_PERIM},
+    {Surface::ST_SLAB_CORE,Surface::ST_SLAB_PERIM},
+    {Surface::ST_SLAB_CORE,Surface::ST_SLAB_PERIM},
+    {Surface::ST_WALL_INT},
+    {Surface::ST_WALL_INT},
+    {Surface::ST_WALL_INT},
+    {Surface::ST_WALL_INT},
+    {Surface::ST_SLAB_CORE,Surface::ST_SLAB_PERIM,Surface::ST_WALL_INT},
+    {Surface::ST_SLAB_CORE,Surface::ST_SLAB_PERIM,Surface::ST_WALL_INT},
+    {Surface::ST_SLAB_CORE,Surface::ST_SLAB_PERIM,Surface::ST_WALL_INT}
+  };
+
+  std::vector<GroundOutput::OutputType> outTypes{
+    GroundOutput::OT_FLUX,
+    GroundOutput::OT_TEMP,
+    GroundOutput::OT_EFF_TEMP,
+    GroundOutput::OT_RATE,
+    GroundOutput::OT_FLUX,
+    GroundOutput::OT_TEMP,
+    GroundOutput::OT_EFF_TEMP,
+    GroundOutput::OT_RATE,
+    GroundOutput::OT_FLUX,
+    GroundOutput::OT_TEMP,
+    GroundOutput::OT_RATE,
+    GroundOutput::OT_FLUX,
+    GroundOutput::OT_TEMP,
+    GroundOutput::OT_EFF_TEMP,
+    GroundOutput::OT_RATE,
+    GroundOutput::OT_FLUX,
+    GroundOutput::OT_TEMP,
+    GroundOutput::OT_RATE
+  };
 
 public:
   int variableID;
   std::string headerText;
+  std::vector<Surface::SurfaceType> surfaces;
+  GroundOutput::OutputType outType;
 
   OutputVariable(int varID);
 
@@ -134,6 +198,8 @@ public:
 class OutputReport: public std::vector<OutputVariable>
 {
 public:
+  void setOutputMap();
+  std::map<Surface::SurfaceType, std::vector<GroundOutput::OutputType>> outputMap;
   boost::posix_time::time_duration minFrequency;
 };
 

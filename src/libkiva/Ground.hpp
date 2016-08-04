@@ -8,6 +8,7 @@
 #include "Domain.hpp"
 #include "BoundaryConditions.hpp"
 #include "Foundation.hpp"
+#include "GroundOutput.hpp"
 #include "Algorithms.hpp"
 
 #include <cmath>
@@ -25,12 +26,14 @@ public:
 
   // Constructor
   Ground(Foundation &foundation);
+  Ground(Foundation &foundation, GroundOutput::OutputMap &outputMap);
 
   // Destructor
   virtual ~Ground();
 
   Domain domain;
   Foundation &foundation;
+  GroundOutput groundOutput;
 
   size_t nX, nY, nZ;
 
@@ -44,11 +47,10 @@ public:
   void calculate(BoundaryConditions& boundaryConidtions, double ts=0.0);
 
   std::vector<double> calculateHeatFlux(const size_t &i, const size_t &j, const size_t &k);
-  double getSurfaceAverageHeatFlux(std::string surfaceName);
-  double getSurfaceAverageTemperature(std::string surfaceName);
-  double getSurfaceArea(std::string surfaceName);
 
-  double getSurfaceEffectiveTemperature(std::string surfaceName, double constructionRValue);
+
+  void calculateSurfaceAverages();
+  double getSurfaceAverageValue(std::pair<Surface::SurfaceType, GroundOutput::OutputType> output);
 
 
 private:
@@ -108,6 +110,8 @@ private:
                 bool isExterior,
                 double tilt);
 
+
+  double getSurfaceArea(Surface::SurfaceType surfaceType);
 
   void setSolarBoundaryConditions();
 

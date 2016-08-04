@@ -108,11 +108,27 @@ class Surface
 {
 public:
 
+  enum SurfaceType
+  {
+    ST_SLAB_CORE,
+    ST_SLAB_PERIM,
+    ST_WALL_INT,
+    ST_WALL_EXT,
+    ST_WALL_TOP,
+    ST_GRADE,
+    ST_SYMMETRY,
+    ST_SYMMETRY_AIR,
+    ST_FAR_FIELD,
+    ST_FAR_FIELD_AIR,
+    ST_DEEP_GROUND,
+    ST_TOP_AIR_INT,
+    ST_TOP_AIR_EXT
+  };
+
   Polygon polygon;
   double xMin, xMax, yMin, yMax, zMin, zMax;
-  std::string name;
+  SurfaceType type;
   double emissivity, absorptivity, temperature;
-
 
   enum BoundaryConditionType
   {
@@ -299,6 +315,9 @@ public:
   MeshData zMeshData;
   std::vector<Block> blocks;
   std::vector<Surface> surfaces;
+
+  std::map<Surface::SurfaceType, double> surfaceAreas;
+  std::map<Surface::SurfaceType, bool> hasSurface;
 
   void createMeshData();
 };

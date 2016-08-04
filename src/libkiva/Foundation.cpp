@@ -297,6 +297,24 @@ void Foundation::createMeshData()
 
   zRanges.ranges.push_back(zNearRange);
 
+
+  // Set 3D foundation areas (for calculation of total heat transfer rates)
+  surfaceAreas[Surface::ST_SLAB_CORE] = boost::geometry::area(offset(polygon, xyPerimeterSurface));
+  surfaceAreas[Surface::ST_SLAB_PERIM] = boost::geometry::area(offset(polygon, xyPerimeterSurface)) - surfaceAreas[Surface::ST_SLAB_CORE];
+
+  if (hasInteriorVerticalInsulation && isGreaterThan(zIntVIns, zSlab)) {
+    surfaceAreas[Surface::ST_WALL_INT] = boost::geometry::perimeter(offset(polygon, xyWallInterior))*(zMax - zIntVIns);
+    surfaceAreas[Surface::ST_WALL_INT] += boost::geometry::area(polygon) - boost::geometry::area(offset(polygon, xyWallInterior));
+    surfaceAreas[Surface::ST_WALL_INT] += boost::geometry::perimeter(polygon)*(zIntVIns - zSlab);
+  }
+  else {
+    surfaceAreas[Surface::ST_WALL_INT] = boost::geometry::perimeter(offset(polygon, xyWallInterior))*foundationDepth;
+  }
+
+  hasSurface[Surface::ST_SLAB_CORE] = true;
+  hasSurface[Surface::ST_SLAB_PERIM] = hasPerimeterSurface;
+  hasSurface[Surface::ST_WALL_INT] = (foundationDepth > 0);
+
   if (numberOfDimensions == 2 )
   {
 
@@ -342,7 +360,7 @@ void Foundation::createMeshData()
     // Symmetry Surface
     {
       Surface surface;
-      surface.name = "Symmetry";
+      surface.type = Surface::ST_SYMMETRY;
       surface.xMin = xMin;
       surface.xMax = xMin;
       surface.yMin = 0.0;
@@ -366,7 +384,7 @@ void Foundation::createMeshData()
       {
         {
           Surface surface;
-          surface.name = "Interior Wall";
+          surface.type = Surface::ST_WALL_INT;
           surface.xMin = xRef2 + xyWallInterior;
           surface.xMax = xRef2 + xyWallInterior;
           surface.yMin = 0.0;
@@ -381,7 +399,7 @@ void Foundation::createMeshData()
         }
         {
           Surface surface;
-          surface.name = "Interior Wall";
+          surface.type = Surface::ST_WALL_INT;
           surface.xMin = xRef2 + xyWallInterior;
           surface.xMax = xRef2;
           surface.yMin = 0.0;
@@ -396,7 +414,7 @@ void Foundation::createMeshData()
         }
         {
           Surface surface;
-          surface.name = "Interior Wall";
+          surface.type = Surface::ST_WALL_INT;
           surface.xMin = xRef2;
           surface.xMax = xRef2;
           surface.yMin = 0.0;
@@ -413,7 +431,7 @@ void Foundation::createMeshData()
         {
           {
             Surface surface;
-            surface.name = "Interior Wall";
+            surface.type = Surface::ST_WALL_INT;
             surface.xMin = xRef1 - xyWallInterior;
             surface.xMax = xRef1 - xyWallInterior;
             surface.yMin = 0.0;
@@ -428,7 +446,7 @@ void Foundation::createMeshData()
           }
           {
             Surface surface;
-            surface.name = "Interior Wall";
+            surface.type = Surface::ST_WALL_INT;
             surface.xMin = xRef1;
             surface.xMax = xRef1 - xyWallInterior;
             surface.yMin = 0.0;
@@ -443,7 +461,7 @@ void Foundation::createMeshData()
           }
           {
             Surface surface;
-            surface.name = "Interior Wall";
+            surface.type = Surface::ST_WALL_INT;
             surface.xMin = xRef1;
             surface.xMax = xRef1;
             surface.yMin = 0.0;
@@ -462,7 +480,7 @@ void Foundation::createMeshData()
       else
       {
         Surface surface;
-        surface.name = "Interior Wall";
+        surface.type = Surface::ST_WALL_INT;
         surface.xMin = xRef2 + xyWallInterior;
         surface.xMax = xRef2 + xyWallInterior;
         surface.yMin = 0.0;
@@ -478,7 +496,7 @@ void Foundation::createMeshData()
         if (twoParameters)
         {
           Surface surface;
-          surface.name = "Interior Wall";
+          surface.type = Surface::ST_WALL_INT;
           surface.xMin = xRef1 - xyWallInterior;
           surface.xMax = xRef1 - xyWallInterior;
           surface.yMin = 0.0;
@@ -497,7 +515,7 @@ void Foundation::createMeshData()
       if (!twoParameters)
       {
         Surface surface;
-        surface.name = "Interior Air Symmetry";
+        surface.type = Surface::ST_SYMMETRY_AIR;
         surface.xMin = xMin;
         surface.xMax = xMin;
         surface.yMin = 0.0;
@@ -516,7 +534,7 @@ void Foundation::createMeshData()
       // Exterior Wall Surface
       {
         Surface surface;
-        surface.name = "Exterior Wall";
+        surface.type = Surface::ST_WALL_EXT;
         surface.xMin = xRef2 + xyWallExterior;
         surface.xMax = xRef2 + xyWallExterior;
         surface.yMin = 0.0;
@@ -534,7 +552,7 @@ void Foundation::createMeshData()
       if(twoParameters)
       {
         Surface surface;
-        surface.name = "Exterior Wall";
+        surface.type = Surface::ST_WALL_EXT;
         surface.xMin = xRef1 - xyWallExterior;
         surface.xMax = xRef1 - xyWallExterior;
         surface.yMin = 0.0;
@@ -552,7 +570,7 @@ void Foundation::createMeshData()
       // Exterior Air Right Surface
       {
         Surface surface;
-        surface.name = "Exterior Air Perimeter";
+        surface.type = Surface::ST_FAR_FIELD_AIR;
         surface.xMin = xMax;
         surface.xMax = xMax;
         surface.yMin = 0.0;
@@ -569,7 +587,7 @@ void Foundation::createMeshData()
     // Far Field Surface
     {
       Surface surface;
-      surface.name = "Far Field";
+      surface.type = Surface::ST_FAR_FIELD;
       surface.xMin = xMax;
       surface.xMax = xMax;
       surface.yMin = 0.0;
@@ -587,7 +605,7 @@ void Foundation::createMeshData()
       deepGroundBoundary == DGB_AUTO)
     {
       Surface surface;
-      surface.name = "Deep Ground";
+      surface.type = Surface::ST_DEEP_GROUND;
       surface.xMin = xMin;
       surface.xMax = xMax;
       surface.yMin = 0.0;
@@ -603,7 +621,7 @@ void Foundation::createMeshData()
     else if (deepGroundBoundary == DGB_ZERO_FLUX)
     {
       Surface surface;
-      surface.name = "Deep Ground";
+      surface.type = Surface::ST_DEEP_GROUND;
       surface.xMin = xMin;
       surface.xMax = xMax;
       surface.yMin = 0.0;
@@ -619,7 +637,7 @@ void Foundation::createMeshData()
     // Slab
     {
       Surface surface;
-      surface.name = "Slab Interior";
+      surface.type = Surface::ST_SLAB_CORE;
       if (!twoParameters)
       {
         surface.xMin = xMin;
@@ -644,7 +662,7 @@ void Foundation::createMeshData()
     {
       {
         Surface surface;
-        surface.name = "Slab Perimeter";
+        surface.type = Surface::ST_SLAB_PERIM;
         surface.xMin = xRef2 + xyPerimeterSurface;
         surface.xMax = xRef2 + xySlabPerimeter;
         surface.yMin = 0.0;
@@ -660,7 +678,7 @@ void Foundation::createMeshData()
       if (twoParameters)
       {
         Surface surface;
-        surface.name = "Slab Perimeter";
+        surface.type = Surface::ST_SLAB_PERIM;
         surface.xMin = xRef1 - xySlabPerimeter;
         surface.xMax = xRef1 - xyPerimeterSurface;
         surface.yMin = 0.0;
@@ -678,7 +696,7 @@ void Foundation::createMeshData()
     // Grade
     {
       Surface surface;
-      surface.name = "Grade";
+      surface.type = Surface::ST_GRADE;
       surface.xMin = xRef2 + xyWallExterior;
       surface.xMax = xMax;
       surface.yMin = 0.0;
@@ -695,7 +713,7 @@ void Foundation::createMeshData()
     if (twoParameters)
     {
       Surface surface;
-      surface.name = "Grade";
+      surface.type = Surface::ST_GRADE;
       surface.xMin = xMin;
       surface.xMax = xRef1 - xyWallExterior;
       surface.yMin = 0.0;
@@ -713,7 +731,7 @@ void Foundation::createMeshData()
     {
       // Interior Air Top Surface
       Surface surface;
-      surface.name = "Interior Air Top";
+      surface.type = Surface::ST_TOP_AIR_INT;
       if (!twoParameters)
       {
         surface.xMin = xMin;
@@ -739,7 +757,7 @@ void Foundation::createMeshData()
       {
         // Exterior Air Top Surface
         Surface surface;
-        surface.name = "Exterior Air Top";
+        surface.type = Surface::ST_TOP_AIR_EXT;
         surface.xMin = xRef2 + xyWallExterior;
         surface.xMax = xMax;
         surface.yMin = 0.0;
@@ -755,7 +773,7 @@ void Foundation::createMeshData()
       {
         // Exterior Air Top Surface
         Surface surface;
-        surface.name = "Exterior Air Top";
+        surface.type = Surface::ST_TOP_AIR_EXT;
         surface.xMin = xMin;
         surface.xMax = xRef1 - xyWallExterior;
         surface.yMin = 0.0;
@@ -785,7 +803,7 @@ void Foundation::createMeshData()
         for (std::size_t n = 1; n <= N; n++)
         {
           Surface surface;
-          surface.name = "Wall Top";
+          surface.type = Surface::ST_WALL_TOP;
           surface.xMin = xRef2 + position;
           surface.xMax = xRef2 + position + xyWallExterior/N;
           surface.yMin = 0.0;
@@ -814,7 +832,7 @@ void Foundation::createMeshData()
           for (std::size_t n = 1; n <= N; n++)
           {
             Surface surface;
-            surface.name = "Wall Top";
+            surface.type = Surface::ST_WALL_TOP;
             surface.xMin = xRef1 - position - xyWallExterior/N;
             surface.xMax = xRef1 - position;
             surface.yMin = 0.0;
@@ -842,7 +860,7 @@ void Foundation::createMeshData()
       {
         {
           Surface surface;
-          surface.name = "Wall Top";
+          surface.type = Surface::ST_WALL_TOP;
           surface.xMin = xRef2 + xyWallInterior;
           surface.xMax = xRef2 + xyWallExterior;
           surface.yMin = 0.0;
@@ -857,7 +875,7 @@ void Foundation::createMeshData()
         if (twoParameters)
         {
           Surface surface;
-          surface.name = "Wall Top";
+          surface.type = Surface::ST_WALL_TOP;
           surface.xMin = xRef1 - xyWallExterior;
           surface.xMax = xRef1 - xyWallInterior;
           surface.yMin = 0.0;
@@ -1248,7 +1266,7 @@ void Foundation::createMeshData()
           for (std::size_t v = 0; v < nV; v++)
           {
             Surface surface;
-            surface.name = "Interior Wall";
+            surface.type = Surface::ST_WALL_INT;
             surface.xMin = getXmin(poly,v);
             surface.xMax = getXmax(poly,v);
             surface.yMin = getYmin(poly,v);
@@ -1289,7 +1307,7 @@ void Foundation::createMeshData()
           poly.inners().push_back(ring);
 
           Surface surface;
-          surface.name = "Interior Wall";
+          surface.type = Surface::ST_WALL_INT;
           surface.polygon = poly;
           surface.zMin = zIntVIns;
           surface.zMax = zIntVIns;
@@ -1305,7 +1323,7 @@ void Foundation::createMeshData()
           for (std::size_t v = 0; v < nV; v++)
           {
             Surface surface;
-            surface.name = "Interior Wall";
+            surface.type = Surface::ST_WALL_INT;
             surface.xMin = getXmin(poly,v);
             surface.xMax = getXmax(poly,v);
             surface.yMin = getYmin(poly,v);
@@ -1342,7 +1360,7 @@ void Foundation::createMeshData()
         for (std::size_t v = 0; v < nV; v++)
         {
           Surface surface;
-          surface.name = "Interior Wall";
+          surface.type = Surface::ST_WALL_INT;
           surface.xMin = getXmin(poly,v);
           surface.xMax = getXmax(poly,v);
           surface.yMin = getYmin(poly,v);
@@ -1383,7 +1401,7 @@ void Foundation::createMeshData()
         for (std::size_t v = 0; v < nV; v++)
         {
           Surface surface;
-          surface.name = "Exterior Wall";
+          surface.type = Surface::ST_WALL_EXT;
           surface.xMin = getXmin(poly,v);
           surface.xMax = getXmax(poly,v);
           surface.yMin = getYmin(poly,v);
@@ -1418,7 +1436,7 @@ void Foundation::createMeshData()
         {
           // X Min
           Surface surface;
-          surface.name = "Exterior Air Perimeter";
+          surface.type = Surface::ST_FAR_FIELD_AIR;
           surface.xMin =  xMin;
           surface.xMax =  xMin;
           surface.yMin =  yMin;
@@ -1434,7 +1452,7 @@ void Foundation::createMeshData()
         {
           // X Max
           Surface surface;
-          surface.name = "Exterior Air Perimeter";
+          surface.type = Surface::ST_FAR_FIELD_AIR;
           surface.xMin =  xMax;
           surface.xMax =  xMax;
           surface.yMin =  yMin;
@@ -1450,7 +1468,7 @@ void Foundation::createMeshData()
         {
           // Y Min
           Surface surface;
-          surface.name = "Exterior Air Perimeter";
+          surface.type = Surface::ST_FAR_FIELD_AIR;
           surface.xMin =  xMin;
           surface.xMax =  xMax;
           surface.yMin =  yMin;
@@ -1466,7 +1484,7 @@ void Foundation::createMeshData()
         {
           // Y Max
           Surface surface;
-          surface.name = "Exterior Air Perimeter";
+          surface.type = Surface::ST_FAR_FIELD_AIR;
           surface.xMin =  xMin;
           surface.xMax =  xMax;
           surface.yMin =  yMax;
@@ -1487,7 +1505,7 @@ void Foundation::createMeshData()
     {
       // X Min
       Surface surface;
-      surface.name = "Far Field";
+      surface.type = Surface::ST_FAR_FIELD;
       surface.xMin =  xMin;
       surface.xMax =  xMin;
       surface.yMin =  yMin;
@@ -1503,7 +1521,7 @@ void Foundation::createMeshData()
     {
       // X Max
       Surface surface;
-      surface.name = "Far Field";
+      surface.type = Surface::ST_FAR_FIELD;
       surface.xMin =  xMax;
       surface.xMax =  xMax;
       surface.yMin =  yMin;
@@ -1519,7 +1537,7 @@ void Foundation::createMeshData()
     {
       // Y Min
       Surface surface;
-      surface.name = "Far Field";
+      surface.type = Surface::ST_FAR_FIELD;
       surface.xMin =  xMin;
       surface.xMax =  xMax;
       surface.yMin =  yMin;
@@ -1535,7 +1553,7 @@ void Foundation::createMeshData()
     {
       // Y Max
       Surface surface;
-      surface.name = "Far Field";
+      surface.type = Surface::ST_FAR_FIELD;
       surface.xMin =  xMin;
       surface.xMax =  xMax;
       surface.yMin =  yMax;
@@ -1553,7 +1571,7 @@ void Foundation::createMeshData()
       deepGroundBoundary == DGB_AUTO)
     {
       Surface surface;
-      surface.name = "Deep Ground";
+      surface.type = Surface::ST_DEEP_GROUND;
       surface.xMin = xMin;
       surface.xMax = xMax;
       surface.yMin = yMin;
@@ -1569,7 +1587,7 @@ void Foundation::createMeshData()
     else if (deepGroundBoundary == DGB_ZERO_FLUX)
     {
       Surface surface;
-      surface.name = "Deep Ground";
+      surface.type = Surface::ST_DEEP_GROUND;
       surface.xMin = xMin;
       surface.xMax = xMax;
       surface.yMin = yMin;
@@ -1588,7 +1606,7 @@ void Foundation::createMeshData()
       poly = offset(polygon, xyPerimeterSurface);
 
       Surface surface;
-      surface.name = "Slab Interior";
+      surface.type = Surface::ST_SLAB_CORE;
       surface.polygon = poly;
       surface.zMin = zSlab;
       surface.zMax = zSlab;
@@ -1611,7 +1629,7 @@ void Foundation::createMeshData()
       poly.inners().push_back(ring);
 
       Surface surface;
-      surface.name = "Slab Perimeter";
+      surface.type = Surface::ST_SLAB_PERIM;
       surface.polygon = poly;
       surface.zMin = zSlab;
       surface.zMax = zSlab;
@@ -1631,7 +1649,7 @@ void Foundation::createMeshData()
       boost::geometry::reverse(ring);
 
       Surface surface;
-      surface.name = "Grade";
+      surface.type = Surface::ST_GRADE;
       surface.xMin = xMin;
       surface.xMax = xMax;
       surface.yMin = yMin;
@@ -1654,7 +1672,7 @@ void Foundation::createMeshData()
       poly = offset(polygon, xyWallInterior);
 
       Surface surface;
-      surface.name = "Interior Air Top";
+      surface.type = Surface::ST_TOP_AIR_INT;
       surface.polygon = poly;
       surface.zMin = zMax;
       surface.zMax = zMax;
@@ -1675,7 +1693,7 @@ void Foundation::createMeshData()
         boost::geometry::reverse(ring);
 
         Surface surface;
-        surface.name = "Exterior Air Top";
+        surface.type = Surface::ST_TOP_AIR_EXT;
         surface.xMin = xMin;
         surface.xMax = xMax;
         surface.yMin = yMin;
@@ -1719,7 +1737,7 @@ void Foundation::createMeshData()
           poly.inners().push_back(ring);
 
           Surface surface;
-          surface.name = "Wall Top";
+          surface.type = Surface::ST_WALL_TOP;
           surface.polygon = poly;
           surface.zMin = zMax;
           surface.zMax = zMax;
@@ -1750,7 +1768,7 @@ void Foundation::createMeshData()
         poly.inners().push_back(ring);
 
         Surface surface;
-        surface.name = "Wall Top";
+        surface.type = Surface::ST_WALL_TOP;
         surface.polygon = poly;
         surface.zMin = zMax;
         surface.zMax = zMax;
@@ -2171,7 +2189,7 @@ void Foundation::createMeshData()
                 (isEqual(getYmin(poly[0],v),yMin) && isEqual(getYmax(poly[0],v),yMin))))
             {
               Surface surface;
-              surface.name = "Interior Wall";
+              surface.type = Surface::ST_WALL_INT;
               surface.xMin = getXmin(poly[0],v);
               surface.xMax = getXmax(poly[0],v);
               surface.yMin = getYmin(poly[0],v);
@@ -2216,7 +2234,7 @@ void Foundation::createMeshData()
           boost::geometry::intersection(domainBox,tempPoly,poly);
 
           Surface surface;
-          surface.name = "Interior Wall";
+          surface.type = Surface::ST_WALL_INT;
           surface.polygon = poly[0];
           surface.zMin = zIntVIns;
           surface.zMax = zIntVIns;
@@ -2238,7 +2256,7 @@ void Foundation::createMeshData()
                 (isEqual(getYmin(poly[0],v),yMin) && isEqual(getYmax(poly[0],v),yMin))))
             {
               Surface surface;
-              surface.name = "Interior Wall";
+              surface.type = Surface::ST_WALL_INT;
               surface.xMin = getXmin(poly[0],v);
               surface.xMax = getXmax(poly[0],v);
               surface.yMin = getYmin(poly[0],v);
@@ -2282,7 +2300,7 @@ void Foundation::createMeshData()
               (isEqual(getYmin(poly[0],v),yMin) && isEqual(getYmax(poly[0],v),yMin))))
           {
             Surface surface;
-            surface.name = "Interior Wall";
+            surface.type = Surface::ST_WALL_INT;
             surface.xMin = getXmin(poly[0],v);
             surface.xMax = getXmax(poly[0],v);
             surface.yMin = getYmin(poly[0],v);
@@ -2328,7 +2346,7 @@ void Foundation::createMeshData()
               (isEqual(getYmin(poly[0],v),yMin) && isEqual(getYmax(poly[0],v),yMin))))
           {
             Surface surface;
-            surface.name = "Exterior Wall";
+            surface.type = Surface::ST_WALL_EXT;
             surface.xMin = getXmin(poly[0],v);
             surface.xMax = getXmax(poly[0],v);
             surface.yMin = getYmin(poly[0],v);
@@ -2364,7 +2382,7 @@ void Foundation::createMeshData()
     {
       // X Min
       Surface surface;
-      surface.name = "Far Field";
+      surface.type = Surface::ST_FAR_FIELD;
       surface.xMin =  xMin;
       surface.xMax =  xMin;
       surface.yMin =  yMin;
@@ -2380,7 +2398,7 @@ void Foundation::createMeshData()
     {
       // X Max
       Surface surface;
-      surface.name = "Far Field";
+      surface.type = Surface::ST_FAR_FIELD;
       surface.xMin =  xMax;
       surface.xMax =  xMax;
       surface.yMin =  yMin;
@@ -2396,7 +2414,7 @@ void Foundation::createMeshData()
     {
       // Y Min
       Surface surface;
-      surface.name = "Far Field";
+      surface.type = Surface::ST_FAR_FIELD;
       surface.xMin =  xMin;
       surface.xMax =  xMax;
       surface.yMin =  yMin;
@@ -2412,7 +2430,7 @@ void Foundation::createMeshData()
     {
       // Y Max
       Surface surface;
-      surface.name = "Far Field";
+      surface.type = Surface::ST_FAR_FIELD;
       surface.xMin =  xMin;
       surface.xMax =  xMax;
       surface.yMin =  yMax;
@@ -2430,7 +2448,7 @@ void Foundation::createMeshData()
       deepGroundBoundary == DGB_AUTO)
     {
       Surface surface;
-      surface.name = "Deep Ground";
+      surface.type = Surface::ST_DEEP_GROUND;
       surface.xMin = xMin;
       surface.xMax = xMax;
       surface.yMin = yMin;
@@ -2446,7 +2464,7 @@ void Foundation::createMeshData()
     else if (deepGroundBoundary == DGB_ZERO_FLUX)
     {
       Surface surface;
-      surface.name = "Deep Ground";
+      surface.type = Surface::ST_DEEP_GROUND;
       surface.xMin = xMin;
       surface.xMax = xMax;
       surface.yMin = yMin;
@@ -2467,7 +2485,7 @@ void Foundation::createMeshData()
       boost::geometry::intersection(domainBox,tempPoly,poly);
 
       Surface surface;
-      surface.name = "Slab Interior";
+      surface.type = Surface::ST_SLAB_CORE;
       surface.polygon = poly[0];
       surface.zMin = zSlab;
       surface.zMax = zSlab;
@@ -2493,7 +2511,7 @@ void Foundation::createMeshData()
       boost::geometry::intersection(domainBox,tempPoly,poly);
 
       Surface surface;
-      surface.name = "Slab Perimeter";
+      surface.type = Surface::ST_SLAB_PERIM;
       surface.polygon = poly[0];
       surface.zMin = zSlab;
       surface.zMax = zSlab;
@@ -2512,7 +2530,7 @@ void Foundation::createMeshData()
       boost::geometry::difference(domainBox,tempPoly,poly);
 
       Surface surface;
-      surface.name = "Grade";
+      surface.type = Surface::ST_GRADE;
       surface.polygon = poly[0];
       surface.zMin = zGrade;
       surface.zMax = zGrade;
@@ -2532,7 +2550,7 @@ void Foundation::createMeshData()
       boost::geometry::intersection(domainBox,tempPoly,poly);
 
       Surface surface;
-      surface.name = "Interior Air Top";
+      surface.type = Surface::ST_TOP_AIR_INT;
       surface.polygon = poly[0];
       surface.zMin = zMax;
       surface.zMax = zMax;
@@ -2551,7 +2569,7 @@ void Foundation::createMeshData()
       boost::geometry::difference(domainBox,tempPoly,poly);
 
       Surface surface;
-      surface.name = "Exterior Air Top";
+      surface.type = Surface::ST_TOP_AIR_EXT;
       surface.polygon = poly[0];
       surface.zMin = zMax;
       surface.zMax = zMax;
@@ -2591,7 +2609,7 @@ void Foundation::createMeshData()
           boost::geometry::intersection(domainBox,tempPoly,poly);
 
           Surface surface;
-          surface.name = "Wall Top";
+          surface.type = Surface::ST_WALL_TOP;
           surface.polygon = poly[0];
           surface.zMin = zMax;
           surface.zMax = zMax;
@@ -2625,7 +2643,7 @@ void Foundation::createMeshData()
         boost::geometry::intersection(domainBox,tempPoly,poly);
 
         Surface surface;
-        surface.name = "Wall Top";
+        surface.type = Surface::ST_WALL_TOP;
         surface.polygon = poly[0];
         surface.zMin = zMax;
         surface.zMax = zMax;
