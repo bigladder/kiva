@@ -11,7 +11,7 @@ set(kiva_src Main.cpp
              WeatherData.hpp )
 
 
-include_directories(${PROJECT_BINARY_DIR}/src/libkiva/)
+include_directories(${CMAKE_BINARY_DIR}/src/libkiva/)
 add_executable(kiva ${kiva_src})
 
 set(kiva_link_flags "")

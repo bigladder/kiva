@@ -3,7 +3,7 @@ if(${ENABLE_OPENGL})
 endif()
 
 execute_process(COMMAND git describe --tags --long
-                WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+                WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
                 RESULT_VARIABLE git_exit_status
                 OUTPUT_VARIABLE kiva_version
                 OUTPUT_STRIP_TRAILING_WHITESPACE)
@@ -22,11 +22,11 @@ endif()
 string(TIMESTAMP YEAR %Y)
 
 configure_file (
-    "${PROJECT_SOURCE_DIR}/src/libkiva/Version.hpp.in"
-    "${PROJECT_BINARY_DIR}/src/libkiva/Version.hpp"
+    "${CMAKE_SOURCE_DIR}/src/libkiva/Version.hpp.in"
+    "${CMAKE_BINARY_DIR}/src/libkiva/Version.hpp"
 )
 
-include_directories(${PROJECT_BINARY_DIR}/src/libkiva/)
+#include_directories(${CMAKE_SOURCE_DIR})
 
 set(kiva_src Algorithms.cpp
              Algorithms.hpp
