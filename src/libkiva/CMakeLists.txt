@@ -50,7 +50,7 @@ if (${ENABLE_OPENGL})
   set(kiva_src ${kiva_src} PixelCounter.cpp PixelCounter.hpp )
 endif ()
 
-add_library(libkiva ${kiva_src})
+add_library(libkiva SHARED ${kiva_src})
 set_target_properties(libkiva PROPERTIES OUTPUT_NAME kiva)
 
 set(kiva_link_flags "")
