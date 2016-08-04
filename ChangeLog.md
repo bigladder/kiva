@@ -1,6 +1,8 @@
 0.4.0 Released ????
 -------------------
 ### Fixes:
+* Improve output reporting. 2D simulations now report heat transfer rates
+  representative of the 3D inputs.
 
 ### Features:
 * Separate core functionality into a linked library
