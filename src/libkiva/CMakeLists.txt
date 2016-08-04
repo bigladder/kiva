@@ -28,8 +28,6 @@ configure_file (
     "${PROJECT_BINARY_DIR}/Version.hpp"
 )
 
-#include_directories(${CMAKE_SOURCE_DIR})
-
 set(kiva_src Algorithms.cpp
              Algorithms.hpp
              BoundaryConditions.hpp
