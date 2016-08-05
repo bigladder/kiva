@@ -6,11 +6,13 @@
 
 ### Features:
 * Separate core functionality into a linked library
+* Move boundary conditions and initialization inputs into a higher level
+* Use continuous integration for building and testing
 
 0.3.1 Released 16 October 2015
 ------------------------------
 ### Fixes:
-* Make indoor/outdoor air temperature fileds more consistent
+* Make indoor/outdoor air temperature fields more consistent
 * Cross-platform CSV line ending support
 
 0.3.0 Released 28 September 2015

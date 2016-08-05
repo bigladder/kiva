@@ -1,4 +1,5 @@
 [![Documentation Status](https://readthedocs.org/projects/kiva/badge/?version=latest)](http://kiva.readthedocs.org/en/latest/?badge=latest)
+[![Build Status](https://travis-ci.org/big-ladder/kiva.svg?branch=develop)](https://travis-ci.org/big-ladder/kiva)
 
 Kiva
 ====
