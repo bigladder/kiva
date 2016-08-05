@@ -50,8 +50,13 @@ if (${ENABLE_OPENGL})
   set(kiva_src ${kiva_src} PixelCounter.cpp PixelCounter.hpp )
 endif ()
 
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
+
 add_library(libkiva SHARED ${kiva_src})
 set_target_properties(libkiva PROPERTIES OUTPUT_NAME kiva)
+
+include(GenerateExportHeader)
+generate_export_header(libkiva)
 
 set(kiva_link_flags "")
 

@@ -8,6 +8,7 @@
 #include <cmath>
 #include <math.h>
 #include "Functions.hpp"
+#include "libkiva_export.h"
 
 class Interval
 {
@@ -34,7 +35,7 @@ public:
 
 };
 
-class Mesher
+class LIBKIVA_EXPORT Mesher
 {
 private:
     MeshData data;

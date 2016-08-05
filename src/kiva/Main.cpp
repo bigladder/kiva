@@ -15,6 +15,7 @@
 #include "InputParser.hpp"
 #include "WeatherData.hpp"
 #include "Simulator.hpp"
+#include "libkiva_export.h"
 
 namespace po = boost::program_options;
 

@@ -10,6 +10,7 @@
 #include <boost/geometry/multi/geometries/multi_point.hpp>
 
 #include "Functions.hpp"
+#include "libkiva_export.h"
 
 
 typedef boost::geometry::model::point<double, 2, boost::geometry::cs::cartesian> Point;
@@ -54,8 +55,8 @@ double getYmin(Polygon poly, std::size_t vertex);
 double getXmax(Polygon poly, std::size_t vertex);
 double getYmax(Polygon poly, std::size_t vertex);
 
-bool comparePointsX(Point first, Point second);
-bool comparePointsY(Point first, Point second);
+bool LIBKIVA_EXPORT comparePointsX(Point first, Point second);
+bool LIBKIVA_EXPORT comparePointsY(Point first, Point second);
 
 double getDistance(Point a, Point b);
 
