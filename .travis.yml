@@ -1,0 +1,12 @@
+language: cpp
+osx_image: xcode7
+matrix:
+  include:
+    - os: osx
+      compiler: clang
+    - os: linux
+      compiler: gcc
+script:
+  - mkdir build
+  - cd build
+  - cmake .. && make -j
