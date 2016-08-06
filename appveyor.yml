@@ -1,5 +1,11 @@
 init:
   - cmd: cmake --version
+  - cmd: awk -Wversion
+  - cmd: gawk -Wversion
+  - cmd: awk -W version
+  - cmd: gawk -W version
+  - cmd: awk --version
+  - cmd: gawk --version
 
 environment:
   matrix:
