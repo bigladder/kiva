@@ -1,0 +1,25 @@
+language: cpp
+notifications:
+  email: false
+matrix:
+  include:
+    - os: osx
+      compiler: clang
+      osx_image: xcode7
+    - os: linux
+      compiler: gcc
+      sudo: required
+      dist: trusty
+
+before_install:
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install cmake; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install gcc; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get -y -qq update; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get -y install cmake; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get -y install gfortran; fi
+
+script:
+  - mkdir build
+  - cd build
+  - cmake .. && make -j

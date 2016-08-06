@@ -15,7 +15,8 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/date_time/gregorian/gregorian.hpp>
 
-#include "Functions.hpp"
+std::istream& safeGetline(std::istream& is, std::string& t);
+
 
 class HourlyData: public std::vector<double>
 {

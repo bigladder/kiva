@@ -194,7 +194,7 @@ else()
                                "-DINPUT=${_GO_INPUT}"
                                "-DOUTPUT=${_GO_OUTPUT}"
                                -P "${CMAKE_CURRENT_BINARY_DIR}/scripts/genout.cmake"
-                       DEPENDS "${_GO_INPUT}" ${_GO_DEPENDS}
+                       DEPENDS "${_GO_INPUT}" ${_GO_DEPENDS} zlibstatic
                        WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
   endfunction()
 

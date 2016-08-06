@@ -10,6 +10,7 @@
 #include "Foundation.hpp"
 #include "GroundOutput.hpp"
 #include "Algorithms.hpp"
+#include "libkiva_export.h"
 
 #include <cmath>
 #include <vector>
@@ -20,7 +21,7 @@
 
 #include "lis.h"
 
-class Ground
+class LIBKIVA_EXPORT Ground
 {
 public:
 

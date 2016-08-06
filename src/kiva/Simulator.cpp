@@ -426,8 +426,8 @@ std::string Simulator::printOutputLine()
   for (auto out : input.output.outputReport)
   {
 
-    double totalValue;
-    double totalArea;
+    double totalValue = 0.0;
+    double totalArea= 0.0;
     for (auto surface : out.surfaces)
     {
       if (ground.foundation.hasSurface[surface]) {
@@ -437,7 +437,7 @@ std::string Simulator::printOutputLine()
     }
 
     if (out.outType == GroundOutput::OT_RATE) {
-      outputLine += ", " + boost::lexical_cast<std::string>(totalValue);      
+      outputLine += ", " + boost::lexical_cast<std::string>(totalValue);
     }
     else {
       outputLine += ", " + boost::lexical_cast<std::string>(totalValue/totalArea);
