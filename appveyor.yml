@@ -1,6 +1,9 @@
 init:
   - cmd: cmake --version
 
+skip_branch_with_pr: true
+clone_depth: 50
+
 environment:
   matrix:
     - GENERATOR: "Visual Studio 12"
