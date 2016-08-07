@@ -7,11 +7,11 @@ clone_depth: 50
 environment:
   matrix:
     - GENERATOR: "MinGW Makefiles"
-      MINGW_DIR: "C:\\MinGW\\bin"
+      MINGW_DIR: C:\MinGW\bin
       CONFIG: Release
       COMPILER: MinGW
     - GENERATOR: "MinGW Makefiles"
-      MINGW_DIR: "C:\\mingw-w64\\i686-5.3.0-posix-dwarf-rt_v4-rev0\\mingw32\\bin"
+      MINGW_DIR: C:\mingw-w64\i686-5.3.0-posix-dwarf-rt_v4-rev0\mingw32\bin
       CONFIG: Release
       COMPILER: MinGW
     - GENERATOR: "Visual Studio 12"
@@ -22,9 +22,9 @@ environment:
       COMPILER: MSVC
 
 before_build:
-  - echo "%COMPILER% %GENERATOR% %CONFIG%"
   #- if "%COMPILER%"=="MinGW" (del "C:\Program Files (x86)\Git\bin\sh.exe")
-  - if "%COMPILER%"=="MinGW" (set PATH="%MINGW_DIR%;%PATH%")
+  - echo %PATH%
+  - if "%COMPILER%"=="MinGW" (set PATH=%MINGW_DIR%;%PATH%)
   - if "%COMPILER%"=="MinGW" (g++ --version)
   - if "%COMPILER%"=="MinGW" (mingw32-make --version)
 
