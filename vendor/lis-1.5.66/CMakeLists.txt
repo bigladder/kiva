@@ -3,7 +3,7 @@
 cmake_minimum_required(VERSION 2.8.7)
 project( Lis )
 
-if( NOT MSVC)
+if( NOT WIN32)
 	enable_language(Fortran)
   INCLUDE(CMakeFortranInformation)
   INCLUDE(FortranCInterface)
