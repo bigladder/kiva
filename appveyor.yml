@@ -7,13 +7,15 @@ clone_depth: 100
 environment:
   matrix:
     - GENERATOR: "MinGW Makefiles"
-      MINGW_DIR: C:\MinGW\bin
+      MINGW_DIR: C:\mingw-w64\i686-5.3.0-posix-dwarf-rt_v4-rev0\mingw32\bin
       CONFIG: Release
       COMPILER: MinGW
+      platform: x86
     - GENERATOR: "MinGW Makefiles"
       MINGW_DIR: C:\mingw-w64\i686-5.3.0-posix-dwarf-rt_v4-rev0\mingw32\bin
       CONFIG: Release
       COMPILER: MinGW
+      platform: x64
     - GENERATOR: "Visual Studio 12"
       CONFIG: Release
       COMPILER: MSVC
