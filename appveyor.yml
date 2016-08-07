@@ -29,7 +29,7 @@ before_build:
   - if "%COMPILER%"=="MinGW" (mingw32-make --version)
 
 build_script:
-  - if "%COMPILER%"=="MSVC" (cmake "-G%GENERATOR%" -H. -B_builds")
+  - if "%COMPILER%"=="MSVC" (cmake "-G%GENERATOR%" -H. -B_builds)
   - if "%COMPILER%"=="MSVC" (cmake --build _builds --config "%CONFIG%")
   - if "%COMPILER%"=="MinGW" (cmake "-G%GENERATOR%" -H. -B_builds -DCMAKE_BUILD_TYPE=%CONFIG%")
   - if "%COMPILER%"=="MinGW" (cmake --build _builds -- -j)
