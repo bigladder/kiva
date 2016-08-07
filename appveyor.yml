@@ -22,10 +22,7 @@ environment:
       COMPILER: MSVC
 
 before_build:
-  #- if "%COMPILER%"=="MinGW" (del "C:\Program Files (x86)\Git\bin\sh.exe")
-  - echo %PATH%
-  - set PATH=%PATH%
-  - if "%COMPILER%"=="MinGW" (set PATH=%PATH:C:\Program Files (x86)\Git\bin;=%;%MINGW_DIR%)
+  - if "%COMPILER%"=="MinGW" (set "PATH=%PATH:C:\Program Files (x86)\Git\bin;=%;%MINGW_DIR%")
   - if "%COMPILER%"=="MinGW" (g++ --version)
   - if "%COMPILER%"=="MinGW" (mingw32-make --version)
 
