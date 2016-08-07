@@ -24,7 +24,7 @@ environment:
 before_build:
   - echo "%COMPILER% %GENERATOR% %CONFIG%"
   #- if "%COMPILER%"=="MinGW" (del "C:\Program Files (x86)\Git\bin\sh.exe")
-  - if "%COMPILER%"=="MinGW" (set PATH="%MINGW_DIR%";"%PATH%")
+  - if "%COMPILER%"=="MinGW" (set PATH="%MINGW_DIR%;%PATH%")
   - if "%COMPILER%"=="MinGW" (g++ --version)
   - if "%COMPILER%"=="MinGW" (mingw32-make --version)
 
