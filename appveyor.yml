@@ -1,7 +1,5 @@
 init:
   - cmd: cmake --version
-  - cmd: g++ --version
-  - cmd: mingw32-make --version
 
 skip_branch_with_pr: true
 clone_depth: 50
@@ -9,14 +7,26 @@ clone_depth: 50
 environment:
   matrix:
     - GENERATOR: "MinGW Makefiles"
-      MINGW_DIR: mingw32
+      MINGW_DIR: "C:\\MinGW\\bin"
+      COMPILER: MinGW
     - GENERATOR: "MinGW Makefiles"
-      MINGW_DIR: mingw64
+      MINGW_DIR: "C:\\mingw-w64\\i686-5.3.0-posix-dwarf-rt_v4-rev0\\mingw32\\bin"
+      COMPILER: MinGW
     - GENERATOR: "Visual Studio 12"
       CONFIG: Release
+      COMPILER: MSVC
     - GENERATOR: "Visual Studio 12 Win64"
       CONFIG: Release
+      COMPILER: MSVC
+
+before_build:
+  - if "%COMPILER%"=="MinGW" (set PATH=%PATH:C:\Program Files (x86)\Git\bin;=%)
+  - if "%COMPILER%"=="MinGW" (set PATH=%MINGW_DIR%;%PATH%)
+  - if "%COMPILER%"=="MinGW" (g++ --version)
+  - if "%COMPILER%"=="MinGW" (mingw32-make --version)
 
 build_script:
-  - cmake "-G%GENERATOR%" -H. -B_builds
-  - cmake --build _builds --config "%CONFIG%"
+  - if "%COMPILER%"=="MSVC" (cmake "-G%GENERATOR%" -H. -B_builds")
+  - if "%COMPILER%"=="MSVC" (cmake --build _builds --config "%CONFIG%")
+  - if "%COMPILER%"=="MinGW" (cmake "-G%GENERATOR%" -H. -B_builds -DCMAKE_BUILD_TYPE=%CONFIG%")
+  - if "%COMPILER%"=="MinGW" (cmake --build _builds -- -j)

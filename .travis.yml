@@ -22,4 +22,5 @@ before_install:
 script:
   - mkdir build
   - cd build
-  - cmake .. && make -j
+  - cmake ..
+  - make -j
