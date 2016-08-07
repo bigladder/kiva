@@ -23,10 +23,10 @@ environment:
 
 before_build:
   - echo "%COMPILER% %GENERATOR% %CONFIG%"
-  #- if "%COMPILER%"=="MinGW" (del "C:\Program Files (x86)\Git\bin\sh.exe") else
-  - if "%COMPILER%"=="MinGW" (set PATH="%MINGW_DIR%";"%PATH%") else
-  - if "%COMPILER%"=="MinGW" (g++ --version) else
-  - if "%COMPILER%"=="MinGW" (mingw32-make --version) else
+  #- if "%COMPILER%"=="MinGW" (del "C:\Program Files (x86)\Git\bin\sh.exe")
+  - if "%COMPILER%"=="MinGW" (set PATH="%MINGW_DIR%";"%PATH%")
+  - if "%COMPILER%"=="MinGW" (g++ --version)
+  - if "%COMPILER%"=="MinGW" (mingw32-make --version)
 
 build_script:
   - if "%COMPILER%"=="MSVC" (cmake "-G%GENERATOR%" -H. -B_builds")
