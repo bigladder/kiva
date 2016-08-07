@@ -2,7 +2,7 @@ init:
   - cmd: cmake --version
 
 skip_branch_with_pr: true
-clone_depth: 50
+clone_depth: 100
 
 environment:
   matrix:

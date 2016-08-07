@@ -154,7 +154,7 @@ if(NOT MGL_SIN)
 		message(SEND_ERROR "Math library not found")
 	endif(MGL_SIN_M)
 endif(NOT MGL_SIN)
-if (NOT MSVC)
+if (NOT WIN32)
   set(MGL_DEP_LIBS ${M_LIB} ${MGL_DEP_LIBS})
 endif()
 
