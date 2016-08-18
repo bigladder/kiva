@@ -6,6 +6,8 @@
 
 #include "Geometry.hpp"
 
+namespace Kiva {
+
 static const double PI = 4.0*atan(1.0);
 
 
@@ -543,6 +545,8 @@ double getAngle(Point a, Point b, Point c)
     angle += PI;
 
   return angle;
+
+}
 
 }
 

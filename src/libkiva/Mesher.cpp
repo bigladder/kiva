@@ -6,6 +6,8 @@
 
 #include "Mesher.hpp"
 
+namespace Kiva {
+
 Mesher::Mesher()
 {
 }
@@ -299,6 +301,7 @@ std::size_t Mesher::getPreviousIndex(double position)
     }
     return -1;
   }
+}
 }
 
 #endif

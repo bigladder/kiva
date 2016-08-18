@@ -6,6 +6,7 @@
 
 #include "Foundation.hpp"
 
+namespace Kiva {
 
 class GroundOutput {
 public:
@@ -32,5 +33,7 @@ public:
   std::map<std::pair<Surface::SurfaceType, OutputType>,double> outputValues;
 
 };
+
+}
 
 #endif // GroundOutput_HPP

@@ -13,6 +13,8 @@
 #include <boost/multi_array.hpp>
 #include <boost/assign/list_of.hpp>
 
+namespace Kiva {
+
 class Cell
 {
 public:
@@ -94,5 +96,6 @@ public:
 
 };
 
+}
 
 #endif

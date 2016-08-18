@@ -12,6 +12,7 @@
 #include "Functions.hpp"
 #include "libkiva_export.h"
 
+namespace Kiva {
 
 typedef boost::geometry::model::point<double, 2, boost::geometry::cs::cartesian> Point;
 typedef boost::geometry::model::polygon<Point, true, false> Polygon;
@@ -63,6 +64,6 @@ double getDistance(Point a, Point b);
 double getAngle(Point a, Point b, Point c);
 
 
-
+}
 
 #endif /* GEOMETRY_H_ */

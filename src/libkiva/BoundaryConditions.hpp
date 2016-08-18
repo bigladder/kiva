@@ -4,6 +4,8 @@
 #ifndef BoundaryConditions_HPP
 #define BoundaryConditions_HPP
 
+namespace Kiva {
+
 class BoundaryConditions {
 public:
   double indoorTemp;
@@ -30,4 +32,5 @@ public:
 
 };
 
+}
 #endif // BoundaryConditions_HPP

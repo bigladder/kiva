@@ -15,6 +15,8 @@
 #include "Functions.hpp"
 #include "Geometry.hpp"
 
+using namespace Kiva;
+
 struct Axis
 {
   std::size_t nMin;

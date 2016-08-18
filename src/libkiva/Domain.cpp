@@ -6,6 +6,8 @@
 
 #include "Domain.hpp"
 
+namespace Kiva {
+
 static const double PI = 4.0*atan(1.0);
 
 Domain::Domain()
@@ -696,5 +698,7 @@ void Domain::printCellTypes()
   output.close();
 
 }
+
+} 
 
 #endif

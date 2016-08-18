@@ -15,6 +15,8 @@
 #include "GroundOutput.hpp"
 #include "WeatherData.hpp"
 
+using namespace Kiva;
+
 class SimulationControl
 {
 public:

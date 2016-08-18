@@ -8,6 +8,8 @@
 #include "Functions.hpp"
 #include "Geometry.hpp"
 
+namespace Kiva {
+
 class Material
 {
 public:
@@ -322,5 +324,6 @@ public:
   void createMeshData();
 };
 
+}
 
 #endif /* FOUNDATION_HPP_ */

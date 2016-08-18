@@ -6,6 +6,8 @@
 
 #include "Functions.hpp"
 
+namespace Kiva {
+
 static const double EPSILON = 1E-7;
 
 bool isLessThan(double first, double second)
@@ -86,6 +88,8 @@ void solveTDM(const std::vector<double>& a1, const std::vector<double>& a2,
   {
       x[i] = b[i] - a3[i]*x[i+1];
   }
+}
+
 }
 
 #endif

@@ -6,6 +6,8 @@
 
 #include "GroundPlot.hpp"
 
+using namespace Kiva;
+
 static const double EPSILON = 1E-5;
 
 GroundPlot::GroundPlot(OutputAnimation &outputAnimation, Domain &domain, std::vector<Block> &blocks) :

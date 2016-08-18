@@ -3,6 +3,8 @@
 
 #include "Simulator.hpp"
 
+using namespace Kiva;
+
 static const double PI = 4.0*atan(1.0);
 
 Simulator::Simulator(WeatherData &weatherData, Input &input, std::string outputFileName) :
