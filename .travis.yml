@@ -1,4 +1,5 @@
 language: cpp
+clone_depth: 100
 notifications:
   email: false
 matrix:
@@ -22,4 +23,5 @@ before_install:
 script:
   - mkdir build
   - cd build
-  - cmake .. && make -j
+  - cmake ..
+  - make -j

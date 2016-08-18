@@ -82,7 +82,7 @@ ADD_LIBRARY( lis
 #SET_TARGET_PROPERTIES(lis PROPERTIES LINKER_LANGUAGE C)
 
 # Link the standard C math library
-if(NOT MSVC)
+if(NOT WIN32)
 	find_library(M_LIB m)
 	TARGET_LINK_LIBRARIES( lis ${M_LIB} )
 endif()
