@@ -7,6 +7,7 @@
 #include <cmath>
 //#include "PixelCounter.hpp"
 
+namespace Kiva {
 // TODO: use defaulting inputs
 double getDOE2ConvectionCoeff(double tilt,
                           double azimuth,
@@ -43,5 +44,7 @@ double getEffectiveExteriorViewFactor(double eSky,
 double getSimpleInteriorIRCoeff(double eSurf,
                             double Tsurf,
                             double Tamb);
+
+}
 
 #endif

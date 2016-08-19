@@ -6,6 +6,8 @@
 
 #include "Algorithms.hpp"
 
+namespace Kiva {
+  
 static const double PI = 4.0*atan(1.0);
 static const double SIGMA = 5.67*pow(10.0,-8);  // [W/m2-K4]
 
@@ -104,4 +106,5 @@ double getSimpleInteriorIRCoeff(double eSurf, double Tsurf, double Tamb)
   return eSurf*SIGMA*(Tamb*Tamb+Tsurf*Tsurf)*(Tamb + Tsurf);
 }
 
+}
 #endif

@@ -11,6 +11,8 @@
 #include <algorithm>
 #include <vector>
 
+namespace Kiva {
+
 bool LIBKIVA_EXPORT isLessThan(double first, double second);
 bool LIBKIVA_EXPORT isLessOrEqual(double first, double second);
 bool LIBKIVA_EXPORT isEqual(double first, double second);
@@ -22,4 +24,6 @@ bool LIBKIVA_EXPORT isOdd(int N);
 void solveTDM(const std::vector<double>& a1, const std::vector<double>& a2,
           std::vector<double>& a3, std::vector<double>& b,
               std::vector<double>& x);
+}
+
 #endif

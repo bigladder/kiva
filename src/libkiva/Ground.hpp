@@ -21,6 +21,8 @@
 
 #include "lis.h"
 
+namespace Kiva {
+
 class LIBKIVA_EXPORT Ground
 {
 public:
@@ -124,6 +126,6 @@ private:
 
 };
 
-
+}
 
 #endif /* GROUND_HPP_ */

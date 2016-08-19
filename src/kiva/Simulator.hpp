@@ -17,7 +17,7 @@
 #include "GroundPlot.hpp"
 #include "WeatherData.hpp"
 
-
+using namespace Kiva;
 
 class Simulator {
 public:

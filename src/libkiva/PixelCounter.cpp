@@ -3,6 +3,8 @@
 
 #include "PixelCounter.hpp"
 
+namespace Kiva {
+
 // Shader sources
 const GLchar* vertexSource =
     "#version 120\n"
@@ -390,4 +392,5 @@ void PixelCounter::drawRectangles(std::vector<Polygon3> polygons, float color, G
 
     glDrawElements(GL_TRIANGLES, numElements, GL_UNSIGNED_INT, 0);
 
+}
 }

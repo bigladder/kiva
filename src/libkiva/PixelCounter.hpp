@@ -22,6 +22,8 @@
 #include <boost/geometry.hpp>
 #include <boost/geometry/geometries/geometries.hpp>
 
+namespace Kiva {
+
 class PixelCounter
 {
 public:
@@ -55,5 +57,6 @@ private:
 
 };
 
+}
 
 #endif /* PIXELCOUNTER_H_ */

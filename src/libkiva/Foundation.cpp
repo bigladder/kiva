@@ -3,6 +3,8 @@
 
 #include "Foundation.hpp"
 
+namespace Kiva {
+
 static const double PI = 4.0*atan(1.0);
 
 double Wall::totalWidth()
@@ -3283,5 +3285,7 @@ void Foundation::createMeshData()
   xMeshData.intervals = xIntervals;
   yMeshData.intervals = yIntervals;
   zMeshData.intervals = zIntervals;
+
+}
 
 }

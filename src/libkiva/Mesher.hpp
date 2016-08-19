@@ -10,6 +10,8 @@
 #include "Functions.hpp"
 #include "libkiva_export.h"
 
+namespace Kiva {
+
 class Interval
 {
 public:
@@ -55,5 +57,6 @@ public:
 
 };
 
+}
 
 #endif

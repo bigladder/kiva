@@ -6,6 +6,8 @@
 
 #include "Ground.hpp"
 
+namespace Kiva {
+
 static const double PI = 4.0*atan(1.0);
 
 static const bool TDMA = true;
@@ -2528,6 +2530,8 @@ void Ground::setSolarBoundaryConditions()
 double getArrayValue(boost::multi_array<double, 3> Mat, std::size_t i, std::size_t j, std::size_t k)
 {
   return Mat[i][j][k];
+}
+
 }
 
 #endif
