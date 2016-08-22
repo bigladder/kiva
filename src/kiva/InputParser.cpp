@@ -326,7 +326,7 @@ Input inputParser(std::string inputFile)
   }
   else
   {
-    foundation.mesh.minCellDim = 0.05;
+    foundation.mesh.minCellDim = 0.02;
     foundation.mesh.maxNearGrowthCoeff = 1.5;
     foundation.mesh.maxDepthGrowthCoeff = 1.5;
     foundation.mesh.maxInteriorGrowthCoeff = 1.5;
