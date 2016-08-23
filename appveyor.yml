@@ -1,40 +1,55 @@
 init:
+  - cmd: echo %PROCESSOR_ARCHITECTURE%
   - cmd: cmake --version
 
 skip_branch_with_pr: true
 clone_depth: 100
 
+cache:
+  - i686-5.3.0-release-win32-dwarf-rt_v4-rev0.7z
+  - x86_64-5.3.0-release-win32-seh-rt_v4-rev0.7z
+
 environment:
   matrix:
     - GENERATOR: "MinGW Makefiles"
-      MINGW_DIR: C:\mingw-w64\i686-5.3.0-posix-dwarf-rt_v4-rev0\mingw32\bin
+      MINGW_DIR: mingw32
       CONFIG: Release
       COMPILER: MinGW
-      platform: x86
-      PROCESSOR_ARCHITECTURE: i386
+      BIT: i686
+      MINGW_URL: https://sourceforge.net/projects/mingw-w64/files/Toolchains%20targetting%20Win32/Personal%20Builds/mingw-builds/5.3.0/threads-win32/dwarf/i686-5.3.0-release-win32-dwarf-rt_v4-rev0.7z/download
+      MINGW_ARCHIVE: i686-5.3.0-release-win32-dwarf-rt_v4-rev0.7z
     - GENERATOR: "MinGW Makefiles"
-      MINGW_DIR: C:\mingw-w64\i686-5.3.0-posix-dwarf-rt_v4-rev0\mingw32\bin
+      MINGW_DIR: mingw64
       CONFIG: Release
       COMPILER: MinGW
-      platform: x64
-      PROCESSOR_ARCHITECTURE: x86_64
+      BIT: x86_64
+      MINGW_URL: https://sourceforge.net/projects/mingw-w64/files/Toolchains%20targetting%20Win64/Personal%20Builds/mingw-builds/5.3.0/threads-win32/seh/x86_64-5.3.0-release-win32-seh-rt_v4-rev0.7z/download
+      MINGW_ARCHIVE: x86_64-5.3.0-release-win32-seh-rt_v4-rev0.7z
     - GENERATOR: "Visual Studio 12"
       CONFIG: Release
       COMPILER: MSVC
-      PROCESSOR_ARCHITECTURE: i386
+      platform: x86
+      BIT: i686
     - GENERATOR: "Visual Studio 12 Win64"
       CONFIG: Release
       COMPILER: MSVC
-      PROCESSOR_ARCHITECTURE: x86_64
+      platform: x64
+      BIT: x86_64
+
+install:
+  - if "%COMPILER%"=="MinGW" (if not exist "%MINGW_ARCHIVE%" appveyor DownloadFile "%MINGW_URL%" -FileName "%MINGW_ARCHIVE%")
+  - if "%COMPILER%"=="MinGW" (7z x -y "%MINGW_ARCHIVE%" > nul)
 
 before_build:
-  - if "%COMPILER%"=="MinGW" (set "PATH=%PATH:C:\Program Files\Git\usr\bin;=%;%MINGW_DIR%")
+  - if "%COMPILER%"=="MinGW" (set "PATH=%PATH:C:\Program Files\Git\usr\bin;=%;%CD%\%MINGW_DIR%\bin")
   - if "%COMPILER%"=="MinGW" (g++ --version)
   - if "%COMPILER%"=="MinGW" (mingw32-make --version)
 
 build_script:
-  - if "%COMPILER%"=="MSVC" (cmake "-G%GENERATOR%" -H. -B_builds "-DPROCESSOR_ARCHITECTURE=%PROCESSOR_ARCHITECTURE%")
-  - if "%COMPILER%"=="MSVC" (cmake --build _builds --config "%CONFIG%")
-  - if "%COMPILER%"=="MinGW" (cmake "-G%GENERATOR%" -H. -B_builds -DCMAKE_BUILD_TYPE="%CONFIG%" "-DPROCESSOR_ARCHITECTURE=%PROCESSOR_ARCHITECTURE%")
-  - if "%COMPILER%"=="MinGW" (cmake --build _builds -- -j)
+  - mkdir build
+  - cd build
+  - if "%COMPILER%"=="MSVC" (cmake "-G%GENERATOR%" "-DPROCESSOR_ARCHITECTURE=%BIT%" ..)
+  - if "%COMPILER%"=="MSVC" (cmake --build . --config "%CONFIG%")
+  - if "%COMPILER%"=="MinGW" (cmake "-G%GENERATOR%" -DCMAKE_BUILD_TYPE="%CONFIG%" "-DPROCESSOR_ARCHITECTURE=%BIT%" ..)
+  - if "%COMPILER%"=="MinGW" (cmake --build . -- -j)
   - ctest
