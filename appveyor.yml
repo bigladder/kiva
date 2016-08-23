@@ -11,17 +11,21 @@ environment:
       CONFIG: Release
       COMPILER: MinGW
       platform: x86
+      PROCESSOR_ARCHITECTURE: i386
     - GENERATOR: "MinGW Makefiles"
       MINGW_DIR: C:\mingw-w64\i686-5.3.0-posix-dwarf-rt_v4-rev0\mingw32\bin
       CONFIG: Release
       COMPILER: MinGW
       platform: x64
+      PROCESSOR_ARCHITECTURE: x86_64
     - GENERATOR: "Visual Studio 12"
       CONFIG: Release
       COMPILER: MSVC
+      PROCESSOR_ARCHITECTURE: i386
     - GENERATOR: "Visual Studio 12 Win64"
       CONFIG: Release
       COMPILER: MSVC
+      PROCESSOR_ARCHITECTURE: x86_64
 
 before_build:
   - if "%COMPILER%"=="MinGW" (set "PATH=%PATH:C:\Program Files\Git\usr\bin;=%;%MINGW_DIR%")
@@ -29,7 +33,8 @@ before_build:
   - if "%COMPILER%"=="MinGW" (mingw32-make --version)
 
 build_script:
-  - if "%COMPILER%"=="MSVC" (cmake "-G%GENERATOR%" -H. -B_builds)
+  - if "%COMPILER%"=="MSVC" (cmake "-G%GENERATOR%" -H. -B_builds "-DPROCESSOR_ARCHITECTURE=%PROCESSOR_ARCHITECTURE%")
   - if "%COMPILER%"=="MSVC" (cmake --build _builds --config "%CONFIG%")
-  - if "%COMPILER%"=="MinGW" (cmake "-G%GENERATOR%" -H. -B_builds -DCMAKE_BUILD_TYPE="%CONFIG%")
+  - if "%COMPILER%"=="MinGW" (cmake "-G%GENERATOR%" -H. -B_builds -DCMAKE_BUILD_TYPE="%CONFIG%" "-DPROCESSOR_ARCHITECTURE=%PROCESSOR_ARCHITECTURE%")
   - if "%COMPILER%"=="MinGW" (cmake --build _builds -- -j)
+  - ctest

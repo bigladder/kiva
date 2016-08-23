@@ -13,7 +13,9 @@ Input inputParser(std::string inputFile)
   Initialization initialization;
   Output output;
 
-  YAML::Node yamlInput = YAML::LoadFile(inputFile);
+  boost::filesystem::path inputPath(inputFile);
+
+  YAML::Node yamlInput = YAML::LoadFile(inputPath.string());
 
   // SIMULATION CONTROL
   simulationControl.startDate =
@@ -439,6 +441,7 @@ Input inputParser(std::string inputFile)
       boundaries.indoorAirTemperatureFile.fileName = yamlInput["Boundaries"]["Indoor Air Temperature File"]["Name"].as<std::string>();
       boundaries.indoorAirTemperatureFile.firstIndex.first = yamlInput["Boundaries"]["Indoor Air Temperature File"]["Index"][0].as<int>();
       boundaries.indoorAirTemperatureFile.firstIndex.second = yamlInput["Boundaries"]["Indoor Air Temperature File"]["Index"][1].as<int>();
+      boundaries.indoorAirTemperatureFile.searchDir = inputPath.parent_path();
       boundaries.indoorAirTemperatureFile.readData();
     }
     else if (yamlInput["Boundaries"]["Indoor Air Temperature Method"].as<std::string>() == "CONSTANT")

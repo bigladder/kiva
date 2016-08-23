@@ -7,10 +7,12 @@ matrix:
     - os: osx
       compiler: clang
       osx_image: xcode7
+      env: PROCESSOR_ARCHITECTURE=x86_64
     - os: linux
       compiler: gcc
       sudo: required
       dist: trusty
+      env: PROCESSOR_ARCHITECTURE=x86_64
 
 before_install:
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update; fi
@@ -23,5 +25,6 @@ before_install:
 script:
   - mkdir build
   - cd build
-  - cmake ..
+  - cmake -DPROCESSOR_ARCHITECTURE=$PROCESSOR_ARCHITECTURE ..
   - make -j
+  - ctest

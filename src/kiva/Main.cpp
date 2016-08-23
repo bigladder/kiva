@@ -24,9 +24,9 @@ int main(int argc, char *argv[])
   lis_initialize(&argc, &argv);
 
   std::string versionInfo = "kiva ";
-  versionInfo.append(VERSION_NUMBER);
+  versionInfo.append(Kiva::getVersion());
   std::string copyrightInfo = "Copyright (C) 2012-";
-  copyrightInfo.append(YEAR);
+  copyrightInfo.append(Kiva::getYear());
   copyrightInfo.append(" Big Ladder Software\n"
                        "Web: www.bigladdersoftware.com");
   std::string usageInfo = "Usage: kiva [Input File] [Weather File] [Output File]\n"

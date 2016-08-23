@@ -4,12 +4,15 @@
 #ifndef INPUTPARSER_HPP_
 #define INPUTPARSER_HPP_
 
-#include "Input.hpp"
-#include "yaml-cpp/yaml.h"
-#include "WeatherData.hpp"
 #include <fstream>
 
-Input inputParser(std::string inputFile);
+#include "yaml-cpp/yaml.h"
 
+#include <boost/filesystem/operations.hpp>
+
+#include "Input.hpp"
+#include "WeatherData.hpp"
+
+Input inputParser(std::string inputFile);
 
 #endif /* INPUTPARSER_HPP_ */
