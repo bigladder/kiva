@@ -2,8 +2,8 @@ language: cpp
 clone_depth: 100
 notifications:
   email: false
-global:
-  env:
+env:
+  global:
     - secure: "KqBv0Gpy8LhsmMOFukdSB0g7V3A2ctZWzsrkTeAkSoMNUc8AZA+C9m0m0kuIGFyD9HJhzUhjwiW8CbT1rg2lTGYvskjZu7cxfD9AqVlbShkxF+elmfLQzKcd1JueMWsfnHZESnCliAwSxIzrCv9ANabZDfomrijsLS/lswyhryvuc5EvzyYtHwMRof+81v5tggshFqbGK0VhnpGn+kFQwBgV5pmhfE4hUNFwtwGa6dRlzu3rwwZOmr9gnw+Llcf7eCkbWDXUsIr0YNMkC+VkxiXp4NoewJJ3A7siDJUyzCNqhlYlhBDxNQDAyUhkhNfRbctpojOm+L/kqWWKsYYvCtHKNwUWggUlEVOvVY1/4A8zDcVCPLfpJVfOhn/J+03mHHCJMZ/QYyLUiuRepTAi5Tu2rjiyQNADSfLSlzQiBO9KD4kDM4dptPv6tvNWvKJ1qchqCWmZ3ohPSU6TkWHsfBoqvG8F1oNn8A+fS+DXivgGtAoGcYw8sMMDNJspVlIdVtkzPrugUCs9NNOeCu2EgM4OvfPKnirQp8qgBacHfxVG3aRmS8hJRI/wD69mwJdXaASE/iiXc4oWc92A+xK31xdPwoj7pmWmjYw/ipJga8U3RpLaz0CMZQL2on+XmeRMj3F8XxcVqeqBuHDh82BuuImXRc0WRiFG9anYY14Ci78="
 matrix:
   include:
@@ -17,13 +17,12 @@ matrix:
       dist: trusty
       env: PROCESSOR_ARCHITECTURE=x86_64
 before_install:
+  - rvm install 2.0.0
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install cmake; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install ruby; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install gcc; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get -y -qq update; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get -y install cmake; fi
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get -y install ruby; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get -y install gfortran; fi
 
 script:
