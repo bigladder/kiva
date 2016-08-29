@@ -5,20 +5,22 @@ notifications:
 env:
   global:
     - FAV_LANG=LISP
-    - secure: "H8T44wYbwrfzAl7gH81KSG0McVD2HlshivKT14G6M453lcfQtYRlvMiqGMNoj0gR0evmhD2u0zvvEOsMjtB/RiqnMGgGNNKiT3rFgcZnKsb+2B0EcV0Hs0tehqD39XRc7eZ98aCggoIN2PGRY9UyAZpUWXlppITmjM9cEjT8ZPh4lAcESElhBRErgK/jsdFmLm0Xqa4OweEB+hiCIq5Cj3KUuJXLoIh6wYGsDa9SP2FYnU9t4GPb0aznpjYXJWzQaZs6bEcqv3US0Ao9ZWG+4wgOp1/pmXzhoNq7gR807MMSzPKJ6PsRd9RUYcZEZoLEZJIMFQb+OmaEoOZ3gtg7v+tiPbJaFtXIaG7VKJJ7608jYgF8h/x3PBlMkXKy6A7HBWPl78ekpKWfg1z++KEOLAcXOmPfXsn3GCz4mxboAjjvnkrcHy3dSHPXCyd94z7IGWCR7/88hxudANpqDFb7yWmxNpLvkKa1inRvamunHRKtsdOwvm74iUrkhauqA3T36qbAwGLVFYbxIEpznHKMQeHQmrL7TYHn2RPMf1YWcPqKTpxJJXKfshQH8moHKCfbZYJXQzrFcyn/PXglJRyyWrIGuxrQsXa7kaHR+JKZsLOpDJ6ZYHitWL1ogmUnMPYsHr3RUNqU+PFWhNCvNyJl6yixPn1bJlLF8KNzDqWm5f4="
+    - secure: "RQ/z2orB3+Tc06xVsHm+bQC/oKVrSq86kcmhW43HRemmPOYIdeOIIdxgTVVBcwPjU0MqBhG0SSio8SVwpYQ29MDGB1ypuu1mZ/BXK0pBY4W/vg5P3dmDgxixileIGO+HPEP+ExS0+abR2tYqUxr4yN+wr5jG2vhLIPhwyjyeuyYKYdLmgZpNdzqpdm8N7M22jE2xzgddju4pGN09zxDvZFJjQeGt9Sy2rmx6LmsL+el75pUG5Jx+4rxxebim0Uh6O9+aABb2TuuRqvSN0wCpuHb6lviH/3bSOEj+0gduTA33rJc5XRJFBKg6wqiqqH1wLqx4oBEosBjy/e2Tf2XqdV5ywDma5Ym2dHrG1m/aDaRHmfswg6EC1KJlmsOuLrUeBLa9k046FWMPM+kJlQfPTs5MBFSIseACUTrhAsCCYiYnorWs10v61hOeNJalDa1rHSq6ET/UVqkY8C5j1gWfLkAn/T0Kd46OnjnmR9Te8ZRL9dHGMmw+FtxlzT4t5+H7ZzmZAEiBgGUFVkt0Ml0g6mIPIvR2eCSp0Y4Z3uvgHDtxc+s+AwzzEZMxMiJSZ7boy7qa0rdS7v7bb44xVtCiNZPws/tPdrA6iBXPK3rpG+zcU42fRtd/ZsHqLAGnBwUKPc3XLVlxs86ua07EXGLDSSNosAi/sJrXhpilUS+HArU="
 matrix:
   include:
     - os: osx
       compiler: clang
       osx_image: xcode7
-      env: PROCESSOR_ARCHITECTURE=x86_64
+      env: PROCESSOR_ARCHITECTURE=x86_64 COMPILER=clang
     - os: linux
       compiler: gcc
       sudo: required
       dist: trusty
-      env: PROCESSOR_ARCHITECTURE=x86_64
+      env: PROCESSOR_ARCHITECTURE=x86_64 COMPILER=gcc
 before_install:
   - rvm install 2.0.0
+  - gem install bundler
+  - cd scripts && bundle install && cd ..
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install cmake; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install gcc; fi
@@ -32,4 +34,5 @@ script:
   - cmake -DPROCESSOR_ARCHITECTURE=$PROCESSOR_ARCHITECTURE ..
   - make -j
   - ctest
-  - ruby ../scripts/run_test.rb
+  - cd ../scripts
+  - bundle exec ruby regress-test.rb
