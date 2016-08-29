@@ -168,9 +168,11 @@ def main(ci_path, rt_url, rt_dir, arch, test_dir)
   puts("Copying case files to repo")
   puts("test_dir = #{test_dir}")
   puts("test_dir exist? #{File.exist?(test_dir)}")
-  puts("contents of /home/travis/build/michael-okeefe/kiva/build: #{Dir['/home/travis/build/michael-okeefe/kiva/build/*']}")
-  puts("contents of /home/travis/build/michael-okeefe/kiva/build: #{Dir['/home/travis/build/michael-okeefe/kiva/*']}")
-  puts("contents of /home/travis/build/michael-okeefe/kiva/build: #{Dir['/home/travis/build/michael-okeefe/kiva/test/*']}")
+  f = lambda do |p|
+    puts("contents of #{p}: #{Dir[File.join(p, '*')].sort}")
+  end
+  f["/home/travis/build/michael-okeefe/kiva/build/test"]
+  f["/home/travis/build/michael-okeefe/kiva/build/Testing"]
   FileUtils.cp_r(File.join(test_dir, '.'), rt_dir)
   puts("Case files copied")
   #files_to_add = []
