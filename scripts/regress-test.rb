@@ -49,6 +49,7 @@ end
 
 def mimic_source(g, branch, src_commit)
   puts("Mimicing source repository")
+  branch = ENV['TRAVIS_BRANCH'] if branch.include?("(") or branch.include?(" ")
   puts("- branch: #{branch}")
   puts("- src_commit: #{src_commit}")
   ref_commit = find_commit_from_substr(g, src_commit)
@@ -59,7 +60,6 @@ def mimic_source(g, branch, src_commit)
     puts("checking out upstream")
     g.checkout(ref_commit)
   end
-  branch = ENV['TRAVIS_BRANCH'] if branch.include?("(") or branch.include?(" ")
   puts("creating and checking out new branch, #{branch}")
   g.branch(branch).checkout
 end
@@ -163,9 +163,14 @@ def main(ci_path, rt_url, rt_dir, arch, test_dir)
   puts("Git username and email set")
   puts("Attempting to mimic source")
   mimic_source(g_rt, the_branch, the_ci_sha)
-  puts("Source mimiced")
+  puts("Source mimicked")
   # Run Kiva
   puts("Copying case files to repo")
+  puts("test_dir = #{test_dir}")
+  puts("test_dir exist? #{File.exist?(test_dir)}")
+  puts("contents of /home/travis/build/michael-okeefe/kiva/build: #{Dir['/home/travis/build/michael-okeefe/kiva/build/*']}")
+  puts("contents of /home/travis/build/michael-okeefe/kiva/build: #{Dir['/home/travis/build/michael-okeefe/kiva/*']}")
+  puts("contents of /home/travis/build/michael-okeefe/kiva/build: #{Dir['/home/travis/build/michael-okeefe/kiva/test/*']}")
   FileUtils.cp_r(File.join(test_dir, '.'), rt_dir)
   puts("Case files copied")
   #files_to_add = []
