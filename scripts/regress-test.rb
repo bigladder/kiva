@@ -59,6 +59,7 @@ def mimic_source(g, branch, src_commit)
     puts("checking out upstream")
     g.checkout(ref_commit)
   end
+  branch = ENV['TRAVIS_BRANCH'] if branch.include?("(") or branch.include?(" ")
   puts("creating and checking out new branch, #{branch}")
   g.branch(branch).checkout
 end
@@ -113,6 +114,7 @@ THIS_DIR = File.dirname(__FILE__)
 CI_PATH = File.expand_path('..', THIS_DIR)
 TEST_DIR = File.expand_path('../build/results')
 # regression testing repository URL
+# PATOKEN = personal access token
 RT_URL = "https://#{ENV['PATOKEN']}@github.com/michael-okeefe/test.git"
 RT_DIR = File.expand_path("regress", THIS_DIR)
 ARCH = "#{ENV['TRAVIS_OS_NAME']}-#{ENV['PROCESSOR_ARCHITECTURE']}-#{ENV['COMPILER']}"
