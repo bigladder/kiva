@@ -112,7 +112,7 @@ end
 # path to the Continuous Integration Source Code Git Repo
 THIS_DIR = File.dirname(__FILE__)
 CI_PATH = File.expand_path('..', THIS_DIR)
-TEST_DIR = File.expand_path('../build/results')
+TEST_DIR = File.expand_path('../build/test/results')
 # regression testing repository URL
 # PATOKEN = personal access token
 RT_URL = "https://#{ENV['PATOKEN']}@github.com/michael-okeefe/test.git"
@@ -168,11 +168,11 @@ def main(ci_path, rt_url, rt_dir, arch, test_dir)
   puts("Copying case files to repo")
   puts("test_dir = #{test_dir}")
   puts("test_dir exist? #{File.exist?(test_dir)}")
-  f = lambda do |p|
-    puts("contents of #{p}: #{Dir[File.join(p, '*')].sort}")
-  end
-  f["/home/travis/build/michael-okeefe/kiva/build/test"]
-  f["/home/travis/build/michael-okeefe/kiva/build/Testing"]
+  #f = lambda do |p|
+  #  puts("contents of #{p}: #{Dir[File.join(p, '*')].sort}")
+  #end
+  #f["/home/travis/build/michael-okeefe/kiva/build/test"]
+  #f["/home/travis/build/michael-okeefe/kiva/build/Testing"]
   FileUtils.cp_r(File.join(test_dir, '.'), rt_dir)
   puts("Case files copied")
   #files_to_add = []
