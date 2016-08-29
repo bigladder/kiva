@@ -138,7 +138,7 @@ ARCH = "#{ENV['TRAVIS_OS_NAME']}-#{ENV['PROCESSOR_ARCHITECTURE']}-#{ENV['COMPILE
 #]
 
 ############################################################
-def main(ci_path, rt_url, rt_dir, arch, cases, test_dir)
+def main(ci_path, rt_url, rt_dir, arch, test_dir)
   puts("Starting main")
   puts("Opening git on CI_PATH")
   g_ci = Git.open(ci_path)
@@ -200,5 +200,5 @@ def main(ci_path, rt_url, rt_dir, arch, cases, test_dir)
   robust_push_pull(g_rt, the_branch)
   puts("push/pull succeeded")
 end
-main(CI_PATH, RT_URL, RT_DIR, ARCH, CASES, TEST_DIR)
+main(CI_PATH, RT_URL, RT_DIR, ARCH, TEST_DIR)
 puts("Done!")
