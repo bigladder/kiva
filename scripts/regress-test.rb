@@ -147,7 +147,10 @@ def main(ci_path, rt_url, rt_dir, arch, test_dir)
   puts("Opened...")
   puts("Getting current branch...")
   the_branch = g_ci.current_branch # current branch
-  puts("Current branch obtained")
+  if the_branch.include?("(") or the_branch.include?(" ")
+    the_branch = ENV['TRAVIS_BRANCH']
+  end
+  puts("Current branch, #{the_branch}, obtained")
   puts("Getting SHA of HEAD...")
   the_ci_sha = g_ci.object("HEAD").sha
   puts("Sha of HEAD obtained")
