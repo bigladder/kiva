@@ -3,6 +3,9 @@ add_custom_target(results_directory ALL COMMAND ${CMAKE_COMMAND} -E make_directo
 
 add_custom_target(results_subdirectory ALL COMMAND ${CMAKE_COMMAND} -E make_directory results/${build_architecture})
 
+set(SCRIPT_DIR "${CMAKE_SOURCE_DIR}/scripts")
+set(ENV{BUNDLE_GEMFILE} "${SCRIPT_DIR}/Gemfile")
+
 function( add_integration_test )
   set(options)
   set(oneValueArgs IN_FILE EPW_FILE)
@@ -13,10 +16,12 @@ function( add_integration_test )
 
   add_custom_target(results_${TEST_NAME}_directory ALL COMMAND ${CMAKE_COMMAND} -E make_directory results/${build_architecture}/${TEST_NAME})
 
-  add_test(NAME ${TEST_NAME} COMMAND kiva
+  add_test(NAME ${TEST_NAME} COMMAND bundle exec ruby run-kiva.rb
+    ${CMAKE_BINARY_DIR}/kiva
     ${CMAKE_SOURCE_DIR}/examples/${INT_TEST_IN_FILE}.yaml
     ${CMAKE_SOURCE_DIR}/weather/${INT_TEST_EPW_FILE}.epw
-    results/${build_architecture}/${TEST_NAME}/out.csv)
+    ${CMAKE_CURRENT_BINARY_DIR}/results/${build_architecture}/${TEST_NAME}/out.csv
+    WORKING_DIRECTORY ${SCRIPT_DIR})
 
 endfunction()
 
