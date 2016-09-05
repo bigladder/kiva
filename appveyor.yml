@@ -87,6 +87,7 @@ build_script:
   - cd ..\scripts
   - bundle exec ruby run-kiva.rb ../build/kiva ../examples/slab.yaml ../weather/USA_DC_Washington.epw ../build/results/%BUILD_ARCHITECTURE%/slab/out.csv)
   - cd ..\build
+  - set PATH=%PATH%;C:\Ruby%RUBY_VERSION%\bin
   - if "%COMPILER%"=="MSVC" (ctest -C "%CONFIG%")
   - if "%COMPILER%"=="MinGW" (ctest)
   - cd ..\scripts

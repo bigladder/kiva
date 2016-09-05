@@ -6,6 +6,8 @@ add_custom_target(results_subdirectory ALL COMMAND ${CMAKE_COMMAND} -E make_dire
 set(SCRIPT_DIR "${CMAKE_SOURCE_DIR}/scripts")
 set(ENV{BUNDLE_GEMFILE} "${SCRIPT_DIR}/Gemfile")
 
+find_package(Ruby 2.0)
+
 function( add_integration_test )
   set(options)
   set(oneValueArgs IN_FILE EPW_FILE)
@@ -19,7 +21,7 @@ function( add_integration_test )
   add_test(
     NAME ${TEST_NAME}
     WORKING_DIRECTORY ${SCRIPT_DIR}
-    COMMAND "C:\\Ruby200\\bin\\ruby -v")
+    COMMAND ${RUBY_EXECUTABLE} -v)
 
   #  if(CMAKE_SYSTEM_NAME MATCHES "Windows")
   #    add_test(
