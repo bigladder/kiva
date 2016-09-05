@@ -4,19 +4,21 @@ notifications:
   email: false
 env:
   global:
-    - FAV_LANG=LISP
+    - RT_URL=github.com/michael-okeefe/test.git
+    - TEST_DIR=build/test/results
+    - RT_DIR=scripts/regress
     - secure: "RQ/z2orB3+Tc06xVsHm+bQC/oKVrSq86kcmhW43HRemmPOYIdeOIIdxgTVVBcwPjU0MqBhG0SSio8SVwpYQ29MDGB1ypuu1mZ/BXK0pBY4W/vg5P3dmDgxixileIGO+HPEP+ExS0+abR2tYqUxr4yN+wr5jG2vhLIPhwyjyeuyYKYdLmgZpNdzqpdm8N7M22jE2xzgddju4pGN09zxDvZFJjQeGt9Sy2rmx6LmsL+el75pUG5Jx+4rxxebim0Uh6O9+aABb2TuuRqvSN0wCpuHb6lviH/3bSOEj+0gduTA33rJc5XRJFBKg6wqiqqH1wLqx4oBEosBjy/e2Tf2XqdV5ywDma5Ym2dHrG1m/aDaRHmfswg6EC1KJlmsOuLrUeBLa9k046FWMPM+kJlQfPTs5MBFSIseACUTrhAsCCYiYnorWs10v61hOeNJalDa1rHSq6ET/UVqkY8C5j1gWfLkAn/T0Kd46OnjnmR9Te8ZRL9dHGMmw+FtxlzT4t5+H7ZzmZAEiBgGUFVkt0Ml0g6mIPIvR2eCSp0Y4Z3uvgHDtxc+s+AwzzEZMxMiJSZ7boy7qa0rdS7v7bb44xVtCiNZPws/tPdrA6iBXPK3rpG+zcU42fRtd/ZsHqLAGnBwUKPc3XLVlxs86ua07EXGLDSSNosAi/sJrXhpilUS+HArU="
 matrix:
   include:
     - os: osx
       compiler: clang
       osx_image: xcode7
-      env: PROCESSOR_ARCHITECTURE=x86_64 COMPILER=clang
+      env: PROCESSOR_ARCHITECTURE=x86_64 COMPILER=clang BUILD_ARCHITECTURE=macosx-clang-x86_64
     - os: linux
       compiler: gcc
       sudo: required
       dist: trusty
-      env: PROCESSOR_ARCHITECTURE=x86_64 COMPILER=gcc
+      env: PROCESSOR_ARCHITECTURE=x86_64 COMPILER=gcc BUILD_ARCHITECTURE=linux-gnu-x86_64
 before_install:
   - rvm install 2.0.0
   - gem install bundler

@@ -96,8 +96,37 @@ end
 
 # robust pull/push
 def robust_push_pull(g, branch)
-  g.pull('origin', branch) if g.is_remote_branch?(branch)
+  puts("Starting robust_pull_push!")
+  begin
+    puts("Attempting to pull")
+    g.pull('origin', branch) if g.is_remote_branch?(branch)
+    puts("Pull attempt succeeded")
+  rescue => e
+    puts("Trying to fix suspected auto-merge conflict")
+    puts("Error: #{e.message}")
+    # OK, we probably have a merge conflict
+    # we need to:
+    # 1. find which files are in conflict
+    # 2. `git checkout --ours #{filename}` for each file in conflict
+    # 3. re-add the files
+    # 4. re-commit the files with some sort of commit message
+
+    # `git diff --name-only --diff-filter=U`
+    puts("Asking git for list of conflicted files")
+    files_in_conflict = `cd #{g.dir} && git diff --name-only --diff-filter=U`
+    puts("files in conflict: #{files_in_conflict.split.inspect}")
+    files_in_conflict.split.each do |fname|
+      puts("checking out and re-adding #{fname}")
+      `cd #{g.dir} && git checkout --ours #{fname}`
+      g.add(fname)
+    end
+    puts("(Re-)Committing...")
+    g.commit("Commit to fix autoconflict")
+    puts("Done!")
+  end
+  puts("Pushing to origin!")
   g.push('origin', branch, {:tags=>true})
+  puts("Done robust_pull_push!")
 end
 
 # From CI
@@ -112,12 +141,12 @@ end
 # path to the Continuous Integration Source Code Git Repo
 THIS_DIR = File.dirname(__FILE__)
 CI_PATH = File.expand_path('..', THIS_DIR)
-TEST_DIR = File.expand_path('../build/test/results')
+TEST_DIR = File.expand_path(ENV['TEST_DIR'], CI_PATH)
 # regression testing repository URL
 # PATOKEN = personal access token
-RT_URL = "https://#{ENV['PATOKEN']}@github.com/michael-okeefe/test.git"
-RT_DIR = File.expand_path("regress", THIS_DIR)
-ARCH = "#{ENV['TRAVIS_OS_NAME']}-#{ENV['PROCESSOR_ARCHITECTURE']}-#{ENV['COMPILER']}"
+RT_URL = "https://#{ENV['PATOKEN']}@#{ENV['RT_URL']}"
+RT_DIR = File.expand_path(ENV['RT_DIR'], CI_PATH)
+ARCH = ENV['BUILD_ARCHITECTURE']
 #APP = {
 #  exe: "kiva.rb",
 #  cmd: "ruby kiva.rb"
