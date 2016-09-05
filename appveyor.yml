@@ -10,6 +10,11 @@ cache:
   - x86_64-5.3.0-release-win32-seh-rt_v4-rev0.7z
 
 environment:
+  RT_URL: github.com/michael-okeefe/test.git
+  RT_DIR: scripts/regress
+  TEST_DIR: build/test/results
+  PATOKEN:
+    secure: 8H6cZZJc7y+QdOniRvwDc+1MmmVBuVe+0BABlCWSZZPbE0emW/hAaobJrZV9XHo2
   matrix:
     - GENERATOR: "MinGW Makefiles"
       MINGW_DIR: mingw32
@@ -39,11 +44,19 @@ environment:
 install:
   - if "%COMPILER%"=="MinGW" (if not exist "%MINGW_ARCHIVE%" appveyor DownloadFile "%MINGW_URL%" -FileName "%MINGW_ARCHIVE%")
   - if "%COMPILER%"=="MinGW" (7z x -y "%MINGW_ARCHIVE%" > nul)
+  - if "%BIT%" == "i686" (set PATH=C:\Ruby200\bin;%PATH%)
+  - if "%BIT%" == "x86_64" (set PATH=C:\Ruby200-x64\bin;%PATH%)
+  - cd scripts
+  - bundle install
+  - cd ..
 
 before_build:
   - if "%COMPILER%"=="MinGW" (set "PATH=%PATH:C:\Program Files\Git\usr\bin;=%;%CD%\%MINGW_DIR%\bin")
   - if "%COMPILER%"=="MinGW" (g++ --version)
   - if "%COMPILER%"=="MinGW" (mingw32-make --version)
+  - ruby -v
+  - gem -v
+  - bundle -v
 
 build_script:
   - mkdir build
@@ -54,3 +67,5 @@ build_script:
   - if "%COMPILER%"=="MinGW" (cmake "-G%GENERATOR%" -DCMAKE_BUILD_TYPE="%CONFIG%" "-DPROCESSOR_ARCHITECTURE=%BIT%" ..)
   - if "%COMPILER%"=="MinGW" (cmake --build . -- -j)
   - if "%COMPILER%"=="MinGW" (ctest)
+  - cd ../scripts
+  - bundle exec ruby regress-test.rb
