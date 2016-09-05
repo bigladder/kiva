@@ -20,7 +20,7 @@ function( add_integration_test )
     add_test(
       NAME ${TEST_NAME}
       WORKING_DIRECTORY ${SCRIPT_DIR}
-      COMMAND C:\Ruby200\bin\bundle exec C:\Ruby200\bin\bundle\ruby run-dummy.rb)
+      COMMAND "C:/Ruby200/bin/bundle" exec "C:/Ruby200/bin/bundle/ruby" run-dummy.rb)
   else()
     add_test(
       NAME ${TEST_NAME}
