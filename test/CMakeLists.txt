@@ -19,7 +19,7 @@ function( add_integration_test )
   add_test(
     NAME ${TEST_NAME}
     WORKING_DIRECTORY ${SCRIPT_DIR}
-    COMMAND "ruby -v")
+    COMMAND "C:/Ruby200/bin/ruby -v")
 
   #  if(CMAKE_SYSTEM_NAME MATCHES "Windows")
   #    add_test(
