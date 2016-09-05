@@ -15,9 +15,9 @@
 #include <cmath>
 #include <vector>
 #include <string>
+#include <numeric>
 
 #include <boost/lexical_cast.hpp>
-#include <boost/multi_array.hpp>
 
 #include "lis.h"
 
@@ -40,8 +40,8 @@ public:
 
   size_t nX, nY, nZ;
 
-  boost::multi_array<double, 3> TNew; // solution, n+1
-  boost::multi_array<double, 3> TOld; // solution, n
+  std::vector<std::vector<std::vector<double>>> TNew; // solution, n+1
+  std::vector<std::vector<std::vector<double>>> TOld; // solution, n
 
   void buildDomain();
 
@@ -64,10 +64,10 @@ private:
   // Data structures
 
   // ADE
-  boost::multi_array<double, 3> U; // ADE upper sweep, n+1
-  boost::multi_array<double, 3> UOld; // ADE upper sweep, n
-  boost::multi_array<double, 3> V; // ADE lower sweep, n+1
-  boost::multi_array<double, 3> VOld; // ADE lower sweep, n
+  std::vector<std::vector<std::vector<double>>> U; // ADE upper sweep, n+1
+  std::vector<std::vector<std::vector<double>>> UOld; // ADE upper sweep, n
+  std::vector<std::vector<std::vector<double>>> V; // ADE lower sweep, n+1
+  std::vector<std::vector<std::vector<double>>> VOld; // ADE lower sweep, n
 
   // ADI
   std::vector<double> a1; // lower diagonal

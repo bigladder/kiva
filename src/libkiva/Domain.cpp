@@ -40,7 +40,7 @@ void Domain::setDomain(Foundation &foundation)
   nY = meshY.centers.size();
   nZ = meshZ.centers.size();
 
-  cell.resize(boost::extents[nX][nY][nZ]);
+  cell.resize(nX,std::vector<std::vector<Cell> >(nY,std::vector<Cell>(nZ)));
 
   for (std::size_t i = 0; i < nX; i++)
   {

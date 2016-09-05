@@ -46,11 +46,11 @@ void Ground::buildDomain()
   // Initialize matices
   if (foundation.numericalScheme == Foundation::NS_ADE)
   {
-    U.resize(boost::extents[nX][nY][nZ]);
-    UOld.resize(boost::extents[nX][nY][nZ]);
+    U.resize(nX,std::vector<std::vector<double> >(nY,std::vector<double>(nZ)));
+    UOld.resize(nX,std::vector<std::vector<double> >(nY,std::vector<double>(nZ)));
 
-    V.resize(boost::extents[nX][nY][nZ]);
-    VOld.resize(boost::extents[nX][nY][nZ]);
+    V.resize(nX,std::vector<std::vector<double> >(nY,std::vector<double>(nZ)));
+    VOld.resize(nX,std::vector<std::vector<double> >(nY,std::vector<double>(nZ)));
   }
 
   if (foundation.numericalScheme == Foundation::NS_ADI && TDMA)
@@ -87,8 +87,8 @@ void Ground::buildDomain()
   lis_solver_create(&solver);
   lis_solver_set_option(&solverOptions[0],solver);
 
-  TNew.resize(boost::extents[nX][nY][nZ]);
-  TOld.resize(boost::extents[nX][nY][nZ]);
+  TNew.resize(nX,std::vector<std::vector<double> >(nY,std::vector<double>(nZ)));
+  TOld.resize(nX,std::vector<std::vector<double> >(nY,std::vector<double>(nZ)));
 }
 
 void Ground::calculateADE()
@@ -2527,7 +2527,7 @@ void Ground::setSolarBoundaryConditions()
   }
 }
 
-double getArrayValue(boost::multi_array<double, 3> Mat, std::size_t i, std::size_t j, std::size_t k)
+double getArrayValue(std::vector<std::vector<std::vector<double>>> Mat, std::size_t i, std::size_t j, std::size_t k)
 {
   return Mat[i][j][k];
 }
