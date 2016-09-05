@@ -81,9 +81,12 @@ build_script:
   - cd build
   - if "%COMPILER%"=="MSVC" (cmake "-G%GENERATOR%" "-DPROCESSOR_ARCHITECTURE=%BIT%" ..)
   - if "%COMPILER%"=="MSVC" (cmake --build . --config "%CONFIG%" -- /m)
-  - if "%COMPILER%"=="MSVC" (ctest -C "%CONFIG%")
   - if "%COMPILER%"=="MinGW" (cmake "-G%GENERATOR%" -DCMAKE_BUILD_TYPE="%CONFIG%" "-DPROCESSOR_ARCHITECTURE=%BIT%" ..)
   - if "%COMPILER%"=="MinGW" (cmake --build . -- -j)
+  - cd ..\scripts
+  - bundle exec ruby run-kiva.rb ../build/kiva ../examples/slab.yaml ../weather/USA_DC_Washington.epw ../build/results/%BUILD_ARCHITECTURE%/slab/out.csv)
+  - cd ..\build
+  - if "%COMPILER%"=="MSVC" (ctest -C "%CONFIG%")
   - if "%COMPILER%"=="MinGW" (ctest)
   - cd ..\scripts
   - bundle exec ruby regress-test.rb
