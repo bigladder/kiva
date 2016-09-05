@@ -104,6 +104,7 @@ def robust_push_pull(g, branch)
   rescue => e
     puts("Trying to fix suspected auto-merge conflict")
     puts("Error: #{e.message}")
+    puts("Git repo directory: #{g.dir}")
     # OK, we probably have a merge conflict
     # we need to:
     # 1. find which files are in conflict
