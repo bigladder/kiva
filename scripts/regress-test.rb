@@ -1,7 +1,6 @@
 require('git')
 require('fileutils')
 require('open3')
-require('pry')
 
 # String String String String -> Git::Base
 # Robustly clones a source repo to the given target
@@ -207,9 +206,10 @@ def main(ci_path, rt_url, rt_dir, arch, test_dir)
   puts("Attempting to CLONE the RegressTest repo")
   g_rt = robust_clone(rt_url, rt_dir)
   puts("RegressTest repo cloned")
+  puts("- RegressTest repo directory: #{g_rt.dir}")
   puts("Setting Git username and email")
-  g_rt.config('user.name', "TRAVIS CI: #{arch}")
-  g_rt.config('user.email', "travis@travis.org")
+  g_rt.config('user.name', "CI: #{arch}")
+  g_rt.config('user.email', "ci@ci.org")
   puts("Git username and email set")
   puts("Attempting to mimic source")
   mimic_source(g_rt, the_branch, the_ci_sha)
