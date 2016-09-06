@@ -21,7 +21,7 @@ function( add_integration_test )
   add_test(
     NAME ${TEST_NAME}
     WORKING_DIRECTORY ${SCRIPT_DIR}
-    COMMAND ${RUBY_EXECUTABLE} -v)
+    COMMAND bundle exec ${RUBY_EXECUTABLE} -v)
 
   #  if(CMAKE_SYSTEM_NAME MATCHES "Windows")
   #    add_test(
