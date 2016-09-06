@@ -47,6 +47,7 @@ end
 
 KIVA_PATH = File.expand_path(ARGV[0])
 KIVA_DIR = File.dirname(KIVA_PATH)
+KIVA_RELEASE_DIR = File.join(KIVA_DIR, "Release")
 INPUT_FILE = File.expand_path(ARGV[1])
 WEATHER_FILE = File.expand_path(ARGV[2])
 OUTPUT_FILE  = File.expand_path(ARGV[3])
@@ -57,6 +58,15 @@ puts("  input file = #{INPUT_FILE}")
 puts("  weather file = #{WEATHER_FILE}")
 puts("  output file  = #{OUTPUT_FILE}")
 run_case(KIVA_PATH, INPUT_FILE, WEATHER_FILE, OUTPUT_FILE)
-puts("Contents of #{OUTPUT_DIR}\n#{Dir[File.join(OUTPUT_DIR, '*')]}")
-puts("Contents of #{KIVA_DIR}\n#{Dir[File.join(KIVA_DIR, '*')]}")
+f = lambda do |dir|
+  puts("Evaluating contents of #{dir}")
+  if File.exists?(dir)
+    puts("- contents:\n  #{Dir[File.join(dir, '*')]}")
+  else
+    puts("- #{dir} doesn't exist...")
+  end
+end
+f[OUTPUT_DIR]
+f[KIVA_DIR]
+f[KIVA_RELEASE_DIR]
 puts("run-kiva.rb completed!")
