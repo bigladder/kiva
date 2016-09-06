@@ -137,7 +137,7 @@ def robust_push_pull(g, branch, the_commit)
       g.add(fname)
     end
     puts("(Re-)Committing...")
-    g.commit("Commit to fix autoconflict\n#{the_commit}")
+    g.commit("Commit to fix auto-merge conflict\n#{the_commit}")
     puts("Done!")
   end
   puts("Pushing to origin!")
