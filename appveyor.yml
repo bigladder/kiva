@@ -92,7 +92,7 @@ build_script:
   - if "%COMPILER%"=="MinGW" (cmake "-G%GENERATOR%" -DCMAKE_BUILD_TYPE="%CONFIG%" "-DPROCESSOR_ARCHITECTURE=%BIT%" ..)
   - if "%COMPILER%"=="MinGW" (cmake --build . -- -j)
   - cd ..\scripts
-  - bundle exec ruby run-kiva.rb ../build/kiva ../examples/slab.yaml ../weather/USA_DC_Washington.epw ../build/results/%BUILD_ARCHITECTURE%/slab/out.csv
-  - bundle exec ruby run-kiva.rb ../build/kiva ../examples/basement.yaml ../weather/USA_IL_Chicago.epw ../build/results/%BUILD_ARCHITECTURE%/basement/out.csv
-  - bundle exec ruby run-kiva.rb ../build/kiva ../examples/crawlspace.yaml ../weather/USA_FL_Tampa.epw ../build/results/%BUILD_ARCHITECTURE%/crawlspace/out.csv
+  - bundle exec ruby run-kiva.rb ../build/kiva ../examples/slab.yaml ../weather/USA_DC_Washington.epw ../build/test/results/%BUILD_ARCHITECTURE%/slab/out.csv
+  - bundle exec ruby run-kiva.rb ../build/kiva ../examples/basement.yaml ../weather/USA_IL_Chicago.epw ../build/test/results/%BUILD_ARCHITECTURE%/basement/out.csv
+  - bundle exec ruby run-kiva.rb ../build/kiva ../examples/crawlspace.yaml ../weather/USA_FL_Tampa.epw ../build/test/results/%BUILD_ARCHITECTURE%/crawlspace/out.csv
   - bundle exec ruby regress-test.rb
