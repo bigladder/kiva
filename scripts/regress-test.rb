@@ -237,9 +237,9 @@ def main(ci_path, rt_url, rt_dir, arch, test_dir)
   puts("Attempting to add all files")
   g_rt.add(:all=>true)
   puts("All files added")
-  puts("Attempting to see if there are any changes regestered after add --all")
-  code = `cd #{g_rt.dir} && git diff --exit-code`
-  if code.empty?
+  puts("Attempting to see if there are any changes cached after 'add --all'")
+  code = system("cd #{g_rt.dir} && git diff --cached --exit-code")
+  if code
     puts("No changes found")
     puts("Output of git status is:")
     puts(`cd #{g_rt.dir} && git status`)
