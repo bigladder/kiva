@@ -16,9 +16,7 @@ function( add_integration_test )
 
   add_custom_target(results_${TEST_NAME}_directory ALL COMMAND ${CMAKE_COMMAND} -E make_directory results/${build_architecture}/${TEST_NAME})
 
-  add_test(
-	  NAME ${TEST_NAME}
-	  COMMAND bundle exec run-kiva.rb
+  add_test(NAME ${TEST_NAME} COMMAND bundle exec run-kiva.rb
 		  ${CMAKE_BINARY_DIR}/kiva
 		  ${CMAKE_SOURCE_DIR}/examples/${INT_TEST_IN_FILE}.yaml
 		  ${CMAKE_SOURCE_DIR}/weather/${INT_TEST_EPW_FILE}.epw
