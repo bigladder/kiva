@@ -234,7 +234,7 @@ def main(ci_path, rt_url, rt_dir, arch, test_dir)
   g_rt.add(:all=>true)
   puts("All files added")
   puts("Attempting to see if there are any changes cached after 'add --all'")
-  code = system("cd #{g_rt.dir} && git diff --cached --exit-code")
+  code = system("cd #{g_rt.dir} && git diff --quiet --cached --exit-code")
   if code
     puts("No changes found")
     puts("- code is: #{code}")
@@ -254,7 +254,7 @@ def main(ci_path, rt_url, rt_dir, arch, test_dir)
     if tag_exists
       puts("Tag, #{tag_name}, exists")
       # delete tag on remote
-      `cd #{g_rt.dir} && git push -q origin :refs/tags/#{tag_name}`
+      `cd #{g_rt.dir} && git push --quiet origin :refs/tags/#{tag_name}`
       # force annotate the tag again
       `cd #{g_rt.dir} && git tag -fa #{tag_name} -m "Add source sha"`
       # push to origin will occur in a bit
