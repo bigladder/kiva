@@ -84,6 +84,7 @@ before_build:
   - where bundle
 
 build_script:
+  - SET SRC_BRANCH=%APPVEYOR_REPO_BRANCH%
   - mkdir build
   - cd build
   - if "%COMPILER%"=="MSVC" (cmake "-G%GENERATOR%" "-DPROCESSOR_ARCHITECTURE=%BIT%" ..)

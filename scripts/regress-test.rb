@@ -49,7 +49,24 @@ end
 
 def mimic_source(g, branch, src_commit)
   puts("Mimicing source repository")
-  branch = ENV['TRAVIS_BRANCH'] if branch.include?("(") or branch.include?(" ")
+  puts("- branch: #{branch}")
+  if branch.nil? or branch.empty? or branch.include?("(") or branch.include?(" ")
+    puts("detected nil/empty or malformed branch")
+    puts("falling back to system reported branch name")
+    if ! ENV['SRC_BRANCH'].nil?
+      branch = ENV['SRC_BRANCH']
+    elsif ! ENV['TRAVIS_BRANCH'].nil?
+      puts("Tried to find environment variable SRC_BRANCH but it was nil...")
+      puts("trying TRAVIS_BRANCH...")
+      branch = ENV['TRAVIS_BRANCH']
+      puts("TRAVIS_BRANCH found!")
+    elsif ! ENV['APPVEYOR_REPO_BRANCH'].nil?
+      puts("Tried to find environment variable SRC_BRANCH but it was nil...")
+      puts("trying APPVEYOR_REPO_BRANCH...")
+      branch = ENV['APPVEYOR_REPO_BRANCH']
+      puts("APPVEYOR_REPO_BRANCH found!")
+    end
+  end
   puts("- branch: #{branch}")
   puts("- src_commit: #{src_commit}")
   ref_commit = find_commit_from_substr(g, src_commit)
