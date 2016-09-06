@@ -4,6 +4,16 @@ require('time')
 puts("Running Kiva!!!")
 THIS_DIR = File.expand_path(File.dirname(__FILE__))
 
+def operating_system
+  if (/darwin/ =~ RUBY_PLATFORM)
+    :mac
+  elsif (/cygwin|mswin|mingw|bccwin|wince|emx/ =~ RUBY_PLATFORM)
+    :windows
+  else
+    :unix
+  end
+end
+
 def run_case(exe_path, in_file, weather_file, output_path)
   output_dir = File.dirname(output_path)
   puts("  ... output directory=#{output_dir}")
@@ -11,9 +21,14 @@ def run_case(exe_path, in_file, weather_file, output_path)
   FileUtils.mkdir_p(output_dir) unless File.exist?(output_dir)
   FileUtils.cp(in_file, output_dir)
   FileUtils.cp(weather_file, output_dir)
+  run_pat = if operating_system == :windows
+              ""
+            else
+              "./"
+            end
   cmd = [
     "cd #{File.dirname(exe_path)}",
-    "./#{File.basename(exe_path)} #{in_file} #{weather_file} #{output_path}"
+    "#{run_pat}#{File.basename(exe_path)} #{in_file} #{weather_file} #{output_path}"
   ].join(" && ")
   puts("  ... cmd = #{cmd}")
   t_start = Time.now
