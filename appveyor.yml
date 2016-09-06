@@ -86,7 +86,7 @@ build_script:
   - if "%COMPILER%"=="MSVC" (cmake --build . --config "%CONFIG%" -- /m)
   - if "%COMPILER%"=="MinGW" (cmake "-G%GENERATOR%" -DCMAKE_BUILD_TYPE="%CONFIG%" "-DPROCESSOR_ARCHITECTURE=%BIT%" ..)
   - if "%COMPILER%"=="MinGW" (cmake --build . -- -j)
-  - if "%COMPILER%"=="MSVC" (ctest -C "%CONFIG%")
-  - if "%COMPILER%"=="MinGW" (ctest)
+  - if "%COMPILER%"=="MSVC" (cmd /c "set PATH=%PATH%;C:/Ruby200/bin && start ctest -C %CONFIG%")
+  - if "%COMPILER%"=="MinGW" (cmd /c "set PATH=%PATH%;C:/Ruby200/bin && start ctest")
   - cd ..\scripts
   - bundle exec ruby regress-test.rb
