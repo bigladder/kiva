@@ -46,26 +46,25 @@ def find_commit_from_substr(g, substr)
   c
 end
 
+def determine_branch
+  if ! ENV['SRC_BRANCH'].nil?
+    ENV['SRC_BRANCH']
+  elsif ! ENV['TRAVIS_BRANCH'].nil?
+    puts("Tried to find environment variable SRC_BRANCH but it was nil...")
+    puts("trying TRAVIS_BRANCH...")
+    ENV['TRAVIS_BRANCH']
+  elsif ! ENV['APPVEYOR_REPO_BRANCH'].nil?
+    puts("Tried to find environment variable SRC_BRANCH but it was nil...")
+    puts("trying APPVEYOR_REPO_BRANCH...")
+    ENV['APPVEYOR_REPO_BRANCH']
+  else
+    puts("Could not determine branch... exiting with non-zero status")
+    exit(1)
+  end
+end
+
 def mimic_source(g, branch, src_commit)
   puts("Mimicing source repository")
-  puts("- branch: #{branch}")
-  if branch.nil? or branch.empty? or branch.include?("(") or branch.include?(" ")
-    puts("detected nil/empty or malformed branch")
-    puts("falling back to system reported branch name")
-    if ! ENV['SRC_BRANCH'].nil?
-      branch = ENV['SRC_BRANCH']
-    elsif ! ENV['TRAVIS_BRANCH'].nil?
-      puts("Tried to find environment variable SRC_BRANCH but it was nil...")
-      puts("trying TRAVIS_BRANCH...")
-      branch = ENV['TRAVIS_BRANCH']
-      puts("TRAVIS_BRANCH found!")
-    elsif ! ENV['APPVEYOR_REPO_BRANCH'].nil?
-      puts("Tried to find environment variable SRC_BRANCH but it was nil...")
-      puts("trying APPVEYOR_REPO_BRANCH...")
-      branch = ENV['APPVEYOR_REPO_BRANCH']
-      puts("APPVEYOR_REPO_BRANCH found!")
-    end
-  end
   puts("- branch: #{branch}")
   puts("- src_commit: #{src_commit}")
   ref_commit = find_commit_from_substr(g, src_commit)
@@ -193,8 +192,8 @@ def main(ci_path, rt_url, rt_dir, arch, test_dir)
   puts("Opened...")
   puts("Getting current branch...")
   the_branch = g_ci.current_branch # current branch
-  if the_branch.include?("(") or the_branch.include?(" ")
-    the_branch = ENV['TRAVIS_BRANCH']
+  if the_branch.nil? or the_branch.empty? or the_branch.include?("(") or the_branch.include?(" ")
+    the_branch = determine_branch 
   end
   puts("Current branch, #{the_branch}, obtained")
   puts("Getting SHA of HEAD...")
@@ -242,7 +241,9 @@ def main(ci_path, rt_url, rt_dir, arch, test_dir)
   if code
     puts("No changes found")
     puts("Output of git status is:")
-    puts(`cd #{g_rt.dir} && git status`)
+    out = `cd #{g_rt.dir} && git status`
+    # prevent verbose output
+    puts(out[0..100])
   else
     puts("Changes found")
     puts("Committing...")
