@@ -76,6 +76,8 @@ before_build:
   - ruby -v
   - gem -v
   - bundle -v
+  - where ruby
+  - where bundle
 
 build_script:
   - mkdir build
