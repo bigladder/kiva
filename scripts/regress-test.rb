@@ -110,7 +110,7 @@ def run_case(in_root, out_root, arch, a, c)
 end
 
 # robust pull/push
-def robust_push_pull(g, branch)
+def robust_push_pull(g, branch, the_commit)
   puts("Starting robust_pull_push!")
   begin
     puts("Attempting to pull")
@@ -137,7 +137,7 @@ def robust_push_pull(g, branch)
       g.add(fname)
     end
     puts("(Re-)Committing...")
-    g.commit("Commit to fix autoconflict")
+    g.commit("Commit to fix autoconflict\n#{the_commit}")
     puts("Done!")
   end
   puts("Pushing to origin!")
@@ -241,12 +241,11 @@ def main(ci_path, rt_url, rt_dir, arch, test_dir)
   else
     puts("Changes found")
     puts("Committing...")
-    g_rt.commit(
-      "#{the_ci_msg} [#{arch}]\n{:src-sha \"#{the_ci_sha}\" " +
+    the_commit = "#{the_ci_msg} [#{arch}]\n{:src-sha \"#{the_ci_sha}\" " +
       ":src-msg \"#{the_ci_msg}\" " +
       ":arch \"#{arch}\" " + 
       ":src-branch \"#{the_branch}\"}"
-    )
+    g_rt.commit(the_commit)
     puts("Committed")
     puts("Tagging...")
     tag_name = "src_#{the_ci_sha}"
@@ -264,7 +263,7 @@ def main(ci_path, rt_url, rt_dir, arch, test_dir)
     end
     puts("Tag added")
     puts("Attempting to push/pull")
-    robust_push_pull(g_rt, the_branch)
+    robust_push_pull(g_rt, the_branch, the_commit)
     puts("push/pull succeeded")
   end
 end
