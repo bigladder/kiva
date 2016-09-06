@@ -217,35 +217,44 @@ def main(ci_path, rt_url, rt_dir, arch, test_dir)
   # Copy files to copy to the checked out repository 
   # Set files_to_add
   #puts("Adding #{files_to_add.length} files")
-  puts("Attempting to add all files")
-  g_rt.add(:all=>true)
-  puts("All files added")
-  puts("Committing...")
-  g_rt.commit(
-    "#{the_ci_msg} [#{arch}]\n{:src-sha \"#{the_ci_sha}\" " +
-    ":src-msg \"#{the_ci_msg}\" " +
-    ":arch \"#{arch}\" " + 
-    ":src-branch \"#{the_branch}\"}"
-  )
-  puts("Committed")
-  puts("Tagging...")
-  tag_name = "src_#{the_ci_sha}"
-  tag_exists = ! g_rt.tags.select {|t| t.name == tag_name}.empty?
-  if tag_exists
-    puts("Tag, #{tag_name}, exists")
-    # delete tag on remote
-    `cd #{g_rt.dir} && git push origin :refs/tags/#{tag_name}`
-    # force annotate the tag again
-    `cd #{g_rt.dir} && git tag -fa #{tag_name} -m "Add source sha"`
-    # push to origin will occur in a bit
+  puts("Attempting to see if there are any changes")
+  code = `cd #{g_rt.dir} && git diff --exit-code`
+  if code.empty?
+    puts("No changes found")
+    puts("Output of git status is:")
+    puts(`cd #{g_rt.dir} && git status`)
   else
-    puts("Adding tag #{tag_name}")
-    g_rt.add_tag(tag_name, {a: true, m: "Add source sha"})
+    puts("Changes found")
+    puts("Attempting to add all files")
+    g_rt.add(:all=>true)
+    puts("All files added")
+    puts("Committing...")
+    g_rt.commit(
+      "#{the_ci_msg} [#{arch}]\n{:src-sha \"#{the_ci_sha}\" " +
+      ":src-msg \"#{the_ci_msg}\" " +
+      ":arch \"#{arch}\" " + 
+      ":src-branch \"#{the_branch}\"}"
+    )
+    puts("Committed")
+    puts("Tagging...")
+    tag_name = "src_#{the_ci_sha}"
+    tag_exists = ! g_rt.tags.select {|t| t.name == tag_name}.empty?
+    if tag_exists
+      puts("Tag, #{tag_name}, exists")
+      # delete tag on remote
+      `cd #{g_rt.dir} && git push origin :refs/tags/#{tag_name}`
+      # force annotate the tag again
+      `cd #{g_rt.dir} && git tag -fa #{tag_name} -m "Add source sha"`
+      # push to origin will occur in a bit
+    else
+      puts("Adding tag #{tag_name}")
+      g_rt.add_tag(tag_name, {a: true, m: "Add source sha"})
+    end
+    puts("Tag added")
+    puts("Attempting to push/pull")
+    robust_push_pull(g_rt, the_branch)
+    puts("push/pull succeeded")
   end
-  puts("Tag added")
-  puts("Attempting to push/pull")
-  robust_push_pull(g_rt, the_branch)
-  puts("push/pull succeeded")
 end
 main(CI_PATH, RT_URL, RT_DIR, ARCH, TEST_DIR)
 puts("Done!")
