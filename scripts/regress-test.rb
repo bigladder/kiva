@@ -191,10 +191,7 @@ def main(ci_path, rt_url, rt_dir, arch, test_dir)
   g_ci = Git.open(ci_path)
   puts("Opened...")
   puts("Getting current branch...")
-  the_branch = g_ci.current_branch # current branch
-  if the_branch.nil? or the_branch.empty? or the_branch.include?("(") or the_branch.include?(" ")
-    the_branch = determine_branch 
-  end
+  the_branch = determine_branch 
   puts("Current branch, #{the_branch}, obtained")
   puts("Getting SHA of HEAD...")
   the_ci_sha = g_ci.object("HEAD").sha
