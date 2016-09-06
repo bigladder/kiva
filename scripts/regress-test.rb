@@ -254,7 +254,7 @@ def main(ci_path, rt_url, rt_dir, arch, test_dir)
     if tag_exists
       puts("Tag, #{tag_name}, exists")
       # delete tag on remote
-      `cd #{g_rt.dir} && git push origin :refs/tags/#{tag_name}`
+      `cd #{g_rt.dir} && git push -q origin :refs/tags/#{tag_name}`
       # force annotate the tag again
       `cd #{g_rt.dir} && git tag -fa #{tag_name} -m "Add source sha"`
       # push to origin will occur in a bit
