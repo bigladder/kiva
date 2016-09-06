@@ -195,10 +195,10 @@ def main(ci_path, rt_url, rt_dir, arch, test_dir)
   puts("Current branch, #{the_branch}, obtained")
   puts("Getting SHA of HEAD...")
   the_ci_sha = g_ci.object("HEAD").sha
-  puts("Sha of HEAD obtained")
+  puts("Sha of HEAD obtained: #{the_ci_sha}")
   puts("Getting Message of HEAD")
   the_ci_msg = g_ci.object("HEAD").message
-  puts("Message of HEAD obtained")
+  puts("Message of HEAD obtained:\n#{the_ci_msg}")
   puts("Attempting to CLONE the RegressTest repo")
   g_rt = robust_clone(rt_url, rt_dir)
   puts("RegressTest repo cloned")
@@ -237,10 +237,7 @@ def main(ci_path, rt_url, rt_dir, arch, test_dir)
   code = system("cd #{g_rt.dir} && git diff --cached --exit-code")
   if code
     puts("No changes found")
-    puts("Output of git status is:")
-    out = `cd #{g_rt.dir} && git status`
-    # prevent verbose output
-    puts(out[0..100])
+    puts("- code is: #{code}")
   else
     puts("Changes found")
     puts("Committing...")
