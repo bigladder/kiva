@@ -23,6 +23,7 @@ environment:
       RT_URL: github.com/michael-okeefe/test.git
       RT_DIR: scripts/regress
       TEST_DIR: build/test/results
+      BUILD_ARCHITECTURE: win-gnu-x86
       PATOKEN:
         secure: 8H6cZZJc7y+QdOniRvwDc+1MmmVBuVe+0BABlCWSZZPbE0emW/hAaobJrZV9XHo2
     - GENERATOR: "MinGW Makefiles"
@@ -36,6 +37,7 @@ environment:
       RT_URL: github.com/michael-okeefe/test.git
       RT_DIR: scripts/regress
       TEST_DIR: build/test/results
+      BUILD_ARCHITECTURE: win-gnu-x86_64
       PATOKEN:
         secure: 8H6cZZJc7y+QdOniRvwDc+1MmmVBuVe+0BABlCWSZZPbE0emW/hAaobJrZV9XHo2
     - GENERATOR: "Visual Studio 12"
@@ -47,6 +49,7 @@ environment:
       RT_URL: github.com/michael-okeefe/test.git
       RT_DIR: scripts/regress
       TEST_DIR: build/test/results
+      BUILD_ARCHITECTURE: win-msvc-x86
       PATOKEN:
         secure: 8H6cZZJc7y+QdOniRvwDc+1MmmVBuVe+0BABlCWSZZPbE0emW/hAaobJrZV9XHo2
     - GENERATOR: "Visual Studio 12 Win64"
@@ -58,6 +61,7 @@ environment:
       RT_URL: github.com/michael-okeefe/test.git
       RT_DIR: scripts/regress
       TEST_DIR: build/test/results
+      BUILD_ARCHITECTURE: win-msvc-x86_64
       PATOKEN:
         secure: 8H6cZZJc7y+QdOniRvwDc+1MmmVBuVe+0BABlCWSZZPbE0emW/hAaobJrZV9XHo2
 
@@ -86,7 +90,8 @@ build_script:
   - if "%COMPILER%"=="MSVC" (cmake --build . --config "%CONFIG%" -- /m)
   - if "%COMPILER%"=="MinGW" (cmake "-G%GENERATOR%" -DCMAKE_BUILD_TYPE="%CONFIG%" "-DPROCESSOR_ARCHITECTURE=%BIT%" ..)
   - if "%COMPILER%"=="MinGW" (cmake --build . -- -j)
-  - if "%COMPILER%"=="MSVC" (cmd /c "set PATH=%PATH%;C:/Ruby200/bin && start ctest -C %CONFIG%")
-  - if "%COMPILER%"=="MinGW" (cmd /c "set PATH=%PATH%;C:/Ruby200/bin && start ctest")
   - cd ..\scripts
+  - bundle exec ruby run-kiva.rb ../build/kiva ../examples/slab.yaml ../weather/USA_DC_Washington.epw ../build/results/%BUILD_ARCHITECTURE%/slab/out.csv
+  - bundle exec ruby run-kiva.rb ../build/kiva ../examples/basement.yaml ../weather/USA_IL_Chicago.epw ../build/results/%BUILD_ARCHITECTURE%/basement/out.csv
+  - bundle exec ruby run-kiva.rb ../build/kiva ../examples/crawlspace.yaml ../weather/USA_FL_Tampa.epw ../build/results/%BUILD_ARCHITECTURE%/crawlspace/out.csv
   - bundle exec ruby regress-test.rb
