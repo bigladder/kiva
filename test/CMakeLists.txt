@@ -6,8 +6,6 @@ add_custom_target(results_subdirectory ALL COMMAND ${CMAKE_COMMAND} -E make_dire
 set(SCRIPT_DIR "${CMAKE_SOURCE_DIR}/scripts")
 set(ENV{BUNDLE_GEMFILE} "${SCRIPT_DIR}/Gemfile")
 
-find_package(Ruby 2.0)
-
 function( add_integration_test )
   set(options)
   set(oneValueArgs IN_FILE EPW_FILE)
@@ -21,7 +19,7 @@ function( add_integration_test )
   add_test(
 	  NAME ${TEST_NAME}
 	  WORKING_DIRECTORY ${SCRIPT_DIR}
-	  COMMAND ${RUBY_EXECUTABLE} run-kiva.rb
+	  COMMAND bundle exec run-kiva.rb
 		  ${CMAKE_BINARY_DIR}/kiva
 		  ${CMAKE_SOURCE_DIR}/examples/${INT_TEST_IN_FILE}.yaml
 		  ${CMAKE_SOURCE_DIR}/weather/${INT_TEST_EPW_FILE}.epw
