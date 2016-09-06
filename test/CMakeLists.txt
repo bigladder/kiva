@@ -7,7 +7,7 @@ set(SCRIPT_DIR "${CMAKE_SOURCE_DIR}/scripts")
 set(ENV{BUNDLE_GEMFILE} "${SCRIPT_DIR}/Gemfile")
 
 #find_package(Ruby 2.0)
-set( ENV{PATH} ENV{PATH} "C:/Ruby200/bin")
+#set( ENV{PATH} ENV{PATH} "C:/Ruby200/bin")
 
 function( add_integration_test )
   set(options)
@@ -22,7 +22,7 @@ function( add_integration_test )
   add_test(
     NAME ${TEST_NAME}
     WORKING_DIRECTORY ${SCRIPT_DIR}
-    COMMAND bundle exec ruby -v)
+    COMMAND "C:/Ruby200/bin/bundle.bat exec C:/Ruby200/bin/ruby.exe -v")
 
   #  if(CMAKE_SYSTEM_NAME MATCHES "Windows")
   #    add_test(
