@@ -234,7 +234,10 @@ def main(ci_path, rt_url, rt_dir, arch, test_dir)
   # Copy files to copy to the checked out repository 
   # Set files_to_add
   #puts("Adding #{files_to_add.length} files")
-  puts("Attempting to see if there are any changes")
+  puts("Attempting to add all files")
+  g_rt.add(:all=>true)
+  puts("All files added")
+  puts("Attempting to see if there are any changes regestered after add --all")
   code = `cd #{g_rt.dir} && git diff --exit-code`
   if code.empty?
     puts("No changes found")
@@ -242,9 +245,6 @@ def main(ci_path, rt_url, rt_dir, arch, test_dir)
     puts(`cd #{g_rt.dir} && git status`)
   else
     puts("Changes found")
-    puts("Attempting to add all files")
-    g_rt.add(:all=>true)
-    puts("All files added")
     puts("Committing...")
     g_rt.commit(
       "#{the_ci_msg} [#{arch}]\n{:src-sha \"#{the_ci_sha}\" " +
