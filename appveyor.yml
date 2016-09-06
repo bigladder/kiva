@@ -84,6 +84,7 @@ before_build:
   - where bundle
 
 build_script:
+  - ruby -e "puts(RUBY_PLATFORM)"
   - SET SRC_BRANCH=%APPVEYOR_REPO_BRANCH%
   - mkdir build
   - cd build
