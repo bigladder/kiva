@@ -18,12 +18,12 @@ function( add_integration_test )
 
   add_test(
 	  NAME ${TEST_NAME}
-	  WORKING_DIRECTORY ${SCRIPT_DIR}
 	  COMMAND bundle exec run-kiva.rb
 		  ${CMAKE_BINARY_DIR}/kiva
 		  ${CMAKE_SOURCE_DIR}/examples/${INT_TEST_IN_FILE}.yaml
 		  ${CMAKE_SOURCE_DIR}/weather/${INT_TEST_EPW_FILE}.epw
-		  ${CMAKE_CURRENT_BINARY_DIR}/results/${build_architecture}/${TEST_NAME}/out.csv)
+		  ${CMAKE_CURRENT_BINARY_DIR}/results/${build_architecture}/${TEST_NAME}/out.csv
+	  WORKING_DIRECTORY ${SCRIPT_DIR})
 
 endfunction()
 
