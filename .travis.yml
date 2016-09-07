@@ -4,10 +4,10 @@ notifications:
   email: false
 env:
   global:
-    - RT_URL=github.com/michael-okeefe/test.git
+    - RT_URL=github.com/big-ladder/kiva-test-results.git
     - TEST_DIR=build/test/results
     - RT_DIR=scripts/regress
-    - secure: "RQ/z2orB3+Tc06xVsHm+bQC/oKVrSq86kcmhW43HRemmPOYIdeOIIdxgTVVBcwPjU0MqBhG0SSio8SVwpYQ29MDGB1ypuu1mZ/BXK0pBY4W/vg5P3dmDgxixileIGO+HPEP+ExS0+abR2tYqUxr4yN+wr5jG2vhLIPhwyjyeuyYKYdLmgZpNdzqpdm8N7M22jE2xzgddju4pGN09zxDvZFJjQeGt9Sy2rmx6LmsL+el75pUG5Jx+4rxxebim0Uh6O9+aABb2TuuRqvSN0wCpuHb6lviH/3bSOEj+0gduTA33rJc5XRJFBKg6wqiqqH1wLqx4oBEosBjy/e2Tf2XqdV5ywDma5Ym2dHrG1m/aDaRHmfswg6EC1KJlmsOuLrUeBLa9k046FWMPM+kJlQfPTs5MBFSIseACUTrhAsCCYiYnorWs10v61hOeNJalDa1rHSq6ET/UVqkY8C5j1gWfLkAn/T0Kd46OnjnmR9Te8ZRL9dHGMmw+FtxlzT4t5+H7ZzmZAEiBgGUFVkt0Ml0g6mIPIvR2eCSp0Y4Z3uvgHDtxc+s+AwzzEZMxMiJSZ7boy7qa0rdS7v7bb44xVtCiNZPws/tPdrA6iBXPK3rpG+zcU42fRtd/ZsHqLAGnBwUKPc3XLVlxs86ua07EXGLDSSNosAi/sJrXhpilUS+HArU="
+    secure: "Iu96o6rugFB7LdIGAY8+Yr2ChIZiLGmyWoX6CtXBfu72ZZZcI4G8QMLyh8ymPMBIoq6e7FQOiHyn0TGuPsutwOasnDIKvasP1Duy4hDmO8394uWnv0P2icWNBny7A+cv8mIby/BJ2hB0SlqkCGPi5+L+66FOTZMSw7KWoOxFIsd8RRha4nBY27flGrbcd+nTjyXXSlY6TLP/cpktucB600JCOwbHhV0RqYqd2IIAYKMJTWRVACu42oQqmxqO+T9HP0n0MlV2bbY7PgGEii79wieeaeaVyWdEWPN8fxEqeu8iXfYI3vijXo7IuDLm5kOpPoMFM+OyOWHzFJ0zsFkbJixE7V3F8qEVCiYFI+myGTrCnRSqD3jD0+GQjklj9P1+vmO0D9TBrH66z7YLL9t5E2lGOLJWnNI1uJoUKPTO+BrBvR4sOWuie3fBXCfMDbUr0N4uBfjnVSSAdHvjLf25pN3gkXEpptjSFjJ74blMVswHw9QlCQ4eXN+FGgoLhY2QpzPLpMFmH5ZX5R7r4jktqqNHy4rziM5R9Jxbdf9Gt4kjm0Uc4tEC4iohbTgGlDKIjZPcA2dP4QMCiuidXD80jl+KDSqaOHONB9urf2U0StFEmuJApbQ96gVo+a7/uEgb0izCnOv2V1BbGcQcgWrx7JkCipbae7Lsz/8Of4hqgXI="
 matrix:
   include:
     - os: osx
@@ -41,4 +41,4 @@ script:
   - bundle exec ruby run-kiva.rb ../build/kiva ../examples/slab.yaml ../weather/USA_DC_Washington.epw ../build/test/results/${BUILD_ARCHITECTURE}/slab/out.csv
   - bundle exec ruby run-kiva.rb ../build/kiva ../examples/basement.yaml ../weather/USA_IL_Chicago.epw ../build/test/results/${BUILD_ARCHITECTURE}/basement/out.csv
   - bundle exec ruby run-kiva.rb ../build/kiva ../examples/crawlspace.yaml ../weather/USA_FL_Tampa.epw ../build/test/results/${BUILD_ARCHITECTURE}/crawlspace/out.csv
-  - bundle exec ruby regress-test.rb
+  - bundle exec ruby log-results.rb

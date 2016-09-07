@@ -20,12 +20,12 @@ environment:
       BIT: i686
       MINGW_URL: https://sourceforge.net/projects/mingw-w64/files/Toolchains%20targetting%20Win32/Personal%20Builds/mingw-builds/5.3.0/threads-win32/dwarf/i686-5.3.0-release-win32-dwarf-rt_v4-rev0.7z/download
       MINGW_ARCHIVE: i686-5.3.0-release-win32-dwarf-rt_v4-rev0.7z
-      RT_URL: github.com/michael-okeefe/test.git
+      RT_URL: github.com/big-ladder/kiva-test-results.git
       RT_DIR: scripts/regress
       TEST_DIR: build/test/results
       BUILD_ARCHITECTURE: win-gnu-x86
       PATOKEN:
-        secure: 8H6cZZJc7y+QdOniRvwDc+1MmmVBuVe+0BABlCWSZZPbE0emW/hAaobJrZV9XHo2
+        secure: vB8XFwP3e+T61dIGoE2LxtolDMT/nsiFoJ6JMREjIObdHoCsscKOEKYlG0TWW+sx
     - GENERATOR: "MinGW Makefiles"
       MINGW_DIR: mingw64
       CONFIG: Release
@@ -34,36 +34,36 @@ environment:
       BIT: x86_64
       MINGW_URL: https://sourceforge.net/projects/mingw-w64/files/Toolchains%20targetting%20Win64/Personal%20Builds/mingw-builds/5.3.0/threads-win32/seh/x86_64-5.3.0-release-win32-seh-rt_v4-rev0.7z/download
       MINGW_ARCHIVE: x86_64-5.3.0-release-win32-seh-rt_v4-rev0.7z
-      RT_URL: github.com/michael-okeefe/test.git
+      RT_URL: github.com/big-ladder/kiva-test-results.git
       RT_DIR: scripts/regress
       TEST_DIR: build/test/results
       BUILD_ARCHITECTURE: win-gnu-x86_64
       PATOKEN:
-        secure: 8H6cZZJc7y+QdOniRvwDc+1MmmVBuVe+0BABlCWSZZPbE0emW/hAaobJrZV9XHo2
+        secure: vB8XFwP3e+T61dIGoE2LxtolDMT/nsiFoJ6JMREjIObdHoCsscKOEKYlG0TWW+sx
     - GENERATOR: "Visual Studio 12"
       CONFIG: Release
       COMPILER: MSVC
       RUBY_VERSION: "200"
       platform: x86
       BIT: i686
-      RT_URL: github.com/michael-okeefe/test.git
+      RT_URL: github.com/big-ladder/kiva-test-results.git
       RT_DIR: scripts/regress
       TEST_DIR: build/test/results
       BUILD_ARCHITECTURE: win-msvc-x86
       PATOKEN:
-        secure: 8H6cZZJc7y+QdOniRvwDc+1MmmVBuVe+0BABlCWSZZPbE0emW/hAaobJrZV9XHo2
+        secure: vB8XFwP3e+T61dIGoE2LxtolDMT/nsiFoJ6JMREjIObdHoCsscKOEKYlG0TWW+sx
     - GENERATOR: "Visual Studio 12 Win64"
       CONFIG: Release
       COMPILER: MSVC
       RUBY_VERSION: "200-x64"
       platform: x64
       BIT: x86_64
-      RT_URL: github.com/michael-okeefe/test.git
+      RT_URL: github.com/big-ladder/kiva-test-results.git
       RT_DIR: scripts/regress
       TEST_DIR: build/test/results
       BUILD_ARCHITECTURE: win-msvc-x86_64
       PATOKEN:
-        secure: 8H6cZZJc7y+QdOniRvwDc+1MmmVBuVe+0BABlCWSZZPbE0emW/hAaobJrZV9XHo2
+        secure: vB8XFwP3e+T61dIGoE2LxtolDMT/nsiFoJ6JMREjIObdHoCsscKOEKYlG0TWW+sx
 
 install:
   - if "%COMPILER%"=="MinGW" (if not exist "%MINGW_ARCHIVE%" appveyor DownloadFile "%MINGW_URL%" -FileName "%MINGW_ARCHIVE%")
@@ -99,4 +99,4 @@ build_script:
   - if "%COMPILER%"=="MinGW" (bundle exec ruby run-kiva.rb ../build/kiva ../examples/slab.yaml ../weather/USA_DC_Washington.epw ../build/test/results/%BUILD_ARCHITECTURE%/slab/out.csv)
   - if "%COMPILER%"=="MinGW" (bundle exec ruby run-kiva.rb ../build/kiva ../examples/basement.yaml ../weather/USA_IL_Chicago.epw ../build/test/results/%BUILD_ARCHITECTURE%/basement/out.csv)
   - if "%COMPILER%"=="MinGW" (bundle exec ruby run-kiva.rb ../build/kiva ../examples/crawlspace.yaml ../weather/USA_FL_Tampa.epw ../build/test/results/%BUILD_ARCHITECTURE%/crawlspace/out.csv)
-  - bundle exec ruby regress-test.rb
+  - bundle exec ruby log-results.rb
