@@ -1,6 +1,7 @@
 init:
   - cmd: echo %PROCESSOR_ARCHITECTURE%
   - cmd: cmake --version
+  - cmd: ctest --version
 
 skip_branch_with_pr: true
 clone_depth: 100
@@ -15,42 +16,87 @@ environment:
       MINGW_DIR: mingw32
       CONFIG: Release
       COMPILER: MinGW
+      RUBY_VERSION: "200"
       BIT: i686
       MINGW_URL: https://sourceforge.net/projects/mingw-w64/files/Toolchains%20targetting%20Win32/Personal%20Builds/mingw-builds/5.3.0/threads-win32/dwarf/i686-5.3.0-release-win32-dwarf-rt_v4-rev0.7z/download
       MINGW_ARCHIVE: i686-5.3.0-release-win32-dwarf-rt_v4-rev0.7z
+      RT_URL: github.com/michael-okeefe/test.git
+      RT_DIR: scripts/regress
+      TEST_DIR: build/test/results
+      BUILD_ARCHITECTURE: win-gnu-x86
+      PATOKEN:
+        secure: 8H6cZZJc7y+QdOniRvwDc+1MmmVBuVe+0BABlCWSZZPbE0emW/hAaobJrZV9XHo2
     - GENERATOR: "MinGW Makefiles"
       MINGW_DIR: mingw64
       CONFIG: Release
+      RUBY_VERSION: "200-x64"
       COMPILER: MinGW
       BIT: x86_64
       MINGW_URL: https://sourceforge.net/projects/mingw-w64/files/Toolchains%20targetting%20Win64/Personal%20Builds/mingw-builds/5.3.0/threads-win32/seh/x86_64-5.3.0-release-win32-seh-rt_v4-rev0.7z/download
       MINGW_ARCHIVE: x86_64-5.3.0-release-win32-seh-rt_v4-rev0.7z
+      RT_URL: github.com/michael-okeefe/test.git
+      RT_DIR: scripts/regress
+      TEST_DIR: build/test/results
+      BUILD_ARCHITECTURE: win-gnu-x86_64
+      PATOKEN:
+        secure: 8H6cZZJc7y+QdOniRvwDc+1MmmVBuVe+0BABlCWSZZPbE0emW/hAaobJrZV9XHo2
     - GENERATOR: "Visual Studio 12"
       CONFIG: Release
       COMPILER: MSVC
+      RUBY_VERSION: "200"
       platform: x86
       BIT: i686
+      RT_URL: github.com/michael-okeefe/test.git
+      RT_DIR: scripts/regress
+      TEST_DIR: build/test/results
+      BUILD_ARCHITECTURE: win-msvc-x86
+      PATOKEN:
+        secure: 8H6cZZJc7y+QdOniRvwDc+1MmmVBuVe+0BABlCWSZZPbE0emW/hAaobJrZV9XHo2
     - GENERATOR: "Visual Studio 12 Win64"
       CONFIG: Release
       COMPILER: MSVC
+      RUBY_VERSION: "200-x64"
       platform: x64
       BIT: x86_64
+      RT_URL: github.com/michael-okeefe/test.git
+      RT_DIR: scripts/regress
+      TEST_DIR: build/test/results
+      BUILD_ARCHITECTURE: win-msvc-x86_64
+      PATOKEN:
+        secure: 8H6cZZJc7y+QdOniRvwDc+1MmmVBuVe+0BABlCWSZZPbE0emW/hAaobJrZV9XHo2
 
 install:
   - if "%COMPILER%"=="MinGW" (if not exist "%MINGW_ARCHIVE%" appveyor DownloadFile "%MINGW_URL%" -FileName "%MINGW_ARCHIVE%")
   - if "%COMPILER%"=="MinGW" (7z x -y "%MINGW_ARCHIVE%" > nul)
+  - set PATH=C:\Ruby%RUBY_VERSION%\bin;%PATH%
+  - cd scripts
+  - bundle install
+  - cd ..
 
 before_build:
   - if "%COMPILER%"=="MinGW" (set "PATH=%PATH:C:\Program Files\Git\usr\bin;=%;%CD%\%MINGW_DIR%\bin")
   - if "%COMPILER%"=="MinGW" (g++ --version)
   - if "%COMPILER%"=="MinGW" (mingw32-make --version)
+  - ruby -v
+  - gem -v
+  - bundle -v
+  - where ruby
+  - where bundle
 
 build_script:
+  - ruby -e "puts(RUBY_PLATFORM)"
+  - SET SRC_BRANCH=%APPVEYOR_REPO_BRANCH%
   - mkdir build
   - cd build
   - if "%COMPILER%"=="MSVC" (cmake "-G%GENERATOR%" "-DPROCESSOR_ARCHITECTURE=%BIT%" ..)
-  - if "%COMPILER%"=="MSVC" (cmake --build . --config "%CONFIG%")
-  - if "%COMPILER%"=="MSVC" (ctest -C "%CONFIG%")
+  - if "%COMPILER%"=="MSVC" (cmake --build . --config "%CONFIG%" -- /m)
   - if "%COMPILER%"=="MinGW" (cmake "-G%GENERATOR%" -DCMAKE_BUILD_TYPE="%CONFIG%" "-DPROCESSOR_ARCHITECTURE=%BIT%" ..)
   - if "%COMPILER%"=="MinGW" (cmake --build . -- -j)
-  - if "%COMPILER%"=="MinGW" (ctest)
+  - cd ..\scripts
+  - if "%COMPILER%"=="MSVC" (bundle exec ruby run-kiva.rb ../build/Release/kiva ../examples/slab.yaml ../weather/USA_DC_Washington.epw ../build/test/results/%BUILD_ARCHITECTURE%/slab/out.csv)
+  - if "%COMPILER%"=="MSVC" (bundle exec ruby run-kiva.rb ../build/Release/kiva ../examples/basement.yaml ../weather/USA_IL_Chicago.epw ../build/test/results/%BUILD_ARCHITECTURE%/basement/out.csv)
+  - if "%COMPILER%"=="MSVC" (bundle exec ruby run-kiva.rb ../build/Release/kiva ../examples/crawlspace.yaml ../weather/USA_FL_Tampa.epw ../build/test/results/%BUILD_ARCHITECTURE%/crawlspace/out.csv)
+  - if "%COMPILER%"=="MinGW" (bundle exec ruby run-kiva.rb ../build/kiva ../examples/slab.yaml ../weather/USA_DC_Washington.epw ../build/test/results/%BUILD_ARCHITECTURE%/slab/out.csv)
+  - if "%COMPILER%"=="MinGW" (bundle exec ruby run-kiva.rb ../build/kiva ../examples/basement.yaml ../weather/USA_IL_Chicago.epw ../build/test/results/%BUILD_ARCHITECTURE%/basement/out.csv)
+  - if "%COMPILER%"=="MinGW" (bundle exec ruby run-kiva.rb ../build/kiva ../examples/crawlspace.yaml ../weather/USA_FL_Tampa.epw ../build/test/results/%BUILD_ARCHITECTURE%/crawlspace/out.csv)
+  - bundle exec ruby regress-test.rb

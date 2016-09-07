@@ -11,10 +11,14 @@ if(NOT PROCESSOR_ARCHITECTURE)
   message(STATUS "Setting processor architecture to 'x86_64' as none was specified.")
   set(PROCESSOR_ARCHITECTURE x86_64 CACHE STRING "Choose the processor architecture." FORCE)
   # Set the possible values of build type for cmake-gui
-  set_property(CACHE PROCESSOR_ARCHITECTURE PROPERTY STRINGS "x86_64" "i386")
+  set_property(CACHE PROCESSOR_ARCHITECTURE PROPERTY STRINGS "x86_64" "x86")
 endif()
 
-set(build_architecture ${CMAKE_SYSTEM_NAME}-${CMAKE_CXX_COMPILER_ID}-${PROCESSOR_ARCHITECTURE})
+if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+  set(build_architecture macosx-${CMAKE_CXX_COMPILER_ID}-${PROCESSOR_ARCHITECTURE})
+else()
+  set(build_architecture ${CMAKE_SYSTEM_NAME}-${CMAKE_CXX_COMPILER_ID}-${PROCESSOR_ARCHITECTURE})
+endif()
 
 string(TOLOWER ${build_architecture} build_architecture)
 
