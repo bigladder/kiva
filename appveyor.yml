@@ -72,6 +72,6 @@ build_script:
   - if "%COMPILER%"=="MinGW" (cmake --build . -- -j)
 
 test_script:
-  - ps: if ($env:COMPILER -eq "MSVC") {ctest -C $env:CONFIG}
-  - ps: if ($env:COMPILER -eq "MinGW") {ctest}
+  - if "%COMPILER%"=="MSVC" (ctest -C "%CONFIG%")
+  - if "%COMPILER%"=="MinGW" (ctest)
   - ruby ..\scripts\log-results.rb

@@ -4,7 +4,7 @@ require('open3')
 
 # String String String String -> Git::Base
 # Robustly clones a source repo to the given target
-# repo_url: String   = URL to repository to clone from 
+# repo_url: String   = URL to repository to clone from
 # branch: String     = Commit SHA or Branch Name of a branch to switch to
 # ref_commit: String = Commit SHA, Tag, or Branch Name to serve as the tag to
 #                      branch off of
@@ -149,7 +149,7 @@ end
 # - what branch is CI on
 # - commit-sha
 # - commit-message
-# - 
+# -
 # NOTE: used tags in regresstest repo to identify which commit in source a regress-test corresponds to
 
 ############################################################
@@ -191,7 +191,7 @@ def main(ci_path, rt_url, rt_dir, arch, test_dir)
   g_ci = Git.open(ci_path)
   puts("Opened...")
   puts("Getting current branch...")
-  the_branch = determine_branch 
+  the_branch = determine_branch
   puts("Current branch, #{the_branch}, obtained")
   puts("Getting SHA of HEAD...")
   the_ci_sha = g_ci.object("HEAD").sha
@@ -220,6 +220,7 @@ def main(ci_path, rt_url, rt_dir, arch, test_dir)
   #f["/home/travis/build/michael-okeefe/kiva/build/test"]
   #f["/home/travis/build/michael-okeefe/kiva/build/Testing"]
   FileUtils.cp_r(File.join(test_dir, '.'), rt_dir)
+  FileUtils.cp(File.join('..', 'build','Testing','Temporary','LastTest.log'), rt_dir)
   puts("Case files copied")
   #files_to_add = []
   #cases.each do |c|
@@ -227,7 +228,7 @@ def main(ci_path, rt_url, rt_dir, arch, test_dir)
   #  puts("running case #{c[:id]}")
   #  files_to_add += run_case(ci_path, rt_dir, arch, a, c)
   #end
-  # Copy files to copy to the checked out repository 
+  # Copy files to copy to the checked out repository
   # Set files_to_add
   #puts("Adding #{files_to_add.length} files")
   puts("Attempting to add all files")
@@ -243,7 +244,7 @@ def main(ci_path, rt_url, rt_dir, arch, test_dir)
     puts("Committing...")
     the_commit = "#{the_ci_msg} [#{arch}]\n{:src-sha \"#{the_ci_sha}\" " +
       ":src-msg \"#{the_ci_msg}\" " +
-      ":arch \"#{arch}\" " + 
+      ":arch \"#{arch}\" " +
       ":src-branch \"#{the_branch}\"}"
     g_rt.commit(the_commit)
     puts("Committed")
