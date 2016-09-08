@@ -50,7 +50,6 @@ end
 
 KIVA_PATH = File.expand_path(ARGV[0])
 KIVA_DIR = File.dirname(KIVA_PATH)
-KIVA_RELEASE_DIR = File.join(KIVA_DIR, "Release")
 INPUT_FILE = File.expand_path(ARGV[1])
 WEATHER_FILE = File.expand_path(ARGV[2])
 OUTPUT_FILE  = File.expand_path(ARGV[3])
@@ -71,7 +70,6 @@ f = lambda do |dir|
 end
 f[OUTPUT_DIR]
 f[KIVA_DIR]
-f[KIVA_RELEASE_DIR]
 puts("run-kiva.rb completed!")
 
 #if success
