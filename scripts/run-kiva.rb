@@ -27,9 +27,14 @@ def run_case(exe_path, in_file, weather_file, output_path)
             else
               "./"
             end
+  exe_ext = if operating_system == :windows
+              ".exe"
+            else
+              ""
+            end
   cmd = [
     "cd #{File.dirname(exe_path)}",
-    "#{run_pat}#{File.basename(exe_path)} #{in_file} #{weather_file} #{output_path}"
+    "#{run_pat}#{File.basename(exe_path)}#{exe_ext} #{in_file} #{weather_file} #{output_path}"
   ].join(" && ")
   puts("  ... cmd = #{cmd}")
   t_start = Time.now
@@ -44,6 +49,7 @@ def run_case(exe_path, in_file, weather_file, output_path)
   w['exitcode.log', exitcode]
   w['timings.log', (t_end - t_start).to_s + " seconds"]
   puts("run_case complete!")
+  return exitcode.success?
 end
 
 KIVA_PATH = File.expand_path(ARGV[0])
@@ -58,7 +64,7 @@ puts("  kiva path  = #{KIVA_PATH}")
 puts("  input file = #{INPUT_FILE}")
 puts("  weather file = #{WEATHER_FILE}")
 puts("  output file  = #{OUTPUT_FILE}")
-run_case(KIVA_PATH, INPUT_FILE, WEATHER_FILE, OUTPUT_FILE)
+success = run_case(KIVA_PATH, INPUT_FILE, WEATHER_FILE, OUTPUT_FILE)
 f = lambda do |dir|
   puts("Evaluating contents of #{dir}")
   if File.exists?(dir)
@@ -71,3 +77,9 @@ f[OUTPUT_DIR]
 f[KIVA_DIR]
 f[KIVA_RELEASE_DIR]
 puts("run-kiva.rb completed!")
+
+if success
+  exit(0)
+else
+  exit(1)
+end
