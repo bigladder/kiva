@@ -55,19 +55,14 @@ def main(ci_path, rt_url, rt_dir, arch, test_dir)
     tag_name = "src_#{the_ci_sha}_#{arch}"
     tag_exists = ! g_rt.tags.select {|t| t.name == tag_name}.empty?
     if tag_exists
-      puts("Tag, #{tag_name}, exists")
-      # delete tag on remote
-      `cd #{g_rt.dir} && git push --quiet origin :refs/tags/#{tag_name}`
-      # force annotate the tag again
-      `cd #{g_rt.dir} && git tag -fa #{tag_name} -m "Add source sha"`
-      # push to origin will occur in a bit
+      retag(g_rt.dir, tag_name)
     else
       puts("Adding tag #{tag_name}")
       g_rt.add_tag(tag_name, {a: true, m: "Add source sha"})
     end
     puts("Tag added")
     puts("Attempting to push/pull")
-    robust_push_pull(g_rt, the_branch, the_commit)
+    robust_push_pull(g_rt, the_branch, the_commit, tag_name)
     puts("push/pull succeeded")
   end
 end
