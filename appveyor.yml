@@ -13,8 +13,7 @@ cache:
 environment:
   global:
       RT_URL: github.com/big-ladder/kiva-test-results.git
-      RT_DIR: scripts/regress
-      TEST_DIR: build/test/results
+      RT_DIR: build/test/results
       PATOKEN:
         secure: vB8XFwP3e+T61dIGoE2LxtolDMT/nsiFoJ6JMREjIObdHoCsscKOEKYlG0TWW+sx
       RUBY_VERSION: "200"
@@ -67,8 +66,9 @@ build_script:
   - mkdir build
   - cd build
   - if "%COMPILER%"=="MSVC" (cmake "-G%GENERATOR%" "-DPROCESSOR_ARCHITECTURE=%BIT%" ..)
-  - if "%COMPILER%"=="MSVC" (cmake --build . --config "%CONFIG%" -- /m)
   - if "%COMPILER%"=="MinGW" (cmake "-G%GENERATOR%" -DCMAKE_BUILD_TYPE="%CONFIG%" "-DPROCESSOR_ARCHITECTURE=%BIT%" ..)
+  - ruby ..\scripts\clone-and-mimic.rb
+  - if "%COMPILER%"=="MSVC" (cmake --build . --config "%CONFIG%" -- /m)
   - if "%COMPILER%"=="MinGW" (cmake --build . -- -j)
 
 test_script:
