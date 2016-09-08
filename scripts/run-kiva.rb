@@ -27,14 +27,9 @@ def run_case(exe_path, in_file, weather_file, output_path)
             else
               "./"
             end
-  exe_ext = if operating_system == :windows
-              ".exe"
-            else
-              ""
-            end
   cmd = [
     "cd #{File.dirname(exe_path)}",
-    "#{run_pat}#{File.basename(exe_path)}#{exe_ext} #{in_file} #{weather_file} #{output_path}"
+    "#{run_pat}#{File.basename(exe_path)} #{in_file} #{weather_file} #{output_path}"
   ].join(" && ")
   puts("  ... cmd = #{cmd}")
   t_start = Time.now

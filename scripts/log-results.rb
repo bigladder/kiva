@@ -220,7 +220,7 @@ def main(ci_path, rt_url, rt_dir, arch, test_dir)
   #f["/home/travis/build/michael-okeefe/kiva/build/test"]
   #f["/home/travis/build/michael-okeefe/kiva/build/Testing"]
   FileUtils.cp_r(File.join(test_dir, '.'), rt_dir)
-  FileUtils.cp(File.join('..', 'build','Testing','Temporary','LastTest.log'), rt_dir)
+  FileUtils.cp(File.join('..', 'build','Testing','Temporary','LastTest.log'), File.join(rt_dir,arch))
   puts("Case files copied")
   #files_to_add = []
   #cases.each do |c|
