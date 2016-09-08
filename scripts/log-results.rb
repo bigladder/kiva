@@ -71,6 +71,10 @@ end
 
 puts("scripts/log-results.rb Start!")
 
-main(CI_PATH, RT_URL, RT_DIR, ARCH, TEST_DIR)
+if not is_pull_request?
+  main(CI_PATH, RT_URL, RT_DIR, ARCH, TEST_DIR)
+else
+  puts("Skipping log-results.rb due to being a pull request")
+end
 
 puts("scripts/log-results.rb Done!")
