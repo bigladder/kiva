@@ -30,7 +30,7 @@ before_install:
 
 script:
   - ruby -e "puts(RUBY_PLATFORM)"
-  - SRC_BRANCH=$TRAVIS_BRANCH
+  - export SRC_BRANCH=$TRAVIS_BRANCH
   - mkdir build
   - cd build
   - cmake -DPROCESSOR_ARCHITECTURE=$PROCESSOR_ARCHITECTURE ..
