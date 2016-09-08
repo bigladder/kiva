@@ -1,10 +1,10 @@
 
 add_custom_target(results_directory ALL COMMAND ${CMAKE_COMMAND} -E make_directory results)
 
-add_custom_target(results_subdirectory ALL COMMAND ${CMAKE_COMMAND} -E make_directory results/${build_architecture})
+add_custom_target(rm_results_subdirectory ALL COMMAND ${CMAKE_COMMAND} -E remove_directory results/${build_architecture} DEPENDS results_directory)
+add_custom_target(results_subdirectory ALL COMMAND ${CMAKE_COMMAND} -E make_directory results/${build_architecture} DEPENDS rm_results_subdirectory)
 
 set(SCRIPT_DIR "${CMAKE_SOURCE_DIR}/scripts")
-set(ENV{BUNDLE_GEMFILE} "${SCRIPT_DIR}/Gemfile")
 
 function( add_integration_test )
   set(options)
@@ -14,9 +14,9 @@ function( add_integration_test )
 
   set(TEST_NAME "integration.${INT_TEST_IN_FILE}")
 
-  add_custom_target(results_${TEST_NAME}_directory ALL COMMAND ${CMAKE_COMMAND} -E make_directory results/${build_architecture}/${TEST_NAME})
+  add_custom_target(results_${INT_TEST_IN_FILE}_directory ALL COMMAND ${CMAKE_COMMAND} -E make_directory results/${build_architecture}/${TEST_NAME} DEPENDS results_subdirectory)
 
-  add_test(NAME ${TEST_NAME} COMMAND bundle exec run-kiva.rb
+  add_test(NAME ${TEST_NAME} COMMAND ruby run-kiva.rb
     ${CMAKE_BINARY_DIR}/kiva
     ${CMAKE_SOURCE_DIR}/examples/${INT_TEST_IN_FILE}.yaml
     ${CMAKE_SOURCE_DIR}/weather/${INT_TEST_EPW_FILE}.epw
