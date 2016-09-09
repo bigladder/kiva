@@ -4,6 +4,24 @@ if(${ENABLE_OPENGL})
   add_definitions(-D ENABLE_OPENGL )
 endif()
 
+set(PROCESSOR_ARCHITECTURE "x86_64" CACHE STRING "Set architecture used for version string.")
+
+# Set a default build type if none was specified
+if(NOT PROCESSOR_ARCHITECTURE)
+  message(STATUS "Setting processor architecture to 'x86_64' as none was specified.")
+  set(PROCESSOR_ARCHITECTURE x86_64 CACHE STRING "Choose the processor architecture." FORCE)
+  # Set the possible values of build type for cmake-gui
+  set_property(CACHE PROCESSOR_ARCHITECTURE PROPERTY STRINGS "x86_64" "x86")
+endif()
+
+if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+  set(build_architecture macosx-${CMAKE_CXX_COMPILER_ID}-${PROCESSOR_ARCHITECTURE})
+else()
+  set(build_architecture ${CMAKE_SYSTEM_NAME}-${CMAKE_CXX_COMPILER_ID}-${PROCESSOR_ARCHITECTURE})
+endif()
+
+string(TOLOWER ${build_architecture} build_architecture)
+
 execute_process(COMMAND git describe --tags --long
                 WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
                 RESULT_VARIABLE git_exit_status
@@ -15,10 +33,11 @@ if(${CMAKE_BUILD_TYPE} MATCHES "Debug")
 endif()
 
 if(${git_exit_status} MATCHES "0")
-  set(VERSION_NUMBER ${kiva_version})
+  set(VERSION_NUMBER "${kiva_version} (${build_architecture})")
   message("Building Kiva version: ${VERSION_NUMBER}")
 else()
-  message("Error finding version number.")
+  set(VERSION_NUMBER "v?.?.?")
+  message("Cannot determine version number.")
 endif()
 
 string(TIMESTAMP YEAR %Y)

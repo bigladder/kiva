@@ -4,7 +4,17 @@
 #ifndef VERSION_HPP
 #define VERSION_HPP
 
-#define VERSION_NUMBER "@VERSION_NUMBER@"
-#define YEAR "@YEAR@"
+
+namespace Kiva {
+
+std::string getVersion(){
+  return "@VERSION_NUMBER@";
+};
+
+std::string getYear(){
+  return "@YEAR@";
+};
+
+}
 
 #endif // VERSION_HPP

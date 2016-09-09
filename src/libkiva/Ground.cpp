@@ -46,11 +46,11 @@ void Ground::buildDomain()
   // Initialize matices
   if (foundation.numericalScheme == Foundation::NS_ADE)
   {
-    U.resize(boost::extents[nX][nY][nZ]);
-    UOld.resize(boost::extents[nX][nY][nZ]);
+    U.resize(nX,std::vector<std::vector<double> >(nY,std::vector<double>(nZ)));
+    UOld.resize(nX,std::vector<std::vector<double> >(nY,std::vector<double>(nZ)));
 
-    V.resize(boost::extents[nX][nY][nZ]);
-    VOld.resize(boost::extents[nX][nY][nZ]);
+    V.resize(nX,std::vector<std::vector<double> >(nY,std::vector<double>(nZ)));
+    VOld.resize(nX,std::vector<std::vector<double> >(nY,std::vector<double>(nZ)));
   }
 
   if (foundation.numericalScheme == Foundation::NS_ADI && TDMA)
@@ -87,18 +87,18 @@ void Ground::buildDomain()
   lis_solver_create(&solver);
   lis_solver_set_option(&solverOptions[0],solver);
 
-  TNew.resize(boost::extents[nX][nY][nZ]);
-  TOld.resize(boost::extents[nX][nY][nZ]);
+  TNew.resize(nX,std::vector<std::vector<double> >(nY,std::vector<double>(nZ)));
+  TOld.resize(nX,std::vector<std::vector<double> >(nY,std::vector<double>(nZ)));
 }
 
 void Ground::calculateADE()
 {
   // Set Old values
-  for (size_t k = 0; k < nZ; ++k)
+  for (size_t i = 0; i < nX; ++i)
   {
     for (size_t j = 0; j < nY; ++j)
     {
-      for (size_t i = 0; i < nX; ++i)
+      for (size_t k = 0; k < nZ; ++k)
       {
         UOld[i][j][k] = VOld[i][j][k] = TOld[i][j][k];
       }
@@ -115,11 +115,11 @@ void Ground::calculateADE()
       calculateADEDownwardSweep();
   }
 
-  for (size_t k = 0; k < nZ; ++k)
+  for (size_t i = 0; i < nX; ++i)
   {
     for (size_t j = 0; j < nY; ++j)
     {
-      for (size_t i = 0; i < nX; ++i)
+      for (size_t k = 0; k < nZ; ++k)
       {
         // Calculate average of sweeps
         TNew[i][j][k] = 0.5*(U[i][j][k] + V[i][j][k]);
@@ -134,11 +134,11 @@ void Ground::calculateADE()
 void Ground::calculateADEUpwardSweep()
 {
   // Upward sweep (Solve U Matrix starting from 1, 1)
-  for (size_t k = 0; k < nZ; k++)
+  for (size_t i = 0; i < nX; i++)
   {
     for (size_t j = 0; j < nY; ++j)
     {
-      for (size_t i = 0; i < nX; i++)
+      for (size_t k = 0; k < nZ; k++)
       {
         switch (domain.cell[i][j][k].cellType)
         {
@@ -336,11 +336,11 @@ void Ground::calculateADEUpwardSweep()
 void Ground::calculateADEDownwardSweep()
 {
   // Downward sweep (Solve V Matrix starting from I, K)
-  for (size_t k = nZ - 1; k >= 0 && k < nZ; k--)
+  for (size_t i = nX - 1; i >= 0 && i < nX; i--)
   {
     for (size_t j = nY - 1; j >= 0 && j < nY; j--)
     {
-      for (size_t i = nX - 1; i >= 0 && i < nX; i--)
+      for (size_t k = nZ - 1; k >= 0 && k < nZ; k--)
       {
         switch (domain.cell[i][j][k].cellType)
         {
@@ -538,11 +538,11 @@ void Ground::calculateADEDownwardSweep()
 
 void Ground::calculateExplicit()
 {
-  for (size_t k = 0; k < nZ; k++)
+  for (size_t i = 0; i < nX; i++)
   {
     for (size_t j = 0; j < nY; ++j)
     {
-      for (size_t i = 0; i < nX; i++)
+      for (size_t k = 0; k < nZ; k++)
       {
         switch (domain.cell[i][j][k].cellType)
         {
@@ -735,11 +735,11 @@ void Ground::calculateExplicit()
       }
     }
   }
-  for (size_t k = 0; k < nZ; ++k)
+  for (size_t i = 0; i < nX; ++i)
   {
     for (size_t j = 0; j < nY; ++j)
     {
-      for (size_t i = 0; i < nX; ++i)
+      for (size_t k = 0; k < nZ; ++k)
       {
         // Update old values for next timestep
         TOld[i][j][k] = TNew[i][j][k];
@@ -750,11 +750,11 @@ void Ground::calculateExplicit()
 
 void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
 {
-  for (size_t k = 0; k < nZ; k++)
+  for (size_t i = 0; i < nX; i++)
   {
     for (size_t j = 0; j < nY; j++)
     {
-      for (size_t i = 0; i < nX; i++)
+      for (size_t k = 0; k < nZ; k++)
       {
         int index = i + nX*j + nX*nY*k;
         int index_ip = (i+1) + nX*j + nX*nY*k;
@@ -1166,11 +1166,11 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
 
   solveLinearSystem();
 
-  for (size_t k = 0; k < nZ; ++k)
+  for (size_t i = 0; i < nX; ++i)
   {
     for (size_t j = 0; j < nY; ++j)
     {
-      for (size_t i = 0; i < nX; ++i)
+      for (size_t k = 0; k < nZ; ++k)
       {
         int index = i + nX*j + nX*nY*k;
         // Read solution into temperature matrix
@@ -1187,11 +1187,11 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
 
 void Ground::calculateADI(int dim)
 {
-  for (size_t k = 0; k < nZ; k++)
+  for (size_t i = 0; i < nX; i++)
   {
     for (size_t j = 0; j < nY; j++)
     {
-      for (size_t i = 0; i < nX; i++)
+      for (size_t k = 0; k < nZ; k++)
       {
 
         int index;
@@ -1717,11 +1717,11 @@ void Ground::calculateADI(int dim)
 
   solveLinearSystem();
 
-  for (size_t k = 0; k < nZ; ++k)
+  for (size_t i = 0; i < nX; ++i)
   {
     for (size_t j = 0; j < nY; ++j)
     {
-      for (size_t i = 0; i < nX; ++i)
+      for (size_t k = 0; k < nZ; ++k)
       {
         int index;
         if (dim == 1)
@@ -2527,7 +2527,7 @@ void Ground::setSolarBoundaryConditions()
   }
 }
 
-double getArrayValue(boost::multi_array<double, 3> Mat, std::size_t i, std::size_t j, std::size_t k)
+double getArrayValue(std::vector<std::vector<std::vector<double>>> Mat, std::size_t i, std::size_t j, std::size_t k)
 {
   return Mat[i][j][k];
 }

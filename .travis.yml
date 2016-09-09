@@ -2,17 +2,25 @@ language: cpp
 clone_depth: 100
 notifications:
   email: false
+env:
+  global:
+    - RT_URL=github.com/big-ladder/kiva-test-results.git
+    - RT_DIR=build/test/results
+    - secure: "Iu96o6rugFB7LdIGAY8+Yr2ChIZiLGmyWoX6CtXBfu72ZZZcI4G8QMLyh8ymPMBIoq6e7FQOiHyn0TGuPsutwOasnDIKvasP1Duy4hDmO8394uWnv0P2icWNBny7A+cv8mIby/BJ2hB0SlqkCGPi5+L+66FOTZMSw7KWoOxFIsd8RRha4nBY27flGrbcd+nTjyXXSlY6TLP/cpktucB600JCOwbHhV0RqYqd2IIAYKMJTWRVACu42oQqmxqO+T9HP0n0MlV2bbY7PgGEii79wieeaeaVyWdEWPN8fxEqeu8iXfYI3vijXo7IuDLm5kOpPoMFM+OyOWHzFJ0zsFkbJixE7V3F8qEVCiYFI+myGTrCnRSqD3jD0+GQjklj9P1+vmO0D9TBrH66z7YLL9t5E2lGOLJWnNI1uJoUKPTO+BrBvR4sOWuie3fBXCfMDbUr0N4uBfjnVSSAdHvjLf25pN3gkXEpptjSFjJ74blMVswHw9QlCQ4eXN+FGgoLhY2QpzPLpMFmH5ZX5R7r4jktqqNHy4rziM5R9Jxbdf9Gt4kjm0Uc4tEC4iohbTgGlDKIjZPcA2dP4QMCiuidXD80jl+KDSqaOHONB9urf2U0StFEmuJApbQ96gVo+a7/uEgb0izCnOv2V1BbGcQcgWrx7JkCipbae7Lsz/8Of4hqgXI="
 matrix:
   include:
     - os: osx
       compiler: clang
       osx_image: xcode7
+      env: PROCESSOR_ARCHITECTURE=x86_64 COMPILER=clang BUILD_ARCHITECTURE=macosx-clang-x86_64
     - os: linux
       compiler: gcc
       sudo: required
       dist: trusty
-
+      env: PROCESSOR_ARCHITECTURE=x86_64 COMPILER=gcc BUILD_ARCHITECTURE=linux-gnu-x86_64
 before_install:
+  - rvm install 2.0.0
+  - gem install git
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install cmake; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install gcc; fi
@@ -21,7 +29,14 @@ before_install:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get -y install gfortran; fi
 
 script:
+  - ruby -e "puts(RUBY_PLATFORM)"
+  - export SRC_BRANCH=$TRAVIS_BRANCH
   - mkdir build
   - cd build
-  - cmake ..
+  - cmake -DPROCESSOR_ARCHITECTURE=$PROCESSOR_ARCHITECTURE ..
+  - ruby ../scripts/clone-and-mimic.rb
   - make -j
+
+after_success:
+  - ctest
+  - ruby ../scripts/log-results.rb

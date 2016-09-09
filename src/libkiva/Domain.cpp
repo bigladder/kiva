@@ -40,13 +40,13 @@ void Domain::setDomain(Foundation &foundation)
   nY = meshY.centers.size();
   nZ = meshZ.centers.size();
 
-  cell.resize(boost::extents[nX][nY][nZ]);
+  cell.resize(nX,std::vector<std::vector<Cell> >(nY,std::vector<Cell>(nZ)));
 
-  for (std::size_t k = 0; k < nZ; k++)
+  for (std::size_t i = 0; i < nX; i++)
   {
     for (std::size_t j = 0; j < nY; j++)
     {
-      for (std::size_t i = 0; i < nX; i++)
+      for (std::size_t k = 0; k < nZ; k++)
       {
 
         // Set Cell Properties
@@ -213,11 +213,11 @@ void Domain::setDomain(Foundation &foundation)
 
   // Set effective properties of zero-thickness cells
   // based on other cells
-  for (std::size_t k = 0; k < nZ; k++)
+  for (std::size_t i = 0; i < nX; i++)
   {
     for (std::size_t j = 0; j < nY; j++)
     {
-      for (std::size_t i = 0; i < nX; i++)
+      for (std::size_t k = 0; k < nZ; k++)
       {
         int numZeroDims = getNumZeroDims(i,j,k);
 
@@ -243,11 +243,11 @@ void Domain::setDomain(Foundation &foundation)
   }
 
   // Calculate matrix coefficients
-  for (std::size_t k = 0; k < nZ; k++)
+  for (std::size_t i = 0; i < nX; i++)
   {
     for (std::size_t j = 0; j < nY; j++)
     {
-      for (std::size_t i = 0; i < nX; i++)
+      for (std::size_t k = 0; k < nZ; k++)
       {
 
         // PDE Coefficients
@@ -699,6 +699,6 @@ void Domain::printCellTypes()
 
 }
 
-} 
+}
 
 #endif

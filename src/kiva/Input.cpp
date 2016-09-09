@@ -104,13 +104,29 @@ void OutputReport::setOutputMap()
 
 void DataFile::readData()
 {
-  std::ifstream file(fileName.c_str());
+  // Check relative to working directory first
+  boost::filesystem::path dataFilePath(fileName);
+
+  if (!boost::filesystem::exists(dataFilePath)) {
+      // Then check relative to input file Directory
+
+      if (!boost::filesystem::exists(searchDir / dataFilePath)) {
+        // Print an error and exit
+        std::cerr << "Unable to read data file" << std::endl;
+        exit(EXIT_FAILURE);
+      }
+      else {
+        dataFilePath = searchDir / dataFilePath;
+      }
+  }
+
+  std::ifstream file(dataFilePath.string().c_str());
 
   if (!file.is_open())
   {
-      // Print an error and exit
-      std::cerr << "Unable to read data file" << std::endl;
-      exit(1);
+    // Print an error and exit
+    std::cerr << "Unable to read data file" << std::endl;
+    exit(EXIT_FAILURE);
   }
 
   // While there's still stuff left to read

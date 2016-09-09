@@ -77,11 +77,11 @@ void Simulator::initializeConditions()
     }
     else
     {
-      for (size_t k = 0; k < ground.nZ; ++k)
+      for (size_t i = 0; i < ground.nX; ++i)
       {
         for (size_t j = 0; j < ground.nY; ++j)
         {
-          for (size_t i = 0; i < ground.nX; ++i)
+          for (size_t k = 0; k < ground.nZ; ++k)
           {
             ground.TOld[i][j][k]= getInitialTemperature(tInit,
                 ground.domain.meshZ.centers[k]);

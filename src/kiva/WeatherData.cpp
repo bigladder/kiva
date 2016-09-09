@@ -132,7 +132,7 @@ void WeatherData::importEPW(std::string epwFile)
   {
       // Print an error and exit
       std::cerr << "Unable to read EPW file" << std::endl;
-      exit(1);
+      exit(EXIT_FAILURE);
   }
 
   // While there's still stuff left to read

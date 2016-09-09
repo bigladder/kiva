@@ -46,7 +46,7 @@ Foundation:
 Boundaries:
   Indoor Air Temperature Method: FILE
   Indoor Air Temperature File:
-    Name: ../examples/indoor-temps.csv
+    Name: indoor-temps.csv
     Index: [0,1]
 
 Output:

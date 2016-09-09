@@ -9,8 +9,8 @@
 #include "Functions.hpp"
 
 #include <fstream>
+#include <numeric>
 
-#include <boost/multi_array.hpp>
 #include <boost/assign/list_of.hpp>
 
 namespace Kiva {
@@ -68,7 +68,7 @@ public:
     std::size_t nY;
     std::size_t nZ;
 
-    boost::multi_array<Cell, 3> cell;
+    std::vector<std::vector<std::vector<Cell>>> cell;
 
 public:
 

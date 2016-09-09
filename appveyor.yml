@@ -1,35 +1,77 @@
 init:
+  - cmd: echo %PROCESSOR_ARCHITECTURE%
   - cmd: cmake --version
+  - cmd: ctest --version
 
 skip_branch_with_pr: true
 clone_depth: 100
 
+cache:
+  - i686-5.3.0-release-win32-dwarf-rt_v4-rev0.7z
+  - x86_64-5.3.0-release-win32-seh-rt_v4-rev0.7z
+
 environment:
+  global:
+      RT_URL: github.com/big-ladder/kiva-test-results.git
+      RT_DIR: build/test/results
+      PATOKEN:
+        secure: vB8XFwP3e+T61dIGoE2LxtolDMT/nsiFoJ6JMREjIObdHoCsscKOEKYlG0TWW+sx
+      RUBY_VERSION: "200"
+
   matrix:
     - GENERATOR: "MinGW Makefiles"
-      MINGW_DIR: C:\mingw-w64\i686-5.3.0-posix-dwarf-rt_v4-rev0\mingw32\bin
+      MINGW_DIR: mingw32
       CONFIG: Release
       COMPILER: MinGW
-      platform: x86
+      BIT: x86
+      MINGW_URL: https://sourceforge.net/projects/mingw-w64/files/Toolchains%20targetting%20Win32/Personal%20Builds/mingw-builds/5.3.0/threads-win32/dwarf/i686-5.3.0-release-win32-dwarf-rt_v4-rev0.7z/download
+      MINGW_ARCHIVE: i686-5.3.0-release-win32-dwarf-rt_v4-rev0.7z
+      BUILD_ARCHITECTURE: windows-gnu-x86
     - GENERATOR: "MinGW Makefiles"
-      MINGW_DIR: C:\mingw-w64\i686-5.3.0-posix-dwarf-rt_v4-rev0\mingw32\bin
+      MINGW_DIR: mingw64
       CONFIG: Release
       COMPILER: MinGW
-      platform: x64
+      BIT: x86_64
+      MINGW_URL: https://sourceforge.net/projects/mingw-w64/files/Toolchains%20targetting%20Win64/Personal%20Builds/mingw-builds/5.3.0/threads-win32/seh/x86_64-5.3.0-release-win32-seh-rt_v4-rev0.7z/download
+      MINGW_ARCHIVE: x86_64-5.3.0-release-win32-seh-rt_v4-rev0.7z
+      BUILD_ARCHITECTURE: windows-gnu-x86_64
     - GENERATOR: "Visual Studio 12"
       CONFIG: Release
       COMPILER: MSVC
+      BIT: x86
+      BUILD_ARCHITECTURE: windows-msvc-x86
     - GENERATOR: "Visual Studio 12 Win64"
       CONFIG: Release
       COMPILER: MSVC
+      BIT: x86_64
+      BUILD_ARCHITECTURE: windows-msvc-x86_64
+
+install:
+  - if "%COMPILER%"=="MinGW" (if not exist "%MINGW_ARCHIVE%" appveyor DownloadFile "%MINGW_URL%" -FileName "%MINGW_ARCHIVE%")
+  - if "%COMPILER%"=="MinGW" (7z x -y "%MINGW_ARCHIVE%" > nul)
+  - set PATH=C:\Ruby%RUBY_VERSION%\bin;%PATH%
+  - gem install git
 
 before_build:
-  - if "%COMPILER%"=="MinGW" (set "PATH=%PATH:C:\Program Files\Git\usr\bin;=%;%MINGW_DIR%")
+  - if "%COMPILER%"=="MinGW" (set "PATH=%PATH:C:\Program Files\Git\usr\bin;=%;%CD%\%MINGW_DIR%\bin")
   - if "%COMPILER%"=="MinGW" (g++ --version)
   - if "%COMPILER%"=="MinGW" (mingw32-make --version)
+  - ruby -v
+  - gem -v
+  - where ruby
 
 build_script:
-  - if "%COMPILER%"=="MSVC" (cmake "-G%GENERATOR%" -H. -B_builds)
-  - if "%COMPILER%"=="MSVC" (cmake --build _builds --config "%CONFIG%")
-  - if "%COMPILER%"=="MinGW" (cmake "-G%GENERATOR%" -H. -B_builds -DCMAKE_BUILD_TYPE="%CONFIG%")
-  - if "%COMPILER%"=="MinGW" (cmake --build _builds -- -j)
+  - ruby -e "puts(RUBY_PLATFORM)"
+  - SET SRC_BRANCH=%APPVEYOR_REPO_BRANCH%
+  - mkdir build
+  - cd build
+  - if "%COMPILER%"=="MSVC" (cmake "-G%GENERATOR%" "-DPROCESSOR_ARCHITECTURE=%BIT%" ..)
+  - if "%COMPILER%"=="MinGW" (cmake "-G%GENERATOR%" -DCMAKE_BUILD_TYPE="%CONFIG%" "-DPROCESSOR_ARCHITECTURE=%BIT%" ..)
+  - ruby ..\scripts\clone-and-mimic.rb
+  - if "%COMPILER%"=="MSVC" (cmake --build . --config "%CONFIG%" -- /m)
+  - if "%COMPILER%"=="MinGW" (cmake --build . -- -j)
+
+test_script:
+  - if "%COMPILER%"=="MSVC" (ctest -C "%CONFIG%")
+  - if "%COMPILER%"=="MinGW" (ctest)
+  - ruby ..\scripts\log-results.rb
