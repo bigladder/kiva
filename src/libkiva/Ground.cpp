@@ -400,7 +400,7 @@ void Ground::calculateADEDownwardSweep()
           case Surface::INTERIOR_FLUX:
             {
             double& Tair = bcs.indoorTemp;
-            double q = 0;
+            double q = domain.cell[i][j][k].heatGain;
 
             double hc = getConvectionCoeff(TOld[i][j][k],
                     Tair,0.0,1.52,false,tilt);
@@ -445,7 +445,7 @@ void Ground::calculateADEDownwardSweep()
             double F = getEffectiveExteriorViewFactor(eSky,tilt);
             double hc = getConvectionCoeff(TOld[i][j][k],Tair,v,foundation.surfaceRoughness,true,tilt);
             double hr = getExteriorIRCoeff(domain.cell[i][j][k].surface.emissivity,TOld[i][j][k],Tair,eSky,tilt);
-            double q = domain.cell[i][j][k].surface.absorptivity*bcs.globalHorizontalFlux;
+            double q = domain.cell[i][j][k].heatGain;
 
             switch (domain.cell[i][j][k].surface.orientation)
             {
@@ -602,7 +602,7 @@ void Ground::calculateExplicit()
           case Surface::INTERIOR_FLUX:
             {
             double& Tair = bcs.indoorTemp;
-            double q = 0;
+            double q = domain.cell[i][j][k].heatGain;
 
             double hc = getConvectionCoeff(TOld[i][j][k],
                     Tair,0.0,1.52,false,tilt);
@@ -647,7 +647,7 @@ void Ground::calculateExplicit()
             double F = getEffectiveExteriorViewFactor(eSky,tilt);
             double hc = getConvectionCoeff(TOld[i][j][k],Tair,v,foundation.surfaceRoughness,true,tilt);
             double hr = getExteriorIRCoeff(domain.cell[i][j][k].surface.emissivity,TOld[i][j][k],Tair,eSky,tilt);
-            double q = domain.cell[i][j][k].surface.absorptivity*bcs.globalHorizontalFlux;
+            double q = domain.cell[i][j][k].heatGain;
 
             switch (domain.cell[i][j][k].surface.orientation)
             {
@@ -865,7 +865,7 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
           case Surface::INTERIOR_FLUX:
             {
             double Tair = bcs.indoorTemp;
-            double q = 0;
+            double q = domain.cell[i][j][k].heatGain;
 
             double hc = getConvectionCoeff(TOld[i][j][k],
                     Tair,0.0,1.52,false,tilt);
@@ -940,7 +940,7 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
             double F = getEffectiveExteriorViewFactor(eSky,tilt);
             double hc = getConvectionCoeff(TOld[i][j][k],Tair,v,foundation.surfaceRoughness,true,tilt);
             double hr = getExteriorIRCoeff(domain.cell[i][j][k].surface.emissivity,TOld[i][j][k],Tair,eSky,tilt);
-            double q = domain.cell[i][j][k].surface.absorptivity*bcs.globalHorizontalFlux;
+            double q = domain.cell[i][j][k].heatGain;
 
             switch (domain.cell[i][j][k].surface.orientation)
             {
@@ -1353,7 +1353,7 @@ void Ground::calculateADI(int dim)
           case Surface::INTERIOR_FLUX:
             {
             double Tair = bcs.indoorTemp;
-            double q = 0;
+            double q = domain.cell[i][j][k].heatGain;
 
             double hc = getConvectionCoeff(TOld[i][j][k],
                     Tair,0.0,1.52,false,tilt);
@@ -1476,7 +1476,7 @@ void Ground::calculateADI(int dim)
             double F = getEffectiveExteriorViewFactor(eSky,tilt);
             double hc = getConvectionCoeff(TOld[i][j][k],Tair,v,foundation.surfaceRoughness,true,tilt);
             double hr = getExteriorIRCoeff(domain.cell[i][j][k].surface.emissivity,TOld[i][j][k],Tair,eSky,tilt);
-            double q = domain.cell[i][j][k].surface.absorptivity*bcs.globalHorizontalFlux;
+            double q = domain.cell[i][j][k].heatGain;
 
             switch (domain.cell[i][j][k].surface.orientation)
             {
