@@ -12,23 +12,23 @@ static const double PI = 4.0*atan(1.0);
 
 static const bool TDMA = true;
 
-Ground::Ground(Foundation &foundation) : foundation(foundation)
+Ground::Ground(Foundation &foundation) : foundation(foundation), lisInit(false)
 {
-
 }
 
 Ground::Ground(Foundation &foundation, GroundOutput::OutputMap &outputMap)
-  : foundation(foundation), groundOutput(outputMap)
+  : foundation(foundation), groundOutput(outputMap), lisInit(false)
 {
-
 }
 
 Ground::~Ground()
 {
-  lis_matrix_destroy(Amat);
-  lis_vector_destroy(x);
-  lis_vector_destroy(b);
-  lis_solver_destroy(solver); // for whatever reason, this causes a crash
+  if (lisInit) {
+    lis_matrix_destroy(Amat);
+    lis_vector_destroy(x);
+    lis_vector_destroy(b);
+    lis_solver_destroy(solver);
+  }
 }
 
 void Ground::buildDomain()
@@ -86,6 +86,8 @@ void Ground::buildDomain()
   lis_vector_set_all(283.15,x);  // TODO Set better default
   lis_solver_create(&solver);
   lis_solver_set_option(&solverOptions[0],solver);
+
+  lisInit = true;
 
   TNew.resize(nX,std::vector<std::vector<double> >(nY,std::vector<double>(nZ)));
   TOld.resize(nX,std::vector<std::vector<double> >(nY,std::vector<double>(nZ)));
@@ -201,7 +203,7 @@ void Ground::calculateADEUpwardSweep()
             double q = domain.cell[i][j][k].heatGain;
 
             double hc = getConvectionCoeff(TOld[i][j][k],
-                    Tair,0.0,1.52,false,tilt);
+                    Tair,0.0,0.00208,false,tilt);  // TODO Make roughness a property of the interior surfaces
             double hr = getSimpleInteriorIRCoeff(domain.cell[i][j][k].surface.emissivity,
                                TOld[i][j][k],Tair);
 
@@ -336,11 +338,11 @@ void Ground::calculateADEUpwardSweep()
 void Ground::calculateADEDownwardSweep()
 {
   // Downward sweep (Solve V Matrix starting from I, K)
-  for (size_t i = nX - 1; i >= 0 && i < nX; i--)
+  for (size_t i = nX - 1; /* i >= 0 && */ i < nX; i--)
   {
-    for (size_t j = nY - 1; j >= 0 && j < nY; j--)
+    for (size_t j = nY - 1; /* j >= 0 && */ j < nY; j--)
     {
-      for (size_t k = nZ - 1; k >= 0 && k < nZ; k--)
+      for (size_t k = nZ - 1; /* k >= 0 && */ k < nZ; k--)
       {
         switch (domain.cell[i][j][k].cellType)
         {
@@ -403,7 +405,7 @@ void Ground::calculateADEDownwardSweep()
             double q = domain.cell[i][j][k].heatGain;
 
             double hc = getConvectionCoeff(TOld[i][j][k],
-                    Tair,0.0,1.52,false,tilt);
+                    Tair,0.0,0.00208,false,tilt);
             double hr = getSimpleInteriorIRCoeff(domain.cell[i][j][k].surface.emissivity,
                                TOld[i][j][k],Tair);
 
@@ -605,7 +607,7 @@ void Ground::calculateExplicit()
             double q = domain.cell[i][j][k].heatGain;
 
             double hc = getConvectionCoeff(TOld[i][j][k],
-                    Tair,0.0,1.52,false,tilt);
+                    Tair,0.0,0.00208,false,tilt);
             double hr = getSimpleInteriorIRCoeff(domain.cell[i][j][k].surface.emissivity,
                                TOld[i][j][k],Tair);
 
@@ -868,7 +870,7 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
             double q = domain.cell[i][j][k].heatGain;
 
             double hc = getConvectionCoeff(TOld[i][j][k],
-                    Tair,0.0,1.52,false,tilt);
+                    Tair,0.0,0.00208,false,tilt);
             double hr = getSimpleInteriorIRCoeff(domain.cell[i][j][k].surface.emissivity,
                                TOld[i][j][k],Tair);
 
@@ -1356,7 +1358,7 @@ void Ground::calculateADI(int dim)
             double q = domain.cell[i][j][k].heatGain;
 
             double hc = getConvectionCoeff(TOld[i][j][k],
-                    Tair,0.0,1.52,false,tilt);
+                    Tair,0.0,0.00208,false,tilt);
             double hr = getSimpleInteriorIRCoeff(domain.cell[i][j][k].surface.emissivity,
                                TOld[i][j][k],Tair);
 
@@ -1654,7 +1656,7 @@ void Ground::calculateADI(int dim)
                    + TOld[i][j][k+1]*f*CZP
                    + Q;
             }
-            else if (dim == 3) // z
+            else //if (dim == 3) // z
             {
               A = (1.0 + (3 - 2*f)*(CZP - CZM));
               Am = (3 - 2*f)*CZM;
@@ -1690,7 +1692,7 @@ void Ground::calculateADI(int dim)
                    + TOld[i][j][k+1]*f*CZP
                    + Q;
             }
-            else if (dim == 3) // z
+            else //if (dim == 3) // z
             {
               A = 1.0 + (2 - f)*(CZP - CZM);
               Am = (2 - f)*CZM;
@@ -1728,7 +1730,7 @@ void Ground::calculateADI(int dim)
           index = i + nX*j + nX*nY*k;
         else if (dim == 2)
           index = j + nY*i + nY*nX*k;
-        else if (dim == 3)
+        else //if (dim == 3)
           index = k + nZ*i + nZ*nX*j;
 
         // Read solution into temperature matrix
@@ -1964,7 +1966,7 @@ void Ground::calculateSurfaceAverages(){
             std::size_t j = boost::get<1>(foundation.surfaces[s].indices[index]);
             std::size_t k = boost::get<2>(foundation.surfaces[s].indices[index]);
 
-            double h = getConvectionCoeff(TNew[i][j][k],Tair,0.0,1.52,false,tilt)
+            double h = getConvectionCoeff(TNew[i][j][k],Tair,0.0,0.00208,false,tilt)
                  + getSimpleInteriorIRCoeff(domain.cell[i][j][k].surface.emissivity,
                      TNew[i][j][k],Tair);
 
@@ -1980,11 +1982,12 @@ void Ground::calculateSurfaceAverages(){
     }
 
     double Tavg = TA/totalArea;
+    double hAvg = totalHeatTransferRate/(totalArea*(Tair - Tavg));
+
     groundOutput.outputValues[{surface,GroundOutput::OT_TEMP}] = Tavg;
     groundOutput.outputValues[{surface,GroundOutput::OT_FLUX}] = totalHeatTransferRate/totalArea;
     groundOutput.outputValues[{surface,GroundOutput::OT_RATE}] = totalHeatTransferRate/totalArea*surfaceArea;
-
-    double hAvg = totalHeatTransferRate/(totalArea*(Tair - Tavg));
+    groundOutput.outputValues[{surface,GroundOutput::OT_CONV}] = hAvg;
 
     groundOutput.outputValues[{surface,GroundOutput::OT_EFF_TEMP}] = Tair - (totalHeatTransferRate/totalArea)*(constructionRValue+1/hAvg) - 273.15;
   }
@@ -2094,7 +2097,7 @@ std::vector<double> Ground::calculateHeatFlux(const size_t &i, const size_t &j, 
       break;
     case Cell::ZERO_THICKNESS:
       {
-        int numZeroDims = domain.getNumZeroDims(i,j,k);
+        //int numZeroDims = domain.getNumZeroDims(i,j,k);
 
         std::vector<double> Qm;
         std::vector<double> Qp;
@@ -2173,7 +2176,6 @@ void Ground::calculateBoundaryLayer()
   for (size_t i = i_min; i < pre.nX; i++)
   {
     double Qz = pre.calculateHeatFlux(i,j,k)[2];
-    double x = pre.domain.meshX.centers[i];
     double x1 = pre.domain.meshX.dividers[i];
     double x2 = pre.domain.meshX.dividers[i+1];
 
@@ -2290,7 +2292,7 @@ void Ground::setNewBoundaryGeometry()
       double edgeDistance = BC;
       double reductionDistance = std::min(AB,CD);
       double reductionValue = 1 - getBoundaryValue(edgeDistance);
-      perimeter -= reductionValue*(AB+CD);
+      perimeter -= 2*reductionDistance*reductionValue;
     }
 
     double alpha = getAngle(a,b,c);
@@ -2339,8 +2341,8 @@ void Ground::setSolarBoundaryConditions()
       double& azi = bcs.solarAzimuth;
       double& alt = bcs.solarAltitude;
       double& qDN = bcs.directNormalFlux;
-      double& qGH = bcs.globalHorizontalFlux;
       double& qDH = bcs.diffuseHorizontalFlux;
+      double qGH = cos(PI/2 - alt)*qDN + qDH;
       double pssf;
       double q;
 

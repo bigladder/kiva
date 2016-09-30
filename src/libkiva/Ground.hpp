@@ -58,7 +58,7 @@ public:
 
 private:
 
-  double timestep;
+  double timestep;  // in seconds
 
   BoundaryConditions bcs;
   // Data structures
@@ -81,6 +81,8 @@ private:
   LIS_VECTOR b, x;
 
   LIS_SOLVER solver;
+
+  bool lisInit;
 
   std::vector<char> solverOptions;
 

@@ -116,7 +116,7 @@ double HourlyData::getMax()
 
 WeatherData::WeatherData(std::string weatherFile)
 {
-  globalHorizontalSolar.dataType = HourlyData::DT_SOLAR;
+  //globalHorizontalSolar.dataType = HourlyData::DT_SOLAR;
   directNormalSolar.dataType = HourlyData::DT_SOLAR;
   diffuseHorizontalSolar.dataType = HourlyData::DT_SOLAR;
   importEPW(weatherFile);
@@ -217,10 +217,6 @@ void WeatherData::importEPW(std::string epwFile)
       atmosphericPressure.push_back(
           double(boost::lexical_cast<double>(columns[9])));  // [Pa]
 
-      // Note: global horizontal solar can be calculated using solar position,
-      // direct normal solar and diffuse solar.
-      // double qGH = double(boost::lexical_cast<double>(columns[13]));
-
       double qDN = double(boost::lexical_cast<double>(columns[14]));
 
       directNormalSolar.push_back(qDN);  // [W/m2]
@@ -269,9 +265,6 @@ void WeatherData::importEPW(std::string epwFile)
 
       double alt = asin(sinLat*sinDec + cosLat*cosDec*cosHA);
       altitude.push_back(alt);
-
-      double qGH = cos(PI/2 - alt)*qDN + qDH;
-      globalHorizontalSolar.push_back(qGH);  // [W/m2]
 
       // clockwise from north
       double azi = PI + acos((sin(alt)*sinLat - sinDec)/(cos(alt)*cosLat));

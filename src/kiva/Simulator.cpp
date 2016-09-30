@@ -403,7 +403,6 @@ void Simulator::updateBoundaryConditions(boost::posix_time::ptime t)
   bcs.solarAzimuth = weatherData.azimuth.getValue(t);
   bcs.solarAltitude = weatherData.altitude.getValue(t);
   bcs.directNormalFlux = weatherData.directNormalSolar.getValue(t);
-  bcs.globalHorizontalFlux = weatherData.globalHorizontalSolar.getValue(t);
   bcs.diffuseHorizontalFlux = weatherData.diffuseHorizontalSolar.getValue(t);
   bcs.skyEmissivity = weatherData.skyEmissivity.getValue(t);
 

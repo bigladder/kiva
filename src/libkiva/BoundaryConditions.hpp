@@ -14,7 +14,6 @@ public:
   double solarAzimuth;
   double solarAltitude;
   double directNormalFlux;
-  double globalHorizontalFlux;
   double diffuseHorizontalFlux;
   double skyEmissivity;
 
@@ -25,7 +24,6 @@ public:
     solarAzimuth(3.14),
     solarAltitude(0.0),
     directNormalFlux(0.0),
-    globalHorizontalFlux(0.0),
     diffuseHorizontalFlux(0.0),
     skyEmissivity(0.0)
   {}

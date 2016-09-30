@@ -68,7 +68,7 @@ public:
   //HourlyData enthalpy;
 
   //HourlyData solarAngle;
-  HourlyData globalHorizontalSolar;
+  //HourlyData globalHorizontalSolar;
   HourlyData directNormalSolar;
   HourlyData diffuseHorizontalSolar;
 
