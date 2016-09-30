@@ -681,7 +681,7 @@ void Domain::printCellTypes()
 
   output << "\n";
 
-  for (std::size_t k = nZ - 1; k >= 0 && k < nZ; k--)
+  for (std::size_t k = nZ - 1; /* k >= 0 && */ k < nZ; k--)
   {
 
     output << k;

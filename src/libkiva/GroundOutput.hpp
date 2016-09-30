@@ -17,14 +17,14 @@ public:
     OT_FLUX,
     OT_TEMP,
     OT_EFF_TEMP,
-    OT_RATE
+    OT_RATE,
+    OT_CONV
   };
 
   typedef std::map<Surface::SurfaceType, std::vector<OutputType>> OutputMap;
 
-  GroundOutput(OutputMap oM) {
-    outputMap = oM;
-  };
+  GroundOutput(OutputMap oM) : outputMap(oM)
+  {};
 
   GroundOutput() {};
 

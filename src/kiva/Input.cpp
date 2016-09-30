@@ -91,7 +91,7 @@ void OutputReport::setOutputMap()
 {
   for (auto outVar : *this) {
     for (auto s : outVar.surfaces) {
-      if (!(outputMap.count(s))) { // If surface isn't in map
+      if (!(outputMap.count(s))) { // If surface isn't in map create it and add to the list of outputs
         outputMap[s].push_back(outVar.outType);
       }
       else if (std::find(outputMap[s].begin(), outputMap[s].end(), outVar.outType) == outputMap[s].end()) {
