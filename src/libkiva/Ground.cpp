@@ -4,6 +4,8 @@
 #ifndef Ground_CPP
 #define Ground_CPP
 
+#undef PRNTSURF
+
 #include "Ground.hpp"
 
 namespace Kiva {
@@ -199,8 +201,8 @@ void Ground::calculateADEUpwardSweep()
 
           case Surface::INTERIOR_FLUX:
             {
-            double Tair = bcs.indoorTemp;
-            double q = domain.cell[i][j][k].heatGain;
+            double& Tair = bcs.indoorTemp;
+            double& q = domain.cell[i][j][k].heatGain;
 
             double hc = getConvectionCoeff(TOld[i][j][k],
                     Tair,0.0,0.00208,false,tilt);  // TODO Make roughness a property of the interior surfaces
@@ -402,7 +404,7 @@ void Ground::calculateADEDownwardSweep()
           case Surface::INTERIOR_FLUX:
             {
             double& Tair = bcs.indoorTemp;
-            double q = domain.cell[i][j][k].heatGain;
+            double& q = domain.cell[i][j][k].heatGain;
 
             double hc = getConvectionCoeff(TOld[i][j][k],
                     Tair,0.0,0.00208,false,tilt);
@@ -604,7 +606,7 @@ void Ground::calculateExplicit()
           case Surface::INTERIOR_FLUX:
             {
             double& Tair = bcs.indoorTemp;
-            double q = domain.cell[i][j][k].heatGain;
+            double& q = domain.cell[i][j][k].heatGain;
 
             double hc = getConvectionCoeff(TOld[i][j][k],
                     Tair,0.0,0.00208,false,tilt);
@@ -866,8 +868,8 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
             break;
           case Surface::INTERIOR_FLUX:
             {
-            double Tair = bcs.indoorTemp;
-            double q = domain.cell[i][j][k].heatGain;
+            double& Tair = bcs.indoorTemp;
+            double& q = domain.cell[i][j][k].heatGain;
 
             double hc = getConvectionCoeff(TOld[i][j][k],
                     Tair,0.0,0.00208,false,tilt);
@@ -1354,8 +1356,8 @@ void Ground::calculateADI(int dim)
             break;
           case Surface::INTERIOR_FLUX:
             {
-            double Tair = bcs.indoorTemp;
-            double q = domain.cell[i][j][k].heatGain;
+            double& Tair = bcs.indoorTemp;
+            double& q = domain.cell[i][j][k].heatGain;
 
             double hc = getConvectionCoeff(TOld[i][j][k],
                     Tair,0.0,0.00208,false,tilt);
@@ -1750,6 +1752,7 @@ void Ground::calculate(BoundaryConditions& boundaryConidtions, double ts)
   timestep = ts;
   // update boundary conditions
   setSolarBoundaryConditions();
+  setInteriorRadiationBoundaryConditions();
 
   // Calculate Temperatures
   switch(foundation.numericalScheme)
@@ -1832,6 +1835,7 @@ void Ground::solveLinearSystem()
       lis_solver_get_iter(solver, &iters);
       lis_solver_get_residualnorm(solver, &residual);
 
+      // TODO Kiva: Make error wrapper inteface
       std::cerr << "Warning: Solution did not converge after ";
       std::cerr << iters << " iterations." << "\n";
       std::cerr << "  The final residual was: " << residual << "\n";
@@ -1959,6 +1963,11 @@ void Ground::calculateSurfaceAverages(){
           else
             tilt = PI/2.0;
 
+          #ifdef PRNTSURF
+            std::ofstream output;
+            output.open("surface.csv");
+            output  << "x, T, h, q, dx\n";
+          #endif
 
           for (std::size_t index = 0; index < foundation.surfaces[s].indices.size(); index++)
           {
@@ -1976,7 +1985,21 @@ void Ground::calculateSurfaceAverages(){
             totalHeatTransferRate += h*A*(Tair - TNew[i][j][k]);
             TA += TNew[i][j][k]*A;
 
+            #ifdef PRNTSURF
+              output <<
+                domain.meshX.centers[i] << ", " <<
+                TNew[i][j][k] << ", " <<
+                h << ", " <<
+                h*(Tair - TNew[i][j][k]) << ", " <<
+                domain.meshX.deltas[i] << "\n";
+            #endif
+
           }
+
+          #ifdef PRNTSURF
+            output.close();
+          #endif
+
         }
       }
     }
@@ -2524,6 +2547,31 @@ void Ground::setSolarBoundaryConditions()
         }
         domain.cell[i][j][k].heatGain = q;
 
+      }
+    }
+  }
+}
+
+void Ground::setInteriorRadiationBoundaryConditions()
+{
+  for (std::size_t s = 0; s < foundation.surfaces.size() ; s++)
+  {
+    if (foundation.surfaces[s].type == Surface::ST_SLAB_CORE
+        || foundation.surfaces[s].type == Surface::ST_SLAB_PERIM
+        || foundation.surfaces[s].type == Surface::ST_WALL_INT)
+    {
+      for (std::size_t index = 0; index < foundation.surfaces[s].indices.size(); index++)
+      {
+        std::size_t i = boost::get<0>(foundation.surfaces[s].indices[index]);
+        std::size_t j = boost::get<1>(foundation.surfaces[s].indices[index]);
+        std::size_t k = boost::get<2>(foundation.surfaces[s].indices[index]);
+
+        if (foundation.surfaces[s].type == Surface::ST_WALL_INT) {
+          domain.cell[i][j][k].heatGain = bcs.wallAbsRadiation;
+        }
+        else {
+          domain.cell[i][j][k].heatGain = bcs.slabAbsRadiation;
+        }
       }
     }
   }

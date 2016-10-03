@@ -657,7 +657,7 @@ void Foundation::createMeshData()
       surface.zMax = zSlab;
       surface.boundaryConditionType = Surface::INTERIOR_FLUX;
       surface.orientation = Surface::Z_POS;
-      surface.emissivity = wall.interiorEmissivity;
+      surface.emissivity = slab.emissivity;
       surfaces.push_back(surface);
     }
     if (hasPerimeterSurface)
@@ -674,7 +674,7 @@ void Foundation::createMeshData()
         surface.zMax = zSlab;
         surface.boundaryConditionType = Surface::INTERIOR_FLUX;
         surface.orientation = Surface::Z_POS;
-        surface.emissivity = wall.interiorEmissivity;
+        surface.emissivity = slab.emissivity;
         surfaces.push_back(surface);
       }
       if (twoParameters)
@@ -690,7 +690,7 @@ void Foundation::createMeshData()
         surface.zMax = zSlab;
         surface.boundaryConditionType = Surface::INTERIOR_FLUX;
         surface.orientation = Surface::Z_POS;
-        surface.emissivity = wall.interiorEmissivity;
+        surface.emissivity = slab.emissivity;
         surfaces.push_back(surface);
       }
     }
@@ -1614,7 +1614,7 @@ void Foundation::createMeshData()
       surface.zMax = zSlab;
       surface.boundaryConditionType = Surface::INTERIOR_FLUX;
       surface.orientation = Surface::Z_POS;
-      surface.emissivity = wall.interiorEmissivity;
+      surface.emissivity = slab.emissivity;
       surfaces.push_back(surface);
     }
     if (hasPerimeterSurface)
@@ -1637,7 +1637,7 @@ void Foundation::createMeshData()
       surface.zMax = zSlab;
       surface.boundaryConditionType = Surface::INTERIOR_FLUX;
       surface.orientation = Surface::Z_POS;
-      surface.emissivity = wall.interiorEmissivity;
+      surface.emissivity = slab.emissivity;
       surfaces.push_back(surface);
     }
 
@@ -2493,7 +2493,7 @@ void Foundation::createMeshData()
       surface.zMax = zSlab;
       surface.boundaryConditionType = Surface::INTERIOR_FLUX;
       surface.orientation = Surface::Z_POS;
-      surface.emissivity = wall.interiorEmissivity;
+      surface.emissivity = slab.emissivity;
       surfaces.push_back(surface);
     }
     if (hasPerimeterSurface)
@@ -2519,7 +2519,7 @@ void Foundation::createMeshData()
       surface.zMax = zSlab;
       surface.boundaryConditionType = Surface::INTERIOR_FLUX;
       surface.orientation = Surface::Z_POS;
-      surface.emissivity = wall.interiorEmissivity;
+      surface.emissivity = slab.emissivity;
       surfaces.push_back(surface);
     }
 

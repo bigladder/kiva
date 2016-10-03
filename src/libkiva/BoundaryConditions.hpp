@@ -16,6 +16,8 @@ public:
   double directNormalFlux;
   double diffuseHorizontalFlux;
   double skyEmissivity;
+  double slabAbsRadiation;
+  double wallAbsRadiation;
 
   BoundaryConditions() :
     indoorTemp(293.15),
@@ -25,7 +27,9 @@ public:
     solarAltitude(0.0),
     directNormalFlux(0.0),
     diffuseHorizontalFlux(0.0),
-    skyEmissivity(0.0)
+    skyEmissivity(0.0),
+    slabAbsRadiation(0.0),
+    wallAbsRadiation(0.0)
   {}
 
 };

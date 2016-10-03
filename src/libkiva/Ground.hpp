@@ -119,6 +119,7 @@ private:
   double getSurfaceArea(Surface::SurfaceType surfaceType);
 
   void setSolarBoundaryConditions();
+  void setInteriorRadiationBoundaryConditions();
 
   std::vector<std::pair<double,double>> boundaryLayer;
 

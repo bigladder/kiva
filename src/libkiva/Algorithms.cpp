@@ -43,7 +43,7 @@ double getDOE2ConvectionCoeff(double tilt,
        (cos(tilt) > 0.0 && Tsurf > Tamb))
   {
     hn = 9.482*(pow(fabs(Tsurf - Tamb),1.0/3.0))/
-        (7.238 - fabs(cos(tilt)));
+        (7.283 - fabs(cos(tilt)));
   }
   else /*if ((cos(tilt) < 0.0 && Tsurf > Tamb) ||
        (cos(tilt) > 0.0 && Tsurf < Tamb)) */
