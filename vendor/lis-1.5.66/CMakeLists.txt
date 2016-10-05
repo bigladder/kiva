@@ -78,6 +78,12 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I/usr/include/malloc/")
 endif()
 
+if(MSVC)
+	SET( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W0" )
+else()
+	SET( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -w" )
+endif()
+
 ######################################################################
 # Add subdirectories
 

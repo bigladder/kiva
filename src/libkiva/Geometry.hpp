@@ -39,7 +39,7 @@ namespace geom
     LEFT,
     RIGHT
   };
-};
+}
 
 bool isRectilinear(Polygon poly);
 Polygon offset(Polygon poly, double dist);
