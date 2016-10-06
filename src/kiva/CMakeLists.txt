@@ -31,4 +31,14 @@ set(links boost_date_time
           mgl-static
           lis )
 
+if( MSVC )
+  set_target_properties(yaml-cpp PROPERTIES COMPILE_FLAGS "/W0")
+  set_target_properties(mgl-static PROPERTIES COMPILE_FLAGS "/W0")
+  set_target_properties(lis PROPERTIES COMPILE_FLAGS "/W0")
+else()
+  set_target_properties(yaml-cpp PROPERTIES COMPILE_FLAGS "-w")
+  set_target_properties(mgl-static PROPERTIES COMPILE_FLAGS "-w")
+  set_target_properties(lis PROPERTIES COMPILE_FLAGS "-w")
+endif()
+
 target_link_libraries(kiva ${links} libkiva)

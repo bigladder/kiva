@@ -110,3 +110,10 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 endif()
 
 target_link_libraries(libkiva ${links})
+
+if( MSVC )
+  set_target_properties(lis PROPERTIES COMPILE_FLAGS "/W0")
+else()
+  set_target_properties(libkiva PROPERTIES COMPILE_FLAGS "-fPIC")
+  set_target_properties(lis PROPERTIES COMPILE_FLAGS "-w -fPIC")
+endif()
