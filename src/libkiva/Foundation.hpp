@@ -55,7 +55,7 @@ public:
   double exteriorEmissivity;
   double exteriorAbsorptivity;
   double heightAboveGrade;  // [m] below grade depth
-  double height;  // [m] total height
+  double footerDepth;  // [m] total height
   std::vector <Layer> layers;
 
   double totalWidth();

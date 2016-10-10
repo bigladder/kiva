@@ -3,25 +3,28 @@
 ### Fixes:
 * Improve output reporting. 2D simulations now report heat transfer rates
   representative of the 3D inputs.
+* Small fixes to solar and convective boundary conditions.
 
 ### Features:
-* Separate core functionality into a linked library
-* Move boundary conditions and initialization inputs into a higher level
-* Use continuous integration for building and testing
+* Separate core functionality into a linked library.
+* Move boundary, initialization, and output related inputs to a higher level.
+* Replace foundation wall height ("Height") with footer depth relative to bottom
+  of the slab ("Footer Depth Below Slab").
+* Use continuous integration for building and testing.
 
 0.3.1 Released 16 October 2015
 ------------------------------
 ### Fixes:
-* Make indoor/outdoor air temperature fields more consistent
-* Cross-platform CSV line ending support
+* Make indoor/outdoor air temperature fields more consistent.
+* Cross-platform CSV line ending support.
 
 0.3.0 Released 28 September 2015
 --------------------------------
 ### Features:
-* Better naming conventions for input fields
-* More informed default values
-* User documentation
-* Example files
+* Better naming conventions for input fields.
+* More informed default values.
+* User documentation.
+* Example files.
 
 0.2.1 Released 16 March 2015
 ----------------------------

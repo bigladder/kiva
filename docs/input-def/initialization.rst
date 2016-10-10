@@ -3,6 +3,16 @@ Initialization
 
 Defines how the inital temperatures are generated for the model.
 
+**Example:**
+
+.. code-block:: yaml
+
+  Initialization:
+    Initialization Method: STEADY-STATE  # KUSUDA | CONSTANT | STEADY-STATE
+    Accelerated Initialization Timestep: 168  # hours
+    Number of Accelearted Initialization Timesteps: 12
+    Number of Warmup Days in Initialization: 365 # days
+
 Initialization Method
 ---------------------
 

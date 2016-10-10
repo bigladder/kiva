@@ -38,7 +38,7 @@ The foundation insulation and structural components are defined by (up to) six s
           Material: Concrete # Material reference
           Thickness: 0.3048 # [m]
       Height Above Grade: 0.3048  # [m]
-      Height: 0.508 # [m]
+      Footer Depth Below Slab: 0.3 # [m]
     Interior Horizontal Insulation:
       Depth: 0.2032 # [m]
       Width: 0.4064 # [m]
@@ -184,7 +184,7 @@ This defines the costruction of the foundation wall. This is not required. If th
 .. code-block:: yaml
 
   Wall:
-    Height: 2.95 # [m]
+    Footer Depth Below Slab: 0.3 # [m]
     Height Above Grade: 0.3048  # [m]
     Layers:
       -
@@ -202,29 +202,29 @@ This defines the costruction of the foundation wall. This is not required. If th
 **Type:**       Compound object
 =============   ===============
 
-Height
-^^^^^^
-
-The height of the wall describes the distance from the wall top to the bottom of the foundation footer (the footer is not modeled separately). This value should generally be greater than that of the `Foundation Depth`_ combined with the total thickness of the slab.
-
-=============   =======
-**Required:**   Yes
-**Type:**       Numeric
-**Units:**      m
-=============   =======
-
-
 Height Above Grade
 ^^^^^^^^^^^^^^^^^^
 
 The height of the wall top relative to the grade (z = 0).
 
 =============   =======
-**Required:**   Yes
+**Required:**   No
 **Type:**       Numeric
 **Units:**      m
+**Default:**    0.2
 =============   =======
 
+Footer Depth Below Slab
+^^^^^^^^^^^^^^^^^^^^^^^
+
+The distance from the bottom of the slab to the bottom of the foundation footer (the footer is not modeled separately). The total wall extends down to this level.
+
+=============   =======
+**Required:**   No
+**Type:**       Numeric
+**Units:**      m
+**Default:**    0.3
+=============   =======
 
 Layers
 ^^^^^^

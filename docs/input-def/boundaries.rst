@@ -1,7 +1,17 @@
-Boundary Conditions
-===================
+Boundaries
+==========
 
 Definitions related to the boundary conditions of the ground domain.
+
+**Example:**
+
+.. code-block:: yaml
+
+  Boundaries:
+    Far-Field Width: 40.0  # [m]
+    Deep-Ground Depth: 40.0  # [m]
+    Deep-Ground Boundary Condition: ZERO-FLUX  # AUTO | CONSTANT-TEMP | ZERO-FLUX
+    Indoor Air Temperature: 295.0  # [K]
 
 Indoor Air Temperature Method
 -----------------------------

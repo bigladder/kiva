@@ -244,7 +244,7 @@ void Foundation::createMeshData()
   double zWall = 0.0;
   if (hasWall)
   {
-    zWall = wall.heightAboveGrade - wall.height;
+    zWall = zSlabBottom - wall.footerDepth;
     if(zWall < zNearDeep)
     {
       zNearDeep = zWall;

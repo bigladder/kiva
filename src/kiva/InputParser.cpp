@@ -109,8 +109,17 @@ Input inputParser(std::string inputFile)
 
     }
 
-    foundation.wall.heightAboveGrade = yamlInput["Foundation"]["Wall"]["Height Above Grade"].as<double>();
-    foundation.wall.height = yamlInput["Foundation"]["Wall"]["Height"].as<double>();
+    if (yamlInput["Foundation"]["Wall"]["Height Above Grade"].IsDefined()) {
+      foundation.wall.heightAboveGrade = yamlInput["Foundation"]["Wall"]["Height Above Grade"].as<double>();
+    } else {
+      foundation.wall.heightAboveGrade = 0.2;
+    }
+
+    if (yamlInput["Foundation"]["Wall"]["Footer Depth Below Slab"].IsDefined()) {
+      foundation.wall.footerDepth = yamlInput["Foundation"]["Wall"]["Footer Depth Below Slab"].as<double>();
+    } else {
+      foundation.wall.footerDepth = 0.3;
+    }
 
     if (yamlInput["Foundation"]["Wall"]["Interior Emissivity"].IsDefined()) {
       foundation.wall.interiorEmissivity = yamlInput["Foundation"]["Wall"]["Interior Emissivity"].as<double>();
