@@ -51,7 +51,7 @@ endif (NOT CMAKE_BUILD_TYPE)
 
 ADD_DEFINITIONS(-DHAVE_CONFIG_H)
 # Create Configure.h
-CONFIGURE_FILE (include/Configure.h.in ${PROJECT_BINARY_DIR}/Configure.h)
+CONFIGURE_FILE (include/Configure.h.in ${PROJECT_BINARY_DIR}/lis_config.h)
 INCLUDE_DIRECTORIES (${PROJECT_BINARY_DIR}/)
 
 IF(LIS_ENABLE_OPENMP)
@@ -73,10 +73,6 @@ IF(LIS_ENABLE_MPI)
 		MESSAGE (FATAL_ERROR "Aborting: MPI implementation is not found!")
 	ENDIF(MPI_FOUND)
 ENDIF()
-
-if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-  SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -I/usr/include/malloc/")
-endif()
 
 ######################################################################
 # Add subdirectories
