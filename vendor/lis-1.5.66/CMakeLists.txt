@@ -51,7 +51,7 @@ endif (NOT CMAKE_BUILD_TYPE)
 
 ADD_DEFINITIONS(-DHAVE_CONFIG_H)
 # Create Configure.h
-CONFIGURE_FILE (include/Configure.h.in ${PROJECT_BINARY_DIR}/lis_config.h)
+CONFIGURE_FILE (include/lis_config.h.in ${PROJECT_BINARY_DIR}/lis_config.h)
 INCLUDE_DIRECTORIES (${PROJECT_BINARY_DIR}/)
 
 IF(LIS_ENABLE_OPENMP)

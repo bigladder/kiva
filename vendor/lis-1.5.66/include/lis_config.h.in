@@ -27,18 +27,14 @@
  #ifndef __CONFIGURE_H
  #define __CONFIGURE_H
 
-// Type sizes
-#cmakedefine SIZEOF_INT ${SIZEOF_INT}
-#cmakedefine SIZEOF_LONG ${SIZEOF_LONG}
-#cmakedefine SIZEOF_LONG_LONG ${SIZEOF_LONG_LONG}
-#cmakedefine SIZEOF_VOID_P ${SIZEOF_VOID_P}
+ /* Define to 1 to enable x87 FPU. */
+ #define HAS_X87_FPU 1
 
 // Has includes?
 #cmakedefine HAVE_COMPLEX_H
 #cmakedefine HAVE_DLFCN_H
 #cmakedefine HAVE_INTTYPES_H
 #cmakedefine HAVE_MALLOC_H
-#cmakedefine HAVE_MALLOC_MALLOC_H
 #cmakedefine HAVE_MEMORY_H
 #cmakedefine HAVE_STDINT_H
 #cmakedefine HAVE_STDLIB_H
@@ -49,5 +45,47 @@
 #cmakedefine HAVE_SYS_TYPES_H
 #cmakedefine HAVE_UNISTD_H
 #cmakedefine HAVE_SYS_MOUNT_H
+
+/* Define to the sub-directory in which libtool stores uninstalled libraries.
+   */
+#define LT_OBJDIR ".libs/"
+
+/* Name of package */
+#define PACKAGE "lis"
+
+/* Define to the address where bug reports for this package should be sent. */
+#define PACKAGE_BUGREPORT "devel@ssisc.org"
+
+/* Define to the full name of this package. */
+#define PACKAGE_NAME "lis"
+
+/* Define to the full name and version of this package. */
+#define PACKAGE_STRING "lis 1.5.66"
+
+/* Define to the one symbol short name of this package. */
+#define PACKAGE_TARNAME "lis"
+
+/* Define to the home page for this package. */
+#define PACKAGE_URL ""
+
+/* Define to the version of this package. */
+#define PACKAGE_VERSION "1.5.66"
+
+// Type sizes
+#cmakedefine SIZEOF_DOUBLE ${SIZEOF_DOUBLE}
+#cmakedefine SIZEOF_FLOAT ${SIZEOF_FLOAT}
+#cmakedefine SIZEOF_INT ${SIZEOF_INT}
+#cmakedefine SIZEOF_LONG ${SIZEOF_LONG}
+#cmakedefine SIZEOF_LONG_DOUBLE ${SIZEOF_LONG_DOUBLE}
+#cmakedefine SIZEOF_LONG_LONG ${SIZEOF_LONG_LONG}
+#cmakedefine SIZEOF_SIZE_T ${SIZEOF_SIZE_T}
+#cmakedefine SIZEOF_VOID_P ${SIZEOF_VOID_P}
+
+/* Define to 1 if you have the ANSI C header files. */
+#define STDC_HEADERS 1
+
+/* Version number of package */
+#define VERSION "1.5.66"
+
 
 #endif // __CONFIGURE_H
