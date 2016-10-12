@@ -6,74 +6,96 @@
 
 #include "GroundPlot.hpp"
 
-using namespace Kiva;
-
 static const double EPSILON = 1E-5;
 
-GroundPlot::GroundPlot(OutputAnimation &outputAnimation, Domain &domain, std::vector<Block> &blocks) :
-  outputAnimation(outputAnimation), blocks(blocks)
+namespace Kiva {
+
+SnapshotSettings::SnapshotSettings() :
+  size(800),
+  frequency(129600.0),
+  grid(false),
+  gradients(false),
+  contours(true),
+  contourLabels(false),
+  axes(true),
+  timestamp(true),
+  plotType(SnapshotSettings::P_TEMP),
+  fluxDir(SnapshotSettings::D_M),
+  colorScheme(SnapshotSettings::C_CMR),
+  format(SnapshotSettings::F_PNG),
+  outputUnits(SnapshotSettings::SI),
+  minValue(-20.0),
+  maxValue(40.0),
+  numberOfContours(13),
+  contourColor("H")
+{}
+
+
+
+GroundPlot::GroundPlot(SnapshotSettings &snapshotSettings, Domain &domain, std::vector<Block> &blocks) :
+  snapshotSettings(snapshotSettings), blocks(blocks)
 {
 
-  boost::filesystem::remove_all(outputAnimation.dir);
-  boost::filesystem::create_directory(outputAnimation.dir);
+  boost::filesystem::remove_all(snapshotSettings.dir);
+  boost::filesystem::create_directory(snapshotSettings.dir);
 
   frameNumber = 0;
 
-  if (outputAnimation.outputUnits == OutputAnimation::IP)
+  if (snapshotSettings.outputUnits == SnapshotSettings::IP)
     distanceUnitConversion = 3.28084;
   else
     distanceUnitConversion = 1;
 
-  std::size_t contourLevels = outputAnimation.numberOfContours;
+  std::size_t contourLevels = snapshotSettings.numberOfContours;
 
-  if (isEqual(outputAnimation.xRange.first,outputAnimation.xRange.second))
+  if (isEqual(snapshotSettings.xRange.first,snapshotSettings.xRange.second))
   {
-    iMin = domain.meshX.getNearestIndex(outputAnimation.xRange.first);
-    iMax = domain.meshX.getNearestIndex(outputAnimation.xRange.second);
+    iMin = domain.meshX.getNearestIndex(snapshotSettings.xRange.first);
+    iMax = domain.meshX.getNearestIndex(snapshotSettings.xRange.second);
   }
   else
   {
-    iMin = domain.meshX.getPreviousIndex(outputAnimation.xRange.first);
-    iMax = domain.meshX.getNextIndex(outputAnimation.xRange.second);
+    iMin = domain.meshX.getPreviousIndex(snapshotSettings.xRange.first);
+    iMax = domain.meshX.getNextIndex(snapshotSettings.xRange.second);
 
     // Check for exact match
-    if (isEqual(domain.meshX.centers[iMin + 1],outputAnimation.xRange.first))
+    if (isEqual(domain.meshX.centers[iMin + 1],snapshotSettings.xRange.first))
       iMin += 1;
-    if (isEqual(domain.meshX.centers[iMax - 1],outputAnimation.xRange.second))
+    if (isEqual(domain.meshX.centers[iMax - 1],snapshotSettings.xRange.second))
       iMax -= 1;
   }
 
-  if (isEqual(outputAnimation.yRange.first,outputAnimation.yRange.second))
+  if (isEqual(snapshotSettings.yRange.first,snapshotSettings.yRange.second))
   {
-    jMin = domain.meshY.getNearestIndex(outputAnimation.yRange.first);
-    jMax = domain.meshY.getNearestIndex(outputAnimation.yRange.second);
+    jMin = domain.meshY.getNearestIndex(snapshotSettings.yRange.first);
+    jMax = domain.meshY.getNearestIndex(snapshotSettings.yRange.second);
   }
   else
   {
-    jMin = domain.meshY.getPreviousIndex(outputAnimation.yRange.first);
-    jMax = domain.meshY.getNextIndex(outputAnimation.yRange.second);
+    jMin = domain.meshY.getPreviousIndex(snapshotSettings.yRange.first);
+    jMax = domain.meshY.getNextIndex(snapshotSettings.yRange.second);
 
     // Check for exact match
-    if (isEqual(domain.meshY.centers[jMin + 1],outputAnimation.yRange.first))
+    if (isEqual(domain.meshY.centers[jMin + 1],snapshotSettings.yRange.first))
       jMin += 1;
-    if (isEqual(domain.meshY.centers[jMax - 1],outputAnimation.yRange.second))
+    if (isEqual(domain.meshY.centers[jMax - 1],snapshotSettings.yRange.second))
       jMax -= 1;
   }
 
-  if (isEqual(outputAnimation.zRange.first,outputAnimation.zRange.second))
+  if (isEqual(snapshotSettings.zRange.first,snapshotSettings.zRange.second))
   {
-    kMin = domain.meshZ.getNearestIndex(outputAnimation.zRange.first);
-    kMax = domain.meshZ.getNearestIndex(outputAnimation.zRange.second);
+    kMin = domain.meshZ.getNearestIndex(snapshotSettings.zRange.first);
+    kMax = domain.meshZ.getNearestIndex(snapshotSettings.zRange.second);
   }
   else
   {
-    kMin = domain.meshZ.getPreviousIndex(outputAnimation.zRange.first);
-    kMax = domain.meshZ.getNextIndex(outputAnimation.zRange.second);
+    kMin = domain.meshZ.getPreviousIndex(snapshotSettings.zRange.first);
+    kMax = domain.meshZ.getNextIndex(snapshotSettings.zRange.second);
 
     // Check for exact match
-    if (isEqual(domain.meshZ.centers[kMin + 1],outputAnimation.zRange.first))
+    if (isEqual(domain.meshZ.centers[kMin + 1],snapshotSettings.zRange.first))
       kMin += 1;
-    if (isEqual(domain.meshZ.centers[kMax - 1],outputAnimation.zRange.second))
+    if (isEqual(domain.meshZ.centers[kMax - 1],snapshotSettings.zRange.second))
       kMax -= 1;
   }
 
@@ -186,8 +208,8 @@ GroundPlot::GroundPlot(OutputAnimation &outputAnimation, Domain &domain, std::ve
     }
   }
 
-  double min = outputAnimation.minimumTemperature;
-  double max = outputAnimation.maximumTemperature;
+  double min = snapshotSettings.minValue;
+  double max = snapshotSettings.maxValue;
   double step = (max - min) / (contourLevels - 1);
 
   for (size_t n = 0; n < contourLevels; n++)
@@ -203,7 +225,7 @@ void GroundPlot::createFrame(std::string timeStamp)
   std::string temperatureUnit;
   std::string fluxUnit;
 
-  if (outputAnimation.outputUnits == OutputAnimation::IP)
+  if (snapshotSettings.outputUnits == SnapshotSettings::IP)
   {
     distanceUnit = "ft";
     temperatureUnit = "\\textdegree F";
@@ -241,7 +263,7 @@ void GroundPlot::createFrame(std::string timeStamp)
   // Plot
   gr.Clf(1,1,1);
   double aspect = 1.0;
-  int height = outputAnimation.size;
+  int height = snapshotSettings.size;
   int width = height*aspect;
 
 
@@ -258,20 +280,19 @@ void GroundPlot::createFrame(std::string timeStamp)
 
   // Timestamp
 
-  std::string timeStampMinusYear = timeStamp.substr(5,timeStamp.size()-5);
-  if (outputAnimation.axes)
+  if (snapshotSettings.axes)
   {
-    if (outputAnimation.colorScheme != OutputAnimation::C_NONE)
+    if (snapshotSettings.colorScheme != SnapshotSettings::C_NONE)
     {
-      if  (outputAnimation.plotType == OutputAnimation::P_TEMP)
+      if  (snapshotSettings.plotType == SnapshotSettings::P_TEMP)
         gr.Puts(0.9, 0.056, temperatureUnit.c_str(), ":AL");
       else
         gr.Puts(0.9, 0.056, fluxUnit.c_str(), ":AL");
     }
   }
 
-  if (outputAnimation.timestamp)
-    gr.Puts(hText, vText, timeStampMinusYear.c_str(), ":AL");
+  if (snapshotSettings.timestamp)
+    gr.Puts(hText, vText, timeStamp.c_str(), ":AL");
 
   switch (sliceType)
   {
@@ -282,61 +303,61 @@ void GroundPlot::createFrame(std::string timeStamp)
   case XY:
   {
     std::string sliceString = "Z = " + str(boost::format("%0.2f") % (slice*distanceUnitConversion)) + " " + distanceUnit;
-    if (outputAnimation.axes)
+    if (snapshotSettings.axes)
       gr.Puts(hText, vText - vTextSpacing, sliceString.c_str(), ":AL");
   }
   break;
   case XZ:
   {
     std::string sliceString = "Y = " + str(boost::format("%0.2f") % (slice*distanceUnitConversion)) + " " + distanceUnit;
-    if (outputAnimation.axes)
+    if (snapshotSettings.axes)
       gr.Puts(hText, vText - vTextSpacing, sliceString.c_str(), ":AL");
   }
   break;
   case YZ:
   {
     std::string sliceString = "X = " + str(boost::format("%0.2f") % (slice*distanceUnitConversion)) + " " + distanceUnit;
-    if (outputAnimation.axes)
+    if (snapshotSettings.axes)
       gr.Puts(hText, vText - vTextSpacing, sliceString.c_str(), ":AL");
   }
   }
   gr.SetPlotFactor(1.3);
 
-  if (outputAnimation.axes)
+  if (snapshotSettings.axes)
   {
     gr.Axis("yU");
     gr.Axis("x");
-    if (outputAnimation.colorScheme == OutputAnimation::C_CMR)
+    if (snapshotSettings.colorScheme == SnapshotSettings::C_CMR)
     {
       gr.Colorbar("kUrqyw_");
     }
-    else if (outputAnimation.colorScheme == OutputAnimation::C_JET)
+    else if (snapshotSettings.colorScheme == SnapshotSettings::C_JET)
     {
       gr.Colorbar("BbcyrR_");
     }
   }
 
-  if (outputAnimation.colorScheme == OutputAnimation::C_CMR)
+  if (snapshotSettings.colorScheme == SnapshotSettings::C_CMR)
   {
     gr.Dens(hDat, vDat, TDat,"kUrqyw");
   }
-  else if (outputAnimation.colorScheme == OutputAnimation::C_JET)
+  else if (snapshotSettings.colorScheme == SnapshotSettings::C_JET)
   {
     gr.Dens(hDat, vDat, TDat,"BbcyrR");
   }
 
   gr.Box("k",false);
 
-  if (outputAnimation.contours)
+  if (snapshotSettings.contours)
   {
-    if (outputAnimation.contourLabels)
-      gr.Cont(cDat, hDat, vDat, TDat,(outputAnimation.contourColor + "t").c_str());
+    if (snapshotSettings.contourLabels)
+      gr.Cont(cDat, hDat, vDat, TDat,(snapshotSettings.contourColor + "t").c_str());
     else
-      gr.Cont(cDat, hDat, vDat, TDat,outputAnimation.contourColor.c_str());
+      gr.Cont(cDat, hDat, vDat, TDat,snapshotSettings.contourColor.c_str());
   }
-  if (outputAnimation.gradients)
+  if (snapshotSettings.gradients)
     gr.Grad(hDat, vDat, TDat);
-  if (outputAnimation.grid)
+  if (snapshotSettings.grid)
     gr.Grid(hGrid, vGrid, TGrid, "W");
 
 
@@ -484,20 +505,23 @@ void GroundPlot::createFrame(std::string timeStamp)
     }
   }
 
-  if (outputAnimation.format == OutputAnimation::F_PNG)
-    gr.WritePNG((outputAnimation.dir + "/" + str(boost::format("%04d") % frameNumber) + ".png").c_str(),"",false);
-  else if (outputAnimation.format == OutputAnimation::F_TEX)
-    gr.WriteTEX((outputAnimation.dir + "/" + str(boost::format("%04d") % frameNumber) + ".tex").c_str());
+  if (snapshotSettings.format == SnapshotSettings::F_PNG)
+    gr.WritePNG((snapshotSettings.dir + "/" + str(boost::format("%04d") % frameNumber) + ".png").c_str(),"",false);
+  else if (snapshotSettings.format == SnapshotSettings::F_TEX)
+    gr.WriteTEX((snapshotSettings.dir + "/" + str(boost::format("%04d") % frameNumber) + ".tex").c_str());
 
   frameNumber += 1;
-  nextPlotTime += outputAnimation.frequency;
+  nextPlotTime += snapshotSettings.frequency;
 }
 
-bool GroundPlot::makeNewFrame(boost::posix_time::ptime t)
+bool GroundPlot::makeNewFrame(double t)
 {
   if ((t >= nextPlotTime) && (t >= tStart) && (t <= tEnd))
     return true;
   else
     return false;
 }
+
+}
+
 #endif

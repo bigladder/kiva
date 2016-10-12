@@ -598,148 +598,148 @@ Input inputParser(std::string inputFile)
   // Animations/Plots
   for(size_t i=0;i<yamlInput["Output"]["Output Snapshots"].size();i++)
   {
-    OutputAnimation temp;
-    temp.dir = yamlInput["Output"]["Output Snapshots"][i]["Directory"].as<std::string>();
+    OutputSnapshots temp;
+    temp.snapshotSettings.dir = yamlInput["Output"]["Output Snapshots"][i]["Directory"].as<std::string>();
 
     if (yamlInput["Output"]["Output Snapshots"][i]["Size"].IsDefined()) {
-      temp.size = yamlInput["Output"]["Output Snapshots"][i]["Size"].as<int>();
+      temp.snapshotSettings.size = yamlInput["Output"]["Output Snapshots"][i]["Size"].as<int>();
     }
     else {
-      temp.size = 800;
+      temp.snapshotSettings.size = 800;
     }
 
     if (yamlInput["Output"]["Output Snapshots"][i]["Frequency"].IsDefined()) {
-      temp.frequency = boost::posix_time::hours(yamlInput["Output"]["Output Snapshots"][i]["Frequency"].as<long>());
+      temp.snapshotSettings.frequency = yamlInput["Output"]["Output Snapshots"][i]["Frequency"].as<double>()*60.0*60.0;
     }
     else {
-      temp.frequency = boost::posix_time::hours(36);
+      temp.snapshotSettings.frequency = 36*60.0*60.0;
     }
 
     if (yamlInput["Output"]["Output Snapshots"][i]["Mesh"].IsDefined()) {
-      temp.grid = yamlInput["Output"]["Output Snapshots"][i]["Mesh"].as<bool>();
+      temp.snapshotSettings.grid = yamlInput["Output"]["Output Snapshots"][i]["Mesh"].as<bool>();
     }
     else {
-      temp.grid = false;
+      temp.snapshotSettings.grid = false;
     }
 
     if (yamlInput["Output"]["Output Snapshots"][i]["Gradients"].IsDefined()) {
-      temp.gradients = yamlInput["Output"]["Output Snapshots"][i]["Gradients"].as<bool>();
+      temp.snapshotSettings.gradients = yamlInput["Output"]["Output Snapshots"][i]["Gradients"].as<bool>();
     }
     else {
-      temp.gradients = false;
+      temp.snapshotSettings.gradients = false;
     }
 
     if (yamlInput["Output"]["Output Snapshots"][i]["Contours"].IsDefined()) {
-      temp.contours = yamlInput["Output"]["Output Snapshots"][i]["Contours"].as<bool>();
+      temp.snapshotSettings.contours = yamlInput["Output"]["Output Snapshots"][i]["Contours"].as<bool>();
     }
     else {
-      temp.contours = true;
+      temp.snapshotSettings.contours = true;
     }
 
     if (yamlInput["Output"]["Output Snapshots"][i]["Contour Labels"].IsDefined()) {
-      temp.contourLabels = yamlInput["Output"]["Output Snapshots"][i]["Contour Labels"].as<bool>();
+      temp.snapshotSettings.contourLabels = yamlInput["Output"]["Output Snapshots"][i]["Contour Labels"].as<bool>();
     }
     else {
-      temp.contourLabels = false;
+      temp.snapshotSettings.contourLabels = false;
     }
 
     if (yamlInput["Output"]["Output Snapshots"][i]["Axes"].IsDefined()) {
-      temp.axes = yamlInput["Output"]["Output Snapshots"][i]["Axes"].as<bool>();
+      temp.snapshotSettings.axes = yamlInput["Output"]["Output Snapshots"][i]["Axes"].as<bool>();
     }
     else {
-      temp.axes = true;
+      temp.snapshotSettings.axes = true;
     }
 
     if (yamlInput["Output"]["Output Snapshots"][i]["Timestamp"].IsDefined()) {
-      temp.timestamp = yamlInput["Output"]["Output Snapshots"][i]["Timestamp"].as<bool>();
+      temp.snapshotSettings.timestamp = yamlInput["Output"]["Output Snapshots"][i]["Timestamp"].as<bool>();
     }
     else {
-      temp.timestamp = true;
+      temp.snapshotSettings.timestamp = true;
     }
 
     if (yamlInput["Output"]["Output Snapshots"][i]["Plot Type"].IsDefined())
     {
       if (yamlInput["Output"]["Output Snapshots"][i]["Plot Type"].as<std::string>() == "TEMPERATURE")
-        temp.plotType = OutputAnimation::P_TEMP;
+        temp.snapshotSettings.plotType = SnapshotSettings::P_TEMP;
       else if (yamlInput["Output"]["Output Snapshots"][i]["Plot Type"].as<std::string>() == "HEAT-FLUX")
-        temp.plotType = OutputAnimation::P_FLUX;
+        temp.snapshotSettings.plotType = SnapshotSettings::P_FLUX;
     }
     else
-      temp.plotType = OutputAnimation::P_TEMP;
+      temp.snapshotSettings.plotType = SnapshotSettings::P_TEMP;
 
     if (yamlInput["Output"]["Output Snapshots"][i]["Flux Direction"].IsDefined())
     {
       if (yamlInput["Output"]["Output Snapshots"][i]["Flux Direction"].as<std::string>() == "MAG")
-        temp.fluxDir = OutputAnimation::D_M;
+        temp.snapshotSettings.fluxDir = SnapshotSettings::D_M;
       else if (yamlInput["Output"]["Output Snapshots"][i]["Flux Direction"].as<std::string>() == "X")
-        temp.fluxDir = OutputAnimation::D_X;
+        temp.snapshotSettings.fluxDir = SnapshotSettings::D_X;
       else if (yamlInput["Output"]["Output Snapshots"][i]["Flux Direction"].as<std::string>() == "Y")
-        temp.fluxDir = OutputAnimation::D_Y;
+        temp.snapshotSettings.fluxDir = SnapshotSettings::D_Y;
       else if (yamlInput["Output"]["Output Snapshots"][i]["Flux Direction"].as<std::string>() == "Z")
-        temp.fluxDir = OutputAnimation::D_Z;
+        temp.snapshotSettings.fluxDir = SnapshotSettings::D_Z;
     }
     else
-      temp.fluxDir = OutputAnimation::D_M;
+      temp.snapshotSettings.fluxDir = SnapshotSettings::D_M;
 
     if (yamlInput["Output"]["Output Snapshots"][i]["Color Scheme"].IsDefined())
     {
       if (yamlInput["Output"]["Output Snapshots"][i]["Color Scheme"].as<std::string>() == "CMR")
-        temp.colorScheme = OutputAnimation::C_CMR;
+        temp.snapshotSettings.colorScheme = SnapshotSettings::C_CMR;
       else if (yamlInput["Output"]["Output Snapshots"][i]["Color Scheme"].as<std::string>() == "JET")
-        temp.colorScheme = OutputAnimation::C_JET;
+        temp.snapshotSettings.colorScheme = SnapshotSettings::C_JET;
       else if (yamlInput["Output"]["Output Snapshots"][i]["Color Scheme"].as<std::string>() == "NONE")
-        temp.colorScheme = OutputAnimation::C_NONE;
+        temp.snapshotSettings.colorScheme = SnapshotSettings::C_NONE;
     }
     else
-      temp.colorScheme = OutputAnimation::C_CMR;
+      temp.snapshotSettings.colorScheme = SnapshotSettings::C_CMR;
 
     if (yamlInput["Output"]["Output Snapshots"][i]["File Format"].IsDefined())
     {
       if (yamlInput["Output"]["Output Snapshots"][i]["File Format"].as<std::string>() == "PNG")
-        temp.format = OutputAnimation::F_PNG;
+        temp.snapshotSettings.format = SnapshotSettings::F_PNG;
       else if (yamlInput["Output"]["Output Snapshots"][i]["File Format"].as<std::string>() == "TEX")
-        temp.format = OutputAnimation::F_TEX;
+        temp.snapshotSettings.format = SnapshotSettings::F_TEX;
     }
     else
-      temp.format = OutputAnimation::F_PNG;
+      temp.snapshotSettings.format = SnapshotSettings::F_PNG;
 
     if (yamlInput["Output"]["Output Snapshots"][i]["Unit System"].IsDefined())
     {
       if (yamlInput["Output"]["Output Snapshots"][i]["Unit System"].as<std::string>() == "IP")
-        temp.outputUnits = OutputAnimation::IP;
+        temp.snapshotSettings.outputUnits = SnapshotSettings::IP;
       else if (yamlInput["Output"]["Output Snapshots"][i]["Unit System"].as<std::string>() == "SI")
-        temp.outputUnits = OutputAnimation::SI;
+        temp.snapshotSettings.outputUnits = SnapshotSettings::SI;
     }
     else
-      temp.outputUnits = OutputAnimation::SI;
+      temp.snapshotSettings.outputUnits = SnapshotSettings::SI;
 
     if (yamlInput["Output"]["Output Snapshots"][i]["Output Range"].IsDefined())
     {
-      temp.minimumTemperature = yamlInput["Output"]["Output Snapshots"][i]["Output Range"][0].as<double>();
-      temp.maximumTemperature = yamlInput["Output"]["Output Snapshots"][i]["Output Range"][1].as<double>();
+      temp.snapshotSettings.minValue = yamlInput["Output"]["Output Snapshots"][i]["Output Range"][0].as<double>();
+      temp.snapshotSettings.maxValue = yamlInput["Output"]["Output Snapshots"][i]["Output Range"][1].as<double>();
     }
     else
     {
-      temp.minimumTemperature = -20;
-      temp.maximumTemperature = 40;
+      temp.snapshotSettings.minValue = -20;
+      temp.snapshotSettings.maxValue = 40;
     }
 
     if (yamlInput["Output"]["Output Snapshots"][i]["Number of Contours"].IsDefined())
     {
-      temp.numberOfContours = yamlInput["Output"]["Output Snapshots"][i]["Number of Contours"].as<int>();
+      temp.snapshotSettings.numberOfContours = yamlInput["Output"]["Output Snapshots"][i]["Number of Contours"].as<int>();
     }
     else
     {
-      temp.numberOfContours = 13;
+      temp.snapshotSettings.numberOfContours = 13;
     }
 
     if (yamlInput["Output"]["Output Snapshots"][i]["Contour Color"].IsDefined())
     {
-      temp.contourColor = yamlInput["Output"]["Output Snapshots"][i]["Contour Color"].as<std::string>();
+      temp.snapshotSettings.contourColor = yamlInput["Output"]["Output Snapshots"][i]["Contour Color"].as<std::string>();
     }
     else
     {
-      temp.contourColor = "H";
+      temp.snapshotSettings.contourColor = "H";
     }
 
     if (yamlInput["Output"]["Output Snapshots"][i]["Start Date"].IsDefined())
@@ -760,8 +760,8 @@ Input inputParser(std::string inputFile)
 
     if (yamlInput["Output"]["Output Snapshots"][i]["X Range"].IsDefined())
     {
-      temp.xRange.first = yamlInput["Output"]["Output Snapshots"][i]["X Range"][0].as<double>();
-      temp.xRange.second = yamlInput["Output"]["Output Snapshots"][i]["X Range"][1].as<double>();
+      temp.snapshotSettings.xRange.first = yamlInput["Output"]["Output Snapshots"][i]["X Range"][0].as<double>();
+      temp.snapshotSettings.xRange.second = yamlInput["Output"]["Output Snapshots"][i]["X Range"][1].as<double>();
       temp.xRangeSet = true;
     }
     else
@@ -769,8 +769,8 @@ Input inputParser(std::string inputFile)
 
     if (yamlInput["Output"]["Output Snapshots"][i]["Y Range"].IsDefined())
     {
-      temp.yRange.first = yamlInput["Output"]["Output Snapshots"][i]["Y Range"][0].as<double>();
-      temp.yRange.second = yamlInput["Output"]["Output Snapshots"][i]["Y Range"][1].as<double>();
+      temp.snapshotSettings.yRange.first = yamlInput["Output"]["Output Snapshots"][i]["Y Range"][0].as<double>();
+      temp.snapshotSettings.yRange.second = yamlInput["Output"]["Output Snapshots"][i]["Y Range"][1].as<double>();
       temp.yRangeSet = true;
     }
     else
@@ -779,14 +779,14 @@ Input inputParser(std::string inputFile)
     if (yamlInput["Output"]["Output Snapshots"][i]["Z Range"].IsDefined())
     {
 
-      temp.zRange.first = yamlInput["Output"]["Output Snapshots"][i]["Z Range"][0].as<double>();
-      temp.zRange.second = yamlInput["Output"]["Output Snapshots"][i]["Z Range"][1].as<double>();
+      temp.snapshotSettings.zRange.first = yamlInput["Output"]["Output Snapshots"][i]["Z Range"][0].as<double>();
+      temp.snapshotSettings.zRange.second = yamlInput["Output"]["Output Snapshots"][i]["Z Range"][1].as<double>();
       temp.zRangeSet = true;
     }
     else
       temp.zRangeSet = false;
 
-    output.outputAnimations.push_back(temp);
+    output.outputSnapshots.push_back(temp);
   }
 
   // Full Input

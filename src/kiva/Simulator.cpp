@@ -133,40 +133,40 @@ void Simulator::initializeConditions()
 
 void Simulator::initializePlots()
 {
-  for (std::size_t p = 0; p < input.output.outputAnimations.size(); p++)
+  for (std::size_t p = 0; p < input.output.outputSnapshots.size(); p++)
   {
-    if (!input.output.outputAnimations[p].startDateSet)
-      input.output.outputAnimations[p].startDate = input.simulationControl.startDate;
+    if (!input.output.outputSnapshots[p].startDateSet)
+      input.output.outputSnapshots[p].startDate = input.simulationControl.startDate;
 
-    if (!input.output.outputAnimations[p].endDateSet)
-      input.output.outputAnimations[p].endDate = input.simulationControl.endDate;
+    if (!input.output.outputSnapshots[p].endDateSet)
+      input.output.outputSnapshots[p].endDate = input.simulationControl.endDate;
 
     if (ground.foundation.numberOfDimensions == 3)
     {
-      if (!input.output.outputAnimations[p].xRangeSet)
+      if (!input.output.outputSnapshots[p].xRangeSet)
       {
-        input.output.outputAnimations[p].xRange.first = ground.domain.meshX.dividers[0];
-        input.output.outputAnimations[p].xRange.second = ground.domain.meshX.dividers[ground.nX];
+        input.output.outputSnapshots[p].snapshotSettings.xRange.first = ground.domain.meshX.dividers[0];
+        input.output.outputSnapshots[p].snapshotSettings.xRange.second = ground.domain.meshX.dividers[ground.nX];
       }
 
-      if (!input.output.outputAnimations[p].yRangeSet)
+      if (!input.output.outputSnapshots[p].yRangeSet)
       {
-        input.output.outputAnimations[p].yRange.first = ground.domain.meshY.dividers[0];
-        input.output.outputAnimations[p].yRange.second = ground.domain.meshY.dividers[ground.nY];
+        input.output.outputSnapshots[p].snapshotSettings.yRange.first = ground.domain.meshY.dividers[0];
+        input.output.outputSnapshots[p].snapshotSettings.yRange.second = ground.domain.meshY.dividers[ground.nY];
       }
 
-      if (!input.output.outputAnimations[p].zRangeSet)
+      if (!input.output.outputSnapshots[p].zRangeSet)
       {
 
-        if (!input.output.outputAnimations[p].xRangeSet && !input.output.outputAnimations[p].yRangeSet)
+        if (!input.output.outputSnapshots[p].xRangeSet && !input.output.outputSnapshots[p].yRangeSet)
         {
-          input.output.outputAnimations[p].zRange.first = 0;
-          input.output.outputAnimations[p].zRange.second = 0;
+          input.output.outputSnapshots[p].snapshotSettings.zRange.first = 0;
+          input.output.outputSnapshots[p].snapshotSettings.zRange.second = 0;
         }
         else
         {
-          input.output.outputAnimations[p].zRange.first = ground.domain.meshZ.dividers[0];
-          input.output.outputAnimations[p].zRange.second = ground.domain.meshZ.dividers[ground.nZ];
+          input.output.outputSnapshots[p].snapshotSettings.zRange.first = ground.domain.meshZ.dividers[0];
+          input.output.outputSnapshots[p].snapshotSettings.zRange.second = ground.domain.meshZ.dividers[ground.nZ];
         }
       }
 
@@ -174,33 +174,33 @@ void Simulator::initializePlots()
     }
     else
     {
-      if (!input.output.outputAnimations[p].xRangeSet)
+      if (!input.output.outputSnapshots[p].xRangeSet)
       {
-        input.output.outputAnimations[p].xRange.first = ground.domain.meshX.dividers[0];
-        input.output.outputAnimations[p].xRange.second = ground.domain.meshX.dividers[ground.nX];
+        input.output.outputSnapshots[p].snapshotSettings.xRange.first = ground.domain.meshX.dividers[0];
+        input.output.outputSnapshots[p].snapshotSettings.xRange.second = ground.domain.meshX.dividers[ground.nX];
       }
 
-      if (!input.output.outputAnimations[p].yRangeSet)
+      if (!input.output.outputSnapshots[p].yRangeSet)
       {
-        input.output.outputAnimations[p].yRange.first = 0.5;
-        input.output.outputAnimations[p].yRange.second = 0.5;
+        input.output.outputSnapshots[p].snapshotSettings.yRange.first = 0.5;
+        input.output.outputSnapshots[p].snapshotSettings.yRange.second = 0.5;
       }
 
-      if (!input.output.outputAnimations[p].zRangeSet)
+      if (!input.output.outputSnapshots[p].zRangeSet)
       {
-        input.output.outputAnimations[p].zRange.first = ground.domain.meshZ.dividers[0];
-        input.output.outputAnimations[p].zRange.second = ground.domain.meshZ.dividers[ground.nZ];
+        input.output.outputSnapshots[p].snapshotSettings.zRange.first = ground.domain.meshZ.dividers[0];
+        input.output.outputSnapshots[p].snapshotSettings.zRange.second = ground.domain.meshZ.dividers[ground.nZ];
       }
     }
 
-    plots.push_back(GroundPlot(input.output.outputAnimations[p],ground.domain,input.foundation.blocks));
+    plots.push_back(GroundPlot(input.output.outputSnapshots[p].snapshotSettings,ground.domain,input.foundation.blocks));
 
-    boost::posix_time::ptime startTime(input.output.outputAnimations[p].startDate,boost::posix_time::hours(0));;
-    boost::posix_time::ptime endTime(input.output.outputAnimations[p].endDate + boost::gregorian::days(1));
+    boost::posix_time::ptime startTime(input.output.outputSnapshots[p].startDate,boost::posix_time::hours(0));
+    boost::posix_time::ptime endTime(input.output.outputSnapshots[p].endDate + boost::gregorian::days(1));
 
-    plots[p].tStart = startTime;
-    plots[p].nextPlotTime = startTime;
-    plots[p].tEnd = endTime;
+    plots[p].tStart = (startTime - input.simulationControl.startTime).total_seconds();
+    plots[p].nextPlotTime = (startTime - input.simulationControl.startTime).total_seconds();
+    plots[p].tEnd = (endTime - input.simulationControl.startTime).total_seconds();
   }
 }
 
@@ -241,7 +241,7 @@ void Simulator::plot(boost::posix_time::ptime t)
 {
   for (std::size_t p = 0; p < plots.size(); p++)
   {
-    if (plots[p].makeNewFrame(t))
+    if (plots[p].makeNewFrame((t - input.simulationControl.startTime).total_seconds()))
     {
       std::string timeStamp = to_simple_string(t);
 
@@ -255,9 +255,9 @@ void Simulator::plot(boost::posix_time::ptime t)
           for(size_t i = plots[p].iMin; i <= plots[p].iMax; i++)
           {
             std::size_t index = (i-plots[p].iMin)+nI*(j-plots[p].jMin)+nI*nJ*(k-plots[p].kMin);
-            if (input.output.outputAnimations[p].plotType == OutputAnimation::P_TEMP)
+            if (input.output.outputSnapshots[p].snapshotSettings.plotType == SnapshotSettings::P_TEMP)
             {
-              if (input.output.outputAnimations[p].outputUnits == OutputAnimation::IP)
+              if (input.output.outputSnapshots[p].snapshotSettings.outputUnits == SnapshotSettings::IP)
                 plots[p].TDat.a[index] = (ground.TNew[i][j][k] - 273.15)*9/5 + 32.0;
               else
                 plots[p].TDat.a[index] = ground.TNew[i][j][k] - 273.15;
@@ -271,13 +271,13 @@ void Simulator::plot(boost::posix_time::ptime t)
               double Qz = Qflux[2];
               double Qmag = sqrt(Qx*Qx + Qy*Qy + Qz*Qz);
 
-              if (input.output.outputAnimations[p].fluxDir == OutputAnimation::D_M)
+              if (input.output.outputSnapshots[p].snapshotSettings.fluxDir == SnapshotSettings::D_M)
                 plots[p].TDat.a[index] = Qmag/(du*du);
-              else if (input.output.outputAnimations[p].fluxDir == OutputAnimation::D_X)
+              else if (input.output.outputSnapshots[p].snapshotSettings.fluxDir == SnapshotSettings::D_X)
                 plots[p].TDat.a[index] = Qx/(du*du);
-              else if (input.output.outputAnimations[p].fluxDir == OutputAnimation::D_Y)
+              else if (input.output.outputSnapshots[p].snapshotSettings.fluxDir == SnapshotSettings::D_Y)
                 plots[p].TDat.a[index] = Qy/(du*du);
-              else if (input.output.outputAnimations[p].fluxDir == OutputAnimation::D_Z)
+              else if (input.output.outputSnapshots[p].snapshotSettings.fluxDir == SnapshotSettings::D_Z)
                 plots[p].TDat.a[index] = Qz/(du*du);
             }
           }
@@ -319,7 +319,7 @@ void Simulator::plot(boost::posix_time::ptime t)
       }
       output.close();*/
 
-      plots[p].createFrame(timeStamp);
+      plots[p].createFrame(timeStamp.substr(5,timeStamp.size()-5));
     }
   }
 }

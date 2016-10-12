@@ -15,6 +15,7 @@
 #include "Foundation.hpp"
 #include "Geometry.hpp"
 #include "GroundOutput.hpp"
+#include "GroundPlot.hpp"
 #include "WeatherData.hpp"
 
 using namespace Kiva;
@@ -50,76 +51,17 @@ public:
   InitializationMethod initializationMethod;
 };
 
-class OutputAnimation
+class OutputSnapshots
 {
 public:
-
-  std::string dir;
-  boost::posix_time::time_duration frequency;
-  bool grid;
-  bool contours;
-  bool contourLabels;
-  std::string contourColor;
-  bool gradients;
-  bool axes;
-  bool timestamp;
-  int size;
   boost::gregorian::date startDate;
   boost::gregorian::date endDate;
-  std::pair<double, double> xRange;
-  std::pair<double, double> yRange;
-  std::pair<double, double> zRange;
-
-  enum PlotType
-  {
-    P_TEMP,
-    P_FLUX
-  };
-
-  PlotType plotType;
-
-  enum FluxDir
-  {
-    D_M,
-    D_X,
-    D_Y,
-    D_Z
-  };
-  FluxDir fluxDir;
-
-  enum ColorScheme
-  {
-    C_CMR,
-    C_JET,
-    C_NONE
-  };
-  ColorScheme colorScheme;
-
-  enum Format
-  {
-    F_PNG,
-    F_TEX
-  };
-  Format format;
-
-  enum OutputUnits
-  {
-    IP,
-    SI
-  };
-  OutputUnits outputUnits;
-
-  double minimumTemperature;
-  double maximumTemperature;
-
-  int numberOfContours;
-
+  SnapshotSettings snapshotSettings;
   bool startDateSet;
   bool endDateSet;
   bool xRangeSet;
   bool yRangeSet;
   bool zRangeSet;
-
 };
 
 class OutputVariable
@@ -151,7 +93,7 @@ class Output
 {
 public:
   OutputReport outputReport;
-  std::vector<OutputAnimation> outputAnimations;
+  std::vector<OutputSnapshots> outputSnapshots;
 };
 
 class DataFile

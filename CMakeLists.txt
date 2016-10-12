@@ -50,6 +50,7 @@ endif()
 add_definitions("-DBOOST_ALL_NO_LIB")
 
 include_directories( ${CMAKE_SOURCE_DIR}/src/libkiva/)
+include_directories( ${CMAKE_SOURCE_DIR}/src/libgroundplot/)
 include_directories( SYSTEM ${CMAKE_SOURCE_DIR}/vendor/boost-1.61.0/)
 include_directories( SYSTEM ${CMAKE_SOURCE_DIR}/vendor/lis-1.5.66/include/)
 include_directories( SYSTEM ${CMAKE_SOURCE_DIR}/vendor/mathgl-2.3.5.1/include/)
@@ -58,6 +59,7 @@ include_directories( SYSTEM ${CMAKE_SOURCE_DIR}/vendor/yaml-cpp-0.5.3/include/)
 
 add_subdirectory(vendor)
 add_subdirectory(src/libkiva)
+add_subdirectory(src/libgroundplot)
 add_subdirectory(src/kiva)
 
 # Testing

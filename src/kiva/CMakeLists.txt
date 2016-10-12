@@ -1,6 +1,4 @@
 set(kiva_src Main.cpp
-             GroundPlot.cpp
-             GroundPlot.hpp
              Input.cpp
              Input.hpp
              InputParser.cpp
@@ -9,7 +7,6 @@ set(kiva_src Main.cpp
              Simulator.hpp
              WeatherData.cpp
              WeatherData.hpp )
-
 
 include_directories(${CMAKE_BINARY_DIR}/src/libkiva/)
 add_executable(kiva ${kiva_src})
@@ -28,17 +25,14 @@ set(links boost_date_time
           boost_filesystem
           boost_system
           yaml-cpp
-          mgl-static
           lis )
 
 if( MSVC )
   set_target_properties(yaml-cpp PROPERTIES COMPILE_FLAGS "/W0")
-  set_target_properties(mgl-static PROPERTIES COMPILE_FLAGS "/W0")
   set_target_properties(lis PROPERTIES COMPILE_FLAGS "/W0")
 else()
   set_target_properties(yaml-cpp PROPERTIES COMPILE_FLAGS "-w")
-  set_target_properties(mgl-static PROPERTIES COMPILE_FLAGS "-w")
   set_target_properties(lis PROPERTIES COMPILE_FLAGS "-w")
 endif()
 
-target_link_libraries(kiva ${links} libkiva)
+target_link_libraries(kiva ${links} libkiva groundplot)

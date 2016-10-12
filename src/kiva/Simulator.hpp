@@ -12,6 +12,7 @@
 #include <boost/date_time/gregorian/gregorian.hpp>
 
 #include "BoundaryConditions.hpp"
+#include "Input.hpp"
 #include "Ground.hpp"
 #include "GroundOutput.hpp"
 #include "GroundPlot.hpp"
