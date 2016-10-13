@@ -11,6 +11,8 @@
 
 #include <boost/filesystem/operations.hpp>
 
+#include <boost/lexical_cast.hpp>
+
 #include "Mesher.hpp"
 #include "Foundation.hpp"
 #include "Geometry.hpp"

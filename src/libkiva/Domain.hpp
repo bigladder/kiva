@@ -11,8 +11,6 @@
 #include <fstream>
 #include <numeric>
 
-#include <boost/assign/list_of.hpp>
-
 namespace Kiva {
 
 class Cell
@@ -91,7 +89,7 @@ public:
     void set2DZeroThicknessCellProperties(std::size_t i,std::size_t j,std::size_t k);
     void set3DZeroThicknessCellProperties(std::size_t i,std::size_t j,std::size_t k);
     void setZeroThicknessCellProperties(std::size_t i, std::size_t j, std::size_t k,
-        std::vector<boost::tuple<std::size_t,std::size_t,std::size_t> > pointSet);
+        std::vector<std::tuple<std::size_t,std::size_t,std::size_t> > pointSet);
     void printCellTypes();
 
 };

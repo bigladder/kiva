@@ -12,12 +12,12 @@
 #include "Algorithms.hpp"
 #include "libkiva_export.h"
 
+#include <boost/lexical_cast.hpp>
+
 #include <cmath>
 #include <vector>
 #include <string>
 #include <numeric>
-
-#include <boost/lexical_cast.hpp>
 
 #include "lis.h"
 

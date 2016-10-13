@@ -1971,9 +1971,9 @@ void Ground::calculateSurfaceAverages(){
 
           for (std::size_t index = 0; index < foundation.surfaces[s].indices.size(); index++)
           {
-            std::size_t i = boost::get<0>(foundation.surfaces[s].indices[index]);
-            std::size_t j = boost::get<1>(foundation.surfaces[s].indices[index]);
-            std::size_t k = boost::get<2>(foundation.surfaces[s].indices[index]);
+            std::size_t i = std::get<0>(foundation.surfaces[s].indices[index]);
+            std::size_t j = std::get<1>(foundation.surfaces[s].indices[index]);
+            std::size_t k = std::get<2>(foundation.surfaces[s].indices[index]);
 
             double h = getConvectionCoeff(TNew[i][j][k],Tair,0.0,0.00208,false,tilt)
                  + getSimpleInteriorIRCoeff(domain.cell[i][j][k].surface.emissivity,
@@ -2493,9 +2493,9 @@ void Ground::setSolarBoundaryConditions()
 
       for (std::size_t index = 0; index < foundation.surfaces[s].indices.size(); index++)
       {
-        std::size_t i = boost::get<0>(foundation.surfaces[s].indices[index]);
-        std::size_t j = boost::get<1>(foundation.surfaces[s].indices[index]);
-        std::size_t k = boost::get<2>(foundation.surfaces[s].indices[index]);
+        std::size_t i = std::get<0>(foundation.surfaces[s].indices[index]);
+        std::size_t j = std::get<1>(foundation.surfaces[s].indices[index]);
+        std::size_t k = std::get<2>(foundation.surfaces[s].indices[index]);
 
         double alpha = domain.cell[i][j][k].surface.absorptivity;
 
@@ -2562,9 +2562,9 @@ void Ground::setInteriorRadiationBoundaryConditions()
     {
       for (std::size_t index = 0; index < foundation.surfaces[s].indices.size(); index++)
       {
-        std::size_t i = boost::get<0>(foundation.surfaces[s].indices[index]);
-        std::size_t j = boost::get<1>(foundation.surfaces[s].indices[index]);
-        std::size_t k = boost::get<2>(foundation.surfaces[s].indices[index]);
+        std::size_t i = std::get<0>(foundation.surfaces[s].indices[index]);
+        std::size_t j = std::get<1>(foundation.surfaces[s].indices[index]);
+        std::size_t k = std::get<2>(foundation.surfaces[s].indices[index]);
 
         if (foundation.surfaces[s].type == Surface::ST_WALL_INT) {
           domain.cell[i][j][k].heatGain = bcs.wallAbsRadiation;

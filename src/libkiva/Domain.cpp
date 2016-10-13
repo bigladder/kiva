@@ -137,7 +137,7 @@ void Domain::setDomain(Foundation &foundation)
 
               if (cell[i][j][k].cellType == Cell::BOUNDARY)
               {
-                foundation.surfaces[s].indices.push_back(boost::tuple<std::size_t,std::size_t,std::size_t> (i,j,k));
+                foundation.surfaces[s].indices.push_back(std::tuple<std::size_t,std::size_t,std::size_t> (i,j,k));
               }
 
             }
@@ -300,9 +300,9 @@ void Domain::setDomain(Foundation &foundation)
     foundation.surfaces[s].area = 0;
     for (std::size_t index = 0; index < foundation.surfaces[s].indices.size(); index++)
     {
-      std::size_t i = boost::get<0>(foundation.surfaces[s].indices[index]);
-      std::size_t j = boost::get<1>(foundation.surfaces[s].indices[index]);
-      std::size_t k = boost::get<2>(foundation.surfaces[s].indices[index]);
+      std::size_t i = std::get<0>(foundation.surfaces[s].indices[index]);
+      std::size_t j = std::get<1>(foundation.surfaces[s].indices[index]);
+      std::size_t k = std::get<2>(foundation.surfaces[s].indices[index]);
 
       foundation.surfaces[s].area += cell[i][j][k].area;
     }
@@ -489,29 +489,29 @@ void Domain::set2DZeroThicknessCellProperties(std::size_t i,std::size_t j,std::s
     isEqual(meshZ.deltas[k], 0.0))
   {
 
-    std::vector<boost::tuple<std::size_t,std::size_t,std::size_t> >
-    pointSet = boost::assign::tuple_list_of(i-1,j,k+1)
-                             (i+1,j,k+1)
-                            (i-1,j,k-1)
-                            (i+1,j,k-1);
+    std::vector<std::tuple<std::size_t,std::size_t,std::size_t> > pointSet =
+      {std::make_tuple(i-1,j,k+1),
+       std::make_tuple(i+1,j,k+1),
+       std::make_tuple(i-1,j,k-1),
+       std::make_tuple(i+1,j,k-1)};
 
     setZeroThicknessCellProperties(i, j, k, pointSet);
 
   }
   else if (isEqual(meshX.deltas[i], 0.0))
   {
-    std::vector<boost::tuple<std::size_t,std::size_t,std::size_t> >
-    pointSet = boost::assign::tuple_list_of(i-1,j,k)
-                             (i+1,j,k);
+    std::vector<std::tuple<std::size_t,std::size_t,std::size_t> > pointSet =
+      {std::make_tuple(i-1,j,k),
+       std::make_tuple(i+1,j,k)};
 
     setZeroThicknessCellProperties(i, j, k, pointSet);
 
   }
   else if (isEqual(meshZ.deltas[k], 0.0))
   {
-    std::vector<boost::tuple<std::size_t,std::size_t,std::size_t> >
-    pointSet = boost::assign::tuple_list_of(i,j,k-1)
-                             (i,j,k+1);
+    std::vector<std::tuple<std::size_t,std::size_t,std::size_t> > pointSet =
+      {std::make_tuple(i,j,k-1),
+       std::make_tuple(i,j,k+1)};
 
     setZeroThicknessCellProperties(i, j, k, pointSet);
   }
@@ -524,72 +524,72 @@ void Domain::set3DZeroThicknessCellProperties(std::size_t i,std::size_t j,std::s
     isEqual(meshZ.deltas[k], 0.0))
   {
     // Use all 8 full volume cells
-    std::vector<boost::tuple<std::size_t,std::size_t,std::size_t> >
-    pointSet = boost::assign::tuple_list_of(i-1,j-1,k+1)
-                             (i+1,j-1,k+1)
-                            (i-1,j-1,k-1)
-                            (i+1,j-1,k-1)
-                            (i-1,j+1,k+1)
-                            (i+1,j+1,k+1)
-                            (i-1,j+1,k-1)
-                            (i+1,j+1,k-1);
+    std::vector<std::tuple<std::size_t,std::size_t,std::size_t> > pointSet =
+      {std::make_tuple(i-1,j-1,k+1),
+       std::make_tuple(i+1,j-1,k+1),
+       std::make_tuple(i-1,j-1,k-1),
+       std::make_tuple(i+1,j-1,k-1),
+       std::make_tuple(i-1,j+1,k+1),
+       std::make_tuple(i+1,j+1,k+1),
+       std::make_tuple(i-1,j+1,k-1),
+       std::make_tuple(i+1,j+1,k-1)};
 
     setZeroThicknessCellProperties(i, j, k, pointSet);
   }
   else if (isEqual(meshX.deltas[i], 0.0) &&
     isEqual(meshY.deltas[j], 0.0))
   {
-    std::vector<boost::tuple<std::size_t,std::size_t,std::size_t> >
-    pointSet = boost::assign::tuple_list_of(i-1,j-1,k)
-                             (i+1,j-1,k)
-                            (i-1,j+1,k)
-                            (i+1,j+1,k);
+    std::vector<std::tuple<std::size_t,std::size_t,std::size_t> > pointSet =
+      {std::make_tuple(i-1,j-1,k),
+       std::make_tuple(i+1,j-1,k),
+       std::make_tuple(i-1,j+1,k),
+       std::make_tuple(i+1,j+1,k)};
 
     setZeroThicknessCellProperties(i, j, k, pointSet);
   }
   else if (isEqual(meshX.deltas[i], 0.0) &&
     isEqual(meshZ.deltas[k], 0.0))
   {
-    std::vector<boost::tuple<std::size_t,std::size_t,std::size_t> >
-    pointSet = boost::assign::tuple_list_of(i-1,j,k+1)
-                             (i+1,j,k+1)
-                            (i-1,j,k-1)
-                            (i+1,j,k-1);
+    std::vector<std::tuple<std::size_t,std::size_t,std::size_t> > pointSet =
+      {std::make_tuple(i-1,j,k+1),
+       std::make_tuple(i+1,j,k+1),
+       std::make_tuple(i-1,j,k-1),
+       std::make_tuple(i+1,j,k-1)};
 
     setZeroThicknessCellProperties(i, j, k, pointSet);
   }
   else if (isEqual(meshY.deltas[j], 0.0) &&
     isEqual(meshZ.deltas[k], 0.0))
   {
-    std::vector<boost::tuple<std::size_t,std::size_t,std::size_t> >
-    pointSet = boost::assign::tuple_list_of(i,j-1,k+1)
-                             (i,j+1,k+1)
-                            (i,j-1,k-1)
-                            (i,j+1,k-1);
+    std::vector<std::tuple<std::size_t,std::size_t,std::size_t> > pointSet =
+      {std::make_tuple(i,j-1,k+1),
+       std::make_tuple(i,j+1,k+1),
+       std::make_tuple(i,j-1,k-1),
+       std::make_tuple(i,j+1,k-1)};
 
     setZeroThicknessCellProperties(i, j, k, pointSet);
   }
   else if (isEqual(meshX.deltas[i], 0.0))
   {
-    std::vector<boost::tuple<std::size_t,std::size_t,std::size_t> >
-    pointSet = boost::assign::tuple_list_of(i+1,j,k)
-                             (i-1,j,k);
+    std::vector<std::tuple<std::size_t,std::size_t,std::size_t> > pointSet =
+      {std::make_tuple(i+1,j,k),
+       std::make_tuple(i-1,j,k)};
 
     setZeroThicknessCellProperties(i, j, k, pointSet);
   }
   else if (isEqual(meshY.deltas[j], 0.0))
   {
-    std::vector<boost::tuple<std::size_t,std::size_t,std::size_t> >
-    pointSet = boost::assign::tuple_list_of(i,j+1,k)
-                             (i,j-1,k);
+    std::vector<std::tuple<std::size_t,std::size_t,std::size_t> > pointSet =
+      {std::make_tuple(i,j+1,k),
+       std::make_tuple(i,j-1,k)};
 
     setZeroThicknessCellProperties(i, j, k, pointSet);
   }
   else if (isEqual(meshZ.deltas[k], 0.0))
   {
-    std::vector<boost::tuple<std::size_t,std::size_t,std::size_t> >
-    pointSet = boost::assign::tuple_list_of(i,j,k+1)
-                             (i,j,k-1);
+    std::vector<std::tuple<std::size_t,std::size_t,std::size_t> > pointSet =
+      {std::make_tuple(i,j,k+1),
+       std::make_tuple(i,j,k-1)};
 
     setZeroThicknessCellProperties(i, j, k, pointSet);
   }
@@ -598,7 +598,7 @@ void Domain::set3DZeroThicknessCellProperties(std::size_t i,std::size_t j,std::s
 
 void Domain::setZeroThicknessCellProperties(std::size_t i,
     std::size_t j, std::size_t k,
-    std::vector<boost::tuple<std::size_t,std::size_t,std::size_t> > pointSet)
+    std::vector<std::tuple<std::size_t,std::size_t,std::size_t> > pointSet)
 {
   std::vector<double> volumes;
   std::vector<double> densities;
@@ -612,9 +612,9 @@ void Domain::setZeroThicknessCellProperties(std::size_t i,
 
   for (std::size_t p = 0; p < pointSet.size(); p++)
   {
-    std::size_t iP = boost::get<0>(pointSet[p]);
-    std::size_t jP = boost::get<1>(pointSet[p]);
-    std::size_t kP = boost::get<2>(pointSet[p]);
+    std::size_t iP = std::get<0>(pointSet[p]);
+    std::size_t jP = std::get<1>(pointSet[p]);
+    std::size_t kP = std::get<2>(pointSet[p]);
 
     // Do not add air cell properties into the weighted average
     if (cell[iP][jP][kP].cellType != Cell::INTERIOR_AIR &&
