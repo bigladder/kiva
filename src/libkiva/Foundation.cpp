@@ -7,6 +7,15 @@ namespace Kiva {
 
 static const double PI = 4.0*atan(1.0);
 
+Material::Material() {}
+
+Material::Material(double k, double rho, double cp) :
+  conductivity(k),
+  density(rho),
+  specificHeat(cp)
+{}
+
+
 double Wall::totalWidth()
 {
   double width = 0.0;
@@ -44,6 +53,14 @@ double Slab::totalResistance()
   return R;
 }
 
+Mesh::Mesh() :
+  minCellDim(0.02),
+  maxNearGrowthCoeff(1.5),
+  maxDepthGrowthCoeff(1.5),
+  maxInteriorGrowthCoeff(1.5),
+  maxExteriorGrowthCoeff(1.5)
+{}
+
 void Block::setSquarePolygon()
 {
   polygon.outer().push_back(Point(xMin,yMin));
@@ -79,6 +96,38 @@ bool Ranges::isType(double position,RangeType::Type type)
   }
   return false;
 }
+
+Foundation::Foundation() :
+  deepGroundDepth(40.0),
+  farFieldWidth(40.0),
+  foundationDepth(0.0),
+  orientation(0.0),
+  deepGroundBoundary(DGB_ZERO_FLUX),
+  wallTopBoundary(WTB_ZERO_FLUX),
+  soil(Material(0.864,1510,1260)),
+  soilAbsorptivity(0.9),
+  soilEmissivity(0.9),
+  surfaceRoughness(0.03),
+  coordinateSystem(CS_CARTESIAN),
+  numberOfDimensions(2),
+  useSymmetry(true),
+  reductionStrategy(RS_BOUNDARY),
+  buildingHeight(0.0),
+  hasWall(true),
+  hasSlab(true),
+  hasInteriorHorizontalInsulation(false),
+  hasExteriorHorizontalInsulation(false),
+  hasInteriorVerticalInsulation(false),
+  hasExteriorVerticalInsulation(false),
+  mesh(Mesh()),
+  numericalScheme(NS_ADI),
+  fADI(0.00001),
+  solver("bicgstab"),
+  preconditioner("ilu"),
+  tolerance(1.0e-6),
+  maxIterations(100000),
+  convectionCalculationMethod(CCM_AUTO)
+{}
 
 void Foundation::createMeshData()
 {

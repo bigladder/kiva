@@ -13,7 +13,8 @@ namespace Kiva {
 class Material
 {
 public:
-
+  Material();
+  Material(double k, double rho, double cp);
   double conductivity;  // [W/m-K] conductivity (boost function of z, t?)
   double density;  // [kg/m3] density
   double specificHeat;  // [J/kg-K] specific heat
@@ -76,12 +77,12 @@ public:
 class Mesh
 {
 public:
-
-  double maxNearGrowthCoeff;
-  double maxExteriorGrowthCoeff;
-  double maxInteriorGrowthCoeff;
-  double maxDepthGrowthCoeff;
+  Mesh();
   double minCellDim;  // [m]
+  double maxNearGrowthCoeff;
+  double maxDepthGrowthCoeff;
+  double maxInteriorGrowthCoeff;
+  double maxExteriorGrowthCoeff;
 
 };
 
@@ -193,6 +194,7 @@ class Foundation
 {
 public:
 
+  Foundation();
   // Inputs
 
   // Site
