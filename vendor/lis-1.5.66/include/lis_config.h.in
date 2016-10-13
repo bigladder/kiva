@@ -31,7 +31,7 @@
  #define HAS_X87_FPU 1
 
 // Has includes?
-#cmakedefine HAVE_COMPLEX_H
+//#cmakedefine HAVE_COMPLEX_H
 #cmakedefine HAVE_DLFCN_H
 #cmakedefine HAVE_INTTYPES_H
 #cmakedefine HAVE_MALLOC_H
