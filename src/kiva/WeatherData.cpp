@@ -294,7 +294,7 @@ void WeatherData::importEPW(std::string epwFile)
   int dayCount = 0;
   int monthCount = 0;
 
-  for (int h = 0; h < days.size(); ++h)
+  for (std::size_t h = 0; h < days.size(); ++h)
   {
     dailyTemperatureSum += dryBulbTemp[h];
     monthlyTemperatureSum += dryBulbTemp[h];

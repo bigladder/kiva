@@ -32,8 +32,8 @@ public:
   virtual ~Simulator();
   void simulate();
 
-  Input &input;
   WeatherData &weatherData;
+  Input &input;
 
   double annualAverageDryBulbTemperature;
 

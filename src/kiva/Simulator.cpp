@@ -349,9 +349,6 @@ double Simulator::getInitialTemperature(boost::posix_time::ptime t, double z)
 {
   if (input.initialization.initializationMethod == Initialization::IM_KUSUDA)
   {
-    double minDryBulb = weatherData.dryBulbTemp.getMin();
-    double maxDryBulb = weatherData.dryBulbTemp.getMax();
-
     boost::gregorian::greg_year year = t.date().year();
     boost::gregorian::date dayBegin(year,boost::gregorian::Jan,1);
     boost::posix_time::ptime tYearStart(dayBegin);
