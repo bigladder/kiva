@@ -1943,7 +1943,8 @@ void Ground::calculateSurfaceAverages(){
     }
 
     double totalHeatTransferRate = 0;
-    double TA = 0;
+    //double TA = 0;
+    double HA = 0;
     double totalArea = 0;
 
     double& Tair = bcs.indoorTemp;
@@ -1983,7 +1984,8 @@ void Ground::calculateSurfaceAverages(){
 
             totalArea += A;
             totalHeatTransferRate += h*A*(Tair - TNew[i][j][k]);
-            TA += TNew[i][j][k]*A;
+            //TA += TNew[i][j][k]*A;
+            HA += h*A;
 
             #ifdef PRNTSURF
               output <<
@@ -2004,8 +2006,8 @@ void Ground::calculateSurfaceAverages(){
       }
     }
 
-    double Tavg = TA/totalArea;
-    double hAvg = totalHeatTransferRate/(totalArea*(Tair - Tavg));
+    double Tavg = Tair - totalHeatTransferRate/HA;
+    double hAvg = HA/totalArea;
 
     groundOutput.outputValues[{surface,GroundOutput::OT_TEMP}] = Tavg;
     groundOutput.outputValues[{surface,GroundOutput::OT_FLUX}] = totalHeatTransferRate/totalArea;
