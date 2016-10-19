@@ -10,7 +10,7 @@
 
 namespace Kiva {
 
-class Material
+class LIBKIVA_EXPORT Material
 {
 public:
   Material();
@@ -190,7 +190,7 @@ public:
 
 };
 
-class Foundation
+class LIBKIVA_EXPORT Foundation
 {
 public:
 
