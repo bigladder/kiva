@@ -40,7 +40,6 @@ The foundation insulation and structural components are defined by (up to) six s
       Height Above Grade: 0.3048  # [m]
       Footer Depth Below Slab: 0.3 # [m]
     Interior Horizontal Insulation:
-      Depth: 0.2032 # [m]
       Width: 0.4064 # [m]
       Material: XPS # Material reference
       Thickness: 0.0508
@@ -300,7 +299,6 @@ This defines the position, dimensions, and material of interior horizontal insul
   Interior Horizontal Insulation:
     Material: XPS # Material reference
     Thickness: 0.0508 # [m]
-    Depth: 0.2032  # [m]
     Width: 0.4064 # [m]
 
 =============   ===============
@@ -333,12 +331,13 @@ Thickness of the insulation.
 Depth
 ^^^^^
 
-Depth of the insulation measured from the wall top to the top of the insulation.
+Depth of the insulation measured from the bottom of the slab to the top of the insulation.
 
 =============   =======
-**Required:**   Yes
+**Required:**   No
 **Type:**       Numeric
 **Units:**      m
+**Default:**    0.0
 =============   =======
 
 Width
@@ -415,7 +414,6 @@ This defines the position, dimensions, and material of exterior horizontal insul
   Exterior Horizontal Insulation:
     Material: XPS # Material reference
     Thickness: 0.0508 # [m]
-    Depth: 0.3048  # [m]
     Width: 0.6096 # [m]
 
 =============   ===============
@@ -448,12 +446,13 @@ Thickness of the insulation.
 Depth
 ^^^^^
 
-Depth of the insulation measured from the wall top to the top of the insulation.
+Depth of the insulation measured from the exterior grade to the top of the insulation.
 
 =============   =======
-**Required:**   Yes
+**Required:**   No
 **Type:**       Numeric
 **Units:**      m
+**Default:**    0.0
 =============   =======
 
 Width

@@ -44,7 +44,6 @@ Foundation:
     Material: XPS
     Thickness: 0.0508
   Interior Horizontal Insulation:
-    Depth: 0.2032
     Width: 0.4064
     Material: XPS
     Thickness: 0.0508

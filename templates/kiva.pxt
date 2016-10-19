@@ -265,7 +265,7 @@ Foundation:
 <% end %>
 <% if (exterior_horizontal_width > 0.0) %>
   ExteriorHorizontalInsulation:
-    Depth: <%= exterior_vertical_depth %>
+    Depth: <%= exterior_vertical_depth - height_above_grade %>
     Width: <%= exterior_horizontal_width %>
     Material: XPS
     Thickness: <%= insulation_thickness%>
@@ -278,7 +278,7 @@ Foundation:
 <% end %>
 <% if (interior_horizontal_width > 0.0) %>
   Interior Horizontal Insulation:
-    Depth: <%= interior_vertical_depth %>
+    Depth: <%= interior_vertical_depth - slab_thickness - foundation_depth %>
     Width: <%= interior_horizontal_width %>
     Material: XPS
     Thickness: <%= insulation_thickness%>

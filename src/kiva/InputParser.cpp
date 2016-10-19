@@ -155,7 +155,16 @@ Input inputParser(std::string inputFile)
 
     foundation.interiorHorizontalInsulation.layer.thickness = yamlInput["Foundation"]["Interior Horizontal Insulation"]["Thickness"].as<double>();
     foundation.interiorHorizontalInsulation.layer.material = materials[yamlInput["Foundation"]["Interior Horizontal Insulation"]["Material"].as<std::string>()];
-    foundation.interiorHorizontalInsulation.depth = yamlInput["Foundation"]["Interior Horizontal Insulation"]["Depth"].as<double>();
+
+    if  (yamlInput["Foundation"]["Interior Horizontal Insulation"]["Depth"].IsDefined())
+    {
+      foundation.interiorHorizontalInsulation.depth = yamlInput["Foundation"]["Interior Horizontal Insulation"]["Depth"].as<double>();
+    }
+    else
+    {
+      foundation.interiorHorizontalInsulation.depth = 0.0;
+    }
+
     foundation.interiorHorizontalInsulation.width = yamlInput["Foundation"]["Interior Horizontal Insulation"]["Width"].as<double>();
 
   }
@@ -186,7 +195,17 @@ Input inputParser(std::string inputFile)
 
     foundation.exteriorHorizontalInsulation.layer.thickness = yamlInput["Foundation"]["Exterior Horizontal Insulation"]["Thickness"].as<double>();
     foundation.exteriorHorizontalInsulation.layer.material = materials[yamlInput["Foundation"]["Exterior Horizontal Insulation"]["Material"].as<std::string>()];
-    foundation.exteriorHorizontalInsulation.depth = yamlInput["Foundation"]["Exterior Horizontal Insulation"]["Depth"].as<double>();
+
+    if  (yamlInput["Foundation"]["Exterior Horizontal Insulation"]["Depth"].IsDefined())
+    {
+      foundation.exteriorHorizontalInsulation.depth = yamlInput["Foundation"]["Exterior Horizontal Insulation"]["Depth"].as<double>();
+    }
+    else
+    {
+      foundation.exteriorHorizontalInsulation.depth = 0.0;
+    }
+
+
     foundation.exteriorHorizontalInsulation.width = yamlInput["Foundation"]["Exterior Horizontal Insulation"]["Width"].as<double>();
 
   }

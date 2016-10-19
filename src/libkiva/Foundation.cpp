@@ -240,19 +240,6 @@ void Foundation::createMeshData()
   double xyNearInt = xyWallInterior;  // This will change depending on configuration
   double xyNearExt = xyWallExterior;  // This will change depending on configuration
 
-  double xyIntHIns = 0.0;
-  double zIntHIns = 0.0;
-  if (hasInteriorHorizontalInsulation)
-  {
-    xyIntHIns = -interiorHorizontalInsulation.width;
-    zIntHIns = zMax - interiorHorizontalInsulation.depth - interiorHorizontalInsulation.layer.thickness;
-
-    if(zIntHIns < zNearDeep)
-      zNearDeep = zIntHIns;
-    if(xyIntHIns < xyNearInt)
-      xyNearInt = xyIntHIns;
-  }
-
 
 
   double zSlabBottom = zSlab;
@@ -265,6 +252,20 @@ void Foundation::createMeshData()
       zNearDeep = zSlabBottom;
     }
   }
+
+  double xyIntHIns = 0.0;
+  double zIntHIns = 0.0;
+  if (hasInteriorHorizontalInsulation)
+  {
+    xyIntHIns = -interiorHorizontalInsulation.width;
+    zIntHIns = zSlabBottom - interiorHorizontalInsulation.depth - interiorHorizontalInsulation.layer.thickness;
+
+    if(zIntHIns < zNearDeep)
+      zNearDeep = zIntHIns;
+    if(xyIntHIns < xyNearInt)
+      xyNearInt = xyIntHIns;
+  }
+
 
   double zIntVIns = 0.0;
   if (hasInteriorVerticalInsulation)
@@ -316,7 +317,7 @@ void Foundation::createMeshData()
   if (hasExteriorHorizontalInsulation)
   {
     xyExtHIns = wall.totalWidth() + exteriorHorizontalInsulation.width;
-    zExtHIns = zMax - exteriorHorizontalInsulation.depth - exteriorHorizontalInsulation.layer.thickness;
+    zExtHIns = zGrade - exteriorHorizontalInsulation.depth - exteriorHorizontalInsulation.layer.thickness;
 
     if(zExtHIns < zNearDeep)
     {
