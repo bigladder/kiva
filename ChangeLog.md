@@ -10,6 +10,7 @@
 * Move boundary, initialization, and output related inputs to a higher level.
 * Replace foundation wall height ("Height") with footer depth relative to bottom
   of the slab ("Footer Depth Below Slab").
+* Make horizontal insulation depths relative to the slab and grade surfaces.
 * Use continuous integration for building and testing.
 
 0.3.1 Released 16 October 2015
