@@ -104,7 +104,7 @@ void Domain::setDomain(Foundation &foundation)
 
         for (std::size_t s = 0; s < foundation.surfaces.size(); s++)
         {
-          if (boost::geometry::intersects(Point(meshX.centers[i],meshY.centers[j]), foundation.surfaces[s].polygon))
+          if (pointOnPoly(Point(meshX.centers[i],meshY.centers[j]), foundation.surfaces[s].polygon))
           {
             if (isGreaterOrEqual(meshZ.centers[k], foundation.surfaces[s].zMin)
             &&  isLessOrEqual(meshZ.centers[k], foundation.surfaces[s].zMax))

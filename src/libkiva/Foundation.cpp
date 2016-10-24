@@ -374,9 +374,29 @@ void Foundation::createMeshData()
     double area = boost::geometry::area(polygon);  // [m2] Area of foundation
     double perimeter = boost::geometry::perimeter(polygon);  // [m] Perimeter of foundation
 
+    double interiorPerimeter = 0.0;
+
+    std::size_t nV = polygon.outer().size();
+    for (std::size_t v = 0; v < nV; v++)
+    {
+      std::size_t vNext;
+      if (v == nV -1) {
+        vNext = 0;
+      } else {
+        vNext = v+1;
+      }
+
+      Point a = polygon.outer()[v];
+      Point b = polygon.outer()[vNext];
+
+      if (!isExposedPerimeter[v]) {
+        interiorPerimeter += getDistance(a,b);
+      }
+    }
+
     linearAreaMultiplier = 1.0;
 
-    double ap = area/perimeter;
+    double ap = area/(perimeter - interiorPerimeter);
 
     if (reductionStrategy == RS_AP)
     {

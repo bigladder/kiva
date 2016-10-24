@@ -295,6 +295,23 @@ Input inputParser(std::string inputFile)
         yamlInput["Foundation"]["Polygon"][i][1].as<double>()));
   }
 
+  if  (yamlInput["Foundation"]["Exposed Perimeter"].IsDefined())
+  {
+    if (yamlInput["Foundation"]["Exposed Perimeter"].size() != yamlInput["Foundation"]["Polygon"].size()) {
+      // error
+    }
+    else {
+      for (size_t i=0;i<yamlInput["Foundation"]["Exposed Perimeter"].size();i++) {
+        foundation.isExposedPerimeter.push_back(yamlInput["Foundation"]["Exposed Perimeter"][i].as<bool>());
+      }
+    }
+  }
+  else {
+    for (size_t i=0;i<foundation.polygon.outer().size();i++) {
+      foundation.isExposedPerimeter.push_back(true);
+    }
+  }
+
   if  (yamlInput["Foundation"]["Building Height"].IsDefined())
   {
     foundation.buildingHeight = yamlInput["Foundation"]["Building Height"].as<double>();

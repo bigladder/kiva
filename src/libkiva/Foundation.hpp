@@ -258,6 +258,7 @@ public:
 
   Polygon polygon;
   bool isXSymm, isYSymm;
+  std::vector<bool> isExposedPerimeter;
 
   double buildingHeight;
   std::vector<Polygon3> buildingSurfaces;

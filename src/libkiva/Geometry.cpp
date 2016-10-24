@@ -511,6 +511,11 @@ bool comparePointsY(Point first, Point second)
   return (first.get<1>() < second.get<1>());
 }
 
+bool pointOnPoly(Point point, Polygon poly)
+{
+  return boost::geometry::intersects(point,poly);
+}
+
 double getDistance(Point a, Point b)
 {
   double ax = a.get<0>();

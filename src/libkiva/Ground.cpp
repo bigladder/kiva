@@ -2282,76 +2282,90 @@ void Ground::setNewBoundaryGeometry()
 {
   double area = boost::geometry::area(foundation.polygon);
   double perimeter = boost::geometry::perimeter(foundation.polygon);
+  double interiorPerimeter = 0.0;
 
   std::size_t nV = foundation.polygon.outer().size();
   for (std::size_t v = 0; v < nV; v++)
   {
-    Point b = foundation.polygon.outer()[v];
+    std::size_t vPrev, vNext, vNext2;
 
-    Point a;
     if (v == 0)
-      a = foundation.polygon.outer()[nV-1];
+      vPrev = nV - 1;
     else
-      a = foundation.polygon.outer()[v-1];
+      vPrev = v - 1;
 
-    Point c;
     if (v == nV -1)
-      c = foundation.polygon.outer()[0];
+      vNext = 0;
     else
-      c = foundation.polygon.outer()[v+1];
+      vNext = v + 1;
 
-    Point d;
-    if (v == nV -2)
-      d = foundation.polygon.outer()[0];
+    if (v == nV - 2)
+      vNext2 = 0;
     else if (v == nV -1)
-      d = foundation.polygon.outer()[1];
+      vNext2 = 1;
     else
-      d = foundation.polygon.outer()[v+2];
+      vNext2 = v + 2;
+
+    Point a = foundation.polygon.outer()[vPrev];
+    Point b = foundation.polygon.outer()[v];
+    Point c = foundation.polygon.outer()[vNext];
+    Point d = foundation.polygon.outer()[vNext2];
 
     // Correct U-turns
-    if (isEqual(getAngle(a,b,c) + getAngle(b,c,d),PI))
+    if (foundation.isExposedPerimeter[vPrev] && foundation.isExposedPerimeter[v] && foundation.isExposedPerimeter[vNext])
     {
-      double AB = getDistance(a,b);
-      double BC = getDistance(b,c);
-      double CD = getDistance(c,d);
-      double edgeDistance = BC;
-      double reductionDistance = std::min(AB,CD);
-      double reductionValue = 1 - getBoundaryValue(edgeDistance);
-      perimeter -= 2*reductionDistance*reductionValue;
+      if (isEqual(getAngle(a,b,c) + getAngle(b,c,d),PI))
+      {
+        double AB = getDistance(a,b);
+        double BC = getDistance(b,c);
+        double CD = getDistance(c,d);
+        double edgeDistance = BC;
+        double reductionDistance = std::min(AB,CD);
+        double reductionValue = 1 - getBoundaryValue(edgeDistance);
+        perimeter -= 2*reductionDistance*reductionValue;
+      }
     }
 
-    double alpha = getAngle(a,b,c);
-    double A = getDistance(a,b);
-    double B = getDistance(b,c);
-
-
-    if (sin(alpha) > 0)
+    if (foundation.isExposedPerimeter[vPrev] && foundation.isExposedPerimeter[v])
     {
-      double f = getBoundaryDistance(1-sin(alpha/2)/(1+cos(alpha/2)))/sin(alpha/2);
+      double alpha = getAngle(a,b,c);
+      double A = getDistance(a,b);
+      double B = getDistance(b,c);
 
-      // Chamfer
-      double d = f/cos(alpha/2);
-      if (A < d || B < d)
+
+      if (sin(alpha) > 0)
       {
-        A = std::min(A,B);
-        B = std::min(A,B);
-      }
-      else
-      {
-        A = d;
-        B = d;
-      }
-      double C = sqrt(A*A + B*B - 2*A*B*cos(alpha));
+        double f = getBoundaryDistance(1-sin(alpha/2)/(1+cos(alpha/2)))/sin(alpha/2);
 
-      perimeter += C - (A + B);
+        // Chamfer
+        double d = f/cos(alpha/2);
+        if (A < d || B < d)
+        {
+          A = std::min(A,B);
+          B = std::min(A,B);
+        }
+        else
+        {
+          A = d;
+          B = d;
+        }
+        double C = sqrt(A*A + B*B - 2*A*B*cos(alpha));
 
+        perimeter += C - (A + B);
+
+      }
+    }
+
+    if (!foundation.isExposedPerimeter[v])
+    {
+      interiorPerimeter += getDistance(b,c);
     }
 
   }
 
   foundation.reductionStrategy = Foundation::RS_CUSTOM;
   foundation.twoParameters = false;
-  foundation.reductionLength2 = area/perimeter;
+  foundation.reductionLength2 = area/(perimeter - interiorPerimeter);
 
 }
 

@@ -58,6 +58,8 @@ double getYmax(Polygon poly, std::size_t vertex);
 
 bool LIBKIVA_EXPORT comparePointsX(Point first, Point second);
 bool LIBKIVA_EXPORT comparePointsY(Point first, Point second);
+bool LIBKIVA_EXPORT pointOnPoly(Point point, Polygon poly);
+
 
 double getDistance(Point a, Point b);
 
