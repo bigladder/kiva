@@ -30,22 +30,18 @@ Foundation:
     Layers:
       -
         Material: Concrete
-        Thickness: 0.1016
+        Thickness: 0.2032
   Wall:
     Layers:
       -
         Material: Concrete
-        Thickness: 0.254
+        Thickness: 0.3048
     Height Above Grade: 0.3048  # [m]
-    Depth Below Slab: 0.0  # [m]
+    Depth Below Slab: 0.2032  # [m]
   Exterior Vertical Insulation:
     Depth: 2.44
     Material: XPS
     Thickness: 0.0508
-  Footing:
-    Material: Concrete
-    Width: 0.762
-    Depth: 0.254
 
 Boundaries:
   Indoor Air Temperature: 295.372 # [K]
@@ -72,13 +68,3 @@ Output:
       - 15 # Foundation Average Heat Flux [W/m2]
       - 16 # Foundation Average Temperature [K]
       - 17 # Foundation Total Heat Transfer Rate [W]
-  Output Snapshots:
-    -
-     Directory: snapshot
-     Size: 800
-     Frequency: 26
-     Mesh: true
-     Start Date: 2015-Jan-1
-     End Date: 2015-Jan-1
-     X Range: [4, 8]
-     Z Range: [-5, 1]
