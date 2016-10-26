@@ -6,11 +6,13 @@
 * Small fixes to solar and convective boundary conditions.
 
 ### Features:
-* Separate core functionality into a linked library.
-* Move boundary, initialization, and output related inputs to a higher level.
-* Replace foundation wall height ("Height") with footer depth relative to bottom
-  of the slab ("Footer Depth Below Slab").
+* Ability to define any block of material within the domain.
+* Add inputs to define the foundation footing.
 * Make horizontal insulation depths relative to the slab and grade surfaces.
+* Replace foundation wall height ("Height") with depth relative to bottom
+  of the slab ("Depth Below Slab").
+* Move boundary, initialization, and output related inputs to a higher level.
+* Separate core functionality into a linked libraries.
 * Use continuous integration for building and testing.
 
 0.3.1 Released 16 October 2015

@@ -48,6 +48,19 @@ public:
 
 };
 
+class InputBlock
+{
+public:
+
+  double x; // [m] block X origin relative to wall interior
+  double z; // [m] block Z origin relative to wall top
+  double width; // [m] block width extending from block X origin outward
+  double depth; // [m] block depth extending from block z origin downward
+  Material material;
+  Box box;
+
+};
+
 class Wall
 {
 public:
@@ -55,8 +68,8 @@ public:
   double interiorEmissivity;
   double exteriorEmissivity;
   double exteriorAbsorptivity;
-  double heightAboveGrade;  // [m] below grade depth
-  double footerDepth;  // [m] total height
+  double heightAboveGrade;  // [m]
+  double depthBelowSlab;  // [m]
   std::vector <Layer> layers;
 
   double totalWidth();
@@ -268,14 +281,7 @@ public:
   bool hasWall;
   Slab slab;
   bool hasSlab;
-  HorizontalInsulation interiorHorizontalInsulation;
-  bool hasInteriorHorizontalInsulation;
-  HorizontalInsulation exteriorHorizontalInsulation;
-  bool hasExteriorHorizontalInsulation;
-  VerticalInsulation interiorVerticalInsulation;
-  bool hasInteriorVerticalInsulation;
-  VerticalInsulation exteriorVerticalInsulation;
-  bool hasExteriorVerticalInsulation;
+  std::vector<InputBlock> inputBlocks;
 
   double perimeterSurfaceWidth;
   bool hasPerimeterSurface;

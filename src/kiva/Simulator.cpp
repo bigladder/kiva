@@ -193,7 +193,7 @@ void Simulator::initializePlots()
       }
     }
 
-    plots.push_back(GroundPlot(input.output.outputSnapshots[p].snapshotSettings,ground.domain,input.foundation.blocks));
+    plots.emplace_back(input.output.outputSnapshots[p].snapshotSettings,ground.domain,input.foundation);
 
     boost::posix_time::ptime startTime(input.output.outputSnapshots[p].startDate,boost::posix_time::hours(0));
     boost::posix_time::ptime endTime(input.output.outputSnapshots[p].endDate + boost::gregorian::days(1));

@@ -11,6 +11,7 @@
 #include <boost/filesystem/operations.hpp>
 
 #include "../libkiva/Domain.hpp"
+#include "../libkiva/Foundation.hpp"
 #include "../libkiva/Functions.hpp"
 #include "../libkiva/Geometry.hpp"
 
@@ -117,6 +118,7 @@ public:
   //mglGraph gr;
   SnapshotSettings snapshotSettings;
   std::vector<Block> blocks;
+  std::vector<Surface> surfaces;
   SliceType sliceType;
 
   mglData TDat;
@@ -126,7 +128,7 @@ public:
 
   double tStart, tEnd;
   double nextPlotTime;
-  GroundPlot(SnapshotSettings &snapshotSettings, Domain &domain, std::vector<Block> &blocks);
+  GroundPlot(SnapshotSettings &snapshotSettings, Domain &domain, Foundation &foundation);
   void createFrame(std::string timeStamp="");
   bool makeNewFrame(double t);
 };

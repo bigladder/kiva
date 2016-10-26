@@ -32,8 +32,8 @@ SnapshotSettings::SnapshotSettings() :
 
 
 
-GroundPlot::GroundPlot(SnapshotSettings &snapshotSettings, Domain &domain, std::vector<Block> &blocks) :
-  snapshotSettings(snapshotSettings), blocks(blocks)
+GroundPlot::GroundPlot(SnapshotSettings &snapshotSettings, Domain &domain, Foundation &foundation) :
+  snapshotSettings(snapshotSettings), blocks(foundation.blocks), surfaces(foundation.surfaces)
 {
 
   boost::filesystem::remove_all(snapshotSettings.dir);
@@ -362,23 +362,26 @@ void GroundPlot::createFrame(std::string timeStamp)
 
 
   // Draw blocks
-  for (size_t b = 0; b < blocks.size(); b++)
+  for (auto& b : blocks)
   {
+    if (b.blockType != Block::SOLID) {
+      continue;
+    }
     switch (sliceType)
     {
     case XZ_2D:
     {
-      mglPoint bl = mglPoint(std::min(std::max(blocks[b].xMin*distanceUnitConversion, hMin),hMax),
-                   std::min(std::max(blocks[b].zMin*distanceUnitConversion, vMin),vMax),
+      mglPoint bl = mglPoint(std::min(std::max(b.xMin*distanceUnitConversion, hMin),hMax),
+                   std::min(std::max(b.zMin*distanceUnitConversion, vMin),vMax),
                    210.0);
-      mglPoint br = mglPoint(std::max(std::min(blocks[b].xMax*distanceUnitConversion, hMax),hMin),
-                   std::min(std::max(blocks[b].zMin*distanceUnitConversion, vMin),vMax),
+      mglPoint br = mglPoint(std::max(std::min(b.xMax*distanceUnitConversion, hMax),hMin),
+                   std::min(std::max(b.zMin*distanceUnitConversion, vMin),vMax),
                    210.0);
-      mglPoint tr = mglPoint(std::max(std::min(blocks[b].xMax*distanceUnitConversion, hMax),hMin),
-                   std::max(std::min(blocks[b].zMax*distanceUnitConversion, vMax),vMin),
+      mglPoint tr = mglPoint(std::max(std::min(b.xMax*distanceUnitConversion, hMax),hMin),
+                   std::max(std::min(b.zMax*distanceUnitConversion, vMax),vMin),
                    210.0);
-      mglPoint tl = mglPoint(std::min(std::max(blocks[b].xMin*distanceUnitConversion, hMin),hMax),
-                   std::max(std::min(blocks[b].zMax*distanceUnitConversion, vMax),vMin),
+      mglPoint tl = mglPoint(std::min(std::max(b.xMin*distanceUnitConversion, hMin),hMax),
+                   std::max(std::min(b.zMax*distanceUnitConversion, vMax),vMin),
                    210.0);
 
       gr.Line(bl, br, "k");
@@ -397,7 +400,7 @@ void GroundPlot::createFrame(std::string timeStamp)
       view.outer().push_back(Point(hMax,vMin));
 
       MultiPolygon intersection;
-      boost::geometry::intersection(view, blocks[b].polygon, intersection);
+      boost::geometry::intersection(view, b.polygon, intersection);
 
       // loop through each polygon in resulting multi_polygon
       for (std::size_t p = 0; p < intersection.size(); p++)
@@ -424,7 +427,7 @@ void GroundPlot::createFrame(std::string timeStamp)
       slicingPlane.push_back(Point(xMax+EPSILON,slice));
 
       MultiPoint intersection;
-      boost::geometry::intersection(slicingPlane, blocks[b].polygon, intersection);
+      boost::geometry::intersection(slicingPlane, b.polygon, intersection);
 
       // sort points in ascending order
       sort(intersection.begin(), intersection.end(), comparePointsX);
@@ -438,16 +441,16 @@ void GroundPlot::createFrame(std::string timeStamp)
 
 
         mglPoint bl = mglPoint(std::min(std::max(p1, hMin),hMax),
-                     std::min(std::max(blocks[b].zMin*distanceUnitConversion, vMin),vMax),
+                     std::min(std::max(b.zMin*distanceUnitConversion, vMin),vMax),
                      210.0);
         mglPoint br = mglPoint(std::max(std::min(p2, hMax),hMin),
-                     std::min(std::max(blocks[b].zMin*distanceUnitConversion, vMin),vMax),
+                     std::min(std::max(b.zMin*distanceUnitConversion, vMin),vMax),
                      210.0);
         mglPoint tr = mglPoint(std::max(std::min(p2, hMax),hMin),
-                     std::max(std::min(blocks[b].zMax*distanceUnitConversion, vMax),vMin),
+                     std::max(std::min(b.zMax*distanceUnitConversion, vMax),vMin),
                      210.0);
         mglPoint tl = mglPoint(std::min(std::max(p1, hMin),hMax),
-                     std::max(std::min(blocks[b].zMax*distanceUnitConversion, vMax),vMin),
+                     std::max(std::min(b.zMax*distanceUnitConversion, vMax),vMin),
                      210.0);
 
         gr.Line(bl, br, "k");
@@ -467,7 +470,7 @@ void GroundPlot::createFrame(std::string timeStamp)
       slicingPlane.push_back(Point(slice,yMax+EPSILON));
 
       MultiPoint intersection;
-      boost::geometry::intersection(slicingPlane, blocks[b].polygon, intersection);
+      boost::geometry::intersection(slicingPlane, b.polygon, intersection);
 
       // sort points in ascending order
       sort(intersection.begin(), intersection.end(), comparePointsY);
@@ -481,16 +484,16 @@ void GroundPlot::createFrame(std::string timeStamp)
 
 
         mglPoint bl = mglPoint(std::min(std::max(p1, hMin),hMax),
-                     std::min(std::max(blocks[b].zMin*distanceUnitConversion, vMin),vMax),
+                     std::min(std::max(b.zMin*distanceUnitConversion, vMin),vMax),
                      210.0);
         mglPoint br = mglPoint(std::max(std::min(p2, hMax),hMin),
-                     std::min(std::max(blocks[b].zMin*distanceUnitConversion, vMin),vMax),
+                     std::min(std::max(b.zMin*distanceUnitConversion, vMin),vMax),
                      210.0);
         mglPoint tr = mglPoint(std::max(std::min(p2, hMax),hMin),
-                     std::max(std::min(blocks[b].zMax*distanceUnitConversion, vMax),vMin),
+                     std::max(std::min(b.zMax*distanceUnitConversion, vMax),vMin),
                      210.0);
         mglPoint tl = mglPoint(std::min(std::max(p1, hMin),hMax),
-                     std::max(std::min(blocks[b].zMax*distanceUnitConversion, vMax),vMin),
+                     std::max(std::min(b.zMax*distanceUnitConversion, vMax),vMin),
                      210.0);
 
         gr.Line(bl, br, "k");
@@ -504,6 +507,124 @@ void GroundPlot::createFrame(std::string timeStamp)
       break;
     }
   }
+
+  // Draw surfaces
+  for (auto& s : surfaces){
+    switch (sliceType)
+    {
+    case XZ_2D:
+      {
+        mglPoint a = mglPoint(std::min(std::max(s.xMin*distanceUnitConversion, hMin),hMax),
+                     std::min(std::max(s.zMin*distanceUnitConversion, vMin),vMax),
+                     210.0);
+        mglPoint b = mglPoint(std::max(std::min(s.xMax*distanceUnitConversion, hMax),hMin),
+                     std::min(std::max(s.zMax*distanceUnitConversion, vMin),vMax),
+                     210.0);
+
+        gr.Line(a, b, "k");
+      }
+      break;
+    case XY:
+      {
+      }
+      break;
+    case XZ:
+      {
+        Line slicingPlane;
+        slicingPlane.push_back(Point(xMin-EPSILON,slice));
+        slicingPlane.push_back(Point(xMax+EPSILON,slice));
+
+        MultiPoint intersection;
+        boost::geometry::intersection(slicingPlane, s.polygon, intersection);
+
+        // sort points in ascending order
+        sort(intersection.begin(), intersection.end(), comparePointsX);
+
+        if (s.orientation == Surface::Z_POS || s.orientation == Surface::Z_NEG) {
+
+          for (std::size_t p = 0; p < intersection.size(); p++)
+          {
+            // Use point pairs and zmin/max to draw rectangles similar to 2D
+            // case.
+            double p1 = intersection[p].get<0>()*distanceUnitConversion;
+            double p2 = intersection[p+1].get<0>()*distanceUnitConversion;
+
+            mglPoint a = mglPoint(std::min(std::max(p1, hMin),hMax),
+                         std::min(std::max(s.zMin*distanceUnitConversion, vMin),vMax),
+                         210.0);
+            mglPoint b = mglPoint(std::min(std::max(p2, hMin),hMax),
+                         std::max(std::min(s.zMax*distanceUnitConversion, vMax),vMin),
+                         210.0);
+
+            gr.Line(a, b, "k");
+
+            p += 1; // skip one point, on to the next pair
+          }
+        } else {
+          for (std::size_t p = 0; p < intersection.size(); p++)
+          {
+            mglPoint a = mglPoint(std::min(std::max(intersection[p].get<0>()*distanceUnitConversion, hMin),hMax),
+                         std::min(std::max(s.zMin*distanceUnitConversion, vMin),vMax),
+                         210.0);
+            mglPoint b = mglPoint(std::min(std::max(intersection[p].get<0>()*distanceUnitConversion, hMin),hMax),
+                         std::max(std::min(s.zMax*distanceUnitConversion, vMax),vMin),
+                         210.0);
+
+            gr.Line(a, b, "k");
+          }
+        }
+      }
+      break;
+    case YZ:
+      {
+        Line slicingPlane;
+        slicingPlane.push_back(Point(yMin-EPSILON,slice));
+        slicingPlane.push_back(Point(yMax+EPSILON,slice));
+
+        MultiPoint intersection;
+        boost::geometry::intersection(slicingPlane, s.polygon, intersection);
+
+        // sort points in ascending order
+        sort(intersection.begin(), intersection.end(), comparePointsY);
+
+        if (s.orientation == Surface::Z_POS || s.orientation == Surface::Z_NEG) {
+
+          for (std::size_t p = 0; p < intersection.size(); p++)
+          {
+            // Use point pairs and zmin/max to draw rectangles similar to 2D
+            // case.
+            double p1 = intersection[p].get<0>()*distanceUnitConversion;
+            double p2 = intersection[p+1].get<0>()*distanceUnitConversion;
+
+            mglPoint a = mglPoint(std::min(std::max(p1, hMin),hMax),
+                         std::min(std::max(s.zMin*distanceUnitConversion, vMin),vMax),
+                         210.0);
+            mglPoint b = mglPoint(std::min(std::max(p2, hMin),hMax),
+                         std::max(std::min(s.zMax*distanceUnitConversion, vMax),vMin),
+                         210.0);
+
+            gr.Line(a, b, "k");
+
+            p += 1; // skip one point, on to the next pair
+          }
+        } else {
+          for (std::size_t p = 0; p < intersection.size(); p++)
+          {
+            mglPoint a = mglPoint(std::min(std::max(intersection[p].get<0>()*distanceUnitConversion, hMin),hMax),
+                         std::min(std::max(s.zMin*distanceUnitConversion, vMin),vMax),
+                         210.0);
+            mglPoint b = mglPoint(std::min(std::max(intersection[p].get<0>()*distanceUnitConversion, hMin),hMax),
+                         std::max(std::min(s.zMax*distanceUnitConversion, vMax),vMin),
+                         210.0);
+
+            gr.Line(a, b, "k");
+          }
+        }
+      }
+      break;
+    }
+  }
+
 
   if (snapshotSettings.format == SnapshotSettings::F_PNG)
     gr.WritePNG((snapshotSettings.dir + "/" + str(boost::format("%04d") % frameNumber) + ".png").c_str(),"",false);

@@ -171,7 +171,7 @@ geom::Direction getDirectionOut(Polygon poly, std::size_t vertex)
 {
   if (!isRectilinear(poly))
   {
-    // Throw exception
+    // TODO Error
   }
 
   double xNext;

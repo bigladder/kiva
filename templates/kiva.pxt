@@ -137,7 +137,7 @@ else # (foundation_type == 'SLAB')
 end
 
 wall_thickness = 1|'ft'
-footer_depth = 20|'in'
+wall_depth = 20|'in'
 
 xps_k = 1/((5|'R-IP')/(1|'in'))
 insulation_thickness = insulation_level*xps_k
@@ -151,7 +151,7 @@ if (bestest)
   soil_type = "Standard 140a Soil"
   concrete_material = "Standard 140a Soil"
   foundation_depth = 0.0
-  footer_depth = 0.0
+  wall_depth = 0.0
   absorptivity = 0.0
   wall_thickness = 0.24
   height_above_grade = 0.0
@@ -253,7 +253,7 @@ Foundation:
         Material: <%= concrete_material %>
         Thickness: <%= wall_thickness %>
     Height Above Grade: <%= height_above_grade %>  # [m]
-    Footer Depth Below Slab: <%= footer_depth %>  # [m]
+    Depth Below Slab: <%= wall_depth %>  # [m]
     Interior Emissivity: <%= absorptivity %>
     Exterior Emissivity: <%= absorptivity %>
     Exterior Absorptivity: <%= absorptivity %>
@@ -446,7 +446,7 @@ Output:
       Flux Direction: <%= plot_flux_dir %>
     <% end %>
       Frequency: <%= plot_freq %>  # [h]
-      Grid: <%= plot_grid %>
+      Mesh: <%= plot_grid %>
       Axes: <%= plot_axes %>
       Timestamp: <%= plot_timestamp %>
       Gradients: <%= plot_gradients %>

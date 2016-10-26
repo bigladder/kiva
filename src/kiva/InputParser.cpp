@@ -65,6 +65,10 @@ Input inputParser(std::string inputFile)
     foundation.surfaceRoughness = 0.03;
   }
 
+
+  foundation.foundationDepth = yamlInput["Foundation"]["Foundation Depth"].as<double>();
+
+
   // Slab
   if  (yamlInput["Foundation"]["Slab"].IsDefined())
   {
@@ -115,10 +119,10 @@ Input inputParser(std::string inputFile)
       foundation.wall.heightAboveGrade = 0.2;
     }
 
-    if (yamlInput["Foundation"]["Wall"]["Footer Depth Below Slab"].IsDefined()) {
-      foundation.wall.footerDepth = yamlInput["Foundation"]["Wall"]["Footer Depth Below Slab"].as<double>();
+    if (yamlInput["Foundation"]["Wall"]["Depth Below Slab"].IsDefined()) {
+      foundation.wall.depthBelowSlab = yamlInput["Foundation"]["Wall"]["Depth Below Slab"].as<double>();
     } else {
-      foundation.wall.footerDepth = 0.3;
+      foundation.wall.depthBelowSlab = 0.0;
     }
 
     if (yamlInput["Foundation"]["Wall"]["Interior Emissivity"].IsDefined()) {
@@ -148,92 +152,151 @@ Input inputParser(std::string inputFile)
     foundation.hasWall = false;
   }
 
+  // Misc. Material blocks
+  if  (yamlInput["Foundation"]["Material Blocks"].IsDefined()){
+    for (auto block : yamlInput["Foundation"]["Material Blocks"]) {
+      InputBlock tempBlock;
+
+      if  (block["X Position"].IsDefined()) {
+        tempBlock.x = block["X Position"].as<double>();
+      } else {
+        // Error
+      }
+
+      if  (block["Z Position"].IsDefined()) {
+        tempBlock.z = block["Z Position"].as<double>();
+      } else {
+        // Error
+      }
+
+      if  (block["Width"].IsDefined()) {
+        tempBlock.width = block["Width"].as<double>();
+      } else {
+        // Error
+      }
+
+      if  (block["Depth"].IsDefined()) {
+        tempBlock.depth = block["Depth"].as<double>();
+      } else {
+        // Error
+      }
+
+      if  (block["Material"].IsDefined()) {
+        tempBlock.material = materials[block["Material"].as<std::string>()];
+      } else {
+        // Error
+      }
+
+
+      foundation.inputBlocks.push_back(tempBlock);
+    }
+  }
+
   // Interior Horizontal Insulation
   if  (yamlInput["Foundation"]["Interior Horizontal Insulation"].IsDefined())
   {
-    foundation.hasInteriorHorizontalInsulation = true;
 
-    foundation.interiorHorizontalInsulation.layer.thickness = yamlInput["Foundation"]["Interior Horizontal Insulation"]["Thickness"].as<double>();
-    foundation.interiorHorizontalInsulation.layer.material = materials[yamlInput["Foundation"]["Interior Horizontal Insulation"]["Material"].as<std::string>()];
+    InputBlock tempBlock;
+    tempBlock.x = 0.0;
 
     if  (yamlInput["Foundation"]["Interior Horizontal Insulation"]["Depth"].IsDefined())
     {
-      foundation.interiorHorizontalInsulation.depth = yamlInput["Foundation"]["Interior Horizontal Insulation"]["Depth"].as<double>();
+      tempBlock.z = foundation.foundationDepth + foundation.slab.totalWidth() + yamlInput["Foundation"]["Interior Horizontal Insulation"]["Depth"].as<double>();
     }
     else
     {
-      foundation.interiorHorizontalInsulation.depth = 0.0;
+      tempBlock.z = foundation.foundationDepth + foundation.slab.totalWidth();
     }
 
-    foundation.interiorHorizontalInsulation.width = yamlInput["Foundation"]["Interior Horizontal Insulation"]["Width"].as<double>();
+    tempBlock.width = -yamlInput["Foundation"]["Interior Horizontal Insulation"]["Width"].as<double>();
+    tempBlock.depth = yamlInput["Foundation"]["Interior Horizontal Insulation"]["Thickness"].as<double>();
+    tempBlock.material = materials[yamlInput["Foundation"]["Interior Horizontal Insulation"]["Material"].as<std::string>()];
 
-  }
-  else
-  {
-    foundation.hasInteriorHorizontalInsulation = false;
+    foundation.inputBlocks.push_back(tempBlock);
   }
 
   // Interior Vertical Insulation
   if  (yamlInput["Foundation"]["Interior Vertical Insulation"].IsDefined())
   {
-    foundation.hasInteriorVerticalInsulation = true;
+    InputBlock tempBlock;
+    tempBlock.x = 0.0;
+    tempBlock.z = 0.0;
 
-    foundation.interiorVerticalInsulation.layer.thickness = yamlInput["Foundation"]["Interior Vertical Insulation"]["Thickness"].as<double>();
-    foundation.interiorVerticalInsulation.layer.material = materials[yamlInput["Foundation"]["Interior Vertical Insulation"]["Material"].as<std::string>()];
-    foundation.interiorVerticalInsulation.depth = yamlInput["Foundation"]["Interior Vertical Insulation"]["Depth"].as<double>();
+    tempBlock.width = -yamlInput["Foundation"]["Interior Vertical Insulation"]["Thickness"].as<double>();
+    tempBlock.depth = yamlInput["Foundation"]["Interior Vertical Insulation"]["Depth"].as<double>();
+    tempBlock.material = materials[yamlInput["Foundation"]["Interior Vertical Insulation"]["Material"].as<std::string>()];
 
-  }
-  else
-  {
-    foundation.hasInteriorVerticalInsulation = false;
+    foundation.inputBlocks.push_back(tempBlock);
   }
 
   // Exterior Horizontal Insulation
   if  (yamlInput["Foundation"]["Exterior Horizontal Insulation"].IsDefined())
   {
-    foundation.hasExteriorHorizontalInsulation = true;
-
-    foundation.exteriorHorizontalInsulation.layer.thickness = yamlInput["Foundation"]["Exterior Horizontal Insulation"]["Thickness"].as<double>();
-    foundation.exteriorHorizontalInsulation.layer.material = materials[yamlInput["Foundation"]["Exterior Horizontal Insulation"]["Material"].as<std::string>()];
+    InputBlock tempBlock;
+    tempBlock.x = foundation.wall.totalWidth();
 
     if  (yamlInput["Foundation"]["Exterior Horizontal Insulation"]["Depth"].IsDefined())
     {
-      foundation.exteriorHorizontalInsulation.depth = yamlInput["Foundation"]["Exterior Horizontal Insulation"]["Depth"].as<double>();
+      tempBlock.z = foundation.wall.heightAboveGrade + yamlInput["Foundation"]["Exterior Horizontal Insulation"]["Depth"].as<double>();
     }
     else
     {
-      foundation.exteriorHorizontalInsulation.depth = 0.0;
+      tempBlock.z = foundation.wall.heightAboveGrade;
     }
 
+    tempBlock.width = yamlInput["Foundation"]["Exterior Horizontal Insulation"]["Width"].as<double>();
+    tempBlock.depth = yamlInput["Foundation"]["Exterior Horizontal Insulation"]["Thickness"].as<double>();
+    tempBlock.material = materials[yamlInput["Foundation"]["Exterior Horizontal Insulation"]["Material"].as<std::string>()];
 
-    foundation.exteriorHorizontalInsulation.width = yamlInput["Foundation"]["Exterior Horizontal Insulation"]["Width"].as<double>();
-
-  }
-  else
-  {
-    foundation.hasExteriorHorizontalInsulation = false;
+    foundation.inputBlocks.push_back(tempBlock);
   }
 
   // Exterior Vertical Insulation
   if  (yamlInput["Foundation"]["Exterior Vertical Insulation"].IsDefined())
   {
-    foundation.hasExteriorVerticalInsulation = true;
+    InputBlock tempBlock;
+    tempBlock.x = foundation.wall.totalWidth();
+    tempBlock.z = 0.0;
 
-    foundation.exteriorVerticalInsulation.layer.thickness = yamlInput["Foundation"]["Exterior Vertical Insulation"]["Thickness"].as<double>();
-    foundation.exteriorVerticalInsulation.layer.material = materials[yamlInput["Foundation"]["Exterior Vertical Insulation"]["Material"].as<std::string>()];
-    foundation.exteriorVerticalInsulation.depth = yamlInput["Foundation"]["Exterior Vertical Insulation"]["Depth"].as<double>();
+    tempBlock.width = yamlInput["Foundation"]["Exterior Vertical Insulation"]["Thickness"].as<double>();
+    tempBlock.depth = yamlInput["Foundation"]["Exterior Vertical Insulation"]["Depth"].as<double>();
+    tempBlock.material = materials[yamlInput["Foundation"]["Exterior Vertical Insulation"]["Material"].as<std::string>()];
 
+    foundation.inputBlocks.push_back(tempBlock);
   }
-  else
+
+  // Footing
+  if  (yamlInput["Foundation"]["Footing"].IsDefined())
   {
-    foundation.hasExteriorVerticalInsulation = false;
+    InputBlock tempBlock;
+
+    if  (yamlInput["Foundation"]["Footing"]["Width"].IsDefined()) {
+      tempBlock.width = yamlInput["Foundation"]["Footing"]["Width"].as<double>();
+    } else {
+      // Error
+    }
+    if  (yamlInput["Foundation"]["Footing"]["Depth"].IsDefined()) {
+      tempBlock.depth = yamlInput["Foundation"]["Footing"]["Depth"].as<double>();
+    } else {
+      // Error
+    }
+
+    tempBlock.z = foundation.foundationDepth + (foundation.hasSlab ? foundation.slab.totalWidth() : 0.0) + (foundation.hasWall ? foundation.wall.depthBelowSlab : 0.0);
+    double center = (foundation.hasWall ? foundation.wall.totalWidth()/2.0 : 0.0);
+    tempBlock.x = center - tempBlock.width/2.0; // Centered on wall
+
+    if  (yamlInput["Foundation"]["Footing"]["Material"].IsDefined()) {
+      tempBlock.material = materials[yamlInput["Foundation"]["Footing"]["Material"].as<std::string>()];
+    } else {
+      // Error
+    }
+
+
+    foundation.inputBlocks.push_back(tempBlock);
   }
 
 
   // Site
-
-  foundation.foundationDepth = yamlInput["Foundation"]["Foundation Depth"].as<double>();
-
   if  (yamlInput["Foundation"]["Orientation"].IsDefined()) {
     foundation.orientation = yamlInput["Foundation"]["Orientation"].as<double>();
   }
