@@ -41,83 +41,20 @@ bool isRectilinear(Polygon poly)
   return true;
 }
 
-// TODO: Replace with boost geometry buffer algorithm for polygons when it becomes available
 Polygon offset(Polygon poly, double dist)
 {
-  if (!isRectilinear(poly))
-  {
-    // Throw exception
-  }
-  // March around polygon set offsets from each vertex
-  int nV = poly.outer().size();
+  boost::geometry::strategy::buffer::join_miter join_strategy;
+  boost::geometry::strategy::buffer::distance_symmetric<double> distance_strategy(dist);
+  boost::geometry::strategy::buffer::end_flat end_strategy;
+  boost::geometry::strategy::buffer::side_straight side_strategy;
+  boost::geometry::strategy::buffer::point_square point_strategy;
 
+  MultiPolygon offset;
 
-  Polygon offset;
-  // Main loop
-  for (int v = 0; v < nV; v++)
-  {
-    // current coordinates
-    double x = poly.outer()[v].get<0>();
-    double y = poly.outer()[v].get<1>();
+  boost::geometry::buffer(poly, offset, distance_strategy, side_strategy,
+    join_strategy, end_strategy, point_strategy);
 
-    double xNew, yNew;
-
-    switch (getDirectionOut(poly,v))
-    {
-    case geom::Y_POS:
-      if (getTurn(poly,v) == geom::LEFT)
-      {
-        xNew = x - dist;
-        yNew = y + dist;
-      }
-      else
-      {
-        xNew = x - dist;
-        yNew = y - dist;
-      }
-      break;
-    case geom::X_POS:
-      if (getTurn(poly,v) == geom::LEFT)
-      {
-        xNew = x + dist;
-        yNew = y + dist;
-      }
-      else
-      {
-        xNew = x - dist;
-        yNew = y + dist;
-      }
-      break;
-    case geom::Y_NEG:
-      if (getTurn(poly,v) == geom::LEFT)
-      {
-        xNew = x + dist;
-        yNew = y - dist;
-      }
-      else
-      {
-        xNew = x + dist;
-        yNew = y + dist;
-      }
-      break;
-    case geom::X_NEG:
-      if (getTurn(poly,v) == geom::LEFT)
-      {
-        xNew = x - dist;
-        yNew = y - dist;
-      }
-      else
-      {
-        xNew = x + dist;
-        yNew = y - dist;
-      }
-      break;
-    }
-
-    offset.outer().push_back(Point(xNew, yNew));
-
-  }
-  return offset;
+  return offset[0];
 }
 
 geom::Direction getDirectionIn(Polygon poly, std::size_t vertex)
