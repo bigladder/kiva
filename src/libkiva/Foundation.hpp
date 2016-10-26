@@ -61,7 +61,7 @@ public:
 
 };
 
-class Wall
+class LIBKIVA_EXPORT Wall
 {
 public:
 
@@ -76,7 +76,7 @@ public:
   double totalResistance();
 };
 
-class Slab
+class LIBKIVA_EXPORT Slab
 {
 public:
 

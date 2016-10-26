@@ -69,7 +69,7 @@ build_script:
   - if "%COMPILER%"=="MinGW" (cmake "-G%GENERATOR%" -DCMAKE_BUILD_TYPE="%CONFIG%" "-DPROCESSOR_ARCHITECTURE=%BIT%" ..)
   - ruby ..\scripts\clone-and-mimic.rb
   - if "%COMPILER%"=="MSVC" (cmake --build . --config "%CONFIG%" -- /m)
-  - if "%COMPILER%"=="MinGW" (cmake --build . -- -j)
+  - if "%COMPILER%"=="MinGW" (cmake --build .)
 
 test_script:
   - if "%COMPILER%"=="MSVC" (ctest -C "%CONFIG%")
