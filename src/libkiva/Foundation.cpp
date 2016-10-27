@@ -15,6 +15,12 @@ Material::Material(double k, double rho, double cp) :
   specificHeat(cp)
 {}
 
+InputBlock::InputBlock() :
+  x(0.0),
+  z(0.0),
+  width(0.0),
+  depth(0.0)
+{}
 
 double Wall::totalWidth()
 {

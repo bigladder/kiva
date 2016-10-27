@@ -28,29 +28,10 @@ public:
   double thickness;  // [m] thickness
 };
 
-class HorizontalInsulation
+class LIBKIVA_EXPORT InputBlock
 {
 public:
-
-  double depth;  // [m] depth from top of wall
-  double width;  // [m] width from side of wall
-  Layer layer;
-
-
-};
-
-class VerticalInsulation
-{
-public:
-
-  double depth; // [m] depth from top of wall
-  Layer layer;
-
-};
-
-class InputBlock
-{
-public:
+  InputBlock();
 
   double x; // [m] block X origin relative to wall interior
   double z; // [m] block Z origin relative to wall top
