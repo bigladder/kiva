@@ -677,7 +677,20 @@ void Foundation::createMeshData()
 
       for (std::size_t v = 0; v < nV; v++)
       {
-        if (isExposedPerimeter[v]) {
+        if (useDetailedExposedPerimeter) {
+          if (isExposedPerimeter[v]) {
+            std::size_t vNext;
+            if (v == nV -1) {
+              vNext = 0;
+            } else {
+              vNext = v+1;
+            }
+
+            Point a = poly.outer()[v];
+            Point b = poly.outer()[vNext];
+            surfaceAreas[s.type] += (s.zMax - s.zMin)*getDistance(a,b);
+          }
+        } else {
           std::size_t vNext;
           if (v == nV -1) {
             vNext = 0;
@@ -687,7 +700,7 @@ void Foundation::createMeshData()
 
           Point a = poly.outer()[v];
           Point b = poly.outer()[vNext];
-          surfaceAreas[s.type] += (s.zMax - s.zMin)*getDistance(a,b);
+          surfaceAreas[s.type] += (s.zMax - s.zMin)*getDistance(a,b)*exposedFraction;
         }
       }
 
@@ -710,20 +723,16 @@ void Foundation::createMeshData()
     hasSurface[s.first] = s.second > 0.0;
   }
 
-  if (numberOfDimensions == 2 )
-  {
+  double area = boost::geometry::area(polygon);  // [m2] Area of foundation
+  double perimeter = boost::geometry::perimeter(polygon);  // [m] Perimeter of foundation
 
-    // TODO: 2D
-    double area = boost::geometry::area(polygon);  // [m2] Area of foundation
-    double perimeter = boost::geometry::perimeter(polygon);  // [m] Perimeter of foundation
+  double interiorPerimeter = 0.0;
 
-    double interiorPerimeter = 0.0;
-
-    std::size_t nVs = polygon.outer().size();
-    for (std::size_t v = 0; v < nVs; v++)
+  if (useDetailedExposedPerimeter) {
+    for (std::size_t v = 0; v < nV; v++)
     {
       std::size_t vNext;
-      if (v == nVs -1) {
+      if (v == nV -1) {
         vNext = 0;
       } else {
         vNext = v+1;
@@ -736,6 +745,17 @@ void Foundation::createMeshData()
         interiorPerimeter += getDistance(a,b);
       }
     }
+  } else {
+    interiorPerimeter = perimeter*(1.0 - exposedFraction);
+  }
+
+  netArea = area;
+  netPerimeter = (perimeter - interiorPerimeter);
+
+  if (numberOfDimensions == 2 )
+  {
+
+    // TODO: 2D
 
     linearAreaMultiplier = 1.0;
 
@@ -771,6 +791,7 @@ void Foundation::createMeshData()
 
     double xRef2 = reductionLength2;
     double xRef1 = reductionLength1;
+
 
     // SURFACES and BLOCKS
 

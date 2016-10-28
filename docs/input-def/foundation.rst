@@ -94,6 +94,56 @@ The polygon is specified by a list of x-y Cartesian vertices tracing the foundat
 **Units:**      m
 =============   =================================
 
+Exposed Perimeter
+-----------------
+
+A true/false list corresponding to each segment of the polygon. Segments are defined between polygon vertices *N* and *N + 1*. A value of *true* implies that the ground adjacent to a segment is exposed to the exterior environment. Conversly, a value of *false* indicates that the ground adjacent to a segment neighbors another interior space.
+
+Only exposed perimeter is considered in heat transfer calculations.
+
+This is only used for two-dimensional simulations.
+
+**Example:**
+
+.. code-block:: yaml
+
+    Exposed Perimeter:
+      - true
+      - true
+      - true
+      - true
+      - false
+      - false
+      - true
+      - true
+      - true
+      - true
+
+=============   ====================
+**Required:**   No
+**Type:**       List [N] of booleans
+**Default:**    All true
+=============   ====================
+
+Exposed Fraction
+----------------
+
+Alternative to defining the `Exposed Perimeter`_, one may define the fraction of the total perimeter that is exposed. Using this option will revert any `BOUNDARY` type :ref:`2Dapprox`s to `AP` (as it's not possible to know explicitly which segments represent concave geometry).
+
+This is only used for two-dimensional simulations.
+
+**Example:**
+
+.. code-block:: yaml
+
+    Exposed Fraction: 0.85
+
+=============   ======================================
+**Required:**   No
+**Type:**       Numeric
+**Units:**      dimensionless
+**Default:**    N/A (see `Exposed Perimeter`_ default)
+=============   ======================================
 
 Soil
 ----

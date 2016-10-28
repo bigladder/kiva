@@ -27,6 +27,8 @@ Allows the user to specify the coordinate system used for calculations. For Thre
 **Default:**    ``CARTESIAN``
 =============   ================================
 
+.. _2Dapprox:
+
 Two-Dimensional Approximation
 -----------------------------
 

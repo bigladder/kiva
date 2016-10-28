@@ -15,6 +15,7 @@
 
 #include "BoundaryConditions.hpp"
 #include "Input.hpp"
+#include "Geometry.hpp"
 #include "Ground.hpp"
 #include "GroundOutput.hpp"
 #include "GroundPlot.hpp"

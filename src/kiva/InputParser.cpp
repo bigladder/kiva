@@ -360,6 +360,7 @@ Input inputParser(std::string inputFile)
 
   if  (yamlInput["Foundation"]["Exposed Perimeter"].IsDefined())
   {
+    foundation.useDetailedExposedPerimeter = true;
     if (yamlInput["Foundation"]["Exposed Perimeter"].size() != yamlInput["Foundation"]["Polygon"].size()) {
       // error
     }
@@ -370,9 +371,20 @@ Input inputParser(std::string inputFile)
     }
   }
   else {
-    for (size_t i=0;i<foundation.polygon.outer().size();i++) {
-      foundation.isExposedPerimeter.push_back(true);
+    if  (!yamlInput["Foundation"]["Exposed Fraction"].IsDefined()) {
+      for (size_t i=0;i<foundation.polygon.outer().size();i++) {
+        foundation.isExposedPerimeter.push_back(true);
+      }
     }
+  }
+
+  if  (yamlInput["Foundation"]["Exposed Fraction"].IsDefined()) {
+    if  (yamlInput["Foundation"]["Exposed Perimeter"].IsDefined())
+    {
+      // Error
+    }
+    foundation.useDetailedExposedPerimeter = false;
+    foundation.exposedFraction = yamlInput["Foundation"]["Exposed Fraction"].as<double>();
   }
 
   if  (yamlInput["Foundation"]["Building Height"].IsDefined())

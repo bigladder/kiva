@@ -253,6 +253,8 @@ public:
   Polygon polygon;
   bool isXSymm, isYSymm;
   std::vector<bool> isExposedPerimeter;
+  double exposedFraction;
+  bool useDetailedExposedPerimeter;
 
   double buildingHeight;
   std::vector<Polygon3> buildingSurfaces;
@@ -310,6 +312,8 @@ public:
 
   std::map<Surface::SurfaceType, double> surfaceAreas;
   std::map<Surface::SurfaceType, bool> hasSurface;
+  double netArea;
+  double netPerimeter;
 
   void createMeshData();
 };

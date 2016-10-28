@@ -453,6 +453,13 @@ bool pointOnPoly(Point point, Polygon poly)
   return boost::geometry::intersects(point,poly);
 }
 
+bool isConvex(Polygon poly)
+{
+  Polygon hull;
+  boost::geometry::convex_hull(poly, hull);
+  return boost::geometry::equals(poly, hull);
+}
+
 double getDistance(Point a, Point b)
 {
   double ax = a.get<0>();
