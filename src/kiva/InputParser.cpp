@@ -371,6 +371,7 @@ Input inputParser(std::string inputFile)
     }
   }
   else {
+    foundation.useDetailedExposedPerimeter = true;
     if  (!yamlInput["Foundation"]["Exposed Fraction"].IsDefined()) {
       for (size_t i=0;i<foundation.polygon.outer().size();i++) {
         foundation.isExposedPerimeter.push_back(true);

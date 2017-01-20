@@ -21,7 +21,7 @@ Simulator::Simulator(WeatherData &weatherData, Input &input, std::string outputF
   if (input.foundation.deepGroundBoundary == Foundation::DGB_AUTO)
     input.foundation.deepGroundTemperature = annualAverageDryBulbTemperature;
 
-  if (!input.foundaiton.useDetailedExposedPerimeter || !isConvex(input.foundaiton.polygon))
+  if (!input.foundation.useDetailedExposedPerimeter || !isConvex(input.foundation.polygon))
   {
     if (input.foundation.reductionStrategy == Foundation::RS_BOUNDARY) {
       input.foundation.reductionStrategy = Foundation::RS_AP;
