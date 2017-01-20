@@ -110,7 +110,7 @@ Foundation::Foundation() :
   orientation(0.0),
   deepGroundBoundary(DGB_ZERO_FLUX),
   wallTopBoundary(WTB_ZERO_FLUX),
-  soil(Material(0.864,1510,1260)),
+  soil(Material(1.73,1842,419)),
   soilAbsorptivity(0.9),
   soilEmissivity(0.9),
   surfaceRoughness(0.03),
