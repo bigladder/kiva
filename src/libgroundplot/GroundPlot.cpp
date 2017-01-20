@@ -346,7 +346,7 @@ void GroundPlot::createFrame(std::string timeStamp)
     gr.Dens(hDat, vDat, TDat,"BbcyrR");
   }
 
-  gr.Box("k",false);
+  gr.Box("k2",false);
 
   if (snapshotSettings.contours)
   {
@@ -384,10 +384,10 @@ void GroundPlot::createFrame(std::string timeStamp)
                    std::max(std::min(b.zMax*distanceUnitConversion, vMax),vMin),
                    210.0);
 
-      gr.Line(bl, br, "k");
-      gr.Line(br, tr, "k");
-      gr.Line(tr, tl, "k");
-      gr.Line(tl, bl, "k");
+      gr.Line(bl, br, "k2");
+      gr.Line(br, tr, "k2");
+      gr.Line(tr, tl, "k2");
+      gr.Line(tl, bl, "k2");
     }
     break;
     case XY:
@@ -411,11 +411,11 @@ void GroundPlot::createFrame(std::string timeStamp)
         {
           gr.Line(mglPoint(intersection[p].outer()[v].get<0>()*distanceUnitConversion,intersection[p].outer()[v].get<1>()*distanceUnitConversion,210.0),
               mglPoint(intersection[p].outer()[v+1].get<0>()*distanceUnitConversion,intersection[p].outer()[v+1].get<1>()*distanceUnitConversion,210.0),
-              "k");
+              "k2");
         }
         gr.Line(mglPoint(intersection[p].outer()[nV - 1].get<0>()*distanceUnitConversion,intersection[p].outer()[nV - 1].get<1>()*distanceUnitConversion,210.0),
             mglPoint(intersection[p].outer()[0].get<0>()*distanceUnitConversion,intersection[p].outer()[0].get<1>()*distanceUnitConversion,210.0),
-            "k");
+            "k2");
       }
     }
     break;
@@ -453,10 +453,10 @@ void GroundPlot::createFrame(std::string timeStamp)
                      std::max(std::min(b.zMax*distanceUnitConversion, vMax),vMin),
                      210.0);
 
-        gr.Line(bl, br, "k");
-        gr.Line(br, tr, "k");
-        gr.Line(tr, tl, "k");
-        gr.Line(tl, bl, "k");
+        gr.Line(bl, br, "k2");
+        gr.Line(br, tr, "k2");
+        gr.Line(tr, tl, "k2");
+        gr.Line(tl, bl, "k2");
 
         p += 1; // skip one point, on to the next pair
       }
@@ -496,10 +496,10 @@ void GroundPlot::createFrame(std::string timeStamp)
                      std::max(std::min(b.zMax*distanceUnitConversion, vMax),vMin),
                      210.0);
 
-        gr.Line(bl, br, "k");
-        gr.Line(br, tr, "k");
-        gr.Line(tr, tl, "k");
-        gr.Line(tl, bl, "k");
+        gr.Line(bl, br, "k2");
+        gr.Line(br, tr, "k2");
+        gr.Line(tr, tl, "k2");
+        gr.Line(tl, bl, "k2");
 
         p += 1; // skip one point, on to the next pair
       }
@@ -521,7 +521,7 @@ void GroundPlot::createFrame(std::string timeStamp)
                      std::min(std::max(s.zMax*distanceUnitConversion, vMin),vMax),
                      210.0);
 
-        gr.Line(a, b, "k");
+        gr.Line(a, b, "k2");
       }
       break;
     case XY:
@@ -556,7 +556,7 @@ void GroundPlot::createFrame(std::string timeStamp)
                          std::max(std::min(s.zMax*distanceUnitConversion, vMax),vMin),
                          210.0);
 
-            gr.Line(a, b, "k");
+            gr.Line(a, b, "k2");
 
             p += 1; // skip one point, on to the next pair
           }
@@ -570,7 +570,7 @@ void GroundPlot::createFrame(std::string timeStamp)
                          std::max(std::min(s.zMax*distanceUnitConversion, vMax),vMin),
                          210.0);
 
-            gr.Line(a, b, "k");
+            gr.Line(a, b, "k2");
           }
         }
       }
@@ -603,7 +603,7 @@ void GroundPlot::createFrame(std::string timeStamp)
                          std::max(std::min(s.zMax*distanceUnitConversion, vMax),vMin),
                          210.0);
 
-            gr.Line(a, b, "k");
+            gr.Line(a, b, "k2");
 
             p += 1; // skip one point, on to the next pair
           }
@@ -617,7 +617,7 @@ void GroundPlot::createFrame(std::string timeStamp)
                          std::max(std::min(s.zMax*distanceUnitConversion, vMax),vMin),
                          210.0);
 
-            gr.Line(a, b, "k");
+            gr.Line(a, b, "k2");
           }
         }
       }
