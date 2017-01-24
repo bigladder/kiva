@@ -484,24 +484,6 @@ Input inputParser(std::string inputFile)
     foundation.fADI = 0.00001;
 }
 
-  if  (yamlInput["Foundation"]["Solver"].IsDefined())
-  {
-    foundation.solver = yamlInput["Foundation"]["Solver"].as<std::string>();
-  }
-  else
-  {
-    foundation.solver = "bicgstab";
-  }
-
-  if  (yamlInput["Foundation"]["Preconditioner"].IsDefined())
-  {
-    foundation.preconditioner = yamlInput["Foundation"]["Preconditioner"].as<std::string>();
-  }
-  else
-  {
-    foundation.preconditioner = "ilu";
-  }
-
   if  (yamlInput["Foundation"]["Maximum Iterations"].IsDefined())
   {
     foundation.maxIterations = yamlInput["Foundation"]["Maximum Iterations"].as<int>();

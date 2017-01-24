@@ -15,25 +15,17 @@ static const double PI = 4.0*atan(1.0);
 
 static const bool TDMA = true;
 
-Ground::Ground(Foundation &foundation) : foundation(foundation), solverInit(false)
+Ground::Ground(Foundation &foundation) : foundation(foundation)
 {
 }
 
 Ground::Ground(Foundation &foundation, GroundOutput::OutputMap &outputMap)
-  : foundation(foundation), groundOutput(outputMap), solverInit(false)
+  : foundation(foundation), groundOutput(outputMap)
 {
 }
 
 Ground::~Ground()
 {
-  if (solverInit) {
-#if KIVA_SOLVER_LIS
-    lis_matrix_destroy(Amat);
-    lis_vector_destroy(x);
-    lis_vector_destroy(b);
-    lis_solver_destroy(solver);
-#endif
-  }
 }
 
 void Ground::buildDomain()
@@ -67,34 +59,6 @@ void Ground::buildDomain()
     x_.resize(nX*nY*nZ);
   }
 
-#if KIVA_SOLVER_LIS
-  std::string solverOptionsString = "-i ";
-  solverOptionsString.append(foundation.solver);
-  solverOptionsString.append(" -p ");
-  solverOptionsString.append(foundation.preconditioner);
-  solverOptionsString.append(" -maxiter ");
-  solverOptionsString.append(std::to_string(foundation.maxIterations));
-  solverOptionsString.append(" -initx_zeros false -tol ");
-  solverOptionsString.append(std::to_string(foundation.tolerance));
-
-  std::vector<char> solverChars(solverOptionsString.begin(),solverOptionsString.end());
-  solverChars.push_back('\0');
-  solverOptions = solverChars;
-
-  lis_matrix_create(LIS_COMM_WORLD,&Amat);
-  lis_matrix_set_size(Amat,nX*nY*nZ,nX*nY*nZ);
-
-  lis_vector_create(LIS_COMM_WORLD,&b);
-  lis_vector_set_size(b,0,nX*nY*nZ);
-
-  lis_vector_duplicate(b,&x);
-
-  lis_vector_set_all(283.15,x);  // TODO Set better default
-  lis_solver_create(&solver);
-  lis_solver_set_option(&solverOptions[0],solver);
-
-  solverInit = true;
-#else //if KIVA_SOLVER_EIGEN
   solver.setMaxIterations(foundation.maxIterations);
   solver.setTolerance(foundation.tolerance);
   tripletList.reserve(nX*nY*nZ*(1+2*foundation.numberOfDimensions));
@@ -102,7 +66,6 @@ void Ground::buildDomain()
   b.resize(nX*nY*nZ,nX*nY*nZ);
   x.resize(nX*nY*nZ,nX*nY*nZ);
   x.fill(283.15);
-#endif
 
   TNew.resize(nX,std::vector<std::vector<double> >(nY,std::vector<double>(nZ)));
   TOld.resize(nX,std::vector<std::vector<double> >(nY,std::vector<double>(nZ)));
@@ -1808,12 +1771,7 @@ void Ground::setAmatValue(const int i,const int j,const double val)
   }
   else
   {
-#if KIVA_SOLVER_LIS
-    lis_matrix_set_value(LIS_INS_VALUE,i,j,val,Amat);
-#else //if KIVA_SOLVER_EIGEN
     tripletList.emplace_back(i,j,val);
-#endif
-
   }
 }
 
@@ -1825,11 +1783,7 @@ void Ground::setbValue(const int i,const double val)
   }
   else
   {
-#if KIVA_SOLVER_LIS
-    lis_vector_set_value(LIS_INS_VALUE,i,val,b);
-#else //if KIVA_SOLVER_EIGEN
     b(i) = val;
-#endif
   }
 }
 
@@ -1846,23 +1800,6 @@ void Ground::solveLinearSystem()
 
     bool success;
 
-#if KIVA_SOLVER_LIS
-    lis_matrix_set_type(Amat,LIS_MATRIX_CSR);
-    lis_matrix_assemble(Amat);
-
-    lis_solve(Amat,b,x,solver);
-
-    int status;
-
-    lis_solver_get_status(solver, &status);
-    //lis_output(Amat,b,x,LIS_FMT_MM,"Matrix.mtx");
-
-    success = status == 0;
-    if (!success) // LIS_MAXITER status
-    {
-      lis_solver_get_iter(solver, &iters);
-      lis_solver_get_residualnorm(solver, &residual);
-#else //if KIVA_SOLVER_EIGEN
     Amat.setFromTriplets(tripletList.begin(), tripletList.end());
     solver.compute(Amat);
     x = solver.solveWithGuess(b,x);
@@ -1874,7 +1811,6 @@ void Ground::solveLinearSystem()
     if (!success) {
       iters = solver.iterations();
       residual = solver.error();
-#endif
       // TODO Kiva: Make error wrapper inteface
       std::cerr << "Warning: Solution did not converge after ";
       std::cerr << iters << " iterations." << "\n";
@@ -1895,22 +1831,8 @@ void Ground::clearAmat()
   }
   else
   {
-#if KIVA_SOLVER_LIS
-    lis_matrix_destroy(Amat);
-    lis_matrix_create(LIS_COMM_WORLD,&Amat);
-    lis_matrix_set_size(Amat,nX*nY*nZ,nX*nY*nZ);
-
-    lis_vector_destroy(b);
-    lis_vector_create(LIS_COMM_WORLD,&b);
-    lis_vector_set_size(b,0,nX*nY*nZ);
-
-    lis_solver_destroy(solver);
-    lis_solver_create(&solver);
-    lis_solver_set_option(&solverOptions[0],solver);
-#else //if KIVA_SOLVER_EIGEN
     tripletList.clear();
     tripletList.reserve(nX*nY*nZ*(1+2*foundation.numberOfDimensions));
-#endif
   }
 }
 
@@ -1922,16 +1844,9 @@ double Ground::getxValue(const int i)
   }
   else
   {
-#if KIVA_SOLVER_LIS
-    double xVal;
-    lis_vector_get_value(x,i,&xVal);
-    return xVal;
-#else //if KIVA_SOLVER_EIGEN
     return x(i);
-#endif
   }
 }
-
 
 double Ground::getConvectionCoeff(double Tsurf,
                   double Tamb,

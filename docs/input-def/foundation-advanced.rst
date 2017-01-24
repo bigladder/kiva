@@ -215,31 +215,6 @@ When `Numerical Scheme`_ is ``ADI``, this defines the weighting between the impl
 **Default:**    0.00001
 =============   =============
 
-Solver
-------
-
-Kiva uses Lis [3]_ (Library of Iterative Solvers) to solve any schema that requires an iterative solution. Refer to their user guide for details on the value options.
-
-=============   ============
-**Required:**   No
-**Type:**       Enumeration
-**Values:**     See [3]_.
-**Default:**    ``bicgstab``
-=============   ============
-
-
-Preconditioner
---------------
-
-Preconditioners are used to help solvers find solutions faster. Again the options here come from the Lis documentaiont [3]_.
-
-=============   ===========
-**Required:**   No
-**Type:**       Enumeration
-**Values:**     See [3]_.
-**Default:**    ``ilu``
-=============   ===========
-
 Maximum Iterations
 ------------------
 
@@ -262,5 +237,3 @@ Tolerance is defined as the relative :math:`\ell^2`-norm of the residual when so
 **Units:**      Dimensionless
 **Default:**    1.0e-6
 =============   =============
-
-.. [3] The Scalable Software Infrastructure Project. 2014. *Lis User Guide*. The Scalable Software Infrastructure Project, Fukuoka, Japan.

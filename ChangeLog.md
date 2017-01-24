@@ -12,6 +12,8 @@
 * Replace foundation wall height ("Height") with depth relative to bottom
   of the slab ("Depth Below Slab").
 * Move boundary, initialization, and output related inputs to a higher level.
+* Switch to simpler linear solver ([Eigen](http://eigen.tuxfamily.org/)).
+  Removes inputs for solver and preconditioner.
 * Separate core functionality into a linked libraries.
 * Use continuous integration for building and testing.
 

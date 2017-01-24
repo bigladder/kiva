@@ -9,10 +9,6 @@
 #include <boost/date_time/gregorian/gregorian.hpp>
 #include <boost/program_options.hpp>
 
-#if KIVA_SOLVER_LIS
-#include "lis.h"
-#endif
-
 #include "Version.hpp"
 #include "InputParser.hpp"
 #include "WeatherData.hpp"
@@ -23,10 +19,6 @@ namespace po = boost::program_options;
 
 int main(int argc, char *argv[])
 {
-  #if KIVA_SOLVER_LIS
-    lis_initialize(&argc, &argv);
-  #endif
-
   std::string versionInfo = "kiva ";
   versionInfo.append(Kiva::getVersion());
   std::string copyrightInfo = "Copyright (C) 2012-";
@@ -117,24 +109,15 @@ int main(int argc, char *argv[])
       std::cout << usageInfo << "\n";
       std::cout << generic;
 
-      #if KIVA_SOLVER_LIS
-        lis_finalize();
-      #endif
       return 1;
     }
 
-    #if KIVA_SOLVER_LIS
-      lis_finalize();
-    #endif
     return 0;
 
   }
   catch(std::exception& e)
   {
     std::cerr << e.what() << std::endl;
-    #if KIVA_SOLVER_LIS
-      lis_finalize();
-    #endif
     return 1;
   }
 

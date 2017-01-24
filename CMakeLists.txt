@@ -36,20 +36,6 @@ set( CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}" )
 option(ENABLE_OPENMP "Use OpenMP" OFF)
 option( ENABLE_OPENGL "Use OpenGL to perform shading calculations." OFF )
 
-if(NOT KIVA_SOLVER)
-  set(KIVA_SOLVER "Eigen" CACHE STRING "Choose linear solver libaray." FORCE)
-  set_property(CACHE KIVA_SOLVER PROPERTY STRINGS "lis" "Eigen")
-endif()
-
-set(KIVA_SOLVER_LIS false)
-set(KIVA_SOLVER_EIGEN false)
-
-if (KIVA_SOLVER STREQUAL "lis")
-  set(KIVA_SOLVER_LIS true)
-elseif(KIVA_SOLVER STREQUAL "Eigen")
-  set(KIVA_SOLVER_EIGEN true)
-endif()
-
 if(CMAKE_COMPILER_IS_GNUCXX OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
   if (UNIX)
     add_definitions("-fPIC")
@@ -69,14 +55,7 @@ include_directories( SYSTEM ${CMAKE_SOURCE_DIR}/vendor/boost-1.61.0/)
 include_directories( SYSTEM ${CMAKE_SOURCE_DIR}/vendor/mathgl-2.3.5.1/include/)
 include_directories( SYSTEM ${CMAKE_BINARY_DIR}/vendor/mathgl-2.3.5.1/include/)
 include_directories( SYSTEM ${CMAKE_SOURCE_DIR}/vendor/yaml-cpp-0.5.3/include/)
-
-if(${KIVA_SOLVER_LIS})
-  include_directories( SYSTEM ${CMAKE_SOURCE_DIR}/vendor/lis-1.5.66/include/)
-endif()
-
-if(${KIVA_SOLVER_EIGEN})
-  include_directories( SYSTEM ${CMAKE_SOURCE_DIR}/vendor/eigen-da9b4e14c255/)
-endif()
+include_directories( SYSTEM ${CMAKE_SOURCE_DIR}/vendor/eigen-da9b4e14c255/)
 
 add_subdirectory(vendor)
 add_subdirectory(src/libkiva)

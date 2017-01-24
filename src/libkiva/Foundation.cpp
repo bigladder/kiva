@@ -124,8 +124,6 @@ Foundation::Foundation() :
   mesh(Mesh()),
   numericalScheme(NS_ADI),
   fADI(0.00001),
-  solver("bicgstab"),
-  preconditioner("ilu"),
   tolerance(1.0e-6),
   maxIterations(100000),
   convectionCalculationMethod(CCM_AUTO)
