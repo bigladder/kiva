@@ -11,7 +11,7 @@ matrix:
   include:
     - os: osx
       compiler: clang
-      osx_image: xcode7
+      osx_image: xcode7.3
       env: PROCESSOR_ARCHITECTURE=x86_64 COMPILER=clang BUILD_ARCHITECTURE=macosx-clang-x86_64
     - os: linux
       compiler: gcc
@@ -21,8 +21,6 @@ matrix:
 before_install:
   - rvm install 2.0.0
   - gem install git
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update; fi
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install cmake; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install gcc; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get -y -qq update; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get -y install cmake; fi

@@ -19,7 +19,13 @@
 #include <string>
 #include <numeric>
 
+#if KIVA_SOLVER_LIS
 #include "lis.h"
+#else //if KIVA_SOLVER_EIGEN
+#include <Eigen/SparseCore>
+#include <Eigen/IterativeLinearSolvers>
+#endif
+
 
 namespace Kiva {
 
@@ -77,14 +83,20 @@ private:
   std::vector<double> x_; // solution
 
   // Implicit
+  bool solverInit;
+#if KIVA_SOLVER_LIS
   LIS_MATRIX Amat;
   LIS_VECTOR b, x;
 
   LIS_SOLVER solver;
 
-  bool lisInit;
-
   std::vector<char> solverOptions;
+#else //if KIVA_SOLVER_EIGEN
+  Eigen::SparseMatrix<double> Amat;
+  std::vector<Eigen::Triplet<double>> tripletList;
+  Eigen::VectorXd b, x;
+  Eigen::BiCGSTAB<Eigen::SparseMatrix<double>, Eigen::IncompleteLUT<double>> solver;
+#endif
 
 private:
 

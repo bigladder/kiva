@@ -1,5 +1,7 @@
 add_subdirectory(boost-1.61.0)
-add_subdirectory(lis-1.5.66)
+if(${KIVA_SOLVER} STREQUAL "lis")
+  add_subdirectory(lis-1.5.66)
+endif()
 add_subdirectory(zlib-1.2.8)
 add_subdirectory(libpng-1.6.23)
 add_subdirectory(mathgl-2.3.5.1)

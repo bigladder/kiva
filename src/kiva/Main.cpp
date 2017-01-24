@@ -9,7 +9,9 @@
 #include <boost/date_time/gregorian/gregorian.hpp>
 #include <boost/program_options.hpp>
 
+#if KIVA_SOLVER_LIS
 #include "lis.h"
+#endif
 
 #include "Version.hpp"
 #include "InputParser.hpp"
@@ -21,14 +23,16 @@ namespace po = boost::program_options;
 
 int main(int argc, char *argv[])
 {
-  lis_initialize(&argc, &argv);
+  #if KIVA_SOLVER_LIS
+    lis_initialize(&argc, &argv);
+  #endif
 
   std::string versionInfo = "kiva ";
   versionInfo.append(Kiva::getVersion());
   std::string copyrightInfo = "Copyright (C) 2012-";
   copyrightInfo.append(Kiva::getYear());
-  copyrightInfo.append(" Big Ladder Software\n"
-                       "Web: www.bigladdersoftware.com");
+  copyrightInfo.append(" Big Ladder Software LLC\n"
+                       "Web: bigladdersoftware.com");
   std::string usageInfo = "Usage: kiva [Input File] [Weather File] [Output File]\n"
                           "   Input format: yaml\n"
                           "   Weather format: epw\n"
@@ -113,18 +117,24 @@ int main(int argc, char *argv[])
       std::cout << usageInfo << "\n";
       std::cout << generic;
 
-      lis_finalize();
+      #if KIVA_SOLVER_LIS
+        lis_finalize();
+      #endif
       return 1;
     }
 
-    lis_finalize();
+    #if KIVA_SOLVER_LIS
+      lis_finalize();
+    #endif
     return 0;
 
   }
   catch(std::exception& e)
   {
     std::cerr << e.what() << std::endl;
-    lis_finalize();
+    #if KIVA_SOLVER_LIS
+      lis_finalize();
+    #endif
     return 1;
   }
 

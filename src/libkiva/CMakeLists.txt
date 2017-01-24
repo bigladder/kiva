@@ -4,6 +4,12 @@ if(${ENABLE_OPENGL})
   add_definitions(-D ENABLE_OPENGL )
 endif()
 
+if(${KIVA_SOLVER_LIS})
+  add_definitions(-D KIVA_SOLVER_LIS)
+elseif(${KIVA_SOLVER_EIGEN})
+  add_definitions(-D KIVA_SOLVER_EIGEN)
+endif()
+
 set(PROCESSOR_ARCHITECTURE "x86_64" CACHE STRING "Set architecture used for version string.")
 
 # Set a default build type if none was specified
@@ -92,7 +98,11 @@ endif()
 
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${kiva_link_flags}")
 
-set(links lis)
+set(links "")
+
+if(${KIVA_SOLVER_LIS})
+  set(links ${links} lis)
+endif()
 
 if(${ENABLE_OPENGL})
   set(links ${links} GLEW glfw3 )
@@ -111,9 +121,11 @@ endif()
 
 target_link_libraries(libkiva ${links})
 
-if( MSVC )
-  set_target_properties(lis PROPERTIES COMPILE_FLAGS "/W0")
-else()
-  set_target_properties(libkiva PROPERTIES COMPILE_FLAGS "-fPIC")
-  set_target_properties(lis PROPERTIES COMPILE_FLAGS "-w -fPIC")
+if(${KIVA_SOLVER_LIS})
+  if( MSVC )
+    set_target_properties(lis PROPERTIES COMPILE_FLAGS "/W0")
+  else()
+    set_target_properties(libkiva PROPERTIES COMPILE_FLAGS "-fPIC")
+    set_target_properties(lis PROPERTIES COMPILE_FLAGS "-w -fPIC")
+  endif()
 endif()
