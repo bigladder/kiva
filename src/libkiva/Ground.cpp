@@ -17,11 +17,13 @@ static const bool TDMA = true;
 
 Ground::Ground(Foundation &foundation) : foundation(foundation)
 {
+  pSolver = std::make_shared<Eigen::BiCGSTAB<Eigen::SparseMatrix<double>, Eigen::IncompleteLUT<double>>>();
 }
 
 Ground::Ground(Foundation &foundation, GroundOutput::OutputMap &outputMap)
   : foundation(foundation), groundOutput(outputMap)
 {
+  pSolver = std::make_shared<Eigen::BiCGSTAB<Eigen::SparseMatrix<double>, Eigen::IncompleteLUT<double>>>();
 }
 
 Ground::~Ground()
@@ -59,12 +61,12 @@ void Ground::buildDomain()
     x_.resize(nX*nY*nZ);
   }
 
-  solver.setMaxIterations(foundation.maxIterations);
-  solver.setTolerance(foundation.tolerance);
+  pSolver->setMaxIterations(foundation.maxIterations);
+  pSolver->setTolerance(foundation.tolerance);
   tripletList.reserve(nX*nY*nZ*(1+2*foundation.numberOfDimensions));
   Amat.resize(nX*nY*nZ,nX*nY*nZ);
-  b.resize(nX*nY*nZ,nX*nY*nZ);
-  x.resize(nX*nY*nZ,nX*nY*nZ);
+  b.resize(nX*nY*nZ);
+  x.resize(nX*nY*nZ);
   x.fill(283.15);
 
   TNew.resize(nX,std::vector<std::vector<double> >(nY,std::vector<double>(nZ)));
@@ -1801,16 +1803,16 @@ void Ground::solveLinearSystem()
     bool success;
 
     Amat.setFromTriplets(tripletList.begin(), tripletList.end());
-    solver.compute(Amat);
-    x = solver.solveWithGuess(b,x);
-    int status = solver.info();
+    pSolver->compute(Amat);
+    x = pSolver->solveWithGuess(b,x);
+    int status = pSolver->info();
 
 //    Eigen::saveMarket(Amat, "Amat.mtx");
 //    Eigen::saveMarketVector(b, "b.mtx");
     success = status == Eigen::Success;
     if (!success) {
-      iters = solver.iterations();
-      residual = solver.error();
+      iters = pSolver->iterations();
+      residual = pSolver->error();
       // TODO Kiva: Make error wrapper inteface
       std::cerr << "Warning: Solution did not converge after ";
       std::cerr << iters << " iterations." << "\n";

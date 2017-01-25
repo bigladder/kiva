@@ -16,6 +16,7 @@
 #include <vector>
 #include <string>
 #include <numeric>
+#include <memory>
 
 #include <Eigen/SparseCore>
 #include <Eigen/IterativeLinearSolvers>
@@ -80,7 +81,8 @@ private:
   Eigen::SparseMatrix<double> Amat;
   std::vector<Eigen::Triplet<double>> tripletList;
   Eigen::VectorXd b, x;
-  Eigen::BiCGSTAB<Eigen::SparseMatrix<double>, Eigen::IncompleteLUT<double>> solver;
+
+  std::shared_ptr<Eigen::BiCGSTAB<Eigen::SparseMatrix<double>, Eigen::IncompleteLUT<double>>> pSolver;
 
 private:
 
