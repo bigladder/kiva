@@ -1,3 +1,5 @@
+os: Visual Studio 2015
+
 init:
   - cmd: echo %PROCESSOR_ARCHITECTURE%
   - cmd: cmake --version
@@ -35,12 +37,12 @@ environment:
       MINGW_URL: https://sourceforge.net/projects/mingw-w64/files/Toolchains%20targetting%20Win64/Personal%20Builds/mingw-builds/5.3.0/threads-win32/seh/x86_64-5.3.0-release-win32-seh-rt_v4-rev0.7z/download
       MINGW_ARCHIVE: x86_64-5.3.0-release-win32-seh-rt_v4-rev0.7z
       BUILD_ARCHITECTURE: windows-gnu-x86_64
-    - GENERATOR: "Visual Studio 12"
+    - GENERATOR: "Visual Studio 14"
       CONFIG: Release
       COMPILER: MSVC
       BIT: x86
       BUILD_ARCHITECTURE: windows-msvc-x86
-    - GENERATOR: "Visual Studio 12 Win64"
+    - GENERATOR: "Visual Studio 14 Win64"
       CONFIG: Release
       COMPILER: MSVC
       BIT: x86_64
