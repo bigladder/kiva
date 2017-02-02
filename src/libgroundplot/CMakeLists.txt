@@ -19,3 +19,5 @@ else()
 endif()
 
 target_link_libraries(groundplot ${links} libkiva)
+
+add_coverage(groundplot)

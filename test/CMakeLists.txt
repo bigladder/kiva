@@ -1,3 +1,4 @@
+add_subdirectory(unit)
 
 add_custom_target(results_directory ALL COMMAND ${CMAKE_COMMAND} -E make_directory results)
 

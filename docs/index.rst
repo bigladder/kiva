@@ -1,3 +1,4 @@
+.. figure:: ./images/kiva-logo.png
 
 Kiva
 ====

@@ -12,29 +12,51 @@ matrix:
     - os: osx
       compiler: clang
       osx_image: xcode7.3
-      env: PROCESSOR_ARCHITECTURE=x86_64 COMPILER=clang BUILD_ARCHITECTURE=macosx-clang-x86_64
+      env: PROCESSOR_ARCHITECTURE=x86_64 COMPILER=clang BUILD_ARCHITECTURE=macosx-clang-x86_64 COVERAGE=false
     - os: linux
       compiler: gcc
       sudo: required
       dist: trusty
-      env: PROCESSOR_ARCHITECTURE=x86_64 COMPILER=gcc BUILD_ARCHITECTURE=linux-gnu-x86_64
+      env: PROCESSOR_ARCHITECTURE=x86_64 COMPILER=gcc BUILD_ARCHITECTURE=linux-gnu-x86_64 COVERAGE=false
+    - os: linux
+      compiler: gcc
+      sudo: required
+      dist: trusty
+      env: PROCESSOR_ARCHITECTURE=x86_64 COMPILER=gcc BUILD_ARCHITECTURE=linux-gnu-x86_64 COVERAGE=true
 before_install:
-  - rvm install 2.0.0
-  - gem install git
-  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install gcc; fi
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get -y -qq update; fi
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get -y install cmake; fi
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get -y install gfortran; fi
+  - if [[ "$COVERAGE" == false ]]; then
+      rvm install 2.0.0
+      gem install git
+    fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
+      brew install gcc
+    elif [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+      sudo apt-get -y -qq update
+      sudo apt-get -y install cmake
+      sudo apt-get -y install gfortran
+    fi
 
 script:
-  - ruby -e "puts(RUBY_PLATFORM)"
-  - export SRC_BRANCH=$TRAVIS_BRANCH
   - mkdir build
   - cd build
-  - cmake -DPROCESSOR_ARCHITECTURE=$PROCESSOR_ARCHITECTURE ..
-  - ruby ../scripts/clone-and-mimic.rb
+  - if [[ "$COVERAGE" == false ]]; then
+      ruby -e "puts(RUBY_PLATFORM)"
+      export SRC_BRANCH=$TRAVIS_BRANCH
+      cmake -DPROCESSOR_ARCHITECTURE=$PROCESSOR_ARCHITECTURE ..
+      ruby ../scripts/clone-and-mimic.rb
+    else
+      cmake -DPROCESSOR_ARCHITECTURE=$PROCESSOR_ARCHITECTURE -DENABLE_COVERAGE=On -DCMAKE_BUILD_TYPE=Debug ..
+    fi
   - make -j
+  - ctest
+  - if [[ "$COVERAGE" == true ]]; then
+      make gconv
+    fi
 
 after_success:
-  - ctest
-  - ruby ../scripts/log-results.rb
+  - >
+    if [[ "$COVERAGE" == false ]]; then
+      ruby ../scripts/log-results.rb
+    else
+      bash <(curl -s https://codecov.io/bash)  -X gcov -g ../vendor/
+    fi

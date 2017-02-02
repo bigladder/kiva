@@ -110,3 +110,5 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 endif()
 
 target_link_libraries(libkiva ${links})
+
+add_coverage(libkiva)
