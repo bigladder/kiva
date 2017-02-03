@@ -1,3 +1,7 @@
+if ( MSVC AND NOT ( "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel" ) )
+  set(gtest_force_shared_crt ON)
+endif()
+
 add_subdirectory(boost-1.61.0)
 add_subdirectory(zlib-1.2.8)
 add_subdirectory(libpng-1.6.23)

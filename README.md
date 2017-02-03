@@ -2,15 +2,16 @@
 
 [![Documentation Status](https://readthedocs.org/projects/kiva/badge/?version=latest)](http://kiva.readthedocs.org/en/latest/?badge=latest)
 [![Build Status](https://travis-ci.org/big-ladder/kiva.svg?branch=develop)](https://travis-ci.org/big-ladder/kiva)
-[![Build Status](https://ci.appveyor.com/api/projects/status/pv2c4no2mv4uds26/branch/develop?svg=true)](https://ci.appveyor.com/project/nealkruis/kiva/branch/develop)
-
+[![Build Status](https://ci.appveyor.com/api/projects/status/pv2c4no2mv4uds26/branch/develop?svg=true)](https://ci.appveyor.com/project/nealkruis/kiva/branch/develop) [![codecov](https://codecov.io/gh/big-ladder/kiva/branch/develop/graph/badge.svg)](https://codecov.io/gh/big-ladder/kiva)
 
 Kiva
 ====
 
-Kiva is a free and open source ground heat transfer calculation tool written in C++. Specifically, Kiva is used
-to calculate heat loss and gain on a timestep basis from building foundations. The goal is
-to create a tool that can integrate the multi-dimensional heat transfer into standard building energy simulation engines.
+Kiva is a free and open source ground heat transfer calculation tool written in 
+C++. Specifically, Kiva is used to calculate heat loss and gain on a timestep
+basis from building foundations. The goal is to create a tool that can integrate
+the multi-dimensional heat transfer into standard building energy simulation
+engines.
 
 Documentation
 -------------

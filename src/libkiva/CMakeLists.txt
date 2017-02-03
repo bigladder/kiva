@@ -73,6 +73,7 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 add_library(libkiva SHARED ${kiva_src})
 set_target_properties(libkiva PROPERTIES OUTPUT_NAME kiva)
+set_target_properties(libkiva PROPERTIES PDB_NAME libkiva)
 
 include(GenerateExportHeader)
 generate_export_header(libkiva)

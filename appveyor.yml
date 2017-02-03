@@ -74,6 +74,8 @@ build_script:
   - if "%COMPILER%"=="MinGW" (cmake --build .)
 
 test_script:
+  - if "%COMPILER%"=="MSVC" (Release\kiva_tests.exe)
+  - if "%COMPILER%"=="MinGW" (./kiva_tests)
   - if "%COMPILER%"=="MSVC" (ctest -C "%CONFIG%")
   - if "%COMPILER%"=="MinGW" (ctest)
   - ruby ..\scripts\log-results.rb

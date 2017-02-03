@@ -50,7 +50,7 @@ script:
   - make -j
   - ctest
   - if [[ "$COVERAGE" == true ]]; then
-      make gconv;
+      make gcov;
     fi
 
 after_success:
