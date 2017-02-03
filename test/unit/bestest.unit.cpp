@@ -11,7 +11,7 @@ TEST_F( BESTEST, GC10a)
   fnd.wallTopBoundary = Foundation::WTB_LINEAR_DT;
   fnd.wallTopInteriorTemperature = 303.15;
   fnd.wallTopExteriorTemperature = 283.15;
-  EXPECT_NEAR(calcQ(), 2435, 50);
+  EXPECT_NEAR(calcQ(), 2435, 55);
 }
 
 TEST_F( BESTEST, GC30a)
