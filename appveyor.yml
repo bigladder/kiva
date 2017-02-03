@@ -75,7 +75,7 @@ build_script:
 
 test_script:
   - if "%COMPILER%"=="MSVC" (Release\kiva_tests.exe)
-  - if "%COMPILER%"=="MinGW" (./kiva_tests)
+  - if "%COMPILER%"=="MinGW" (kiva_tests.exe)
   - if "%COMPILER%"=="MSVC" (ctest -C "%CONFIG%")
   - if "%COMPILER%"=="MinGW" (ctest)
   - ruby ..\scripts\log-results.rb
