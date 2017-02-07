@@ -55,7 +55,7 @@ install:
   - gem install git
 
 before_build:
-  - if "%COMPILER%"=="MinGW" (set "PATH=%PATH:C:\Program Files\Git\usr\bin;=%;%CD%\%MINGW_DIR%\bin")
+  - if "%COMPILER%"=="MinGW" (set "PATH=%CD%\%MINGW_DIR%\bin;%PATH:C:\Program Files\Git\usr\bin;=%")
   - if "%COMPILER%"=="MinGW" (g++ --version)
   - if "%COMPILER%"=="MinGW" (mingw32-make --version)
   - ruby -v
@@ -74,8 +74,9 @@ build_script:
   - if "%COMPILER%"=="MinGW" (cmake --build .)
 
 test_script:
-  - if "%COMPILER%"=="MSVC" (Release\kiva_tests.exe)
-  - if "%COMPILER%"=="MinGW" (kiva_tests.exe)
+  - if "%COMPILER%"=="MinGW" (where libwinpthread-1.dll)
+  - if "%COMPILER%"=="MinGW" (where libgcc_s_dw2-1.dll)
+  - if "%COMPILER%"=="MinGW" (where libstdc++-6.dll)
   - if "%COMPILER%"=="MSVC" (ctest -C "%CONFIG%")
   - if "%COMPILER%"=="MinGW" (ctest)
   - ruby ..\scripts\log-results.rb
