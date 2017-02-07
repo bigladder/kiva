@@ -74,9 +74,6 @@ build_script:
   - if "%COMPILER%"=="MinGW" (cmake --build .)
 
 test_script:
-  - if "%COMPILER%"=="MinGW" (where libwinpthread-1.dll)
-  - if "%COMPILER%"=="MinGW" (where libgcc_s_dw2-1.dll)
-  - if "%COMPILER%"=="MinGW" (where libstdc++-6.dll)
   - if "%COMPILER%"=="MSVC" (ctest -C "%CONFIG%")
   - if "%COMPILER%"=="MinGW" (ctest)
   - ruby ..\scripts\log-results.rb
