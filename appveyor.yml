@@ -74,7 +74,7 @@ build_script:
   - if "%COMPILER%"=="MinGW" (cmake --build .)
 
 test_script:
+  - timeout 5
   - if "%COMPILER%"=="MSVC" (ctest -C "%CONFIG%")
-  - if "%COMPILER%"=="MinGW" (timeout 1)
   - if "%COMPILER%"=="MinGW" (ctest)
   - ruby ..\scripts\log-results.rb
