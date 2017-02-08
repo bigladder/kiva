@@ -48,15 +48,19 @@ script:
       cmake -DPROCESSOR_ARCHITECTURE=$PROCESSOR_ARCHITECTURE -DENABLE_COVERAGE=On -DCMAKE_BUILD_TYPE=Debug ..;
     fi
   - make -j
-  - ctest
-  - if [[ "$COVERAGE" == true ]]; then
+  - >
+    if [[ "$COVERAGE" == true ]]; then
+      ctest -R integration
       make gcov;
+      bash <(curl -s https://codecov.io/bash) -X gcov -cF integration;
+      ctest -R BESTEST
+      make gcov;
+      bash <(curl -s https://codecov.io/bash) -X gcov -cF unit;
+    else
+      ctest
     fi
 
 after_success:
-  - >
-    if [[ "$COVERAGE" == false ]]; then
+  - if [[ "$COVERAGE" == false ]]; then
       ruby ../scripts/log-results.rb;
-    else
-      bash <(curl -s https://codecov.io/bash)  -X gcov;
     fi
