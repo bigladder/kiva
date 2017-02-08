@@ -50,10 +50,10 @@ script:
   - make -j
   - >
     if [[ "$COVERAGE" == true ]]; then
-      ctest -R integration
+      ctest -R integration\.
       make gcov;
       bash <(curl -s https://codecov.io/bash) -X gcov -cF integration;
-      ctest -R BESTEST
+      ctest -R unit\.
       make gcov;
       bash <(curl -s https://codecov.io/bash) -X gcov -cF unit;
     else

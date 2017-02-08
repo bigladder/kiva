@@ -9,5 +9,5 @@ add_executable(kiva_tests ${kiva_test_src})
 
 target_link_libraries(kiva_tests gtest libkiva)
 
-add_test(NAME BESTEST.GC10a COMMAND $<TARGET_FILE:kiva_tests> "--gtest_filter=BESTEST.GC10a")
-add_test(NAME BESTEST.GC30a COMMAND $<TARGET_FILE:kiva_tests> "--gtest_filter=BESTEST.GC30a")
+add_test(NAME unit.BESTEST.GC10a COMMAND $<TARGET_FILE:kiva_tests> "--gtest_filter=BESTEST.GC10a")
+add_test(NAME unit.BESTEST.GC30a COMMAND $<TARGET_FILE:kiva_tests> "--gtest_filter=BESTEST.GC30a")
