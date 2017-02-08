@@ -57,7 +57,7 @@ script:
       make gcov;
       bash <(curl -s https://codecov.io/bash) -X gcov -cF unit;
     else
-      ctest
+      ctest --output-on-failure
     fi
 
 after_success:

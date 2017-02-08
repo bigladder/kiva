@@ -75,6 +75,6 @@ build_script:
 
 test_script:
   - timeout 5
-  - if "%COMPILER%"=="MSVC" (ctest -C "%CONFIG%")
-  - if "%COMPILER%"=="MinGW" (ctest)
+  - if "%COMPILER%"=="MSVC" (ctest -C "%CONFIG%" --output-on-failure)
+  - if "%COMPILER%"=="MinGW" (ctest --output-on-failure)
   - ruby ..\scripts\log-results.rb
