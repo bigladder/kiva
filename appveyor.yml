@@ -78,3 +78,6 @@ test_script:
   - if "%COMPILER%"=="MSVC" (ctest -C "%CONFIG%" --output-on-failure)
   - if "%COMPILER%"=="MinGW" (ctest --output-on-failure)
   - ruby ..\scripts\log-results.rb
+
+on_failure:
+  - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
