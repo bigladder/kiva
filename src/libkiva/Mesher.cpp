@@ -97,7 +97,7 @@ Mesher::Mesher(MeshData &data) : data(data)
             double multiplier;
             double nTerm;
             double seriesTerm;
-            double previousMultiplier;
+            double previousMultiplier = 1.0;
 
             while (search)
             {

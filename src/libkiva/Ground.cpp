@@ -1181,7 +1181,7 @@ void Ground::calculateADI(int dim)
           index = i + nX*j + nX*nY*k;
         else if (dim == 2)
           index = j + nY*i + nY*nX*k;
-        else if (dim == 3)
+        else //if (dim == 3)
           index = k + nZ*i + nZ*nX*j;
 
         double A, Ap, Am, bVal = 0.0;
@@ -2150,7 +2150,7 @@ void Ground::calculateBoundaryLayer()
 
   double fluxSum = 0.0;
 
-  double x1_0;
+  double x1_0 = 0.0;
 
   bool firstIndex = true;
 
@@ -2198,7 +2198,7 @@ void Ground::calculateBoundaryLayer()
 
 double Ground::getBoundaryValue(double dist)
 {
-  double val;
+  double val = 0.0;
   if (dist > boundaryLayer[boundaryLayer.size()-1].first)
     val = 1.0;
   else
@@ -2219,7 +2219,7 @@ double Ground::getBoundaryValue(double dist)
 
 double Ground::getBoundaryDistance(double val)
 {
-  double dist;
+  double dist = 0.0;
   if (val > 1.0 || val < 0.0)
   {
     std::cerr << "ERROR: Boundary value passed not between 0.0 and 1.0." << std::endl;
@@ -2348,7 +2348,7 @@ void Ground::setSolarBoundaryConditions()
       double pssf;
       double q;
 
-      double incidence;
+      double incidence = 0.0;
       double aziYPos = foundation.orientation;
       double aziXPos = PI/2 + foundation.orientation;
       double aziYNeg = PI + foundation.orientation;
@@ -2394,7 +2394,7 @@ void Ground::setSolarBoundaryConditions()
           {
             aziSurf = aziYNeg;
           }
-          else if (foundation.surfaces[s].orientation == Surface::X_NEG)
+          else //if (foundation.surfaces[s].orientation == Surface::X_NEG)
           {
             aziSurf = aziXNeg;
           }
