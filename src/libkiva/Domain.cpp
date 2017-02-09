@@ -68,10 +68,17 @@ void Domain::setDomain(Foundation &foundation)
             cell[i][j][k].cellType = Cell::ZERO_THICKNESS;
           }
         }
-        else
+        else if (foundation.numberOfDimensions == 2)
         {
           if (isEqual(meshX.deltas[i], 0.0) ||
             isEqual(meshZ.deltas[k], 0.0))
+          {
+            cell[i][j][k].cellType = Cell::ZERO_THICKNESS;
+          }
+        }
+        else
+        {
+          if (isEqual(meshZ.deltas[k], 0.0))
           {
             cell[i][j][k].cellType = Cell::ZERO_THICKNESS;
           }
@@ -126,10 +133,16 @@ void Domain::setDomain(Foundation &foundation)
                   k != 0 && k != nZ - 1)
                   cell[i][j][k].cellType = Cell::ZERO_THICKNESS;
               }
-              else
+              else if (foundation.numberOfDimensions == 2)
               {
                 if ((numZeroDims > 1) &&
                   i != 0 && i != nX - 1 &&
+                  k != 0 && k != nZ - 1)
+                  cell[i][j][k].cellType = Cell::ZERO_THICKNESS;
+              }
+              else
+              {
+                if ((numZeroDims > 1) &&
                   k != 0 && k != nZ - 1)
                   cell[i][j][k].cellType = Cell::ZERO_THICKNESS;
               }
@@ -178,7 +191,7 @@ void Domain::setDomain(Foundation &foundation)
               cell[i][j][k].area = 2.0*meshX.deltas[i]*foundation.linearAreaMultiplier;
             }
           }
-          else  // if (foundation.numberOfDimensions == 3)
+          else if (foundation.numberOfDimensions == 3)
           {
             if (cell[i][j][k].surface.orientation == Surface::X_POS ||
               cell[i][j][k].surface.orientation == Surface::X_NEG)
@@ -204,6 +217,10 @@ void Domain::setDomain(Foundation &foundation)
               if (foundation.isYSymm)
                 cell[i][j][k].area = 2*cell[i][j][k].area;
             }
+          }
+          else
+          {
+            cell[i][j][k].area = 1.0;
           }
         }
       }
@@ -231,10 +248,21 @@ void Domain::setDomain(Foundation &foundation)
               k != 0 && k != nZ - 1)
               set3DZeroThicknessCellProperties(i,j,k);
           }
-          else
+          else if (foundation.numberOfDimensions == 2)
           {
             if (i != 0 && i != nX - 1 && k != 0 && k != nZ - 1)
               set2DZeroThicknessCellProperties(i,j,k);
+          }
+          else
+          {
+            if (isEqual(meshZ.deltas[k], 0.0))
+            {
+              std::vector<std::tuple<std::size_t,std::size_t,std::size_t> > pointSet =
+                {std::make_tuple(i,j,k-1),
+                 std::make_tuple(i,j,k+1)};
+
+              setZeroThicknessCellProperties(i, j, k, pointSet);
+            }
           }
         }
       }
@@ -251,25 +279,27 @@ void Domain::setDomain(Foundation &foundation)
 
         // PDE Coefficients
 
-        // Radial X terms
-        if (foundation.coordinateSystem == Foundation::CS_CYLINDRICAL)
-        {
-          cell[i][j][k].cxp_c = (getDXM(i)*getKXP(i,j,k))/
+        if (foundation.numberOfDimensions > 1) {
+          // Radial X terms
+          if (foundation.coordinateSystem == Foundation::CS_CYLINDRICAL)
+          {
+            cell[i][j][k].cxp_c = (getDXM(i)*getKXP(i,j,k))/
+                ((getDXM(i) + getDXP(i))*getDXP(i));
+            cell[i][j][k].cxm_c = (getDXP(i)*getKXM(i,j,k))/
+                ((getDXM(i) + getDXP(i))*getDXM(i));
+          }
+          else
+          {
+            cell[i][j][k].cxp_c = 0.0;
+            cell[i][j][k].cxm_c = 0.0;
+          }
+
+          // Cartesian X terms
+          cell[i][j][k].cxp = (2*getKXP(i,j,k))/
               ((getDXM(i) + getDXP(i))*getDXP(i));
-          cell[i][j][k].cxm_c = (getDXP(i)*getKXM(i,j,k))/
+          cell[i][j][k].cxm = -1*(2*getKXM(i,j,k))/
               ((getDXM(i) + getDXP(i))*getDXM(i));
         }
-        else
-        {
-          cell[i][j][k].cxp_c = 0.0;
-          cell[i][j][k].cxm_c = 0.0;
-        }
-
-        // Cartesian X terms
-        cell[i][j][k].cxp = (2*getKXP(i,j,k))/
-            ((getDXM(i) + getDXP(i))*getDXP(i));
-        cell[i][j][k].cxm = -1*(2*getKXM(i,j,k))/
-            ((getDXM(i) + getDXP(i))*getDXM(i));
 
         // Cartesian Z terms
         cell[i][j][k].czp = (2*getKZP(i,j,k))/

@@ -702,7 +702,7 @@ void Foundation::createMeshData()
 
           Point a = poly.outer()[v];
           Point b = poly.outer()[vNext];
-          surfaceAreas[s.type] += (s.zMax - s.zMin)*getDistance(a,b)*exposedFraction;
+          surfaceAreas[s.type] += (s.zMax - s.zMin)*getDistance(a,b);
         }
       }
 
@@ -753,6 +753,116 @@ void Foundation::createMeshData()
 
   netArea = area;
   netPerimeter = (perimeter - interiorPerimeter);
+
+  if (isEqual(netPerimeter, 0.0)) {
+    // TODO: 1D (i.e., cases with no exposed perimeter)
+
+    reductionStrategy = RS_AP;
+
+    numberOfDimensions = 1;
+    xMin = 0.0;
+    xMax = 1.0;
+
+    yMin = 0.0;
+    yMax = 1.0;
+
+    // SURFACES and BLOCKS
+    {
+      Surface surface;
+      surface.type = Surface::ST_DEEP_GROUND;
+      surface.xMin = 0.0;
+      surface.xMax = 1.0;
+      surface.yMin = 0.0;
+      surface.yMax = 1.0;
+      surface.setSquarePolygon();
+      surface.zMin = zMin;
+      surface.zMax = zMin;
+      if (deepGroundBoundary == DGB_CONSTANT_TEMPERATURE ||
+        deepGroundBoundary == DGB_AUTO) {
+          surface.boundaryConditionType = Surface::CONSTANT_TEMPERATURE;
+          surface.temperature = deepGroundTemperature;
+      } else {
+        surface.boundaryConditionType = Surface::ZERO_FLUX;
+      }
+      surface.orientation = Surface::Z_NEG;
+      surfaces.push_back(surface);
+    }
+
+    // Slab
+    {
+      Surface surface;
+      surface.type = Surface::ST_SLAB_CORE;
+      surface.xMin = 0.0;
+      surface.xMax = 1.0;
+      surface.yMin = 0.0;
+      surface.yMax = 1.0;
+      surface.setSquarePolygon();
+      surface.zMin = zSlab;
+      surface.zMax = zSlab;
+      surface.boundaryConditionType = Surface::INTERIOR_FLUX;
+      surface.orientation = Surface::Z_POS;
+      surface.emissivity = slab.emissivity;
+      surfaces.push_back(surface);
+    }
+
+    if(foundationDepth > 0.0)
+    {
+      // Interior Air Top Surface
+      Surface surface;
+      surface.type = Surface::ST_TOP_AIR_INT;
+      surface.xMin = 0.0;
+      surface.xMax = 1.0;
+      surface.yMin = 0.0;
+      surface.yMax = 1.0;
+      surface.setSquarePolygon();
+      surface.zMin = zMax;
+      surface.zMax = zMax;
+      surface.boundaryConditionType = Surface::INTERIOR_TEMPERATURE;
+      surface.orientation = Surface::Z_POS;
+      surfaces.push_back(surface);
+    }
+
+    // BLOCKS
+
+    // Indoor Air
+    {
+      Block block;
+      block.material = air;
+      block.blockType = Block::INTERIOR_AIR;
+      block.xMin = 0.0;
+      block.xMax = 1.0;
+      block.yMin = 0.0;
+      block.yMax = 1.0;
+      block.setSquarePolygon();
+      block.zMin = zSlab;
+      block.zMax = zMax;
+      blocks.push_back(block);
+    }
+
+    if (hasSlab)
+    {
+      // Foundation Slab
+      double zPosition = zSlabBottom;
+
+      for (size_t n = 0; n < slab.layers.size(); n++)
+      {
+        Block block;
+        block.material = slab.layers[n].material;
+        block.blockType = Block::SOLID;
+        block.xMin = 0.0;
+        block.xMax = 1.0;
+        block.yMin = 0.0;
+        block.yMax = 1.0;
+        block.setSquarePolygon();
+        block.zMin = zPosition;
+        block.zMax = zPosition + slab.layers[n].thickness;
+        blocks.push_back(block);
+        zPosition = block.zMax;
+      }
+
+    }
+
+  }
 
   if (numberOfDimensions == 2 )
   {

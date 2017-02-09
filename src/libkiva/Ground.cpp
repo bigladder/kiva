@@ -52,7 +52,8 @@ void Ground::buildDomain()
     VOld.resize(nX,std::vector<std::vector<double> >(nY,std::vector<double>(nZ)));
   }
 
-  if (foundation.numericalScheme == Foundation::NS_ADI && TDMA)
+  if ((foundation.numericalScheme == Foundation::NS_ADI ||
+    foundation.numberOfDimensions == 1) && TDMA)
   {
     a1.resize(nX*nY*nZ, 0.0);
     a2.resize(nX*nY*nZ, 0.0);
@@ -60,14 +61,17 @@ void Ground::buildDomain()
     b_.resize(nX*nY*nZ, 0.0);
     x_.resize(nX*nY*nZ);
   }
+  else
+  {
+    pSolver->setMaxIterations(foundation.maxIterations);
+    pSolver->setTolerance(foundation.tolerance);
+    tripletList.reserve(nX*nY*nZ*(1+2*foundation.numberOfDimensions));
+    Amat.resize(nX*nY*nZ,nX*nY*nZ);
+    b.resize(nX*nY*nZ);
+    x.resize(nX*nY*nZ);
+    x.fill(283.15);
+  }
 
-  pSolver->setMaxIterations(foundation.maxIterations);
-  pSolver->setTolerance(foundation.tolerance);
-  tripletList.reserve(nX*nY*nZ*(1+2*foundation.numberOfDimensions));
-  Amat.resize(nX*nY*nZ,nX*nY*nZ);
-  b.resize(nX*nY*nZ);
-  x.resize(nX*nY*nZ);
-  x.fill(283.15);
 
   TNew.resize(nX,std::vector<std::vector<double> >(nY,std::vector<double>(nZ)));
   TOld.resize(nX,std::vector<std::vector<double> >(nY,std::vector<double>(nZ)));
@@ -288,7 +292,7 @@ void Ground::calculateADEUpwardSweep()
                 + UOld[i][j+1][k]*CYP
                 + Q) /
                 (1.0 - CXM - CZM - CYM);
-          else
+          else if (foundation.numberOfDimensions == 2)
           {
             double CXPC = 0;
             double CXMC = 0;
@@ -306,6 +310,14 @@ void Ground::calculateADEUpwardSweep()
                 + UOld[i][j][k+1]*CZP
                 + Q) /
                 (1.0 - CXMC - CXM - CZM);
+          }
+          else
+          {
+            U[i][j][k] = (UOld[i][j][k]*(1.0 - CZP)
+                - U[i][j][k-1]*CZM
+                + UOld[i][j][k+1]*CZP
+                + Q) /
+                (1.0 - CZM);
           }
           }
           break;
@@ -491,7 +503,7 @@ void Ground::calculateADEDownwardSweep()
                 + V[i][j+1][k]*CYP
                 + Q) /
                 (1.0 + CXP + CZP + CYP);
-          else
+          else if (foundation.numberOfDimensions == 2)
           {
             double CXPC = 0;
             double CXMC = 0;
@@ -509,6 +521,14 @@ void Ground::calculateADEDownwardSweep()
                 + V[i][j][k+1]*CZP
                 + Q) /
                 (1.0 + CXPC + CXP + CZP);
+          }
+          else
+          {
+            V[i][j][k] = (VOld[i][j][k]*(1.0 + CZM)
+                - VOld[i][j][k-1]*CZM
+                + V[i][j][k+1]*CZP
+                + Q) /
+                (1.0 + CZP);
           }
           }
           break;
@@ -692,7 +712,7 @@ void Ground::calculateExplicit()
                 - TOld[i][j-1][k]*CYM
                 + TOld[i][j+1][k]*CYP
                 + Q;
-          else
+          else if (foundation.numberOfDimensions == 2)
           {
             double CXPC = 0;
             double CXMC = 0;
@@ -707,6 +727,13 @@ void Ground::calculateExplicit()
             TNew[i][j][k] = TOld[i][j][k]*(1.0 + CXMC + CXM + CZM - CXPC - CXP - CZP)
                 - TOld[i-1][j][k]*(CXMC + CXM)
                 + TOld[i+1][j][k]*(CXPC + CXP)
+                - TOld[i][j][k-1]*CZM
+                + TOld[i][j][k+1]*CZP
+                + Q;
+          }
+          else
+          {
+            TNew[i][j][k] = TOld[i][j][k]*(1.0 + CZM - CZP)
                 - TOld[i][j][k-1]*CZM
                 + TOld[i][j][k+1]*CZP
                 + Q;
@@ -1033,7 +1060,7 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
               setAmatValue(index,index_km,Akm);
               setbValue(index,bVal);
             }
-            else
+            else if (foundation.numberOfDimensions == 2)
             {
               double CXPC = 0;
               double CXMC = 0;
@@ -1055,6 +1082,19 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
               setAmatValue(index,index,A);
               setAmatValue(index,index_ip,Aip);
               setAmatValue(index,index_im,Aim);
+              setAmatValue(index,index_kp,Akp);
+              setAmatValue(index,index_km,Akm);
+              setbValue(index,bVal);
+            }
+            else
+            {
+              A = (CZM - CZP);
+              Akm = -CZM;
+              Akp = CZP;
+
+              bVal = -Q;
+
+              setAmatValue(index,index,A);
               setAmatValue(index,index_kp,Akp);
               setAmatValue(index,index_km,Akm);
               setbValue(index,bVal);
@@ -1106,8 +1146,8 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
               setAmatValue(index,index_kp,Akp);
               setAmatValue(index,index_km,Akm);
               setbValue(index,bVal);
-}
-            else
+            }
+            else if (foundation.numberOfDimensions == 2)
             {
               double CXPC = 0;
               double CXMC = 0;
@@ -1134,6 +1174,22 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
               setAmatValue(index,index,A);
               setAmatValue(index,index_ip,Aip);
               setAmatValue(index,index_im,Aim);
+              setAmatValue(index,index_kp,Akp);
+              setAmatValue(index,index_km,Akm);
+              setbValue(index,bVal);
+            }
+            else
+            {
+              A = (1.0 + f*(CZP - CZM));
+              Akm = f*CZM;
+              Akp = f*(-CZP);
+
+              bVal = TOld[i][j][k]*(1.0 + (1-f)*(CZM - CZP))
+                 - TOld[i][j][k-1]*(1-f)*CZM
+                 + TOld[i][j][k+1]*(1-f)*CZP
+                 + Q;
+
+              setAmatValue(index,index,A);
               setAmatValue(index,index_kp,Akp);
               setAmatValue(index,index_km,Akm);
               setbValue(index,bVal);
@@ -1592,10 +1648,15 @@ void Ground::calculateADI(int dim)
             theta = timestep/
                 (3*domain.cell[i][j][k].density*domain.cell[i][j][k].specificHeat);
           }
-          else
+          else if (foundation.numberOfDimensions == 2)
           {
             theta = timestep/
                 (2*domain.cell[i][j][k].density*domain.cell[i][j][k].specificHeat);
+          }
+          else
+          {
+            theta = timestep/
+                (domain.cell[i][j][k].density*domain.cell[i][j][k].specificHeat);
           }
 
           double CXP = domain.cell[i][j][k].cxp*theta;
@@ -1651,7 +1712,7 @@ void Ground::calculateADI(int dim)
             }
 
           }
-          else
+          else if (foundation.numberOfDimensions == 2)
           {
             double CXPC = 0;
             double CXMC = 0;
@@ -1683,6 +1744,14 @@ void Ground::calculateADI(int dim)
                    + TOld[i+1][j][k]*f*(CXPC + CXP)
                    + Q;
             }
+          }
+          else
+          {
+            A = 1.0 + CZP - CZM;
+            Am = CZM;
+            Ap = -CZP;
+
+            bVal = TOld[i][j][k] + Q;
           }
 
           setAmatValue(index,index,A);
@@ -1742,10 +1811,13 @@ void Ground::calculate(BoundaryConditions& boundaryConidtions, double ts)
     calculateExplicit();
     break;
   case Foundation::NS_ADI:
-    calculateADI(1);
+    {
+    if (foundation.numberOfDimensions > 1)
+      calculateADI(1);
     if (foundation.numberOfDimensions == 3)
       calculateADI(2);
     calculateADI(3);
+    }
     break;
   case Foundation::NS_IMPLICIT:
     calculateMatrix(Foundation::NS_IMPLICIT);
@@ -1762,7 +1834,8 @@ void Ground::calculate(BoundaryConditions& boundaryConidtions, double ts)
 
 void Ground::setAmatValue(const int i,const int j,const double val)
 {
-  if (foundation.numericalScheme == Foundation::NS_ADI && TDMA)
+  if ((foundation.numericalScheme == Foundation::NS_ADI ||
+    foundation.numberOfDimensions == 1) && TDMA)
   {
     if (j < i)
       a1[i] = val;
@@ -1779,7 +1852,8 @@ void Ground::setAmatValue(const int i,const int j,const double val)
 
 void Ground::setbValue(const int i,const double val)
 {
-  if (foundation.numericalScheme == Foundation::NS_ADI && TDMA)
+  if ((foundation.numericalScheme == Foundation::NS_ADI ||
+    foundation.numberOfDimensions == 1) && TDMA)
   {
     b_[i] = val;
   }
@@ -1791,7 +1865,8 @@ void Ground::setbValue(const int i,const double val)
 
 void Ground::solveLinearSystem()
 {
-  if (foundation.numericalScheme == Foundation::NS_ADI && TDMA)
+  if ((foundation.numericalScheme == Foundation::NS_ADI ||
+    foundation.numberOfDimensions == 1) && TDMA)
   {
     solveTDM(a1,a2,a3,b_,x_);
   }
@@ -1823,7 +1898,8 @@ void Ground::solveLinearSystem()
 
 void Ground::clearAmat()
 {
-  if (foundation.numericalScheme == Foundation::NS_ADI && TDMA)
+  if ((foundation.numericalScheme == Foundation::NS_ADI ||
+    foundation.numberOfDimensions == 1) && TDMA)
   {
     std::fill(a1.begin(), a1.end(), 0.0);
     std::fill(a2.begin(), a2.end(), 0.0);
@@ -1840,7 +1916,8 @@ void Ground::clearAmat()
 
 double Ground::getxValue(const int i)
 {
-  if (foundation.numericalScheme == Foundation::NS_ADI && TDMA)
+  if ((foundation.numericalScheme == Foundation::NS_ADI ||
+    foundation.numberOfDimensions == 1) && TDMA)
   {
     return x_[i];
   }
@@ -1905,10 +1982,10 @@ void Ground::calculateSurfaceAverages(){
       constructionRValue = foundation.wall.totalResistance();
     }
 
-    double totalHeatTransferRate = 0;
+    double totalHeatTransferRate = 0.0;
     //double TA = 0;
-    double HA = 0;
-    double totalArea = 0;
+    double HA = 0.0;
+    double totalArea = 0.0;
 
     double& Tair = bcs.indoorTemp;
 
@@ -1969,15 +2046,25 @@ void Ground::calculateSurfaceAverages(){
       }
     }
 
-    double Tavg = Tair - totalHeatTransferRate/HA;
-    double hAvg = HA/totalArea;
+    if (totalArea > 0.0) {
+      double Tavg = Tair - totalHeatTransferRate/HA;
+      double hAvg = HA/totalArea;
 
-    groundOutput.outputValues[{surface,GroundOutput::OT_TEMP}] = Tavg;
-    groundOutput.outputValues[{surface,GroundOutput::OT_FLUX}] = totalHeatTransferRate/totalArea;
-    groundOutput.outputValues[{surface,GroundOutput::OT_RATE}] = totalHeatTransferRate/totalArea*surfaceArea;
-    groundOutput.outputValues[{surface,GroundOutput::OT_CONV}] = hAvg;
+      groundOutput.outputValues[{surface,GroundOutput::OT_TEMP}] = Tavg;
+      groundOutput.outputValues[{surface,GroundOutput::OT_FLUX}] = totalHeatTransferRate/totalArea;
+      groundOutput.outputValues[{surface,GroundOutput::OT_RATE}] = totalHeatTransferRate/totalArea*surfaceArea;
+      groundOutput.outputValues[{surface,GroundOutput::OT_CONV}] = hAvg;
 
-    groundOutput.outputValues[{surface,GroundOutput::OT_EFF_TEMP}] = Tair - (totalHeatTransferRate/totalArea)*(constructionRValue+1/hAvg) - 273.15;
+      groundOutput.outputValues[{surface,GroundOutput::OT_EFF_TEMP}] = Tair - (totalHeatTransferRate/totalArea)*(constructionRValue+1/hAvg) - 273.15;
+    }
+    else {
+      groundOutput.outputValues[{surface,GroundOutput::OT_TEMP}] = Tair;
+      groundOutput.outputValues[{surface,GroundOutput::OT_FLUX}] = 0.0;
+      groundOutput.outputValues[{surface,GroundOutput::OT_RATE}] = 0.0;
+      groundOutput.outputValues[{surface,GroundOutput::OT_CONV}] = 0.0;
+
+      groundOutput.outputValues[{surface,GroundOutput::OT_EFF_TEMP}] = Tair - 273.15;
+    }
   }
 }
 
@@ -1993,12 +2080,19 @@ std::vector<double> Ground::calculateHeatFlux(const size_t &i, const size_t &j, 
   double Qy = 0;
   double Qz = 0;
 
-  double CXP = -domain.getKXP(i,j,k)*domain.getDXM(i)/(domain.getDXP(i)+domain.getDXM(i))/domain.getDXP(i);
-  double CXM = -domain.getKXM(i,j,k)*domain.getDXP(i)/(domain.getDXP(i)+domain.getDXM(i))/domain.getDXM(i);
+  double CXP = 0;
+  double CXM = 0;
   double CYP = 0;
   double CYM = 0;
   double CZP = -domain.getKZP(i,j,k)*domain.getDZM(k)/(domain.getDZP(k)+domain.getDZM(k))/domain.getDZP(k);
   double CZM = -domain.getKZM(i,j,k)*domain.getDZP(k)/(domain.getDZP(k)+domain.getDZM(k))/domain.getDZM(k);
+
+  if (foundation.numberOfDimensions > 1)
+  {
+    CXP = -domain.getKXP(i,j,k)*domain.getDXM(i)/(domain.getDXP(i)+domain.getDXM(i))/domain.getDXP(i);
+    CXM = -domain.getKXM(i,j,k)*domain.getDXP(i)/(domain.getDXP(i)+domain.getDXM(i))/domain.getDXM(i);
+  }
+
 
   if (foundation.numberOfDimensions == 3)
   {
@@ -2334,6 +2428,9 @@ void Ground::setNewBoundaryGeometry()
 
 void Ground::setSolarBoundaryConditions()
 {
+  if (foundation.numberOfDimensions == 1) {
+    return;
+  }
   for (std::size_t s = 0; s < foundation.surfaces.size() ; s++)
   {
     if (foundation.surfaces[s].type == Surface::ST_GRADE

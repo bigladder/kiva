@@ -179,12 +179,32 @@ void Simulator::initializePlots()
 
 
     }
-    else
+    else if (ground.foundation.numberOfDimensions == 2)
     {
       if (!input.output.outputSnapshots[p].xRangeSet)
       {
         input.output.outputSnapshots[p].snapshotSettings.xRange.first = ground.domain.meshX.dividers[0];
         input.output.outputSnapshots[p].snapshotSettings.xRange.second = ground.domain.meshX.dividers[ground.nX];
+      }
+
+      if (!input.output.outputSnapshots[p].yRangeSet)
+      {
+        input.output.outputSnapshots[p].snapshotSettings.yRange.first = 0.5;
+        input.output.outputSnapshots[p].snapshotSettings.yRange.second = 0.5;
+      }
+
+      if (!input.output.outputSnapshots[p].zRangeSet)
+      {
+        input.output.outputSnapshots[p].snapshotSettings.zRange.first = ground.domain.meshZ.dividers[0];
+        input.output.outputSnapshots[p].snapshotSettings.zRange.second = ground.domain.meshZ.dividers[ground.nZ];
+      }
+    }
+    else
+    {
+      if (!input.output.outputSnapshots[p].xRangeSet)
+      {
+        input.output.outputSnapshots[p].snapshotSettings.xRange.first = 0.5;
+        input.output.outputSnapshots[p].snapshotSettings.xRange.second = 0.5;
       }
 
       if (!input.output.outputSnapshots[p].yRangeSet)
@@ -432,20 +452,28 @@ std::string Simulator::printOutputLine()
   {
 
     double totalValue = 0.0;
+    double totalVA = 0.0;
     double totalArea= 0.0;
     for (auto surface : out.surfaces)
     {
       if (ground.foundation.hasSurface[surface]) {
         totalValue += ground.getSurfaceAverageValue({surface,out.outType});
+        totalVA += ground.getSurfaceAverageValue({surface,out.outType})*ground.foundation.surfaceAreas[surface];
         totalArea += ground.foundation.surfaceAreas[surface];
       }
     }
 
-    if (out.outType == GroundOutput::OT_RATE) {
-      outputLine += ", " + boost::lexical_cast<std::string>(totalValue);
+    if (totalArea > 0.0)
+    {
+      if (out.outType == GroundOutput::OT_RATE) {
+        outputLine += ", " + boost::lexical_cast<std::string>(totalValue);
+      }
+      else {
+        outputLine += ", " + boost::lexical_cast<std::string>(totalVA/totalArea);
+      }
     }
     else {
-      outputLine += ", " + boost::lexical_cast<std::string>(totalValue/totalArea);
+      outputLine += ", NAN";
     }
   }
 

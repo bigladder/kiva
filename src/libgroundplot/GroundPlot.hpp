@@ -95,7 +95,8 @@ enum SliceType
   XZ_2D,
   XY,
   XZ,
-  YZ
+  YZ,
+  Z_1D
 };
 
 class GroundPlot
