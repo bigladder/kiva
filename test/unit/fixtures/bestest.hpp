@@ -26,6 +26,7 @@ protected:
     fnd.soilEmissivity = 0.0;
 
     fnd.hasSlab = false;
+    fnd.slab.emissivity = 0.0;
 
     fnd.polygon.outer().push_back(Point(-length/2.0,-width/2.0));
     fnd.polygon.outer().push_back(Point(-length/2.0,width/2.0));
