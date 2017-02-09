@@ -72,8 +72,4 @@ f[OUTPUT_DIR]
 f[KIVA_DIR]
 puts("run-kiva.rb completed!")
 
-#if success
-  exit(0)
-#else
-#  exit(1)
-#end
+exit(success)

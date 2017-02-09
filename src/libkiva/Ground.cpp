@@ -61,17 +61,14 @@ void Ground::buildDomain()
     b_.resize(nX*nY*nZ, 0.0);
     x_.resize(nX*nY*nZ);
   }
-  else
-  {
-    pSolver->setMaxIterations(foundation.maxIterations);
-    pSolver->setTolerance(foundation.tolerance);
-    tripletList.reserve(nX*nY*nZ*(1+2*foundation.numberOfDimensions));
-    Amat.resize(nX*nY*nZ,nX*nY*nZ);
-    b.resize(nX*nY*nZ);
-    x.resize(nX*nY*nZ);
-    x.fill(283.15);
-  }
 
+  pSolver->setMaxIterations(foundation.maxIterations);
+  pSolver->setTolerance(foundation.tolerance);
+  tripletList.reserve(nX*nY*nZ*(1+2*foundation.numberOfDimensions));
+  Amat.resize(nX*nY*nZ,nX*nY*nZ);
+  b.resize(nX*nY*nZ);
+  x.resize(nX*nY*nZ);
+  x.fill(283.15);
 
   TNew.resize(nX,std::vector<std::vector<double> >(nY,std::vector<double>(nZ)));
   TOld.resize(nX,std::vector<std::vector<double> >(nY,std::vector<double>(nZ)));
