@@ -11,14 +11,23 @@ using namespace Kiva;
 
 class BaseFixture : public testing::Test {
 protected:
-  double calcQ(){
-    Ground ground(fnd,outputMap);
-    ground.buildDomain();
-    ground.calculate(bcs);
-    ground.calculateSurfaceAverages();
-    return ground.getSurfaceAverageValue({Surface::ST_SLAB_CORE,GroundOutput::OT_RATE});
 
+  void init(){
+    ground = std::make_shared<Ground>(fnd,outputMap);
+    ground->buildDomain();
+    Foundation::NumericalScheme tempNS = fnd.numericalScheme;
+    fnd.numericalScheme = Foundation::NS_STEADY_STATE;
+    ground->calculate(bcs);
+    fnd.numericalScheme = tempNS;
   }
+
+  double calcQ(){
+    init();
+    ground->calculateSurfaceAverages();
+    return ground->getSurfaceAverageValue({Surface::ST_SLAB_CORE,GroundOutput::OT_RATE});
+  }
+
+  std::shared_ptr<Ground> ground;
   std::map<Surface::SurfaceType, std::vector<GroundOutput::OutputType>> outputMap;
   BoundaryConditions bcs;
   Foundation fnd;

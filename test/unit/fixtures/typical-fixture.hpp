@@ -14,32 +14,40 @@ protected:
 
     fnd.reductionStrategy = Foundation::RS_BOUNDARY;
 
-    fnd.hasSlab = true;
-    fnd.slab.emissivity = 0.8;
-
+    Material concrete(1.95,2400.0,900.0);
 
     Layer tempLayer;
-    tempLayer.thickness = 0.24;
-    tempLayer.material = soil;
+    tempLayer.thickness = 0.10;
+    tempLayer.material = concrete;
+
+    fnd.slab.emissivity = 0.8;
+    fnd.slab.layers.push_back(tempLayer);
+
+
+    tempLayer.thickness = 0.2;
+    tempLayer.material = concrete;
 
     fnd.wall.layers.push_back(tempLayer);
 
-    fnd.wall.heightAboveGrade = 0.0;
-    fnd.wall.depthBelowSlab = 0.0;
-    fnd.wall.interiorEmissivity = 0.0;
-    fnd.wall.exteriorEmissivity = 0.0;
-    fnd.wall.exteriorAbsorptivity = 0.0;
+    fnd.wall.heightAboveGrade = 0.1;
+    fnd.wall.depthBelowSlab = 0.2;
+    fnd.wall.interiorEmissivity = 0.8;
+    fnd.wall.exteriorEmissivity = 0.8;
+    fnd.wall.exteriorAbsorptivity = 0.8;
 
-    fnd.numericalScheme = Foundation::NS_STEADY_STATE;
+    fnd.foundationDepth = 0.0;
+    fnd.numericalScheme = Foundation::NS_ADI;
 
+  }
+
+  double calcQ(){
+    init();
     bcs.localWindSpeed = 0;
     bcs.outdoorTemp = 283.15;
-    bcs.indoorTemp = 303.15;
-
-
-    outputMap[Surface::ST_SLAB_CORE] = {
-      GroundOutput::OT_RATE
-    };
+    bcs.indoorTemp = 310.15;
+    ground->calculate(bcs,3600.0);
+    ground->calculateSurfaceAverages();
+    return ground->getSurfaceAverageValue({Surface::ST_SLAB_CORE,GroundOutput::OT_RATE});
   }
 
 };

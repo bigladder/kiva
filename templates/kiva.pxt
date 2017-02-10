@@ -61,8 +61,6 @@ parameter "timestep", :default=>60
 
 parameter "numerical_scheme", :default=>"ADE"
 
-parameter "linear_solver_type", :default=>"bicgstab"
-parameter "linear_solver_pc", :default=>"ilu"
 parameter "linear_solver_max_iter", :default=>100000
 parameter "linear_solver_tolerance", :default=>1.0e-6
 
@@ -186,6 +184,10 @@ Simulation Control:
   Timestep: <%= timestep %> # [min]
 
 Materials:
+  FHB Soil:  # alpha: 2E-6
+    Conductivity: 1.73  # [W/m-K]
+    Density: 1842.0  # [kg/m3]
+    Specific Heat: 419.0  # [J/kg-K]
   Typical Soil:  # alpha: 4.54115E-7
     Conductivity: 0.864  # [W/m-K]
     Density: 1510.0  # [kg/m3]
@@ -216,6 +218,10 @@ Materials:
     Density: 1490.0  # [kg/m3]
     Specific Heat: 1800.0  # [J/kg-K]
 
+  HBF Concrete:
+    Conductivity: 1.95  # [W/m-K]
+    Density: 2400.0  # [kg/m3]
+    Specific Heat: 900.0  # [J/kg-K]
   Concrete:
     Conductivity: 1.98  # [W/m-K]
     Density: 1900.0  # [kg/m3]
@@ -372,8 +378,6 @@ end
 <% if (numerical_scheme == "ADI") %>
   f-ADI: <%= f_adi %>
 <% end %>
-  Solver: <%= linear_solver_type %>
-  Preconditioner: <%= linear_solver_pc %>
   Maximum Iterations: <%= linear_solver_max_iter %>
   Tolerance: <%= linear_solver_tolerance %>
 
