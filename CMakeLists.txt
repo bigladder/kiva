@@ -2,8 +2,14 @@ cmake_minimum_required (VERSION 2.8)
 project (kiva)
 enable_testing()
 
+option(KIVA_COVERAGE "Add coverage reports" OFF)
+
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
-find_package(codecov)
+
+if (KIVA_COVERAGE)
+  set(ENABLE_COVERAGE ON)
+  find_package(codecov)
+endif()
 
 # Set a default build type if none was specified
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
@@ -68,4 +74,6 @@ add_subdirectory(src/kiva)
 
 # Testing
 add_subdirectory(test)
-coverage_evaluate()
+if (KIVA_COVERAGE)
+  coverage_evaluate()
+endif()

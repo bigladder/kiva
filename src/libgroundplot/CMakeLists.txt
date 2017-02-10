@@ -20,4 +20,6 @@ endif()
 
 target_link_libraries(groundplot ${links} libkiva)
 
-add_coverage(groundplot)
+if (KIVA_COVERAGE)
+  add_coverage(groundplot)
+endif()

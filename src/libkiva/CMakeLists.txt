@@ -112,4 +112,6 @@ endif()
 
 target_link_libraries(libkiva ${links})
 
-add_coverage(libkiva)
+if (KIVA_COVERAGE)
+  add_coverage(libkiva)
+endif()

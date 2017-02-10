@@ -45,7 +45,7 @@ script:
       cmake -DPROCESSOR_ARCHITECTURE=$PROCESSOR_ARCHITECTURE ..;
       ruby ../scripts/clone-and-mimic.rb;
     else
-      cmake -DPROCESSOR_ARCHITECTURE=$PROCESSOR_ARCHITECTURE -DENABLE_COVERAGE=On -DCMAKE_BUILD_TYPE=Debug ..;
+      cmake -DPROCESSOR_ARCHITECTURE=$PROCESSOR_ARCHITECTURE -DKIVA_COVERAGE=On -DCMAKE_BUILD_TYPE=Debug ..;
     fi
   - make -j
   - >
