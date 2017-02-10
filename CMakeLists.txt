@@ -7,7 +7,6 @@ option(KIVA_COVERAGE "Add coverage reports" OFF)
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 
 if (KIVA_COVERAGE)
-  set(ENABLE_COVERAGE ON)
   find_package(codecov)
 endif()
 
