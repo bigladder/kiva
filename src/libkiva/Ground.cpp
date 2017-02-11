@@ -2560,10 +2560,6 @@ void Ground::setSolarBoundaryConditions()
       double Fg = 1.0 - Fsky;
       double rho_g = 1.0 - foundation.soilAbsorptivity;
 
-#if defined(ENABLE_OPENGL)
-      PixelCounter counter(512, 1, false);
-#endif
-
       for (std::size_t index = 0; index < foundation.surfaces[s].indices.size(); index++)
       {
         std::size_t i = std::get<0>(foundation.surfaces[s].indices[index]);
@@ -2574,45 +2570,8 @@ void Ground::setSolarBoundaryConditions()
 
         if (qGH > 0.0)
         {
-
-#if defined(ENABLE_OPENGL)
-          if (isGreaterThan(domain.cell[i][j][k].area, 0.0))
-          {
-
-            std::vector<Polygon3> shadedSurface(1);
-
-            double xMin, xMax, yMin, yMax, zMin, zMax;
-            xMin = domain.meshX.dividers[i];
-            xMax = domain.meshX.dividers[i+1];
-            yMin = domain.meshY.dividers[j];
-            yMax = domain.meshY.dividers[j+1];
-            zMin = domain.meshZ.dividers[k];
-            zMax = domain.meshZ.dividers[k+1];
-
-
-            Polygon3 poly;
-            poly.outer().push_back(Point3(xMin,yMin,zMax));
-            poly.outer().push_back(Point3(xMin,yMax,zMin));
-            poly.outer().push_back(Point3(xMax,yMax,zMax));
-            poly.outer().push_back(Point3(xMax,yMin,zMin));
-            shadedSurface[0] = poly;
-
-            double areaRatio = counter.getAreaRatio(foundation.orientation,azi,alt,foundation.buildingSurfaces,shadedSurface, 0);
-
-            int pixels = counter.retrievePixelCount(0);
-            pssf = areaRatio*pixels;
-
-          }
-          else
-          {
-#else
           pssf = incidence;
-#endif
-#if defined(ENABLE_OPENGL)
-          }
-#endif
           q = alpha*(qDN*pssf + qDH*Fsky + qGH*Fg*rho_g);
-
         }
         else
         {

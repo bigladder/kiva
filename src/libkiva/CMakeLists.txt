@@ -1,7 +1,7 @@
 project(libkiva)
 
-if(${ENABLE_OPENGL})
-  add_definitions(-D ENABLE_OPENGL )
+if(${KIVA_3D})
+  add_definitions(-D KIVA_3D )
 endif()
 
 set(PROCESSOR_ARCHITECTURE "x86_64" CACHE STRING "Set architecture used for version string.")
@@ -65,10 +65,6 @@ set(kiva_src Algorithms.cpp
              Mesher.hpp
              Version.hpp )
 
-if (${ENABLE_OPENGL})
-  set(kiva_src ${kiva_src} PixelCounter.cpp PixelCounter.hpp )
-endif ()
-
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 add_library(libkiva SHARED ${kiva_src})
@@ -80,37 +76,12 @@ generate_export_header(libkiva)
 
 set(kiva_link_flags "")
 
-if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-  if(${ENABLE_OPENGL})
-    set(kiva_link_flags "${kiva_link_flags} -framework OpenGL -framework Cocoa -framework IOKit" )
-  endif()
-endif()
-
 if(${ENABLE_OPENMP})
   set(kiva_link_flags "${kiva_link_flags} -fopenmp")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
 endif()
 
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${kiva_link_flags}")
-
-set(links "")
-
-if(${ENABLE_OPENGL})
-  set(links ${links} GLEW glfw3 )
-endif()
-
-if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-  if(${ENABLE_OPENGL})
-    set(links ${links} pthread
-                       Xrandr
-                       Xxf86vm
-                       Xi
-                       X11
-                       GL )
-  endif()
-endif()
-
-target_link_libraries(libkiva ${links})
 
 if (KIVA_COVERAGE)
   add_coverage(libkiva)

@@ -190,6 +190,7 @@ geom::Turn getTurn(Polygon poly, std::size_t vertex)
   }
 }
 
+#if defined(KIVA_3D)
 MultiPolygon mirrorX(MultiPolygon poly, double x)
 {
   boost::geometry::strategy::transform::ublas_transformer<double,2,2>
@@ -365,6 +366,7 @@ Polygon symmetricUnit(Polygon poly)
 
   return symPolys[0];
 }
+#endif
 
 double getXmax(Polygon poly, std::size_t vertex)
 {

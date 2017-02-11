@@ -1484,6 +1484,7 @@ void Foundation::createMeshData()
   }
   else if(numberOfDimensions == 3 && !useSymmetry)
   {
+#if defined(KIVA_3D)
     // TODO 3D
     Box boundingBox;
     boost::geometry::envelope(polygon, boundingBox);
@@ -2798,7 +2799,9 @@ void Foundation::createMeshData()
     yMaxExteriorRange.range.second = yMax;
     yMaxExteriorRange.type = RangeType::MAX_EXTERIOR;
     yRanges.ranges.push_back(yMaxExteriorRange);
-
+#else
+    std::cerr << "This version of Kiva cannot calculate 3D heat transfer.";//TODO: Error function
+#endif
   }
 
   std::vector<double> xPoints;
