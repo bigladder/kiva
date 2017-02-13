@@ -44,6 +44,8 @@ set( CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}" )
 option(KIVA_3D "Enable 3D Calculations" ON)
 option(ENABLE_OPENMP "Use OpenMP" OFF)
 
+set(KIVA_EXE_BUILD ON)
+
 if(CMAKE_COMPILER_IS_GNUCXX OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
   if (UNIX)
     add_definitions("-fPIC")
