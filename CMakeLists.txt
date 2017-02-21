@@ -8,6 +8,7 @@ set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 
 if (KIVA_COVERAGE)
   find_package(codecov)
+  set(ENABLE_COVERAGE ON CACHE BOOL "" FORCE)
 endif()
 
 # Set a default build type if none was specified
@@ -67,8 +68,6 @@ include_directories( SYSTEM ${CMAKE_BINARY_DIR}/vendor/mathgl-2.3.5.1/include/)
 include_directories( SYSTEM ${CMAKE_SOURCE_DIR}/vendor/yaml-cpp-0.5.3/include/)
 include_directories( SYSTEM ${CMAKE_SOURCE_DIR}/vendor/eigen-da9b4e14c255/)
 include_directories( SYSTEM ${CMAKE_SOURCE_DIR}/vendor/gtest/include/)
-
-set(KIVA_STATIC_LIB OFF CACHE BOOL "" FORCE)
 
 add_subdirectory(vendor)
 add_subdirectory(src/libkiva)

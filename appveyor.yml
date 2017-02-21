@@ -68,8 +68,8 @@ build_script:
   - SET SRC_BRANCH=%APPVEYOR_REPO_BRANCH%
   - mkdir build
   - cd build
-  - if "%COMPILER%"=="MSVC" (cmake "-G%GENERATOR%" "-DPROCESSOR_ARCHITECTURE=%BIT%" ..)
-  - if "%COMPILER%"=="MinGW" (cmake "-G%GENERATOR%" -DCMAKE_BUILD_TYPE="%CONFIG%" "-DPROCESSOR_ARCHITECTURE=%BIT%" ..)
+  - if "%COMPILER%"=="MSVC" (cmake "-G%GENERATOR%" "-DPROCESSOR_ARCHITECTURE=%BIT%" "-DKIVA_STATIC_LIB=OFF" ..)
+  - if "%COMPILER%"=="MinGW" (cmake "-G%GENERATOR%" -DCMAKE_BUILD_TYPE="%CONFIG%" "-DPROCESSOR_ARCHITECTURE=%BIT%" "-DKIVA_STATIC_LIB=OFF" ..)
   - ruby ..\scripts\clone-and-mimic.rb
   - if "%COMPILER%"=="MSVC" (cmake --build . --config "%CONFIG%" -- /m)
   - if "%COMPILER%"=="MinGW" (cmake --build .)
