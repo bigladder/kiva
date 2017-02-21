@@ -68,6 +68,8 @@ include_directories( SYSTEM ${CMAKE_SOURCE_DIR}/vendor/yaml-cpp-0.5.3/include/)
 include_directories( SYSTEM ${CMAKE_SOURCE_DIR}/vendor/eigen-da9b4e14c255/)
 include_directories( SYSTEM ${CMAKE_SOURCE_DIR}/vendor/gtest/include/)
 
+set(KIVA_STATIC_LIB OFF CACHE BOOL "" FORCE)
+
 add_subdirectory(vendor)
 add_subdirectory(src/libkiva)
 add_subdirectory(src/libgroundplot)
