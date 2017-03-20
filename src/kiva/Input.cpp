@@ -5,6 +5,7 @@
 #define INPUT_CPP_
 
 #include "Input.hpp"
+#include "Errors.hpp"
 
 using namespace Kiva;
 
@@ -112,8 +113,7 @@ void DataFile::readData()
 
       if (!boost::filesystem::exists(searchDir / dataFilePath)) {
         // Print an error and exit
-        std::cerr << "Unable to read data file" << std::endl;
-        exit(EXIT_FAILURE);
+        showMessage(MSG_ERR, "Unable to read data file.");
       }
       else {
         dataFilePath = searchDir / dataFilePath;
@@ -125,8 +125,7 @@ void DataFile::readData()
   if (!file.is_open())
   {
     // Print an error and exit
-    std::cerr << "Unable to read data file" << std::endl;
-    exit(EXIT_FAILURE);
+    showMessage(MSG_ERR, "Unable to read data file.");
   }
 
   // While there's still stuff left to read

@@ -4,10 +4,13 @@
 * Improve output reporting. 2D simulations now report heat transfer rates
   representative of the 3D inputs.
 * Small fixes to solar and convective boundary conditions.
+* Better error handling.
 
 ### Features:
 * Ability to define any block of material within the domain.
 * Add inputs to define the foundation footing.
+* Add ability to define exposed foundation perimeters (including unexposed/core
+  foundations).
 * Make horizontal insulation depths relative to the slab and grade surfaces.
 * Replace foundation wall height ("Height") with depth relative to bottom
   of the slab ("Depth Below Slab").

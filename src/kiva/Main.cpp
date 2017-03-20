@@ -9,6 +9,7 @@
 #include <boost/date_time/gregorian/gregorian.hpp>
 #include <boost/program_options.hpp>
 
+#include "Errors.hpp"
 #include "Version.hpp"
 #include "InputParser.hpp"
 #include "WeatherData.hpp"
@@ -17,8 +18,26 @@
 
 namespace po = boost::program_options;
 
+void errorCallback(
+  const int messageType,
+  const std::string message,
+  void*
+)
+{
+  if (messageType == Kiva::MSG_INFO) {
+    std::cout << message << std::endl;
+  } else if (messageType == Kiva::MSG_WARN) {
+    std::cout << "WARNING: " << message << std::endl;
+  } else /* if (messageType == Kiva::MSG_ERR) */ {
+    std::cout << "ERROR: " << message << std::endl;
+    exit(EXIT_FAILURE);
+  }
+}
+
 int main(int argc, char *argv[])
 {
+  Kiva::setMessageCallback(errorCallback, NULL);
+
   std::string versionInfo = "kiva ";
   versionInfo.append(Kiva::getVersion());
   std::string copyrightInfo = "Copyright (C) 2012-";
@@ -57,30 +76,34 @@ int main(int argc, char *argv[])
 
     if (vm.empty())
     {
-      std::cout << versionInfo << "\n";
-      std::cout << copyrightInfo << "\n\n";
-      std::cout << usageInfo << "\n";
-      std::cout << generic;
+      std::stringstream ss;
+      ss << versionInfo << "\n" <<
+      copyrightInfo << "\n\n" <<
+      usageInfo << "\n" <<
+      generic;
+
+      Kiva::showMessage(MSG_INFO, ss.str());
     }
     else if (vm.count("help"))
     {
-      std::cout << versionInfo << "\n";
-      std::cout << copyrightInfo << "\n\n";
-      std::cout << usageInfo << "\n";
-      std::cout << generic;
+      std::stringstream ss;
+      ss << versionInfo << "\n" <<
+      copyrightInfo << "\n\n" <<
+      usageInfo << "\n" <<
+      generic;
+
+      Kiva::showMessage(MSG_INFO, ss.str());
     }
     else if (vm.count("version"))
     {
-      std::cout << versionInfo << "\n";
-      std::cout << copyrightInfo << std::endl;
+      Kiva::showMessage(MSG_INFO, versionInfo + "\n" + copyrightInfo);
     }
     else if (vm.count("input-file") && vm.count("weather-file") && vm.count("output-file"))
     {
-      std::cout << versionInfo << "\n";
-      std::cout << copyrightInfo << "\n" << std::endl;
+      Kiva::showMessage(MSG_INFO, versionInfo + "\n" + copyrightInfo);
 
       boost::posix_time::ptime beginCalc = boost::posix_time::microsec_clock::local_time();
-      std::cout << "Starting Program: " << beginCalc << std::endl;
+      Kiva::showMessage(MSG_INFO, "Starting Program: " + to_simple_string(beginCalc));
 
       // parse input
       Input input = inputParser(vm["input-file"].as<std::string>());
@@ -96,20 +119,20 @@ int main(int argc, char *argv[])
       simulator.simulate();
 
       boost::posix_time::ptime finishCalc = boost::posix_time::microsec_clock::local_time();
-      std::cout << "Finished Program: " << finishCalc << std::endl;
+      Kiva::showMessage(MSG_INFO, "Finished Program: " + to_simple_string(finishCalc));
 
       boost::posix_time::time_duration totalCalc = finishCalc - beginCalc;
-      std::cout << "Elapsed Time: " << totalCalc << std::endl;
+      Kiva::showMessage(MSG_INFO, "Elapsed Time: " + to_simple_string(totalCalc));
 
     }
     else if (!vm.empty())
     {
-      std::cerr << "ERROR: Incorrect number of arguments\n\n";
+      std::stringstream ss;
+      ss << "Incorrect number of arguments\n\n" <<
+      usageInfo + "\n" <<
+      generic;
 
-      std::cout << usageInfo << "\n";
-      std::cout << generic;
-
-      return 1;
+      Kiva::showMessage(MSG_ERR, ss.str());
     }
 
     return 0;
@@ -117,8 +140,7 @@ int main(int argc, char *argv[])
   }
   catch(std::exception& e)
   {
-    std::cerr << e.what() << std::endl;
-    return 1;
+    Kiva::showMessage(MSG_ERR, e.what());
   }
 
 }

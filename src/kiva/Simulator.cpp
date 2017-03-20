@@ -2,6 +2,7 @@
 * See the LICENSE file for additional terms and conditions. */
 
 #include "Simulator.hpp"
+#include "Errors.hpp"
 
 using namespace Kiva;
 
@@ -16,7 +17,7 @@ Simulator::Simulator(WeatherData &weatherData, Input &input, std::string outputF
 
   annualAverageDryBulbTemperature = weatherData.dryBulbTemp.getAverage();
 
-  std::cout << "Creating Domain..." << std::endl;
+  showMessage(MSG_INFO, "Creating Domain...");
 
   if (input.foundation.deepGroundBoundary == Foundation::DGB_AUTO)
     input.foundation.deepGroundTemperature = annualAverageDryBulbTemperature;
@@ -36,10 +37,15 @@ Simulator::Simulator(WeatherData &weatherData, Input &input, std::string outputF
 
   ground.buildDomain();
 
-  std::cout << "  X Cells: " << ground.nX << std::endl;
-  std::cout << "  Y Cells: " << ground.nY << std::endl;
-  std::cout << "  Z Cells: " << ground.nZ << std::endl;
-  std::cout << "  Total Cells: " << ground.nX*ground.nY*ground.nZ << std::endl;
+  std::stringstream ss;
+
+  ss <<
+  "  X Cells: " << ground.nX << "\n" <<
+  "  Y Cells: " << ground.nY << "\n" <<
+  "  Z Cells: " << ground.nZ << "\n" <<
+  "  Total Cells: " << ground.nX*ground.nY*ground.nZ;
+
+  showMessage(MSG_INFO, ss.str());
 
   // Initial Conditions
   initializeConditions();
@@ -61,7 +67,7 @@ void Simulator::initializeConditions()
 
   if (input.foundation.numericalScheme != Foundation::NS_STEADY_STATE)  // Intialization not necessary for steady state calculations
   {
-    std::cout << "Initializing Temperatures..." << std::endl;
+    showMessage(MSG_INFO, "Initializing Temperatures...");
 
     // Calculate initial time in seconds (simulation start minus warmup and acceleration periods)
     boost::posix_time::time_duration& simulationTimestep = input.simulationControl.timestep;
@@ -233,7 +239,7 @@ void Simulator::initializePlots()
 
 void Simulator::simulate()
 {
-  std::cout << "Beginning Simulation..." << std::endl;
+  showMessage(MSG_INFO, "Beginning Simulation...");
 
   boost::posix_time::ptime simStart = input.simulationControl.startTime;
   boost::posix_time::ptime simEnd(input.simulationControl.endDate + boost::gregorian::days(1));
@@ -260,7 +266,7 @@ void Simulator::simulate()
 
   }
 
-  std::cout << "  " << simEnd - input.simulationControl.timestep << " (100%)" << std::endl;
+  showMessage(MSG_INFO, "  " + to_simple_string(simEnd - input.simulationControl.timestep) + " (100%)");
 
 }
 
@@ -359,11 +365,13 @@ void Simulator::printStatus(boost::posix_time::ptime t)
   {
     if (initPeriod)
     {
-      std::cout << "  " << t << std::endl;
+      showMessage(MSG_INFO, "  " + to_simple_string(t));
     }
     else
     {
-      std::cout << "  " << t << " (" << percentComplete << "%)" << std::endl;
+      std::stringstream ss;
+      ss << "  " << t << " (" << percentComplete << "%)";
+      showMessage(MSG_INFO, ss.str());
     }
 
     prevStatusUpdate = currentTime;

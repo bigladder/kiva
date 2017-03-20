@@ -5,6 +5,7 @@
 #define WeatherData_CPP
 
 #include "WeatherData.hpp"
+#include "Errors.hpp"
 
 static const double PI = 4.0*atan(1.0);
 
@@ -131,8 +132,7 @@ void WeatherData::importEPW(std::string epwFile)
   if (!inf)
   {
       // Print an error and exit
-      std::cerr << "Unable to read EPW file" << std::endl;
-      exit(EXIT_FAILURE);
+      Kiva::showMessage(Kiva::MSG_ERR, "Unable to read EPW file.");
   }
 
   // While there's still stuff left to read

@@ -2,6 +2,7 @@
 * See the LICENSE file for additional terms and conditions. */
 
 #include "InputParser.hpp"
+#include "Errors.hpp"
 
 Input inputParser(std::string inputFile)
 {
@@ -160,31 +161,31 @@ Input inputParser(std::string inputFile)
       if  (block["X Position"].IsDefined()) {
         tempBlock.x = block["X Position"].as<double>();
       } else {
-        // Error
+        showMessage(MSG_ERR, "'X Position' is required for Material Blocks.");
       }
 
       if  (block["Z Position"].IsDefined()) {
         tempBlock.z = block["Z Position"].as<double>();
       } else {
-        // Error
+        showMessage(MSG_ERR, "'Z Position' is required for Material Blocks.");
       }
 
       if  (block["Width"].IsDefined()) {
         tempBlock.width = block["Width"].as<double>();
       } else {
-        // Error
+        showMessage(MSG_ERR, "'Width' is required for Material Blocks.");
       }
 
       if  (block["Depth"].IsDefined()) {
         tempBlock.depth = block["Depth"].as<double>();
       } else {
-        // Error
+        showMessage(MSG_ERR, "'Depth' is required for Material Blocks.");
       }
 
       if  (block["Material"].IsDefined()) {
         tempBlock.material = materials[block["Material"].as<std::string>()];
       } else {
-        // Error
+        showMessage(MSG_ERR, "'Material' is required for Material Blocks.");
       }
 
 
@@ -273,12 +274,12 @@ Input inputParser(std::string inputFile)
     if  (yamlInput["Foundation"]["Footing"]["Width"].IsDefined()) {
       tempBlock.width = yamlInput["Foundation"]["Footing"]["Width"].as<double>();
     } else {
-      // Error
+      showMessage(MSG_ERR, "'Width' is required for Footing.");
     }
     if  (yamlInput["Foundation"]["Footing"]["Depth"].IsDefined()) {
       tempBlock.depth = yamlInput["Foundation"]["Footing"]["Depth"].as<double>();
     } else {
-      // Error
+      showMessage(MSG_ERR, "'Depth' is required for Footing.");
     }
 
     tempBlock.z = foundation.foundationDepth + (foundation.hasSlab ? foundation.slab.totalWidth() : 0.0) + (foundation.hasWall ? foundation.wall.depthBelowSlab : 0.0);
@@ -288,7 +289,7 @@ Input inputParser(std::string inputFile)
     if  (yamlInput["Foundation"]["Footing"]["Material"].IsDefined()) {
       tempBlock.material = materials[yamlInput["Foundation"]["Footing"]["Material"].as<std::string>()];
     } else {
-      // Error
+      showMessage(MSG_ERR, "'Material' is required for Footing.");
     }
 
 
@@ -362,7 +363,7 @@ Input inputParser(std::string inputFile)
   {
     foundation.useDetailedExposedPerimeter = true;
     if (yamlInput["Foundation"]["Exposed Perimeter"].size() != yamlInput["Foundation"]["Polygon"].size()) {
-      // error
+      showMessage(MSG_ERR, "'Exposed Perimeter' list must be the same size as 'Polygon' vetex list.");
     }
     else {
       for (size_t i=0;i<yamlInput["Foundation"]["Exposed Perimeter"].size();i++) {
@@ -382,7 +383,7 @@ Input inputParser(std::string inputFile)
   if  (yamlInput["Foundation"]["Exposed Fraction"].IsDefined()) {
     if  (yamlInput["Foundation"]["Exposed Perimeter"].IsDefined())
     {
-      // Error
+      showMessage(MSG_ERR, "Cannot specify both 'Exposed Fraction' and 'Exposed Perimeter'.");
     }
     foundation.useDetailedExposedPerimeter = false;
     foundation.exposedFraction = yamlInput["Foundation"]["Exposed Fraction"].as<double>();
