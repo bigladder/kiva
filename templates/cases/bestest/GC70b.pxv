@@ -1,0 +1,17 @@
+# Steady Periodic Case
+:numerical_scheme=>"ADI",
+:start_year=>2100,
+:end_year=>2100,
+:timestep=>60,
+:imp_timestep=>168,
+:imp_periods=>12,
+:warmup_days=>365,
+:plot=>false,
+
+# "b" Case
+:deep_ground_depth=>15,
+:far_field_width=>15,
+
+# "65/70" Case
+:bestest_int_conv=>7.95,
+:bestest_ext_conv=>11.95

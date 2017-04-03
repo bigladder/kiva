@@ -1,0 +1,15 @@
+#require('params')
+
+task :default => 'compose'
+
+task :compose do
+  cases = Dir["cases/bestest/*.pxv"]
+  for case_path in cases
+    test_name = File.basename(case_path,File.extname(case_path))
+    output_path = "../test/bestest/" + test_name + ".yaml"
+    command = %Q|params compose -o "#{output_path}" -f "bestest.pxv;#{case_path}" kiva.pxt|
+    system(command)
+  end
+
+#Params.compose()
+end

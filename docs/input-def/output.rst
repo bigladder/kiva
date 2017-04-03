@@ -162,7 +162,7 @@ Output snapshots are used to graphically visualize domain temperatures and/or he
 Directory
 ^^^^^^^^^
 
-Directory where snapshots are created. An ordered file name, ``XXXX.png``, identifies each snapshot within a series. For example, the 134th snapshot in a series with a directory name of ``Profile`` will be created as ``Profile/0134.png``.
+Directory where snapshots are created (in same directory as the output CSV file). An ordered file name, ``XXXX.png``, identifies each snapshot within a series. For example, the 134th snapshot in a series with a directory name of ``Profile`` will be created as ``Profile/0134.png``.
 
 =============   ==============
 **Required:**   Yes

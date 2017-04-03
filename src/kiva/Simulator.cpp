@@ -12,6 +12,8 @@ Simulator::Simulator(WeatherData &weatherData, Input &input, std::string outputF
   weatherData(weatherData), input(input), ground(input.foundation,input.output.outputReport.outputMap)
 {
   // set up output file
+  boost::filesystem::path outputPath(outputFileName);
+  outputDir = outputPath.parent_path();
   outputFile.open(outputFileName.c_str());
   outputFile << "Timestamp" << printOutputHeaders() << std::endl;
 
@@ -225,6 +227,8 @@ void Simulator::initializePlots()
         input.output.outputSnapshots[p].snapshotSettings.zRange.second = ground.domain.meshZ.dividers[ground.nZ];
       }
     }
+
+    input.output.outputSnapshots[p].snapshotSettings.dir = (outputDir / input.output.outputSnapshots[p].snapshotSettings.dir).string();
 
     plots.emplace_back(input.output.outputSnapshots[p].snapshotSettings,ground.domain,input.foundation);
 

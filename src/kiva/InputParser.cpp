@@ -306,52 +306,6 @@ Input inputParser(std::string inputFile)
   }
 
   // Geometry
-  if (yamlInput["Foundation"]["Coordinate System"].IsDefined()) {
-    if (yamlInput["Foundation"]["Coordinate System"].as<std::string>() == "CARTESIAN")
-      foundation.coordinateSystem = Foundation::CS_CARTESIAN;
-    else if (yamlInput["Foundation"]["Coordinate System"].as<std::string>() == "CYLINDRICAL")
-      foundation.coordinateSystem = Foundation::CS_CYLINDRICAL;
-  }
-  else {
-    foundation.coordinateSystem = Foundation::CS_CARTESIAN;
-  }
-
-  if (yamlInput["Foundation"]["Two-Dimensional Approximation"].IsDefined()) {
-    if (yamlInput["Foundation"]["Two-Dimensional Approximation"].as<std::string>() == "AP")
-      foundation.reductionStrategy = Foundation::RS_AP;
-    else if (yamlInput["Foundation"]["Two-Dimensional Approximation"].as<std::string>() == "RR")
-      foundation.reductionStrategy = Foundation::RS_RR;
-    else if (yamlInput["Foundation"]["Two-Dimensional Approximation"].as<std::string>() == "BOUNDARY")
-      foundation.reductionStrategy = Foundation::RS_BOUNDARY;
-    else if (yamlInput["Foundation"]["Two-Dimensional Approximation"].as<std::string>() == "CUSTOM")
-    {
-      foundation.reductionStrategy = Foundation::RS_CUSTOM;
-      if (yamlInput["Foundation"]["Length 1"].IsDefined())
-      {
-        foundation.twoParameters = true;
-        foundation.reductionLength1 = yamlInput["Foundation"]["Length 1"].as<double>();
-      }
-      else
-      {
-        foundation.twoParameters = false;
-      }
-      foundation.reductionLength2 = yamlInput["Foundation"]["Length 2"].as<double>();
-    }
-  }
-  else {
-    foundation.reductionStrategy = Foundation::RS_BOUNDARY;
-  }
-
-  if (yamlInput["Foundation"]["Number of Dimensions"].IsDefined())
-    foundation.numberOfDimensions = yamlInput["Foundation"]["Number of Dimensions"].as<int>();
-  else
-    foundation.numberOfDimensions = 2;
-
-  if  (yamlInput["Foundation"]["Use Symmetry"].IsDefined())
-    foundation.useSymmetry = yamlInput["Foundation"]["Use Symmetry"].as<bool>();
-  else
-    foundation.useSymmetry = true;
-
   for (size_t i=0;i<yamlInput["Foundation"]["Polygon"].size();i++)
   {
     foundation.polygon.outer().push_back(Point(
@@ -409,40 +363,89 @@ Input inputParser(std::string inputFile)
     foundation.perimeterSurfaceWidth = 0.0;
   }
 
+  // NUMERICAL SETTINGS
+
+  // Coordinate System
+  if (yamlInput["Numerical Settings"]["Coordinate System"].IsDefined()) {
+    if (yamlInput["Numerical Settings"]["Coordinate System"].as<std::string>() == "CARTESIAN")
+      foundation.coordinateSystem = Foundation::CS_CARTESIAN;
+    else if (yamlInput["Numerical Settings"]["Coordinate System"].as<std::string>() == "CYLINDRICAL")
+      foundation.coordinateSystem = Foundation::CS_CYLINDRICAL;
+  }
+  else {
+    foundation.coordinateSystem = Foundation::CS_CARTESIAN;
+  }
+
+  if (yamlInput["Numerical Settings"]["Two-Dimensional Approximation"].IsDefined()) {
+    if (yamlInput["Numerical Settings"]["Two-Dimensional Approximation"].as<std::string>() == "AP")
+      foundation.reductionStrategy = Foundation::RS_AP;
+    else if (yamlInput["Numerical Settings"]["Two-Dimensional Approximation"].as<std::string>() == "RR")
+      foundation.reductionStrategy = Foundation::RS_RR;
+    else if (yamlInput["Numerical Settings"]["Two-Dimensional Approximation"].as<std::string>() == "BOUNDARY")
+      foundation.reductionStrategy = Foundation::RS_BOUNDARY;
+    else if (yamlInput["Numerical Settings"]["Two-Dimensional Approximation"].as<std::string>() == "CUSTOM")
+    {
+      foundation.reductionStrategy = Foundation::RS_CUSTOM;
+      if (yamlInput["Numerical Settings"]["Length 1"].IsDefined())
+      {
+        foundation.twoParameters = true;
+        foundation.reductionLength1 = yamlInput["Numerical Settings"]["Length 1"].as<double>();
+      }
+      else
+      {
+        foundation.twoParameters = false;
+      }
+      foundation.reductionLength2 = yamlInput["Numerical Settings"]["Length 2"].as<double>();
+    }
+  }
+  else {
+    foundation.reductionStrategy = Foundation::RS_BOUNDARY;
+  }
+
+  if (yamlInput["Numerical Settings"]["Number of Dimensions"].IsDefined())
+    foundation.numberOfDimensions = yamlInput["Numerical Settings"]["Number of Dimensions"].as<int>();
+  else
+    foundation.numberOfDimensions = 2;
+
+  if  (yamlInput["Numerical Settings"]["Use Symmetry"].IsDefined())
+    foundation.useSymmetry = yamlInput["Numerical Settings"]["Use Symmetry"].as<bool>();
+  else
+    foundation.useSymmetry = true;
+
   // Meshing
-  if  (yamlInput["Foundation"]["Mesh"].IsDefined())
+  if  (yamlInput["Numerical Settings"]["Mesh"].IsDefined())
   {
 
-    if  (yamlInput["Foundation"]["Mesh"]["Minimum Cell Dimension"].IsDefined()) {
-      foundation.mesh.minCellDim = yamlInput["Foundation"]["Mesh"]["Minimum Cell Dimension"].as<double>();
+    if  (yamlInput["Numerical Settings"]["Mesh"]["Minimum Cell Dimension"].IsDefined()) {
+      foundation.mesh.minCellDim = yamlInput["Numerical Settings"]["Mesh"]["Minimum Cell Dimension"].as<double>();
     }
     else {
       foundation.mesh.minCellDim = 0.02;
     }
 
-    if  (yamlInput["Foundation"]["Mesh"]["Maximum Near-Field Growth Coefficient"].IsDefined()) {
-      foundation.mesh.maxNearGrowthCoeff = yamlInput["Foundation"]["Mesh"]["Maximum Near-Field Growth Coefficient"].as<double>();
+    if  (yamlInput["Numerical Settings"]["Mesh"]["Maximum Near-Field Growth Coefficient"].IsDefined()) {
+      foundation.mesh.maxNearGrowthCoeff = yamlInput["Numerical Settings"]["Mesh"]["Maximum Near-Field Growth Coefficient"].as<double>();
     }
     else {
       foundation.mesh.maxNearGrowthCoeff = 1.5;
     }
 
-    if  (yamlInput["Foundation"]["Mesh"]["Maximum Deep-Field Growth Coefficient"].IsDefined()) {
-      foundation.mesh.maxDepthGrowthCoeff = yamlInput["Foundation"]["Mesh"]["Maximum Deep-Field Growth Coefficient"].as<double>();
+    if  (yamlInput["Numerical Settings"]["Mesh"]["Maximum Deep-Field Growth Coefficient"].IsDefined()) {
+      foundation.mesh.maxDepthGrowthCoeff = yamlInput["Numerical Settings"]["Mesh"]["Maximum Deep-Field Growth Coefficient"].as<double>();
     }
     else {
       foundation.mesh.maxDepthGrowthCoeff = 1.5;
     }
 
-    if  (yamlInput["Foundation"]["Mesh"]["Maximum Interior-Field Growth Coefficient"].IsDefined()) {
-      foundation.mesh.maxInteriorGrowthCoeff = yamlInput["Foundation"]["Mesh"]["Maximum Interior-Field Growth Coefficient"].as<double>();
+    if  (yamlInput["Numerical Settings"]["Mesh"]["Maximum Interior-Field Growth Coefficient"].IsDefined()) {
+      foundation.mesh.maxInteriorGrowthCoeff = yamlInput["Numerical Settings"]["Mesh"]["Maximum Interior-Field Growth Coefficient"].as<double>();
     }
     else {
       foundation.mesh.maxInteriorGrowthCoeff = 1.5;
     }
 
-    if  (yamlInput["Foundation"]["Mesh"]["Maximum Far-Field Growth Coefficient"].IsDefined()) {
-      foundation.mesh.maxExteriorGrowthCoeff = yamlInput["Foundation"]["Mesh"]["Maximum Far-Field Growth Coefficient"].as<double>();
+    if  (yamlInput["Numerical Settings"]["Mesh"]["Maximum Far-Field Growth Coefficient"].IsDefined()) {
+      foundation.mesh.maxExteriorGrowthCoeff = yamlInput["Numerical Settings"]["Mesh"]["Maximum Far-Field Growth Coefficient"].as<double>();
     }
     else {
       foundation.mesh.maxExteriorGrowthCoeff = 1.5;
@@ -458,25 +461,25 @@ Input inputParser(std::string inputFile)
   }
 
   // Simulation Control
-  if  (yamlInput["Foundation"]["Numerical Scheme"].IsDefined())
+  if  (yamlInput["Numerical Settings"]["Numerical Scheme"].IsDefined())
   {
-    if (yamlInput["Foundation"]["Numerical Scheme"].as<std::string>() == "ADE")
+    if (yamlInput["Numerical Settings"]["Numerical Scheme"].as<std::string>() == "ADE")
       foundation.numericalScheme = Foundation::NS_ADE;
-    else if (yamlInput["Foundation"]["Numerical Scheme"].as<std::string>() == "EXPLICIT")
+    else if (yamlInput["Numerical Settings"]["Numerical Scheme"].as<std::string>() == "EXPLICIT")
       foundation.numericalScheme = Foundation::NS_EXPLICIT;
-    else if (yamlInput["Foundation"]["Numerical Scheme"].as<std::string>() == "ADI")
+    else if (yamlInput["Numerical Settings"]["Numerical Scheme"].as<std::string>() == "ADI")
     {
       foundation.numericalScheme = Foundation::NS_ADI;
-      if  (yamlInput["Foundation"]["f-ADI"].IsDefined())
-        foundation.fADI = yamlInput["Foundation"]["f-ADI"].as<double>();
+      if  (yamlInput["Numerical Settings"]["f-ADI"].IsDefined())
+        foundation.fADI = yamlInput["Numerical Settings"]["f-ADI"].as<double>();
       else
         foundation.fADI = 0.00001;
     }
-    else if (yamlInput["Foundation"]["Numerical Scheme"].as<std::string>() == "IMPLICIT")
+    else if (yamlInput["Numerical Settings"]["Numerical Scheme"].as<std::string>() == "IMPLICIT")
       foundation.numericalScheme = Foundation::NS_IMPLICIT;
-    else if (yamlInput["Foundation"]["Numerical Scheme"].as<std::string>() == "CRANK-NICOLSON")
+    else if (yamlInput["Numerical Settings"]["Numerical Scheme"].as<std::string>() == "CRANK-NICOLSON")
       foundation.numericalScheme = Foundation::NS_CRANK_NICOLSON;
-    else if (yamlInput["Foundation"]["Numerical Scheme"].as<std::string>() == "STEADY-STATE")
+    else if (yamlInput["Numerical Settings"]["Numerical Scheme"].as<std::string>() == "STEADY-STATE")
       foundation.numericalScheme = Foundation::NS_STEADY_STATE;
   }
   else
@@ -485,18 +488,18 @@ Input inputParser(std::string inputFile)
     foundation.fADI = 0.00001;
 }
 
-  if  (yamlInput["Foundation"]["Maximum Iterations"].IsDefined())
+  if  (yamlInput["Numerical Settings"]["Maximum Iterations"].IsDefined())
   {
-    foundation.maxIterations = yamlInput["Foundation"]["Maximum Iterations"].as<int>();
+    foundation.maxIterations = yamlInput["Numerical Settings"]["Maximum Iterations"].as<int>();
   }
   else
   {
     foundation.maxIterations = 100000;
   }
 
-  if  (yamlInput["Foundation"]["Tolerance"].IsDefined())
+  if  (yamlInput["Numerical Settings"]["Tolerance"].IsDefined())
   {
-    foundation.tolerance = yamlInput["Foundation"]["Tolerance"].as<double>();
+    foundation.tolerance = yamlInput["Numerical Settings"]["Tolerance"].as<double>();
   }
   else
   {

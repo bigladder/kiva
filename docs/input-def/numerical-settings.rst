@@ -1,7 +1,7 @@
-Foundation (Advanced)
-=====================
+Numerical Settings
+==================
 
-These are additional inputs that can be used to further define the :ref:`foundation` object. These inputs are largely intended for advanced research or testing purposes.
+These are additional inputs that can be used to define the numerical approach and discretization. These inputs are largely intended for advanced research or testing purposes.
 
 Number of Dimensions
 --------------------

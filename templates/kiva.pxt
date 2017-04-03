@@ -121,7 +121,6 @@ parameter "bestest_deep_ground_temp", :default=>10
 parameter "bestest_int_conv", :default=>100
 parameter "bestest_ext_conv", :default=>100
 parameter "bestest_wall_boundary", :default=>"ZERO-FLUX"
-parameter "bestest_wall_dt", :default=>20
 
 %>
 <%
@@ -292,16 +291,6 @@ Foundation:
 
   Foundation Depth: <%= foundation_depth %>  # [m]
 
-  Coordinate System: <%= coord_system %>  # CARTESIAN | CYLINDRICAL
-  Number of Dimensions: <%= number_of_dimensions %> # 2 or 3
-  Two-Dimensional Approximation: <%= reduction_strategy %> # AP | NEG | PNEG | A-P | RR | BOUNDARY | CUSTOM
-<% if reduction_strategy == 'CUSTOM' %>
-  <% if length1 != nil %>
-  Length 1: <%= length1 %>
-  <% end %>
-  Length 2: <%= length2 %>
-<% end %>
-  Use Symmetry: <%= use_symmetry %>
 <%
 
 
@@ -362,6 +351,18 @@ end
 <% if (perimeter_width > 0.0) %>
   Perimeter Surface Width: <%= perimeter_width %>  # [m]
 <% end %>
+
+Numerical Settings:
+  Coordinate System: <%= coord_system %>  # CARTESIAN | CYLINDRICAL
+  Number of Dimensions: <%= number_of_dimensions %> # 2 or 3
+  Two-Dimensional Approximation: <%= reduction_strategy %> # AP | NEG | PNEG | A-P | RR | BOUNDARY | CUSTOM
+<% if reduction_strategy == 'CUSTOM' %>
+  <% if length1 != nil %>
+  Length 1: <%= length1 %>
+  <% end %>
+  Length 2: <%= length2 %>
+<% end %>
+  Use Symmetry: <%= use_symmetry %>
 
   Mesh:
     Minimum Cell Dimension: <%= min_cell_dim %>  # [m]

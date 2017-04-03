@@ -1,0 +1,133 @@
+
+
+Simulation Control:
+  Start Date: 2100-Jan-1
+  End Date: 2100-Dec-31
+  Timestep: 60 # [min]
+
+Materials:
+  FHB Soil:  # alpha: 2E-6
+    Conductivity: 1.73  # [W/m-K]
+    Density: 1842.0  # [kg/m3]
+    Specific Heat: 419.0  # [J/kg-K]
+  Typical Soil:  # alpha: 4.54115E-7
+    Conductivity: 0.864  # [W/m-K]
+    Density: 1510.0  # [kg/m3]
+    Specific Heat: 1260.0  # [J/kg-K]
+  Wet Sandy Soil:  # alpha: 3.34857E-7
+    Conductivity: 0.586  # [W/m-K]
+    Density: 1750.0  # [kg/m3]
+    Specific Heat: 1000.0  # [J/kg-K]
+  Wet Loam Soil:  # alpha: 2.4881E-7
+    Conductivity: 0.418  # [W/m-K]
+    Density: 1600.0  # [kg/m3]
+    Specific Heat: 1050.0  # [J/kg-K]
+  Wet Clay Soil:  # alpha: 3.43572E-7
+    Conductivity: 1.51  # [W/m-K]
+    Density: 1500.0  # [kg/m3]
+    Specific Heat: 2930.0  # [J/kg-K]
+  Dry Sandy Soil:  # alpha: 2.01258E-7
+    Conductivity: 0.264  # [W/m-K]
+    Density: 1650.0  # [kg/m3]
+    Specific Heat: 795.0  # [J/kg-K]
+  Dry Loam Soil:  # alpha: 2.39904E-7
+    Conductivity: 0.251  # [W/m-K]
+    Density: 1250.0  # [kg/m3]
+    Specific Heat: 837.0  # [J/kg-K]
+
+  Standard 140a Soil:
+    Conductivity: 1.9  # [W/m-K]
+    Density: 1490.0  # [kg/m3]
+    Specific Heat: 1800.0  # [J/kg-K]
+
+  HBF Concrete:
+    Conductivity: 1.95  # [W/m-K]
+    Density: 2400.0  # [kg/m3]
+    Specific Heat: 900.0  # [J/kg-K]
+  Concrete:
+    Conductivity: 1.98  # [W/m-K]
+    Density: 1900.0  # [kg/m3]
+    Specific Heat: 665.0  # [J/kg-K]
+  XPS:
+    Conductivity: 0.028847245883021008  # [W/m-K]
+    Density: 28.0  # [kg/m3]
+    Specific Heat: 1450.0  # [J/kg-K]
+  Carpet:
+    Conductivity: 0.08  # [W/m-K]
+    Density: 28.0  # [kg/m3]
+    Specific Heat: 1450.0  # [J/kg-K]
+
+Foundation:
+  Soil: Standard 140a Soil  # Material reference
+  Soil Absorptivity: 0.0  # 0-1
+  Soil Emissivity: 0.0  # 0-1
+  Surface Roughness: 0.03 # [m]
+  Wall:
+    Layers:
+      -
+        Material: Standard 140a Soil
+        Thickness: 0.24
+    Height Above Grade: 0.0  # [m]
+    Depth Below Slab: 0.0  # [m]
+    Interior Emissivity: 0.0
+    Exterior Emissivity: 0.0
+    Exterior Absorptivity: 0.0
+
+  Foundation Depth: 0.0  # [m]
+
+
+  Polygon:
+    - [-6.0, -6.0]
+    - [-6.0, 6.0]
+    - [6.0, 6.0]
+    - [6.0, -6.0]
+
+
+Numerical Settings:
+  Coordinate System: CARTESIAN  # CARTESIAN | CYLINDRICAL
+  Number of Dimensions: 2 # 2 or 3
+  Two-Dimensional Approximation: BOUNDARY # AP | NEG | PNEG | A-P | RR | BOUNDARY | CUSTOM
+  Use Symmetry: true
+
+  Mesh:
+    Minimum Cell Dimension: 0.02  # [m]
+    Maximum Near-Field Growth Coefficient: 1.0
+    Maximum Deep-Field Growth Coefficient: 1.5
+    Maximum Interior-Field Growth Coefficient: 1.5
+    Maximum Far-Field Growth Coefficient: 1.5
+
+  Numerical Scheme: ADI  # ADE | EXPLICIT | ADI | IMPLICIT | CRANK-NICOLSON | STEADY-STATE
+  f-ADI: 1.0e-05
+  Maximum Iterations: 100000
+  Tolerance: 1.0e-06
+
+Boundaries:
+  Far-Field Width: 15  # [m]
+  Deep-Ground Depth: 15  # [m]
+  Deep-Ground Boundary Condition: CONSTANT-TEMP  # AUTO | CONSTANT-TEMP | ZERO-FLUX
+  Deep-Ground Temperature: 283.15  # [K]
+
+  Indoor Air Temperature: 303.15  # [K]
+  Local Boundary Layer Thickness: 370  # [m]
+  Local Terrain Exponent: 0.22
+
+  Convection Calculation Method: CONSTANT # AUTO | CONSTANT
+  Interior Convective Coefficient: 7.95
+  Exterior Convective Coefficient: 11.95
+  Wall Top Boundary Condition: ZERO-FLUX  # ZERO-FLUX | LINEAR-DT
+  
+  Outdoor Air Temperature Method: WEATHER-FILE # WEATHER-FILE | CONSTANT
+
+Initialization:
+  Initialization Method: STEADY-STATE  # KUSUDA | CONSTANT | STEADY-STATE
+  Accelerated Initialization Timestep: 168  # hours
+  Number of Accelearted Initialization Timesteps: 12
+  Number of Warmup Days in Initialization: 365 # days
+
+Output:
+  Output Report:
+    Minimum Reporting Frequency: 60  # [min]
+    Reports:
+      - 17
+
+  Output Snapshots:

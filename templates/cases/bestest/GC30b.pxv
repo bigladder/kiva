@@ -1,0 +1,15 @@
+# Steady State Case
+:numerical_scheme=>"STEADY-STATE",
+:start_year=>2097,
+:start_month=>'Jan',
+:start_day=>1,
+:end_month=>'Jan',
+:end_day=>1,
+:timestep=>1440,
+:outdoor_temp=>10,
+
+# "b" Case
+:deep_ground_depth=>15,
+:far_field_width=>15,
+:bestest_int_conv=>100,
+:bestest_ext_conv=>100
