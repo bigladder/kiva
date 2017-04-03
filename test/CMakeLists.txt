@@ -2,8 +2,8 @@ add_subdirectory(unit)
 
 add_custom_target(results_directory ALL COMMAND ${CMAKE_COMMAND} -E make_directory results)
 
-add_custom_target(rm_results_subdirectory ALL COMMAND ${CMAKE_COMMAND} -E remove_directory results/${build_architecture} DEPENDS results_directory)
-add_custom_target(results_subdirectory ALL COMMAND ${CMAKE_COMMAND} -E make_directory results/${build_architecture} DEPENDS rm_results_subdirectory)
+add_custom_target(rm_results_subdirectory ALL COMMAND ${CMAKE_COMMAND} -E remove_directory results/${KIVA_BUILD_CONFIG} DEPENDS results_directory)
+add_custom_target(results_subdirectory ALL COMMAND ${CMAKE_COMMAND} -E make_directory results/${KIVA_BUILD_CONFIG} DEPENDS rm_results_subdirectory)
 
 set(SCRIPT_DIR "${CMAKE_SOURCE_DIR}/scripts")
 
@@ -15,13 +15,13 @@ function( add_example_case )
 
   set(TEST_NAME "integration.example.${INT_TEST_IN_FILE}")
 
-  add_custom_target(results_${INT_TEST_IN_FILE}_directory ALL COMMAND ${CMAKE_COMMAND} -E make_directory results/${build_architecture}/${TEST_NAME} DEPENDS results_subdirectory)
+  add_custom_target(results_${INT_TEST_IN_FILE}_directory ALL COMMAND ${CMAKE_COMMAND} -E make_directory results/${KIVA_BUILD_CONFIG}/${TEST_NAME} DEPENDS results_subdirectory)
 
   add_test(NAME ${TEST_NAME} COMMAND ruby run-kiva.rb
     $<TARGET_FILE:kiva>
     ${CMAKE_SOURCE_DIR}/examples/${INT_TEST_IN_FILE}.yaml
     ${CMAKE_SOURCE_DIR}/weather/${INT_TEST_EPW_FILE}.epw
-    ${CMAKE_CURRENT_BINARY_DIR}/results/${build_architecture}/${TEST_NAME}/out.csv
+    ${CMAKE_CURRENT_BINARY_DIR}/results/${KIVA_BUILD_CONFIG}/${TEST_NAME}/out.csv
     WORKING_DIRECTORY ${SCRIPT_DIR})
 
 endfunction()
@@ -34,13 +34,13 @@ function( add_bestest_case )
 
   set(TEST_NAME "integration.BESTEST.${INT_TEST_IN_FILE}")
 
-  add_custom_target(results_${INT_TEST_IN_FILE}_directory ALL COMMAND ${CMAKE_COMMAND} -E make_directory results/${build_architecture}/${TEST_NAME} DEPENDS results_subdirectory)
+  add_custom_target(results_${INT_TEST_IN_FILE}_directory ALL COMMAND ${CMAKE_COMMAND} -E make_directory results/${KIVA_BUILD_CONFIG}/${TEST_NAME} DEPENDS results_subdirectory)
 
   add_test(NAME ${TEST_NAME} COMMAND ruby run-kiva.rb
     $<TARGET_FILE:kiva>
     ${CMAKE_SOURCE_DIR}/test/bestest/${INT_TEST_IN_FILE}.yaml
     ${CMAKE_SOURCE_DIR}/test/bestest/weather/${INT_TEST_EPW_FILE}.epw
-    ${CMAKE_CURRENT_BINARY_DIR}/results/${build_architecture}/${TEST_NAME}/out.csv
+    ${CMAKE_CURRENT_BINARY_DIR}/results/${KIVA_BUILD_CONFIG}/${TEST_NAME}/out.csv
     WORKING_DIRECTORY ${SCRIPT_DIR})
 
 endfunction()

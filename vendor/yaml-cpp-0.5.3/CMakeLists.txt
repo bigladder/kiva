@@ -297,13 +297,6 @@ if(MSVC)
 	endif()
 endif()
 
-install(TARGETS yaml-cpp ${_INSTALL_DESTINATIONS})
-install(
-	DIRECTORY ${header_directory}
-	DESTINATION ${INCLUDE_INSTALL_DIR}
-	FILES_MATCHING PATTERN "*.h"
-)
-
 export(
     TARGETS yaml-cpp
     FILE "${PROJECT_BINARY_DIR}/yaml-cpp-targets.cmake")
@@ -315,12 +308,6 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/yaml-cpp-config.cmake.in
 	"${PROJECT_BINARY_DIR}/yaml-cpp-config.cmake" @ONLY)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/yaml-cpp-config-version.cmake.in
 	"${PROJECT_BINARY_DIR}/yaml-cpp-config-version.cmake" @ONLY)
-
-if(UNIX)
-	set(PC_FILE ${CMAKE_BINARY_DIR}/yaml-cpp.pc)
-	configure_file("yaml-cpp.pc.cmake" ${PC_FILE} @ONLY)
-	install(FILES ${PC_FILE} DESTINATION ${LIB_INSTALL_DIR}/pkgconfig)
-endif()
 
 ### Formatting
 get_property(all_sources GLOBAL PROPERTY SRCS_LIST)

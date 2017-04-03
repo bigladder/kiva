@@ -38,3 +38,5 @@ target_link_libraries(kiva ${links} libkiva groundplot)
 if (KIVA_COVERAGE)
   add_coverage(kiva)
 endif()
+
+install(TARGETS kiva DESTINATION ./)
