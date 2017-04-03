@@ -3,6 +3,10 @@
 ### Fixes:
 * Improve output reporting. 2D simulations now report heat transfer rates
   representative of the 3D inputs.
+* Allow interior temperature file to be relative to input file (or in working
+  directory).
+* Create output snapshots directory in same directory as the simulation output
+  CSV file.
 * Small fixes to solar and convective boundary conditions.
 * Better error handling.
 
@@ -14,7 +18,8 @@
 * Make horizontal insulation depths relative to the slab and grade surfaces.
 * Replace foundation wall height ("Height") with depth relative to bottom
   of the slab ("Depth Below Slab").
-* Move boundary, initialization, and output related inputs to a higher level.
+* Move boundary, initialization, numerical settings, and output related inputs
+  to a higher level.
 * Switch to simpler linear solver ([Eigen](http://eigen.tuxfamily.org/)).
   Removes inputs for solver and preconditioner.
 * Separate core functionality into a linked libraries.
