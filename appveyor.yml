@@ -71,7 +71,7 @@ test_script:
   - ruby ..\scripts\log-results.rb
 
 after_test:
-  - if "%COMPILER%"=="MSVC" (cpack -C "%CONFIG%" -B ..)
+  - if "%COMPILER%"=="MSVC" (cpack -C "%CONFIG%" -B "%APPVEYOR_BUILD_FOLDER%")
 
 artifacts:
   - path: 'kiva*.zip'

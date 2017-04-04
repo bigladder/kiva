@@ -67,7 +67,8 @@ script:
 after_success:
   - if [[ "$COVERAGE" == false ]]; then
       ruby ../scripts/log-results.rb;
-      cpack -B ..;
+      cpack -B "$TRAVIS_BUILD_DIR";
+      cd "$TRAVIS_BUILD_DIR";
     fi
 
 deploy:
