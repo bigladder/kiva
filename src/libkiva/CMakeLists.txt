@@ -34,21 +34,20 @@ if(KIVA_EXE_BUILD)
                   RESULT_VARIABLE git_exit_status
                   OUTPUT_VARIABLE git_version
                   OUTPUT_STRIP_TRAILING_WHITESPACE)
-  string( REGEX REPLACE "v([0-9]+)\\.[0-9]+\\.[0-9]+-[0-9]+-[a-z,0-9]+" "\\1" libkiva_VERSION_MAJOR ${git_version} )
-  string( REGEX REPLACE "v[0-9]+\\.([0-9]+)\\.[0-9]+-[0-9]+-[a-z,0-9]+" "\\1" libkiva_VERSION_MINOR ${git_version} )
-  string( REGEX REPLACE "v[0-9]+\\.[0-9]+\\.([0-9]+)-[0-9]+-[a-z,0-9]+" "\\1" libkiva_VERSION_PATCH ${git_version} )
-  string( REGEX REPLACE "v[0-9]+\\.[0-9]+\\.[0-9]+-[0-9]+-([a-z,0-9]+)" "\\1" libkiva_VERSION_BUILD ${git_version} )
-
-  set(CPACK_PACKAGE_VERSION_MAJOR "${libkiva_VERSION_MAJOR}" PARENT_SCOPE)
-  set(CPACK_PACKAGE_VERSION_MINOR "${libkiva_VERSION_MINOR}" PARENT_SCOPE)
-  set(CPACK_PACKAGE_VERSION_PATCH "${libkiva_VERSION_PATCH}" PARENT_SCOPE)
-  set(CPACK_PACKAGE_VERSION_BUILD "${libkiva_VERSION_BUILD}" PARENT_SCOPE)
 else()
   set(git_exit_status "1")
 endif()
 
 if(${git_exit_status} MATCHES "0")
-  # No operation
+  string( REGEX REPLACE "v([0-9]+)\\.[0-9]+\\.[0-9]+-[0-9]+-[a-z,0-9]+" "\\1" libkiva_VERSION_MAJOR "${git_version}" )
+  string( REGEX REPLACE "v[0-9]+\\.([0-9]+)\\.[0-9]+-[0-9]+-[a-z,0-9]+" "\\1" libkiva_VERSION_MINOR "${git_version}" )
+  string( REGEX REPLACE "v[0-9]+\\.[0-9]+\\.([0-9]+)-[0-9]+-[a-z,0-9]+" "\\1" libkiva_VERSION_PATCH "${git_version}" )
+  string( REGEX REPLACE "v[0-9]+\\.[0-9]+\\.[0-9]+-[0-9]+-([a-z,0-9]+)" "\\1" libkiva_VERSION_BUILD "${git_version}" )
+
+  set(CPACK_PACKAGE_VERSION_MAJOR "${libkiva_VERSION_MAJOR}" PARENT_SCOPE)
+  set(CPACK_PACKAGE_VERSION_MINOR "${libkiva_VERSION_MINOR}" PARENT_SCOPE)
+  set(CPACK_PACKAGE_VERSION_PATCH "${libkiva_VERSION_PATCH}" PARENT_SCOPE)
+  set(CPACK_PACKAGE_VERSION_BUILD "${libkiva_VERSION_BUILD}" PARENT_SCOPE)
 else()
   set( libkiva_VERSION_MAJOR 0 )
   set( libkiva_VERSION_MINOR 4 )

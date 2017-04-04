@@ -1,5 +1,6 @@
 language: cpp
-clone_depth: 100
+git:
+  depth: 100
 notifications:
   email: false
 env:
@@ -35,6 +36,7 @@ before_install:
       sudo apt-get -y install cmake;
       sudo apt-get -y install gfortran;
     fi
+  - cmake --version
 
 script:
   - mkdir build
