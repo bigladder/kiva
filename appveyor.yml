@@ -21,6 +21,12 @@ environment:
       RUBY_VERSION: "200"
 
   matrix:
+    - GENERATOR: "Visual Studio 14"
+      CONFIG: Release
+      COMPILER: MSVC
+    - GENERATOR: "Visual Studio 14 Win64"
+      CONFIG: Release
+      COMPILER: MSVC
     - GENERATOR: "MinGW Makefiles"
       MINGW_DIR: mingw32
       CONFIG: Release
@@ -33,12 +39,6 @@ environment:
       COMPILER: MinGW
       MINGW_URL: https://sourceforge.net/projects/mingw-w64/files/Toolchains%20targetting%20Win64/Personal%20Builds/mingw-builds/5.3.0/threads-win32/seh/x86_64-5.3.0-release-win32-seh-rt_v4-rev0.7z/download
       MINGW_ARCHIVE: x86_64-5.3.0-release-win32-seh-rt_v4-rev0.7z
-    - GENERATOR: "Visual Studio 14"
-      CONFIG: Release
-      COMPILER: MSVC
-    - GENERATOR: "Visual Studio 14 Win64"
-      CONFIG: Release
-      COMPILER: MSVC
 
 install:
   - if "%COMPILER%"=="MinGW" (if not exist "%MINGW_ARCHIVE%" appveyor DownloadFile "%MINGW_URL%" -FileName "%MINGW_ARCHIVE%")
@@ -72,10 +72,9 @@ test_script:
 
 before_deploy:
   - if "%COMPILER%"=="MSVC" (cpack -C "%CONFIG%")
-  - if "%COMPILER%"=="MinGW" (cpack)
 
 artifacts:
-  - path: 'kiva*.zip'
+  - path: 'build\kiva*.zip'
     name: archive
 
 deploy:
@@ -87,6 +86,8 @@ deploy:
     password:
       secure: yJAGrbf+NQzLleqlplKu3w==
     folder: downloads.bigladdersoftware.com/files/
+    on:
+      COMPILER: MSVC
 
 on_failure:
   - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
