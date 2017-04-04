@@ -67,11 +67,12 @@ script:
 after_success:
   - if [[ "$COVERAGE" == false ]]; then
       ruby ../scripts/log-results.rb;
-      cpack;
+      cpack -B ..;
     fi
 
 deploy:
   provider: script
+  skip_cleanup: true
   script: "curl --ftp-create-dirs -T kiva*.zip -u $FTP_USER:$FTP_PASSWORD ftp://downloads.bigladdersoftware.com/downloads.bigladdersoftware.com/files/"
   on:
     all_branches: true

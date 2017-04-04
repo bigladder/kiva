@@ -71,10 +71,10 @@ test_script:
   - ruby ..\scripts\log-results.rb
 
 after_test:
-  - if "%COMPILER%"=="MSVC" (cpack -C "%CONFIG%")
+  - if "%COMPILER%"=="MSVC" (cpack -C "%CONFIG%" -B ..)
 
 artifacts:
-  - path: 'build\kiva*.zip'
+  - path: 'kiva*.zip'
     name: archive
 
 deploy:
