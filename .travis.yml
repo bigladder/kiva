@@ -67,6 +67,6 @@ script:
 after_success:
   - if [[ "$COVERAGE" == false ]]; then
       ruby ../scripts/log-results.rb;
+      cpack
+      "curl --ftp-create-dirs -T kiva*.zip -u $FTP_USER:$FTP_PASSWORD ftp://downloads.bigladdersoftware.com/downloads.bigladdersoftware.com/files/"
     fi
-  - cpack
-  - "curl --ftp-create-dirs -T kiva*.zip -u $FTP_USER:$FTP_PASSWORD ftp://downloads.bigladdersoftware.com/downloads.bigladdersoftware.com/files/"

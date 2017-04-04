@@ -74,7 +74,7 @@ before_deploy:
   - if "%COMPILER%"=="MSVC" (cpack -C "%CONFIG%")
   - if "%COMPILER%"=="MinGW" (cpack)
 
-arifacts:
+artifacts:
   - path: 'kiva*.zip'
     name: archive
 
