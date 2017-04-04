@@ -1,15 +1,5 @@
 0.4.0 Released 4 April 2017
 ---------------------------
-### Fixes:
-* Improve output reporting. 2D simulations now report heat transfer rates
-  representative of the 3D inputs.
-* Allow interior temperature file to be relative to input file (or in working
-  directory).
-* Create output snapshots directory in same directory as the simulation output
-  CSV file.
-* Small fixes to solar and convective boundary conditions.
-* Better error handling.
-
 ### Features:
 * 64bit Windows, Mac, and Linux versions.
 * Ability to define any block of material within the domain.
@@ -25,6 +15,16 @@
   Removes inputs for solver and preconditioner.
 * Separate core functionality into a linked libraries.
 * Use continuous integration for building and testing.
+
+### Fixes:
+* Improve output reporting. 2D simulations now report heat transfer rates
+  representative of the 3D inputs.
+* Allow interior temperature file to be relative to input file (or in working
+  directory).
+* Create output snapshots directory in same directory as the simulation output
+  CSV file.
+* Small fixes to solar and convective boundary conditions.
+* Better error handling.
 
 0.3.1 Released 16 October 2015
 ------------------------------
