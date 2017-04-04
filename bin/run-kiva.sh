@@ -2,14 +2,14 @@
 
 echo "Kiva(TM) is a command line program. To run it, you must type on the command prompt."
 echo ""
-echo "You can see how it's used by typing:"
+echo "You can see how to use Kiva by typing:"
 echo ""
-echo "./kiva --help"
+echo "bin/kiva --help"
 echo ""
 read -n1 -r -p "Press any key to see the output . . ."
 echo ""
 
-./kiva --help
+bin/kiva --help
 
 read -n1 -r -p "Press any key to continue . . ."
 echo ""
@@ -20,12 +20,12 @@ echo "  3. The name of your output file (CSV)"
 echo ""
 echo "For example, to simulate the slab example in Golden, Colorado, type:"
 echo ""
-echo "./kiva examples/slab.yaml weather/USA_CO_Golden.epw kiva-output.csv"
+echo "bin/kiva examples/slab.yaml weather/USA_CO_Golden.epw kiva-output.csv"
 echo ""
 read -n1 -r -p "Press any key to run this example in Kiva . . ."
 echo ""
 
-./kiva examples/slab.yaml weather/USA_CO_Golden.epw kiva-output.csv
+bin/kiva examples/slab.yaml weather/USA_CO_Golden.epw kiva-output.csv
 
 echo ""
 echo "You now have a CSV output file called 'kiva-output.csv' that you can open"

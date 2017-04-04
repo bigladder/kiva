@@ -8,6 +8,8 @@ set(kiva_src Main.cpp
              WeatherData.cpp
              WeatherData.hpp )
 
+set(CMAKE_INSTALL_RPATH "@executable_path")
+
 include_directories(${CMAKE_BINARY_DIR}/src/libkiva/)
 add_executable(kiva ${kiva_src})
 
@@ -39,4 +41,4 @@ if (KIVA_COVERAGE)
   add_coverage(kiva)
 endif()
 
-install(TARGETS kiva DESTINATION ./)
+install(TARGETS kiva DESTINATION bin/)

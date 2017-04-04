@@ -25,15 +25,13 @@ install(DIRECTORY "${CMAKE_SOURCE_DIR}/examples" DESTINATION "./")
 install(DIRECTORY "${CMAKE_SOURCE_DIR}/weather" DESTINATION "./")
 
 if(UNIX)
-  install(FILES "${CMAKE_SOURCE_DIR}/bin/run-example.sh" DESTINATION "./")
+  install(PROGRAMS "${CMAKE_SOURCE_DIR}/bin/run-kiva.sh" DESTINATION "./")
 else()
-  install(FILES "${CMAKE_SOURCE_DIR}/bin/run-example.bat" DESTINATION "./")
+  install(FILES "${CMAKE_SOURCE_DIR}/bin/run-kiva.bat" DESTINATION "./")
 endif()
 
 # Libraries
 include(CPack)
 
-set(CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS_SKIP TRUE)
 set(CMAKE_INSTALL_UCRT_LIBRARIES TRUE)
 include(InstallRequiredSystemLibraries)
-install(FILES ${CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS} DESTINATION "./" COMPONENT Libraries)
