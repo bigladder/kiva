@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2016 Big Ladder Software. All rights reserved.
+/* Copyright (c) 2012-2017 Big Ladder Software LLC. All rights reserved.
 * See the LICENSE file for additional terms and conditions. */
 
 #ifndef Functions_CPP
@@ -77,14 +77,14 @@ void solveTDM(const std::vector<double>& a1, const std::vector<double>& a2,
   a3[0] /= a2[0];
   b[0] /= a2[0];
 
-  for (int i = 1; i < N; i++)
+  for (std::size_t i = 1; i < N; i++)
   {
     a3[i] /= a2[i] - a1[i]*a3[i-1];
     b[i] = (b[i] - a1[i]*b[i-1]) / (a2[i] - a1[i]*a3[i-1]);
   }
 
   x[N-1] = b[N-1];
-  for (int i = N-2; i >= 0 && i < N; i--)
+  for (std::size_t i = N-2; /* i >= 0 && */ i < N; i--)
   {
       x[i] = b[i] - a3[i]*x[i+1];
   }

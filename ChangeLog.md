@@ -3,25 +3,42 @@
 ### Fixes:
 * Improve output reporting. 2D simulations now report heat transfer rates
   representative of the 3D inputs.
+* Allow interior temperature file to be relative to input file (or in working
+  directory).
+* Create output snapshots directory in same directory as the simulation output
+  CSV file.
+* Small fixes to solar and convective boundary conditions.
+* Better error handling.
 
 ### Features:
-* Separate core functionality into a linked library
-* Move boundary conditions and initialization inputs into a higher level
-* Use continuous integration for building and testing
+* 64bit Windows, Mac, and Linux versions.
+* Ability to define any block of material within the domain.
+* Add inputs to define the foundation footing.
+* Add ability to define exposed foundation perimeters (including unexposed/core
+  foundations).
+* Make horizontal insulation depths relative to the slab and grade surfaces.
+* Replace foundation wall height ("Height") with depth relative to bottom
+  of the slab ("Depth Below Slab").
+* Move boundary, initialization, numerical settings, and output related inputs
+  to a higher level.
+* Switch to simpler linear solver ([Eigen](http://eigen.tuxfamily.org/)).
+  Removes inputs for solver and preconditioner.
+* Separate core functionality into a linked libraries.
+* Use continuous integration for building and testing.
 
 0.3.1 Released 16 October 2015
 ------------------------------
 ### Fixes:
-* Make indoor/outdoor air temperature fields more consistent
-* Cross-platform CSV line ending support
+* Make indoor/outdoor air temperature fields more consistent.
+* Cross-platform CSV line ending support.
 
 0.3.0 Released 28 September 2015
 --------------------------------
 ### Features:
-* Better naming conventions for input fields
-* More informed default values
-* User documentation
-* Example files
+* Better naming conventions for input fields.
+* More informed default values.
+* User documentation.
+* Example files.
 
 0.2.1 Released 16 March 2015
 ----------------------------

@@ -3,6 +3,42 @@ Output
 
 Defines what output is provided from Kiva.
 
+**Example:**
+
+.. code-block:: yaml
+
+  Output:
+    Output Report:
+      Minimum Reporting Frequency: 60 # [min]
+      Reports:
+        - 0 # Slab Core Average Heat Flux [W/m2]
+        - 1 # Slab Core Average Temperature [K]
+        - 2 # Slab Core Average Effective Temperature [C]
+        - 3 # Slab Core Total Heat Transfer Rate [W]
+        - 4 # Slab Perimeter Average Heat Flux [W/m2]
+        - 5 # Slab Perimeter Average Temperature [K]
+        - 6 # Slab Perimeter Average Effective Temperature [C]
+        - 7 # Slab Perimeter Total Heat Transfer Rate [W]
+        - 8 # Slab Average Heat Flux [W/m2]
+        - 9 # Slab Average Temperature [K]
+        - 10 # Slab Total Heat Transfer Rate [W]
+        - 11 # Wall Average Heat Flux [W/m2]
+        - 12 # Wall Average Temperature [K]
+        - 13 # Wall Average Effective Temperature [C]
+        - 14 # Wall Total Heat Transfer Rate [W]
+        - 15 # Foundation Average Heat Flux [W/m2]
+        - 16 # Foundation Average Temperature [K]
+        - 17 # Foundation Total Heat Transfer Rate [W]
+    Output Snapshots:
+      -
+       Directory: Output/Profile
+       Size: 800
+       Frequency: 1
+       Start Date: 2015-Dec-21
+       End Date: 2015-Dec-21
+       X Range: [0, 30]
+       Z Range: [-30, 0.3048]
+
 Output Report
 -------------
 
@@ -126,7 +162,7 @@ Output snapshots are used to graphically visualize domain temperatures and/or he
 Directory
 ^^^^^^^^^
 
-Directory where snapshots are created. An ordered file name, ``XXXX.png``, identifies each snapshot within a series. For example, the 134th snapshot in a series with a directory name of ``Profile`` will be created as ``Profile/0134.png``.
+Directory where snapshots are created (in same directory as the output CSV file). An ordered file name, ``XXXX.png``, identifies each snapshot within a series. For example, the 134th snapshot in a series with a directory name of ``Profile`` will be created as ``Profile/0134.png``.
 
 =============   ==============
 **Required:**   Yes

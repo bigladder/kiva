@@ -1,10 +1,11 @@
-/* Copyright (c) 2012-2016 Big Ladder Software. All rights reserved.
+/* Copyright (c) 2012-2017 Big Ladder Software LLC. All rights reserved.
 * See the LICENSE file for additional terms and conditions. */
 
 #ifndef GEOMETRY_CPP_
 #define GEOMETRY_CPP_
 
 #include "Geometry.hpp"
+#include "Errors.hpp"
 
 namespace Kiva {
 
@@ -41,90 +42,27 @@ bool isRectilinear(Polygon poly)
   return true;
 }
 
-// TODO: Replace with boost geometry buffer algorithm for polygons when it becomes available
 Polygon offset(Polygon poly, double dist)
 {
-  if (!isRectilinear(poly))
-  {
-    // Throw exception
-  }
-  // March around polygon set offsets from each vertex
-  int nV = poly.outer().size();
+  boost::geometry::strategy::buffer::join_miter join_strategy;
+  boost::geometry::strategy::buffer::distance_symmetric<double> distance_strategy(dist);
+  boost::geometry::strategy::buffer::end_flat end_strategy;
+  boost::geometry::strategy::buffer::side_straight side_strategy;
+  boost::geometry::strategy::buffer::point_square point_strategy;
 
+  MultiPolygon offset;
 
-  Polygon offset;
-  // Main loop
-  for (int v = 0; v < nV; v++)
-  {
-    // current coordinates
-    double x = poly.outer()[v].get<0>();
-    double y = poly.outer()[v].get<1>();
+  boost::geometry::buffer(poly, offset, distance_strategy, side_strategy,
+    join_strategy, end_strategy, point_strategy);
 
-    double xNew, yNew;
-
-    switch (getDirectionOut(poly,v))
-    {
-    case geom::Y_POS:
-      if (getTurn(poly,v) == geom::LEFT)
-      {
-        xNew = x - dist;
-        yNew = y + dist;
-      }
-      else
-      {
-        xNew = x - dist;
-        yNew = y - dist;
-      }
-      break;
-    case geom::X_POS:
-      if (getTurn(poly,v) == geom::LEFT)
-      {
-        xNew = x + dist;
-        yNew = y + dist;
-      }
-      else
-      {
-        xNew = x - dist;
-        yNew = y + dist;
-      }
-      break;
-    case geom::Y_NEG:
-      if (getTurn(poly,v) == geom::LEFT)
-      {
-        xNew = x + dist;
-        yNew = y - dist;
-      }
-      else
-      {
-        xNew = x + dist;
-        yNew = y + dist;
-      }
-      break;
-    case geom::X_NEG:
-      if (getTurn(poly,v) == geom::LEFT)
-      {
-        xNew = x - dist;
-        yNew = y - dist;
-      }
-      else
-      {
-        xNew = x + dist;
-        yNew = y - dist;
-      }
-      break;
-    }
-
-    offset.outer().push_back(Point(xNew, yNew));
-
-  }
-  return offset;
+  return offset[0];
 }
 
 geom::Direction getDirectionIn(Polygon poly, std::size_t vertex)
 {
   if (!isRectilinear(poly))
   {
-    // Throw exception
+    showMessage(MSG_ERR, "Cannot get direction of vertex for non-rectilinear polygon.");
   }
 
   double xPrev;
@@ -171,7 +109,7 @@ geom::Direction getDirectionOut(Polygon poly, std::size_t vertex)
 {
   if (!isRectilinear(poly))
   {
-    // Throw exception
+    showMessage(MSG_ERR, "Cannot get direction of vertex for non-rectilinear polygon.");
   }
 
   double xNext;
@@ -253,6 +191,7 @@ geom::Turn getTurn(Polygon poly, std::size_t vertex)
   }
 }
 
+#if defined(KIVA_3D)
 MultiPolygon mirrorX(MultiPolygon poly, double x)
 {
   boost::geometry::strategy::transform::ublas_transformer<double,2,2>
@@ -428,6 +367,7 @@ Polygon symmetricUnit(Polygon poly)
 
   return symPolys[0];
 }
+#endif
 
 double getXmax(Polygon poly, std::size_t vertex)
 {
@@ -509,6 +449,18 @@ bool comparePointsX(Point first, Point second)
 bool comparePointsY(Point first, Point second)
 {
   return (first.get<1>() < second.get<1>());
+}
+
+bool pointOnPoly(Point point, Polygon poly)
+{
+  return boost::geometry::intersects(point,poly);
+}
+
+bool isConvex(Polygon poly)
+{
+  Polygon hull;
+  boost::geometry::convex_hull(poly, hull);
+  return boost::geometry::equals(poly, hull);
 }
 
 double getDistance(Point a, Point b)

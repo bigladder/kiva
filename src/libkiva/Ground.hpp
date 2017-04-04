@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2016 Big Ladder Software. All rights reserved.
+/* Copyright (c) 2012-2017 Big Ladder Software LLC. All rights reserved.
 * See the LICENSE file for additional terms and conditions. */
 
 #ifndef GROUND_HPP_
@@ -16,10 +16,11 @@
 #include <vector>
 #include <string>
 #include <numeric>
+#include <memory>
 
-#include <boost/lexical_cast.hpp>
+#include <Eigen/SparseCore>
+#include <Eigen/IterativeLinearSolvers>
 
-#include "lis.h"
 
 namespace Kiva {
 
@@ -58,7 +59,7 @@ public:
 
 private:
 
-  double timestep;
+  double timestep;  // in seconds
 
   BoundaryConditions bcs;
   // Data structures
@@ -77,12 +78,11 @@ private:
   std::vector<double> x_; // solution
 
   // Implicit
-  LIS_MATRIX Amat;
-  LIS_VECTOR b, x;
+  Eigen::SparseMatrix<double> Amat;
+  std::vector<Eigen::Triplet<double>> tripletList;
+  Eigen::VectorXd b, x;
 
-  LIS_SOLVER solver;
-
-  std::vector<char> solverOptions;
+  std::shared_ptr<Eigen::BiCGSTAB<Eigen::SparseMatrix<double>, Eigen::IncompleteLUT<double>>> pSolver;
 
 private:
 
@@ -117,6 +117,7 @@ private:
   double getSurfaceArea(Surface::SurfaceType surfaceType);
 
   void setSolarBoundaryConditions();
+  void setInteriorRadiationBoundaryConditions();
 
   std::vector<std::pair<double,double>> boundaryLayer;
 

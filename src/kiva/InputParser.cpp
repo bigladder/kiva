@@ -1,7 +1,8 @@
-/* Copyright (c) 2012-2016 Big Ladder Software. All rights reserved.
+/* Copyright (c) 2012-2017 Big Ladder Software LLC. All rights reserved.
 * See the LICENSE file for additional terms and conditions. */
 
 #include "InputParser.hpp"
+#include "Errors.hpp"
 
 Input inputParser(std::string inputFile)
 {
@@ -65,6 +66,10 @@ Input inputParser(std::string inputFile)
     foundation.surfaceRoughness = 0.03;
   }
 
+
+  foundation.foundationDepth = yamlInput["Foundation"]["Foundation Depth"].as<double>();
+
+
   // Slab
   if  (yamlInput["Foundation"]["Slab"].IsDefined())
   {
@@ -109,8 +114,17 @@ Input inputParser(std::string inputFile)
 
     }
 
-    foundation.wall.heightAboveGrade = yamlInput["Foundation"]["Wall"]["Height Above Grade"].as<double>();
-    foundation.wall.height = yamlInput["Foundation"]["Wall"]["Height"].as<double>();
+    if (yamlInput["Foundation"]["Wall"]["Height Above Grade"].IsDefined()) {
+      foundation.wall.heightAboveGrade = yamlInput["Foundation"]["Wall"]["Height Above Grade"].as<double>();
+    } else {
+      foundation.wall.heightAboveGrade = 0.2;
+    }
+
+    if (yamlInput["Foundation"]["Wall"]["Depth Below Slab"].IsDefined()) {
+      foundation.wall.depthBelowSlab = yamlInput["Foundation"]["Wall"]["Depth Below Slab"].as<double>();
+    } else {
+      foundation.wall.depthBelowSlab = 0.0;
+    }
 
     if (yamlInput["Foundation"]["Wall"]["Interior Emissivity"].IsDefined()) {
       foundation.wall.interiorEmissivity = yamlInput["Foundation"]["Wall"]["Interior Emissivity"].as<double>();
@@ -139,73 +153,151 @@ Input inputParser(std::string inputFile)
     foundation.hasWall = false;
   }
 
+  // Misc. Material blocks
+  if  (yamlInput["Foundation"]["Material Blocks"].IsDefined()){
+    for (auto block : yamlInput["Foundation"]["Material Blocks"]) {
+      InputBlock tempBlock;
+
+      if  (block["X Position"].IsDefined()) {
+        tempBlock.x = block["X Position"].as<double>();
+      } else {
+        showMessage(MSG_ERR, "'X Position' is required for Material Blocks.");
+      }
+
+      if  (block["Z Position"].IsDefined()) {
+        tempBlock.z = block["Z Position"].as<double>();
+      } else {
+        showMessage(MSG_ERR, "'Z Position' is required for Material Blocks.");
+      }
+
+      if  (block["Width"].IsDefined()) {
+        tempBlock.width = block["Width"].as<double>();
+      } else {
+        showMessage(MSG_ERR, "'Width' is required for Material Blocks.");
+      }
+
+      if  (block["Depth"].IsDefined()) {
+        tempBlock.depth = block["Depth"].as<double>();
+      } else {
+        showMessage(MSG_ERR, "'Depth' is required for Material Blocks.");
+      }
+
+      if  (block["Material"].IsDefined()) {
+        tempBlock.material = materials[block["Material"].as<std::string>()];
+      } else {
+        showMessage(MSG_ERR, "'Material' is required for Material Blocks.");
+      }
+
+
+      foundation.inputBlocks.push_back(tempBlock);
+    }
+  }
+
   // Interior Horizontal Insulation
   if  (yamlInput["Foundation"]["Interior Horizontal Insulation"].IsDefined())
   {
-    foundation.hasInteriorHorizontalInsulation = true;
 
-    foundation.interiorHorizontalInsulation.layer.thickness = yamlInput["Foundation"]["Interior Horizontal Insulation"]["Thickness"].as<double>();
-    foundation.interiorHorizontalInsulation.layer.material = materials[yamlInput["Foundation"]["Interior Horizontal Insulation"]["Material"].as<std::string>()];
-    foundation.interiorHorizontalInsulation.depth = yamlInput["Foundation"]["Interior Horizontal Insulation"]["Depth"].as<double>();
-    foundation.interiorHorizontalInsulation.width = yamlInput["Foundation"]["Interior Horizontal Insulation"]["Width"].as<double>();
+    InputBlock tempBlock;
+    tempBlock.x = 0.0;
 
-  }
-  else
-  {
-    foundation.hasInteriorHorizontalInsulation = false;
+    if  (yamlInput["Foundation"]["Interior Horizontal Insulation"]["Depth"].IsDefined())
+    {
+      tempBlock.z = foundation.foundationDepth + foundation.slab.totalWidth() + yamlInput["Foundation"]["Interior Horizontal Insulation"]["Depth"].as<double>();
+    }
+    else
+    {
+      tempBlock.z = foundation.foundationDepth + foundation.slab.totalWidth();
+    }
+
+    tempBlock.width = -yamlInput["Foundation"]["Interior Horizontal Insulation"]["Width"].as<double>();
+    tempBlock.depth = yamlInput["Foundation"]["Interior Horizontal Insulation"]["Thickness"].as<double>();
+    tempBlock.material = materials[yamlInput["Foundation"]["Interior Horizontal Insulation"]["Material"].as<std::string>()];
+
+    foundation.inputBlocks.push_back(tempBlock);
   }
 
   // Interior Vertical Insulation
   if  (yamlInput["Foundation"]["Interior Vertical Insulation"].IsDefined())
   {
-    foundation.hasInteriorVerticalInsulation = true;
+    InputBlock tempBlock;
+    tempBlock.x = 0.0;
+    tempBlock.z = 0.0;
 
-    foundation.interiorVerticalInsulation.layer.thickness = yamlInput["Foundation"]["Interior Vertical Insulation"]["Thickness"].as<double>();
-    foundation.interiorVerticalInsulation.layer.material = materials[yamlInput["Foundation"]["Interior Vertical Insulation"]["Material"].as<std::string>()];
-    foundation.interiorVerticalInsulation.depth = yamlInput["Foundation"]["Interior Vertical Insulation"]["Depth"].as<double>();
+    tempBlock.width = -yamlInput["Foundation"]["Interior Vertical Insulation"]["Thickness"].as<double>();
+    tempBlock.depth = yamlInput["Foundation"]["Interior Vertical Insulation"]["Depth"].as<double>();
+    tempBlock.material = materials[yamlInput["Foundation"]["Interior Vertical Insulation"]["Material"].as<std::string>()];
 
-  }
-  else
-  {
-    foundation.hasInteriorVerticalInsulation = false;
+    foundation.inputBlocks.push_back(tempBlock);
   }
 
   // Exterior Horizontal Insulation
   if  (yamlInput["Foundation"]["Exterior Horizontal Insulation"].IsDefined())
   {
-    foundation.hasExteriorHorizontalInsulation = true;
+    InputBlock tempBlock;
+    tempBlock.x = foundation.wall.totalWidth();
 
-    foundation.exteriorHorizontalInsulation.layer.thickness = yamlInput["Foundation"]["Exterior Horizontal Insulation"]["Thickness"].as<double>();
-    foundation.exteriorHorizontalInsulation.layer.material = materials[yamlInput["Foundation"]["Exterior Horizontal Insulation"]["Material"].as<std::string>()];
-    foundation.exteriorHorizontalInsulation.depth = yamlInput["Foundation"]["Exterior Horizontal Insulation"]["Depth"].as<double>();
-    foundation.exteriorHorizontalInsulation.width = yamlInput["Foundation"]["Exterior Horizontal Insulation"]["Width"].as<double>();
+    if  (yamlInput["Foundation"]["Exterior Horizontal Insulation"]["Depth"].IsDefined())
+    {
+      tempBlock.z = foundation.wall.heightAboveGrade + yamlInput["Foundation"]["Exterior Horizontal Insulation"]["Depth"].as<double>();
+    }
+    else
+    {
+      tempBlock.z = foundation.wall.heightAboveGrade;
+    }
 
-  }
-  else
-  {
-    foundation.hasExteriorHorizontalInsulation = false;
+    tempBlock.width = yamlInput["Foundation"]["Exterior Horizontal Insulation"]["Width"].as<double>();
+    tempBlock.depth = yamlInput["Foundation"]["Exterior Horizontal Insulation"]["Thickness"].as<double>();
+    tempBlock.material = materials[yamlInput["Foundation"]["Exterior Horizontal Insulation"]["Material"].as<std::string>()];
+
+    foundation.inputBlocks.push_back(tempBlock);
   }
 
   // Exterior Vertical Insulation
   if  (yamlInput["Foundation"]["Exterior Vertical Insulation"].IsDefined())
   {
-    foundation.hasExteriorVerticalInsulation = true;
+    InputBlock tempBlock;
+    tempBlock.x = foundation.wall.totalWidth();
+    tempBlock.z = 0.0;
 
-    foundation.exteriorVerticalInsulation.layer.thickness = yamlInput["Foundation"]["Exterior Vertical Insulation"]["Thickness"].as<double>();
-    foundation.exteriorVerticalInsulation.layer.material = materials[yamlInput["Foundation"]["Exterior Vertical Insulation"]["Material"].as<std::string>()];
-    foundation.exteriorVerticalInsulation.depth = yamlInput["Foundation"]["Exterior Vertical Insulation"]["Depth"].as<double>();
+    tempBlock.width = yamlInput["Foundation"]["Exterior Vertical Insulation"]["Thickness"].as<double>();
+    tempBlock.depth = yamlInput["Foundation"]["Exterior Vertical Insulation"]["Depth"].as<double>();
+    tempBlock.material = materials[yamlInput["Foundation"]["Exterior Vertical Insulation"]["Material"].as<std::string>()];
 
+    foundation.inputBlocks.push_back(tempBlock);
   }
-  else
+
+  // Footing
+  if  (yamlInput["Foundation"]["Footing"].IsDefined())
   {
-    foundation.hasExteriorVerticalInsulation = false;
+    InputBlock tempBlock;
+
+    if  (yamlInput["Foundation"]["Footing"]["Width"].IsDefined()) {
+      tempBlock.width = yamlInput["Foundation"]["Footing"]["Width"].as<double>();
+    } else {
+      showMessage(MSG_ERR, "'Width' is required for Footing.");
+    }
+    if  (yamlInput["Foundation"]["Footing"]["Depth"].IsDefined()) {
+      tempBlock.depth = yamlInput["Foundation"]["Footing"]["Depth"].as<double>();
+    } else {
+      showMessage(MSG_ERR, "'Depth' is required for Footing.");
+    }
+
+    tempBlock.z = foundation.foundationDepth + (foundation.hasSlab ? foundation.slab.totalWidth() : 0.0) + (foundation.hasWall ? foundation.wall.depthBelowSlab : 0.0);
+    double center = (foundation.hasWall ? foundation.wall.totalWidth()/2.0 : 0.0);
+    tempBlock.x = center - tempBlock.width/2.0; // Centered on wall
+
+    if  (yamlInput["Foundation"]["Footing"]["Material"].IsDefined()) {
+      tempBlock.material = materials[yamlInput["Foundation"]["Footing"]["Material"].as<std::string>()];
+    } else {
+      showMessage(MSG_ERR, "'Material' is required for Footing.");
+    }
+
+
+    foundation.inputBlocks.push_back(tempBlock);
   }
 
 
   // Site
-
-  foundation.foundationDepth = yamlInput["Foundation"]["Foundation Depth"].as<double>();
-
   if  (yamlInput["Foundation"]["Orientation"].IsDefined()) {
     foundation.orientation = yamlInput["Foundation"]["Orientation"].as<double>();
   }
@@ -214,57 +306,41 @@ Input inputParser(std::string inputFile)
   }
 
   // Geometry
-  if (yamlInput["Foundation"]["Coordinate System"].IsDefined()) {
-    if (yamlInput["Foundation"]["Coordinate System"].as<std::string>() == "CARTESIAN")
-      foundation.coordinateSystem = Foundation::CS_CARTESIAN;
-    else if (yamlInput["Foundation"]["Coordinate System"].as<std::string>() == "CYLINDRICAL")
-      foundation.coordinateSystem = Foundation::CS_CYLINDRICAL;
-  }
-  else {
-    foundation.coordinateSystem = Foundation::CS_CARTESIAN;
-  }
-
-  if (yamlInput["Foundation"]["Two-Dimensional Approximation"].IsDefined()) {
-    if (yamlInput["Foundation"]["Two-Dimensional Approximation"].as<std::string>() == "AP")
-      foundation.reductionStrategy = Foundation::RS_AP;
-    else if (yamlInput["Foundation"]["Two-Dimensional Approximation"].as<std::string>() == "RR")
-      foundation.reductionStrategy = Foundation::RS_RR;
-    else if (yamlInput["Foundation"]["Two-Dimensional Approximation"].as<std::string>() == "BOUNDARY")
-      foundation.reductionStrategy = Foundation::RS_BOUNDARY;
-    else if (yamlInput["Foundation"]["Two-Dimensional Approximation"].as<std::string>() == "CUSTOM")
-    {
-      foundation.reductionStrategy = Foundation::RS_CUSTOM;
-      if (yamlInput["Foundation"]["Length 1"].IsDefined())
-      {
-        foundation.twoParameters = true;
-        foundation.reductionLength1 = yamlInput["Foundation"]["Length 1"].as<double>();
-      }
-      else
-      {
-        foundation.twoParameters = false;
-      }
-      foundation.reductionLength2 = yamlInput["Foundation"]["Length 2"].as<double>();
-    }
-  }
-  else {
-    foundation.reductionStrategy = Foundation::RS_BOUNDARY;
-  }
-
-  if (yamlInput["Foundation"]["Number of Dimensions"].IsDefined())
-    foundation.numberOfDimensions = yamlInput["Foundation"]["Number of Dimensions"].as<int>();
-  else
-    foundation.numberOfDimensions = 2;
-
-  if  (yamlInput["Foundation"]["Use Symmetry"].IsDefined())
-    foundation.useSymmetry = yamlInput["Foundation"]["Use Symmetry"].as<bool>();
-  else
-    foundation.useSymmetry = true;
-
   for (size_t i=0;i<yamlInput["Foundation"]["Polygon"].size();i++)
   {
     foundation.polygon.outer().push_back(Point(
         yamlInput["Foundation"]["Polygon"][i][0].as<double>(),
         yamlInput["Foundation"]["Polygon"][i][1].as<double>()));
+  }
+
+  if  (yamlInput["Foundation"]["Exposed Perimeter"].IsDefined())
+  {
+    foundation.useDetailedExposedPerimeter = true;
+    if (yamlInput["Foundation"]["Exposed Perimeter"].size() != yamlInput["Foundation"]["Polygon"].size()) {
+      showMessage(MSG_ERR, "'Exposed Perimeter' list must be the same size as 'Polygon' vetex list.");
+    }
+    else {
+      for (size_t i=0;i<yamlInput["Foundation"]["Exposed Perimeter"].size();i++) {
+        foundation.isExposedPerimeter.push_back(yamlInput["Foundation"]["Exposed Perimeter"][i].as<bool>());
+      }
+    }
+  }
+  else {
+    foundation.useDetailedExposedPerimeter = true;
+    if  (!yamlInput["Foundation"]["Exposed Fraction"].IsDefined()) {
+      for (size_t i=0;i<foundation.polygon.outer().size();i++) {
+        foundation.isExposedPerimeter.push_back(true);
+      }
+    }
+  }
+
+  if  (yamlInput["Foundation"]["Exposed Fraction"].IsDefined()) {
+    if  (yamlInput["Foundation"]["Exposed Perimeter"].IsDefined())
+    {
+      showMessage(MSG_ERR, "Cannot specify both 'Exposed Fraction' and 'Exposed Perimeter'.");
+    }
+    foundation.useDetailedExposedPerimeter = false;
+    foundation.exposedFraction = yamlInput["Foundation"]["Exposed Fraction"].as<double>();
   }
 
   if  (yamlInput["Foundation"]["Building Height"].IsDefined())
@@ -287,40 +363,89 @@ Input inputParser(std::string inputFile)
     foundation.perimeterSurfaceWidth = 0.0;
   }
 
+  // NUMERICAL SETTINGS
+
+  // Coordinate System
+  if (yamlInput["Numerical Settings"]["Coordinate System"].IsDefined()) {
+    if (yamlInput["Numerical Settings"]["Coordinate System"].as<std::string>() == "CARTESIAN")
+      foundation.coordinateSystem = Foundation::CS_CARTESIAN;
+    else if (yamlInput["Numerical Settings"]["Coordinate System"].as<std::string>() == "CYLINDRICAL")
+      foundation.coordinateSystem = Foundation::CS_CYLINDRICAL;
+  }
+  else {
+    foundation.coordinateSystem = Foundation::CS_CARTESIAN;
+  }
+
+  if (yamlInput["Numerical Settings"]["Two-Dimensional Approximation"].IsDefined()) {
+    if (yamlInput["Numerical Settings"]["Two-Dimensional Approximation"].as<std::string>() == "AP")
+      foundation.reductionStrategy = Foundation::RS_AP;
+    else if (yamlInput["Numerical Settings"]["Two-Dimensional Approximation"].as<std::string>() == "RR")
+      foundation.reductionStrategy = Foundation::RS_RR;
+    else if (yamlInput["Numerical Settings"]["Two-Dimensional Approximation"].as<std::string>() == "BOUNDARY")
+      foundation.reductionStrategy = Foundation::RS_BOUNDARY;
+    else if (yamlInput["Numerical Settings"]["Two-Dimensional Approximation"].as<std::string>() == "CUSTOM")
+    {
+      foundation.reductionStrategy = Foundation::RS_CUSTOM;
+      if (yamlInput["Numerical Settings"]["Length 1"].IsDefined())
+      {
+        foundation.twoParameters = true;
+        foundation.reductionLength1 = yamlInput["Numerical Settings"]["Length 1"].as<double>();
+      }
+      else
+      {
+        foundation.twoParameters = false;
+      }
+      foundation.reductionLength2 = yamlInput["Numerical Settings"]["Length 2"].as<double>();
+    }
+  }
+  else {
+    foundation.reductionStrategy = Foundation::RS_BOUNDARY;
+  }
+
+  if (yamlInput["Numerical Settings"]["Number of Dimensions"].IsDefined())
+    foundation.numberOfDimensions = yamlInput["Numerical Settings"]["Number of Dimensions"].as<int>();
+  else
+    foundation.numberOfDimensions = 2;
+
+  if  (yamlInput["Numerical Settings"]["Use Symmetry"].IsDefined())
+    foundation.useSymmetry = yamlInput["Numerical Settings"]["Use Symmetry"].as<bool>();
+  else
+    foundation.useSymmetry = true;
+
   // Meshing
-  if  (yamlInput["Foundation"]["Mesh"].IsDefined())
+  if  (yamlInput["Numerical Settings"]["Mesh"].IsDefined())
   {
 
-    if  (yamlInput["Foundation"]["Mesh"]["Minimum Cell Dimension"].IsDefined()) {
-      foundation.mesh.minCellDim = yamlInput["Foundation"]["Mesh"]["Minimum Cell Dimension"].as<double>();
+    if  (yamlInput["Numerical Settings"]["Mesh"]["Minimum Cell Dimension"].IsDefined()) {
+      foundation.mesh.minCellDim = yamlInput["Numerical Settings"]["Mesh"]["Minimum Cell Dimension"].as<double>();
     }
     else {
       foundation.mesh.minCellDim = 0.02;
     }
 
-    if  (yamlInput["Foundation"]["Mesh"]["Maximum Near-Field Growth Coefficient"].IsDefined()) {
-      foundation.mesh.maxNearGrowthCoeff = yamlInput["Foundation"]["Mesh"]["Maximum Near-Field Growth Coefficient"].as<double>();
+    if  (yamlInput["Numerical Settings"]["Mesh"]["Maximum Near-Field Growth Coefficient"].IsDefined()) {
+      foundation.mesh.maxNearGrowthCoeff = yamlInput["Numerical Settings"]["Mesh"]["Maximum Near-Field Growth Coefficient"].as<double>();
     }
     else {
       foundation.mesh.maxNearGrowthCoeff = 1.5;
     }
 
-    if  (yamlInput["Foundation"]["Mesh"]["Maximum Deep-Field Growth Coefficient"].IsDefined()) {
-      foundation.mesh.maxDepthGrowthCoeff = yamlInput["Foundation"]["Mesh"]["Maximum Deep-Field Growth Coefficient"].as<double>();
+    if  (yamlInput["Numerical Settings"]["Mesh"]["Maximum Deep-Field Growth Coefficient"].IsDefined()) {
+      foundation.mesh.maxDepthGrowthCoeff = yamlInput["Numerical Settings"]["Mesh"]["Maximum Deep-Field Growth Coefficient"].as<double>();
     }
     else {
       foundation.mesh.maxDepthGrowthCoeff = 1.5;
     }
 
-    if  (yamlInput["Foundation"]["Mesh"]["Maximum Interior-Field Growth Coefficient"].IsDefined()) {
-      foundation.mesh.maxInteriorGrowthCoeff = yamlInput["Foundation"]["Mesh"]["Maximum Interior-Field Growth Coefficient"].as<double>();
+    if  (yamlInput["Numerical Settings"]["Mesh"]["Maximum Interior-Field Growth Coefficient"].IsDefined()) {
+      foundation.mesh.maxInteriorGrowthCoeff = yamlInput["Numerical Settings"]["Mesh"]["Maximum Interior-Field Growth Coefficient"].as<double>();
     }
     else {
       foundation.mesh.maxInteriorGrowthCoeff = 1.5;
     }
 
-    if  (yamlInput["Foundation"]["Mesh"]["Maximum Far-Field Growth Coefficient"].IsDefined()) {
-      foundation.mesh.maxExteriorGrowthCoeff = yamlInput["Foundation"]["Mesh"]["Maximum Far-Field Growth Coefficient"].as<double>();
+    if  (yamlInput["Numerical Settings"]["Mesh"]["Maximum Far-Field Growth Coefficient"].IsDefined()) {
+      foundation.mesh.maxExteriorGrowthCoeff = yamlInput["Numerical Settings"]["Mesh"]["Maximum Far-Field Growth Coefficient"].as<double>();
     }
     else {
       foundation.mesh.maxExteriorGrowthCoeff = 1.5;
@@ -328,7 +453,7 @@ Input inputParser(std::string inputFile)
   }
   else
   {
-    foundation.mesh.minCellDim = 0.05;
+    foundation.mesh.minCellDim = 0.02;
     foundation.mesh.maxNearGrowthCoeff = 1.5;
     foundation.mesh.maxDepthGrowthCoeff = 1.5;
     foundation.mesh.maxInteriorGrowthCoeff = 1.5;
@@ -336,25 +461,25 @@ Input inputParser(std::string inputFile)
   }
 
   // Simulation Control
-  if  (yamlInput["Foundation"]["Numerical Scheme"].IsDefined())
+  if  (yamlInput["Numerical Settings"]["Numerical Scheme"].IsDefined())
   {
-    if (yamlInput["Foundation"]["Numerical Scheme"].as<std::string>() == "ADE")
+    if (yamlInput["Numerical Settings"]["Numerical Scheme"].as<std::string>() == "ADE")
       foundation.numericalScheme = Foundation::NS_ADE;
-    else if (yamlInput["Foundation"]["Numerical Scheme"].as<std::string>() == "EXPLICIT")
+    else if (yamlInput["Numerical Settings"]["Numerical Scheme"].as<std::string>() == "EXPLICIT")
       foundation.numericalScheme = Foundation::NS_EXPLICIT;
-    else if (yamlInput["Foundation"]["Numerical Scheme"].as<std::string>() == "ADI")
+    else if (yamlInput["Numerical Settings"]["Numerical Scheme"].as<std::string>() == "ADI")
     {
       foundation.numericalScheme = Foundation::NS_ADI;
-      if  (yamlInput["Foundation"]["f-ADI"].IsDefined())
-        foundation.fADI = yamlInput["Foundation"]["f-ADI"].as<double>();
+      if  (yamlInput["Numerical Settings"]["f-ADI"].IsDefined())
+        foundation.fADI = yamlInput["Numerical Settings"]["f-ADI"].as<double>();
       else
         foundation.fADI = 0.00001;
     }
-    else if (yamlInput["Foundation"]["Numerical Scheme"].as<std::string>() == "IMPLICIT")
+    else if (yamlInput["Numerical Settings"]["Numerical Scheme"].as<std::string>() == "IMPLICIT")
       foundation.numericalScheme = Foundation::NS_IMPLICIT;
-    else if (yamlInput["Foundation"]["Numerical Scheme"].as<std::string>() == "CRANK-NICOLSON")
+    else if (yamlInput["Numerical Settings"]["Numerical Scheme"].as<std::string>() == "CRANK-NICOLSON")
       foundation.numericalScheme = Foundation::NS_CRANK_NICOLSON;
-    else if (yamlInput["Foundation"]["Numerical Scheme"].as<std::string>() == "STEADY-STATE")
+    else if (yamlInput["Numerical Settings"]["Numerical Scheme"].as<std::string>() == "STEADY-STATE")
       foundation.numericalScheme = Foundation::NS_STEADY_STATE;
   }
   else
@@ -363,36 +488,18 @@ Input inputParser(std::string inputFile)
     foundation.fADI = 0.00001;
 }
 
-  if  (yamlInput["Foundation"]["Solver"].IsDefined())
+  if  (yamlInput["Numerical Settings"]["Maximum Iterations"].IsDefined())
   {
-    foundation.solver = yamlInput["Foundation"]["Solver"].as<std::string>();
-  }
-  else
-  {
-    foundation.solver = "bicgstab";
-  }
-
-  if  (yamlInput["Foundation"]["Preconditioner"].IsDefined())
-  {
-    foundation.preconditioner = yamlInput["Foundation"]["Preconditioner"].as<std::string>();
-  }
-  else
-  {
-    foundation.preconditioner = "ilu";
-  }
-
-  if  (yamlInput["Foundation"]["Maximum Iterations"].IsDefined())
-  {
-    foundation.maxIterations = yamlInput["Foundation"]["Maximum Iterations"].as<int>();
+    foundation.maxIterations = yamlInput["Numerical Settings"]["Maximum Iterations"].as<int>();
   }
   else
   {
     foundation.maxIterations = 100000;
   }
 
-  if  (yamlInput["Foundation"]["Tolerance"].IsDefined())
+  if  (yamlInput["Numerical Settings"]["Tolerance"].IsDefined())
   {
-    foundation.tolerance = yamlInput["Foundation"]["Tolerance"].as<double>();
+    foundation.tolerance = yamlInput["Numerical Settings"]["Tolerance"].as<double>();
   }
   else
   {
@@ -589,148 +696,148 @@ Input inputParser(std::string inputFile)
   // Animations/Plots
   for(size_t i=0;i<yamlInput["Output"]["Output Snapshots"].size();i++)
   {
-    OutputAnimation temp;
-    temp.dir = yamlInput["Output"]["Output Snapshots"][i]["Directory"].as<std::string>();
+    OutputSnapshots temp;
+    temp.snapshotSettings.dir = yamlInput["Output"]["Output Snapshots"][i]["Directory"].as<std::string>();
 
     if (yamlInput["Output"]["Output Snapshots"][i]["Size"].IsDefined()) {
-      temp.size = yamlInput["Output"]["Output Snapshots"][i]["Size"].as<int>();
+      temp.snapshotSettings.size = yamlInput["Output"]["Output Snapshots"][i]["Size"].as<int>();
     }
     else {
-      temp.size = 800;
+      temp.snapshotSettings.size = 800;
     }
 
     if (yamlInput["Output"]["Output Snapshots"][i]["Frequency"].IsDefined()) {
-      temp.frequency = boost::posix_time::hours(yamlInput["Output"]["Output Snapshots"][i]["Frequency"].as<long>());
+      temp.snapshotSettings.frequency = yamlInput["Output"]["Output Snapshots"][i]["Frequency"].as<double>()*60.0*60.0;
     }
     else {
-      temp.frequency = boost::posix_time::hours(36);
+      temp.snapshotSettings.frequency = 36*60.0*60.0;
     }
 
     if (yamlInput["Output"]["Output Snapshots"][i]["Mesh"].IsDefined()) {
-      temp.grid = yamlInput["Output"]["Output Snapshots"][i]["Mesh"].as<bool>();
+      temp.snapshotSettings.grid = yamlInput["Output"]["Output Snapshots"][i]["Mesh"].as<bool>();
     }
     else {
-      temp.grid = false;
+      temp.snapshotSettings.grid = false;
     }
 
     if (yamlInput["Output"]["Output Snapshots"][i]["Gradients"].IsDefined()) {
-      temp.gradients = yamlInput["Output"]["Output Snapshots"][i]["Gradients"].as<bool>();
+      temp.snapshotSettings.gradients = yamlInput["Output"]["Output Snapshots"][i]["Gradients"].as<bool>();
     }
     else {
-      temp.gradients = false;
+      temp.snapshotSettings.gradients = false;
     }
 
     if (yamlInput["Output"]["Output Snapshots"][i]["Contours"].IsDefined()) {
-      temp.contours = yamlInput["Output"]["Output Snapshots"][i]["Contours"].as<bool>();
+      temp.snapshotSettings.contours = yamlInput["Output"]["Output Snapshots"][i]["Contours"].as<bool>();
     }
     else {
-      temp.contours = true;
+      temp.snapshotSettings.contours = true;
     }
 
     if (yamlInput["Output"]["Output Snapshots"][i]["Contour Labels"].IsDefined()) {
-      temp.contourLabels = yamlInput["Output"]["Output Snapshots"][i]["Contour Labels"].as<bool>();
+      temp.snapshotSettings.contourLabels = yamlInput["Output"]["Output Snapshots"][i]["Contour Labels"].as<bool>();
     }
     else {
-      temp.contourLabels = false;
+      temp.snapshotSettings.contourLabels = false;
     }
 
     if (yamlInput["Output"]["Output Snapshots"][i]["Axes"].IsDefined()) {
-      temp.axes = yamlInput["Output"]["Output Snapshots"][i]["Axes"].as<bool>();
+      temp.snapshotSettings.axes = yamlInput["Output"]["Output Snapshots"][i]["Axes"].as<bool>();
     }
     else {
-      temp.axes = true;
+      temp.snapshotSettings.axes = true;
     }
 
     if (yamlInput["Output"]["Output Snapshots"][i]["Timestamp"].IsDefined()) {
-      temp.timestamp = yamlInput["Output"]["Output Snapshots"][i]["Timestamp"].as<bool>();
+      temp.snapshotSettings.timestamp = yamlInput["Output"]["Output Snapshots"][i]["Timestamp"].as<bool>();
     }
     else {
-      temp.timestamp = true;
+      temp.snapshotSettings.timestamp = true;
     }
 
     if (yamlInput["Output"]["Output Snapshots"][i]["Plot Type"].IsDefined())
     {
       if (yamlInput["Output"]["Output Snapshots"][i]["Plot Type"].as<std::string>() == "TEMPERATURE")
-        temp.plotType = OutputAnimation::P_TEMP;
+        temp.snapshotSettings.plotType = SnapshotSettings::P_TEMP;
       else if (yamlInput["Output"]["Output Snapshots"][i]["Plot Type"].as<std::string>() == "HEAT-FLUX")
-        temp.plotType = OutputAnimation::P_FLUX;
+        temp.snapshotSettings.plotType = SnapshotSettings::P_FLUX;
     }
     else
-      temp.plotType = OutputAnimation::P_TEMP;
+      temp.snapshotSettings.plotType = SnapshotSettings::P_TEMP;
 
     if (yamlInput["Output"]["Output Snapshots"][i]["Flux Direction"].IsDefined())
     {
       if (yamlInput["Output"]["Output Snapshots"][i]["Flux Direction"].as<std::string>() == "MAG")
-        temp.fluxDir = OutputAnimation::D_M;
+        temp.snapshotSettings.fluxDir = SnapshotSettings::D_M;
       else if (yamlInput["Output"]["Output Snapshots"][i]["Flux Direction"].as<std::string>() == "X")
-        temp.fluxDir = OutputAnimation::D_X;
+        temp.snapshotSettings.fluxDir = SnapshotSettings::D_X;
       else if (yamlInput["Output"]["Output Snapshots"][i]["Flux Direction"].as<std::string>() == "Y")
-        temp.fluxDir = OutputAnimation::D_Y;
+        temp.snapshotSettings.fluxDir = SnapshotSettings::D_Y;
       else if (yamlInput["Output"]["Output Snapshots"][i]["Flux Direction"].as<std::string>() == "Z")
-        temp.fluxDir = OutputAnimation::D_Z;
+        temp.snapshotSettings.fluxDir = SnapshotSettings::D_Z;
     }
     else
-      temp.fluxDir = OutputAnimation::D_M;
+      temp.snapshotSettings.fluxDir = SnapshotSettings::D_M;
 
     if (yamlInput["Output"]["Output Snapshots"][i]["Color Scheme"].IsDefined())
     {
       if (yamlInput["Output"]["Output Snapshots"][i]["Color Scheme"].as<std::string>() == "CMR")
-        temp.colorScheme = OutputAnimation::C_CMR;
+        temp.snapshotSettings.colorScheme = SnapshotSettings::C_CMR;
       else if (yamlInput["Output"]["Output Snapshots"][i]["Color Scheme"].as<std::string>() == "JET")
-        temp.colorScheme = OutputAnimation::C_JET;
+        temp.snapshotSettings.colorScheme = SnapshotSettings::C_JET;
       else if (yamlInput["Output"]["Output Snapshots"][i]["Color Scheme"].as<std::string>() == "NONE")
-        temp.colorScheme = OutputAnimation::C_NONE;
+        temp.snapshotSettings.colorScheme = SnapshotSettings::C_NONE;
     }
     else
-      temp.colorScheme = OutputAnimation::C_CMR;
+      temp.snapshotSettings.colorScheme = SnapshotSettings::C_CMR;
 
     if (yamlInput["Output"]["Output Snapshots"][i]["File Format"].IsDefined())
     {
       if (yamlInput["Output"]["Output Snapshots"][i]["File Format"].as<std::string>() == "PNG")
-        temp.format = OutputAnimation::F_PNG;
+        temp.snapshotSettings.format = SnapshotSettings::F_PNG;
       else if (yamlInput["Output"]["Output Snapshots"][i]["File Format"].as<std::string>() == "TEX")
-        temp.format = OutputAnimation::F_TEX;
+        temp.snapshotSettings.format = SnapshotSettings::F_TEX;
     }
     else
-      temp.format = OutputAnimation::F_PNG;
+      temp.snapshotSettings.format = SnapshotSettings::F_PNG;
 
     if (yamlInput["Output"]["Output Snapshots"][i]["Unit System"].IsDefined())
     {
       if (yamlInput["Output"]["Output Snapshots"][i]["Unit System"].as<std::string>() == "IP")
-        temp.outputUnits = OutputAnimation::IP;
+        temp.snapshotSettings.outputUnits = SnapshotSettings::IP;
       else if (yamlInput["Output"]["Output Snapshots"][i]["Unit System"].as<std::string>() == "SI")
-        temp.outputUnits = OutputAnimation::SI;
+        temp.snapshotSettings.outputUnits = SnapshotSettings::SI;
     }
     else
-      temp.outputUnits = OutputAnimation::SI;
+      temp.snapshotSettings.outputUnits = SnapshotSettings::SI;
 
     if (yamlInput["Output"]["Output Snapshots"][i]["Output Range"].IsDefined())
     {
-      temp.minimumTemperature = yamlInput["Output"]["Output Snapshots"][i]["Output Range"][0].as<double>();
-      temp.maximumTemperature = yamlInput["Output"]["Output Snapshots"][i]["Output Range"][1].as<double>();
+      temp.snapshotSettings.minValue = yamlInput["Output"]["Output Snapshots"][i]["Output Range"][0].as<double>();
+      temp.snapshotSettings.maxValue = yamlInput["Output"]["Output Snapshots"][i]["Output Range"][1].as<double>();
     }
     else
     {
-      temp.minimumTemperature = -20;
-      temp.maximumTemperature = 40;
+      temp.snapshotSettings.minValue = -20;
+      temp.snapshotSettings.maxValue = 40;
     }
 
     if (yamlInput["Output"]["Output Snapshots"][i]["Number of Contours"].IsDefined())
     {
-      temp.numberOfContours = yamlInput["Output"]["Output Snapshots"][i]["Number of Contours"].as<int>();
+      temp.snapshotSettings.numberOfContours = yamlInput["Output"]["Output Snapshots"][i]["Number of Contours"].as<int>();
     }
     else
     {
-      temp.numberOfContours = 13;
+      temp.snapshotSettings.numberOfContours = 13;
     }
 
     if (yamlInput["Output"]["Output Snapshots"][i]["Contour Color"].IsDefined())
     {
-      temp.contourColor = yamlInput["Output"]["Output Snapshots"][i]["Contour Color"].as<std::string>();
+      temp.snapshotSettings.contourColor = yamlInput["Output"]["Output Snapshots"][i]["Contour Color"].as<std::string>();
     }
     else
     {
-      temp.contourColor = "H";
+      temp.snapshotSettings.contourColor = "H";
     }
 
     if (yamlInput["Output"]["Output Snapshots"][i]["Start Date"].IsDefined())
@@ -751,8 +858,8 @@ Input inputParser(std::string inputFile)
 
     if (yamlInput["Output"]["Output Snapshots"][i]["X Range"].IsDefined())
     {
-      temp.xRange.first = yamlInput["Output"]["Output Snapshots"][i]["X Range"][0].as<double>();
-      temp.xRange.second = yamlInput["Output"]["Output Snapshots"][i]["X Range"][1].as<double>();
+      temp.snapshotSettings.xRange.first = yamlInput["Output"]["Output Snapshots"][i]["X Range"][0].as<double>();
+      temp.snapshotSettings.xRange.second = yamlInput["Output"]["Output Snapshots"][i]["X Range"][1].as<double>();
       temp.xRangeSet = true;
     }
     else
@@ -760,8 +867,8 @@ Input inputParser(std::string inputFile)
 
     if (yamlInput["Output"]["Output Snapshots"][i]["Y Range"].IsDefined())
     {
-      temp.yRange.first = yamlInput["Output"]["Output Snapshots"][i]["Y Range"][0].as<double>();
-      temp.yRange.second = yamlInput["Output"]["Output Snapshots"][i]["Y Range"][1].as<double>();
+      temp.snapshotSettings.yRange.first = yamlInput["Output"]["Output Snapshots"][i]["Y Range"][0].as<double>();
+      temp.snapshotSettings.yRange.second = yamlInput["Output"]["Output Snapshots"][i]["Y Range"][1].as<double>();
       temp.yRangeSet = true;
     }
     else
@@ -770,14 +877,14 @@ Input inputParser(std::string inputFile)
     if (yamlInput["Output"]["Output Snapshots"][i]["Z Range"].IsDefined())
     {
 
-      temp.zRange.first = yamlInput["Output"]["Output Snapshots"][i]["Z Range"][0].as<double>();
-      temp.zRange.second = yamlInput["Output"]["Output Snapshots"][i]["Z Range"][1].as<double>();
+      temp.snapshotSettings.zRange.first = yamlInput["Output"]["Output Snapshots"][i]["Z Range"][0].as<double>();
+      temp.snapshotSettings.zRange.second = yamlInput["Output"]["Output Snapshots"][i]["Z Range"][1].as<double>();
       temp.zRangeSet = true;
     }
     else
       temp.zRangeSet = false;
 
-    output.outputAnimations.push_back(temp);
+    output.outputSnapshots.push_back(temp);
   }
 
   // Full Input

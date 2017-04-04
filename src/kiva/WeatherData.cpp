@@ -1,10 +1,11 @@
-/* Copyright (c) 2012-2016 Big Ladder Software. All rights reserved.
+/* Copyright (c) 2012-2017 Big Ladder Software LLC. All rights reserved.
 * See the LICENSE file for additional terms and conditions. */
 
 #ifndef WeatherData_CPP
 #define WeatherData_CPP
 
 #include "WeatherData.hpp"
+#include "Errors.hpp"
 
 static const double PI = 4.0*atan(1.0);
 
@@ -116,7 +117,7 @@ double HourlyData::getMax()
 
 WeatherData::WeatherData(std::string weatherFile)
 {
-  globalHorizontalSolar.dataType = HourlyData::DT_SOLAR;
+  //globalHorizontalSolar.dataType = HourlyData::DT_SOLAR;
   directNormalSolar.dataType = HourlyData::DT_SOLAR;
   diffuseHorizontalSolar.dataType = HourlyData::DT_SOLAR;
   importEPW(weatherFile);
@@ -131,8 +132,7 @@ void WeatherData::importEPW(std::string epwFile)
   if (!inf)
   {
       // Print an error and exit
-      std::cerr << "Unable to read EPW file" << std::endl;
-      exit(EXIT_FAILURE);
+      Kiva::showMessage(Kiva::MSG_ERR, "Unable to read EPW file.");
   }
 
   // While there's still stuff left to read
@@ -217,10 +217,6 @@ void WeatherData::importEPW(std::string epwFile)
       atmosphericPressure.push_back(
           double(boost::lexical_cast<double>(columns[9])));  // [Pa]
 
-      // Note: global horizontal solar can be calculated using solar position,
-      // direct normal solar and diffuse solar.
-      // double qGH = double(boost::lexical_cast<double>(columns[13]));
-
       double qDN = double(boost::lexical_cast<double>(columns[14]));
 
       directNormalSolar.push_back(qDN);  // [W/m2]
@@ -270,9 +266,6 @@ void WeatherData::importEPW(std::string epwFile)
       double alt = asin(sinLat*sinDec + cosLat*cosDec*cosHA);
       altitude.push_back(alt);
 
-      double qGH = cos(PI/2 - alt)*qDN + qDH;
-      globalHorizontalSolar.push_back(qGH);  // [W/m2]
-
       // clockwise from north
       double azi = PI + acos((sin(alt)*sinLat - sinDec)/(cos(alt)*cosLat));
 
@@ -301,7 +294,7 @@ void WeatherData::importEPW(std::string epwFile)
   int dayCount = 0;
   int monthCount = 0;
 
-  for (int h = 0; h < days.size(); ++h)
+  for (std::size_t h = 0; h < days.size(); ++h)
   {
     dailyTemperatureSum += dryBulbTemp[h];
     monthlyTemperatureSum += dryBulbTemp[h];

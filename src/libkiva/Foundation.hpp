@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2016 Big Ladder Software. All rights reserved.
+/* Copyright (c) 2012-2017 Big Ladder Software LLC. All rights reserved.
 * See the LICENSE file for additional terms and conditions. */
 
 #ifndef FOUNDATION_HPP_
@@ -10,10 +10,11 @@
 
 namespace Kiva {
 
-class Material
+class LIBKIVA_EXPORT Material
 {
 public:
-
+  Material();
+  Material(double k, double rho, double cp);
   double conductivity;  // [W/m-K] conductivity (boost function of z, t?)
   double density;  // [kg/m3] density
   double specificHeat;  // [J/kg-K] specific heat
@@ -27,42 +28,36 @@ public:
   double thickness;  // [m] thickness
 };
 
-class HorizontalInsulation
+class LIBKIVA_EXPORT InputBlock
 {
 public:
+  InputBlock();
 
-  double depth;  // [m] depth from top of wall
-  double width;  // [m] width from side of wall
-  Layer layer;
-
+  double x; // [m] block X origin relative to wall interior
+  double z; // [m] block Z origin relative to wall top
+  double width; // [m] block width extending from block X origin outward
+  double depth; // [m] block depth extending from block z origin downward
+  Material material;
+  Box box;
 
 };
 
-class VerticalInsulation
-{
-public:
-
-  double depth; // [m] depth from top of wall
-  Layer layer;
-
-};
-
-class Wall
+class LIBKIVA_EXPORT Wall
 {
 public:
 
   double interiorEmissivity;
   double exteriorEmissivity;
   double exteriorAbsorptivity;
-  double heightAboveGrade;  // [m] below grade depth
-  double height;  // [m] total height
+  double heightAboveGrade;  // [m]
+  double depthBelowSlab;  // [m]
   std::vector <Layer> layers;
 
   double totalWidth();
   double totalResistance();
 };
 
-class Slab
+class LIBKIVA_EXPORT Slab
 {
 public:
 
@@ -76,12 +71,12 @@ public:
 class Mesh
 {
 public:
-
-  double maxNearGrowthCoeff;
-  double maxExteriorGrowthCoeff;
-  double maxInteriorGrowthCoeff;
-  double maxDepthGrowthCoeff;
+  Mesh();
   double minCellDim;  // [m]
+  double maxNearGrowthCoeff;
+  double maxDepthGrowthCoeff;
+  double maxInteriorGrowthCoeff;
+  double maxExteriorGrowthCoeff;
 
 };
 
@@ -154,7 +149,7 @@ public:
   };
   Orientation orientation;
 
-  std::vector<boost::tuple<std::size_t,std::size_t,std::size_t> > indices;
+  std::vector<std::tuple<std::size_t,std::size_t,std::size_t> > indices;
 
   double area;
 
@@ -189,10 +184,11 @@ public:
 
 };
 
-class Foundation
+class LIBKIVA_EXPORT Foundation
 {
 public:
 
+  Foundation();
   // Inputs
 
   // Site
@@ -256,6 +252,9 @@ public:
 
   Polygon polygon;
   bool isXSymm, isYSymm;
+  std::vector<bool> isExposedPerimeter;
+  double exposedFraction;
+  bool useDetailedExposedPerimeter;
 
   double buildingHeight;
   std::vector<Polygon3> buildingSurfaces;
@@ -265,14 +264,7 @@ public:
   bool hasWall;
   Slab slab;
   bool hasSlab;
-  HorizontalInsulation interiorHorizontalInsulation;
-  bool hasInteriorHorizontalInsulation;
-  HorizontalInsulation exteriorHorizontalInsulation;
-  bool hasExteriorHorizontalInsulation;
-  VerticalInsulation interiorVerticalInsulation;
-  bool hasInteriorVerticalInsulation;
-  VerticalInsulation exteriorVerticalInsulation;
-  bool hasExteriorVerticalInsulation;
+  std::vector<InputBlock> inputBlocks;
 
   double perimeterSurfaceWidth;
   bool hasPerimeterSurface;
@@ -296,8 +288,6 @@ public:
 
   double fADI;  // ADI modified f-factor
 
-  std::string solver;
-  std::string preconditioner;
   double tolerance;
   int maxIterations;
 
@@ -320,6 +310,8 @@ public:
 
   std::map<Surface::SurfaceType, double> surfaceAreas;
   std::map<Surface::SurfaceType, bool> hasSurface;
+  double netArea;
+  double netPerimeter;
 
   void createMeshData();
 };

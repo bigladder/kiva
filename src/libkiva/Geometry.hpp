@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2016 Big Ladder Software. All rights reserved.
+/* Copyright (c) 2012-2017 Big Ladder Software LLC. All rights reserved.
 * See the LICENSE file for additional terms and conditions. */
 
 #ifndef GEOMETRY_H_
@@ -39,7 +39,7 @@ namespace geom
     LEFT,
     RIGHT
   };
-};
+}
 
 bool isRectilinear(Polygon poly);
 Polygon offset(Polygon poly, double dist);
@@ -58,8 +58,11 @@ double getYmax(Polygon poly, std::size_t vertex);
 
 bool LIBKIVA_EXPORT comparePointsX(Point first, Point second);
 bool LIBKIVA_EXPORT comparePointsY(Point first, Point second);
+bool LIBKIVA_EXPORT pointOnPoly(Point point, Polygon poly);
+bool LIBKIVA_EXPORT isConvex(Polygon poly);
 
-double getDistance(Point a, Point b);
+
+double LIBKIVA_EXPORT getDistance(Point a, Point b);
 
 double getAngle(Point a, Point b, Point c);
 

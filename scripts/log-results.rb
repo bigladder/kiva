@@ -10,7 +10,7 @@ TEST_DIR = File.expand_path(ENV['RT_DIR'], CI_PATH)
 # PATOKEN = personal access token
 RT_URL = "https://#{ENV['PATOKEN']}@#{ENV['RT_URL']}"
 RT_DIR = File.expand_path(ENV['RT_DIR'], CI_PATH)
-ARCH = ENV['BUILD_ARCHITECTURE']
+ARCH = File.read(File.expand_path('build/arch.txt',CI_PATH))
 
 ############################################################
 def main(ci_path, rt_url, rt_dir, arch, test_dir)

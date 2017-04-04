@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2016 Big Ladder Software. All rights reserved.
+/* Copyright (c) 2012-2017 Big Ladder Software LLC. All rights reserved.
 * See the LICENSE file for additional terms and conditions. */
 
 #ifndef Domain_HPP
@@ -9,9 +9,8 @@
 #include "Functions.hpp"
 
 #include <fstream>
+#include <memory>
 #include <numeric>
-
-#include <boost/assign/list_of.hpp>
 
 namespace Kiva {
 
@@ -49,11 +48,9 @@ public:
   };
   CellType cellType;
 
-  //size_t blockNumber;
-  Block block;
+  Block* blockPtr;
 
-  //size_t surfaceNumber;
-  Surface surface;
+  Surface* surfacePtr;
 };
 
 class Domain
@@ -91,7 +88,7 @@ public:
     void set2DZeroThicknessCellProperties(std::size_t i,std::size_t j,std::size_t k);
     void set3DZeroThicknessCellProperties(std::size_t i,std::size_t j,std::size_t k);
     void setZeroThicknessCellProperties(std::size_t i, std::size_t j, std::size_t k,
-        std::vector<boost::tuple<std::size_t,std::size_t,std::size_t> > pointSet);
+        std::vector<std::tuple<std::size_t,std::size_t,std::size_t> > pointSet);
     void printCellTypes();
 
 };

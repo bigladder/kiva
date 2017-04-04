@@ -11,8 +11,8 @@ This defines the settings of the simulation period and timestep.
 
     Simulation Control:
       Start Date: 2015-Jan-1
-			End Date: 2015-Dec-31
-			Timestep: 60 # [min]
+      End Date: 2015-Dec-31
+      Timestep: 60 # [min]
 
 .. _start_date:
 

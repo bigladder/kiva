@@ -109,12 +109,6 @@ CMAKE_DEPENDENT_OPTION(enable-pdf "Enable pdf support" OFF "NOT enable-all" ON)
 CMAKE_DEPENDENT_OPTION(enable-gif "Enable gif support" OFF "NOT enable-all" ON)
 CMAKE_DEPENDENT_OPTION(enable-glut "Enable glut support" OFF "NOT enable-all-widgets" ON)
 
-# msvc fwprintf print char* for the specifier of "%s" format
-if(MSVC AND MSVC_VERSION GREATER 1899)
-	SET(CMAKE_CXX_FLAGS "/EHsc -D_CRT_STDIO_ISO_WIDE_SPECIFIERS ${CMAKE_CXX_FLAGS}")
-	SET(CMAKE_C_FLAGS "-D_CRT_STDIO_ISO_WIDE_SPECIFIERS ${CMAKE_C_FLAGS}")
-endif(MSVC AND MSVC_VERSION GREATER 1899)
-
 include_directories( ${MathGL_SOURCE_DIR}/include ${MathGL_BINARY_DIR}/include)
 
 set(MGL_INCLUDE_PATH "${CMAKE_INSTALL_PREFIX}/include/mgl2")

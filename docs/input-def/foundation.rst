@@ -38,9 +38,8 @@ The foundation insulation and structural components are defined by (up to) six s
           Material: Concrete # Material reference
           Thickness: 0.3048 # [m]
       Height Above Grade: 0.3048  # [m]
-      Height: 0.508 # [m]
+      Depth Below Slab: 0.3 # [m]
     Interior Horizontal Insulation:
-      Depth: 0.2032 # [m]
       Width: 0.4064 # [m]
       Material: XPS # Material reference
       Thickness: 0.0508
@@ -95,6 +94,56 @@ The polygon is specified by a list of x-y Cartesian vertices tracing the foundat
 **Units:**      m
 =============   =================================
 
+Exposed Perimeter
+-----------------
+
+A true/false list corresponding to each segment of the polygon. Segments are defined between polygon vertices *N* and *N + 1*. A value of *true* implies that the ground adjacent to a segment is exposed to the exterior environment. Conversly, a value of *false* indicates that the ground adjacent to a segment neighbors another interior space.
+
+Only exposed perimeter is considered in heat transfer calculations.
+
+This is only used for two-dimensional simulations.
+
+**Example:**
+
+.. code-block:: yaml
+
+    Exposed Perimeter:
+      - true
+      - true
+      - true
+      - true
+      - false
+      - false
+      - true
+      - true
+      - true
+      - true
+
+=============   ====================
+**Required:**   No
+**Type:**       List [N] of booleans
+**Default:**    All true
+=============   ====================
+
+Exposed Fraction
+----------------
+
+Alternative to defining the `Exposed Perimeter`_, one may define the fraction of the total perimeter that is exposed. Using this option will revert any `BOUNDARY` type :ref:`2Dapprox`s to `AP` (as it's not possible to know explicitly which segments represent concave geometry).
+
+This is only used for two-dimensional simulations.
+
+**Example:**
+
+.. code-block:: yaml
+
+    Exposed Fraction: 0.85
+
+=============   ======================================
+**Required:**   No
+**Type:**       Numeric
+**Units:**      dimensionless
+**Default:**    N/A (see `Exposed Perimeter`_ default)
+=============   ======================================
 
 Soil
 ----
@@ -184,7 +233,7 @@ This defines the costruction of the foundation wall. This is not required. If th
 .. code-block:: yaml
 
   Wall:
-    Height: 2.95 # [m]
+    Depth Below Slab: 0.3 # [m]
     Height Above Grade: 0.3048  # [m]
     Layers:
       -
@@ -202,29 +251,29 @@ This defines the costruction of the foundation wall. This is not required. If th
 **Type:**       Compound object
 =============   ===============
 
-Height
-^^^^^^
-
-The height of the wall describes the distance from the wall top to the bottom of the foundation footer (the footer is not modeled separately). This value should generally be greater than that of the `Foundation Depth`_ combined with the total thickness of the slab.
-
-=============   =======
-**Required:**   Yes
-**Type:**       Numeric
-**Units:**      m
-=============   =======
-
-
 Height Above Grade
 ^^^^^^^^^^^^^^^^^^
 
 The height of the wall top relative to the grade (z = 0).
 
 =============   =======
-**Required:**   Yes
+**Required:**   No
 **Type:**       Numeric
 **Units:**      m
+**Default:**    0.2
 =============   =======
 
+Depth Below Slab
+^^^^^^^^^^^^^^^^
+
+The distance from the bottom of the slab to the bottom of the foundation wall. The total wall extends down to this level.
+
+=============   =======
+**Required:**   No
+**Type:**       Numeric
+**Units:**      m
+**Default:**    0.3
+=============   =======
 
 Layers
 ^^^^^^
@@ -300,7 +349,6 @@ This defines the position, dimensions, and material of interior horizontal insul
   Interior Horizontal Insulation:
     Material: XPS # Material reference
     Thickness: 0.0508 # [m]
-    Depth: 0.2032  # [m]
     Width: 0.4064 # [m]
 
 =============   ===============
@@ -333,12 +381,13 @@ Thickness of the insulation.
 Depth
 ^^^^^
 
-Depth of the insulation measured from the wall top to the top of the insulation.
+Depth of the insulation measured from the bottom of the slab to the top of the insulation.
 
 =============   =======
-**Required:**   Yes
+**Required:**   No
 **Type:**       Numeric
 **Units:**      m
+**Default:**    0.0
 =============   =======
 
 Width
@@ -415,7 +464,6 @@ This defines the position, dimensions, and material of exterior horizontal insul
   Exterior Horizontal Insulation:
     Material: XPS # Material reference
     Thickness: 0.0508 # [m]
-    Depth: 0.3048  # [m]
     Width: 0.6096 # [m]
 
 =============   ===============
@@ -448,12 +496,13 @@ Thickness of the insulation.
 Depth
 ^^^^^
 
-Depth of the insulation measured from the wall top to the top of the insulation.
+Depth of the insulation measured from the exterior grade to the top of the insulation.
 
 =============   =======
-**Required:**   Yes
+**Required:**   No
 **Type:**       Numeric
 **Units:**      m
+**Default:**    0.0
 =============   =======
 
 Width
@@ -512,6 +561,147 @@ Depth
 ^^^^^
 
 Depth of the insulation measured from the wall top to the bottom of the insulation.
+
+=============   =======
+**Required:**   Yes
+**Type:**       Numeric
+**Units:**      m
+=============   =======
+
+Footing
+-------
+
+This defines dimensions, and material of the foundation footing. The footing is vertically centered and placed immediately below the foundation wall.
+
+The footing is optional, and has minor impacts on foundation heat transfer while the additional detail increases the required computation time. As an approximation, users may choose to extend the depth of a concrete wall to represent the footing.
+
+**Example:**
+
+.. code-block:: yaml
+
+  Footing:
+    Material: Concrete # Material reference
+    Depth: 0.254 # [m]
+    Width: 0.762 # [m]
+
+=============   ===============
+**Required:**   No
+**Type:**       Compound object
+=============   ===============
+
+Material
+^^^^^^^^
+
+Insulation material reference.
+
+=============   ==================
+**Required:**   Yes
+**Type:**       Material reference
+=============   ==================
+
+Depth
+^^^^^
+
+Depth (from top to bottom) of the footing (not to be confused with its depth in the ground).
+
+=============   =======
+**Required:**   Yes
+**Type:**       Numeric
+**Units:**      m
+=============   =======
+
+Width
+^^^^^
+
+Width of the footing.
+
+=============   =======
+**Required:**   Yes
+**Type:**       Numeric
+**Units:**      m
+=============   =======
+
+Material Blocks
+---------------
+
+Beyond the solid materials explicity defined by the Slab, Wall, and Insulation objects, general Material Blocks may also be used to define any number of variations within the solid domain.
+
+Material Blocks are specified as a list of material references, and geometric inputs. Each block is defined by its position relative to the top interior corner of the foundation wall in the two-dimensional context.
+
+If a Material Blocks overlapping other materials take precendence in the order defined by the list (later blocks have higher precidence).
+
+.. TODO add figure
+
+**Example:**
+
+.. code-block:: yaml
+
+  Material Blocks:
+    -
+      Material: In-fill Soil # Material reference
+      Z Position: 0.3048 # [m]
+      X Position: 0.254 # [m]
+      Depth: 3.0 # [m]
+      Width: 3.0 # [m]
+    -
+      Material: Batt Insulation # Material reference
+      Z Position: 0.0 # [m]
+      X Position: 0.0 # [m]
+      Depth: 2.44 # [m]
+      Width: -0.0889 # [m]
+
+=============   ==============
+**Required:**   No
+**Type:**       List of blocks
+=============   ==============
+
+Material
+^^^^^^^^
+
+Material reference.
+
+=============   ==================
+**Required:**   Yes
+**Type:**       Material reference
+=============   ==================
+
+Z Position
+^^^^^^^^^^
+
+Starting position of the block relative to the origin at the top of the foundation wall. Defined as positive in the downward direction. Negative values (above the wall) are not allowed.
+
+=============   =======
+**Required:**   Yes
+**Type:**       Numeric
+**Units:**      m
+=============   =======
+
+X Position
+^^^^^^^^^^
+
+Starting position of the block relative to the interior of the foundation wall. Defined as positive in the outward direction. Negative values indicate a position interior to the wall.
+
+=============   =======
+**Required:**   Yes
+**Type:**       Numeric
+**Units:**      m
+=============   =======
+
+Depth
+^^^^^
+
+Depth (from top to bottom) of the material block (not to be confused with its depth in the ground [see `Z Position`_]). A positive value extends the block downward (in the positive Z direction) while a negative value extends the block upward.
+
+=============   =======
+**Required:**   Yes
+**Type:**       Numeric
+**Units:**      m
+=============   =======
+
+Width
+^^^^^
+
+Width of the material block. A positive value extends the block outward (in the positive X direction) while a negative value extends the block inward.
 
 =============   =======
 **Required:**   Yes

@@ -37,7 +37,7 @@ Foundation:
         Material: Concrete
         Thickness: 0.3048
     Height Above Grade: 0.3048  # [m]
-    Height: 1.5  # [m]
+    Depth Below Slab: 0.2032  # [m]
   Interior Vertical Insulation:
     Depth: 1.0
     Material: XPS

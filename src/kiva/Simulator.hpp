@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2016 Big Ladder Software. All rights reserved.
+/* Copyright (c) 2012-2017 Big Ladder Software LLC. All rights reserved.
 * See the LICENSE file for additional terms and conditions. */
 
 #ifndef Simulator_HPP
@@ -11,7 +11,13 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/date_time/gregorian/gregorian.hpp>
 
+#include <boost/lexical_cast.hpp>
+
+#include <boost/filesystem/operations.hpp>
+
 #include "BoundaryConditions.hpp"
+#include "Input.hpp"
+#include "Geometry.hpp"
 #include "Ground.hpp"
 #include "GroundOutput.hpp"
 #include "GroundPlot.hpp"
@@ -29,8 +35,8 @@ public:
   virtual ~Simulator();
   void simulate();
 
-  Input &input;
   WeatherData &weatherData;
+  Input &input;
 
   double annualAverageDryBulbTemperature;
 
@@ -43,6 +49,7 @@ private:
 
   std::vector<GroundPlot> plots;
   std::ofstream outputFile;
+  boost::filesystem::path outputDir;
   void initializePlots();
   void initializeConditions();
 

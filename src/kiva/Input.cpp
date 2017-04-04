@@ -1,10 +1,11 @@
-/* Copyright (c) 2012-2016 Big Ladder Software. All rights reserved.
+/* Copyright (c) 2012-2017 Big Ladder Software LLC. All rights reserved.
 * See the LICENSE file for additional terms and conditions. */
 
 #ifndef INPUT_CPP_
 #define INPUT_CPP_
 
 #include "Input.hpp"
+#include "Errors.hpp"
 
 using namespace Kiva;
 
@@ -91,7 +92,7 @@ void OutputReport::setOutputMap()
 {
   for (auto outVar : *this) {
     for (auto s : outVar.surfaces) {
-      if (!(outputMap.count(s))) { // If surface isn't in map
+      if (!(outputMap.count(s))) { // If surface isn't in map create it and add to the list of outputs
         outputMap[s].push_back(outVar.outType);
       }
       else if (std::find(outputMap[s].begin(), outputMap[s].end(), outVar.outType) == outputMap[s].end()) {
@@ -112,8 +113,7 @@ void DataFile::readData()
 
       if (!boost::filesystem::exists(searchDir / dataFilePath)) {
         // Print an error and exit
-        std::cerr << "Unable to read data file" << std::endl;
-        exit(EXIT_FAILURE);
+        showMessage(MSG_ERR, "Unable to read data file.");
       }
       else {
         dataFilePath = searchDir / dataFilePath;
@@ -125,8 +125,7 @@ void DataFile::readData()
   if (!file.is_open())
   {
     // Print an error and exit
-    std::cerr << "Unable to read data file" << std::endl;
-    exit(EXIT_FAILURE);
+    showMessage(MSG_ERR, "Unable to read data file.");
   }
 
   // While there's still stuff left to read

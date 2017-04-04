@@ -1,0 +1,18 @@
+# Steady Periodic Case
+:numerical_scheme=>"ADI",
+:start_year=>2100,
+:end_year=>2100,
+:timestep=>60,
+:imp_timestep=>168,
+:imp_periods=>12,
+:warmup_days=>365,
+:plot=>false,
+
+# "b" Case
+:deep_ground_depth=>15,
+:far_field_width=>15,
+:bestest_int_conv=>100,
+:bestest_ext_conv=>100,
+
+# "80b" Case
+:bestest_soil_k=>0.5

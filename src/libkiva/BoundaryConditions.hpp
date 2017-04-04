@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2016 Big Ladder Software. All rights reserved.
+/* Copyright (c) 2012-2017 Big Ladder Software LLC. All rights reserved.
 * See the LICENSE file for additional terms and conditions. */
 
 #ifndef BoundaryConditions_HPP
@@ -14,9 +14,10 @@ public:
   double solarAzimuth;
   double solarAltitude;
   double directNormalFlux;
-  double globalHorizontalFlux;
   double diffuseHorizontalFlux;
   double skyEmissivity;
+  double slabAbsRadiation;
+  double wallAbsRadiation;
 
   BoundaryConditions() :
     indoorTemp(293.15),
@@ -25,9 +26,10 @@ public:
     solarAzimuth(3.14),
     solarAltitude(0.0),
     directNormalFlux(0.0),
-    globalHorizontalFlux(0.0),
     diffuseHorizontalFlux(0.0),
-    skyEmissivity(0.0)
+    skyEmissivity(0.0),
+    slabAbsRadiation(0.0),
+    wallAbsRadiation(0.0)
   {}
 
 };

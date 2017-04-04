@@ -1,7 +1,9 @@
+os: Visual Studio 2015
+
 init:
-  - cmd: echo %PROCESSOR_ARCHITECTURE%
   - cmd: cmake --version
   - cmd: ctest --version
+  - ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 
 skip_branch_with_pr: true
 clone_depth: 100
@@ -19,32 +21,24 @@ environment:
       RUBY_VERSION: "200"
 
   matrix:
+    - GENERATOR: "Visual Studio 14"
+      CONFIG: Release
+      COMPILER: MSVC
+    - GENERATOR: "Visual Studio 14 Win64"
+      CONFIG: Release
+      COMPILER: MSVC
     - GENERATOR: "MinGW Makefiles"
       MINGW_DIR: mingw32
       CONFIG: Release
       COMPILER: MinGW
-      BIT: x86
       MINGW_URL: https://sourceforge.net/projects/mingw-w64/files/Toolchains%20targetting%20Win32/Personal%20Builds/mingw-builds/5.3.0/threads-win32/dwarf/i686-5.3.0-release-win32-dwarf-rt_v4-rev0.7z/download
       MINGW_ARCHIVE: i686-5.3.0-release-win32-dwarf-rt_v4-rev0.7z
-      BUILD_ARCHITECTURE: windows-gnu-x86
     - GENERATOR: "MinGW Makefiles"
       MINGW_DIR: mingw64
       CONFIG: Release
       COMPILER: MinGW
-      BIT: x86_64
       MINGW_URL: https://sourceforge.net/projects/mingw-w64/files/Toolchains%20targetting%20Win64/Personal%20Builds/mingw-builds/5.3.0/threads-win32/seh/x86_64-5.3.0-release-win32-seh-rt_v4-rev0.7z/download
       MINGW_ARCHIVE: x86_64-5.3.0-release-win32-seh-rt_v4-rev0.7z
-      BUILD_ARCHITECTURE: windows-gnu-x86_64
-    - GENERATOR: "Visual Studio 12"
-      CONFIG: Release
-      COMPILER: MSVC
-      BIT: x86
-      BUILD_ARCHITECTURE: windows-msvc-x86
-    - GENERATOR: "Visual Studio 12 Win64"
-      CONFIG: Release
-      COMPILER: MSVC
-      BIT: x86_64
-      BUILD_ARCHITECTURE: windows-msvc-x86_64
 
 install:
   - if "%COMPILER%"=="MinGW" (if not exist "%MINGW_ARCHIVE%" appveyor DownloadFile "%MINGW_URL%" -FileName "%MINGW_ARCHIVE%")
@@ -53,7 +47,7 @@ install:
   - gem install git
 
 before_build:
-  - if "%COMPILER%"=="MinGW" (set "PATH=%PATH:C:\Program Files\Git\usr\bin;=%;%CD%\%MINGW_DIR%\bin")
+  - if "%COMPILER%"=="MinGW" (set "PATH=%CD%\%MINGW_DIR%\bin;%PATH:C:\Program Files\Git\usr\bin;=%")
   - if "%COMPILER%"=="MinGW" (g++ --version)
   - if "%COMPILER%"=="MinGW" (mingw32-make --version)
   - ruby -v
@@ -65,13 +59,36 @@ build_script:
   - SET SRC_BRANCH=%APPVEYOR_REPO_BRANCH%
   - mkdir build
   - cd build
-  - if "%COMPILER%"=="MSVC" (cmake "-G%GENERATOR%" "-DPROCESSOR_ARCHITECTURE=%BIT%" ..)
-  - if "%COMPILER%"=="MinGW" (cmake "-G%GENERATOR%" -DCMAKE_BUILD_TYPE="%CONFIG%" "-DPROCESSOR_ARCHITECTURE=%BIT%" ..)
+  - if "%COMPILER%"=="MSVC" (cmake "-G%GENERATOR%" "-DKIVA_STATIC_LIB=OFF" ..)
+  - if "%COMPILER%"=="MinGW" (cmake "-G%GENERATOR%" -DCMAKE_BUILD_TYPE="%CONFIG%" "-DKIVA_STATIC_LIB=OFF" ..)
   - ruby ..\scripts\clone-and-mimic.rb
   - if "%COMPILER%"=="MSVC" (cmake --build . --config "%CONFIG%" -- /m)
-  - if "%COMPILER%"=="MinGW" (cmake --build . -- -j)
+  - if "%COMPILER%"=="MinGW" (cmake --build .)
 
 test_script:
-  - if "%COMPILER%"=="MSVC" (ctest -C "%CONFIG%")
-  - if "%COMPILER%"=="MinGW" (ctest)
+  - if "%COMPILER%"=="MSVC" (ctest -C "%CONFIG%" --output-on-failure)
+  - if "%COMPILER%"=="MinGW" (ctest --output-on-failure)
   - ruby ..\scripts\log-results.rb
+
+after_test:
+  - if "%COMPILER%"=="MSVC" (cpack -C "%CONFIG%" -B "%APPVEYOR_BUILD_FOLDER%")
+
+artifacts:
+  - path: 'kiva*.zip'
+    name: archive
+
+deploy:
+  - provider: FTP
+    protocol: ftp
+    host: downloads.bigladdersoftware.com
+    username:
+      secure: q+D7xTdD5KtZ4MPyNO5rwSLMwiEETZkZtRsd/Fij+gA=
+    password:
+      secure: yJAGrbf+NQzLleqlplKu3w==
+    folder: downloads.bigladdersoftware.com/files/
+    on:
+      COMPILER: MSVC
+      appveyor_repo_tag: true
+
+on_failure:
+  - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))

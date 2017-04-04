@@ -1,13 +1,17 @@
+![](docs/images/kiva-logo.png)
+
 [![Documentation Status](https://readthedocs.org/projects/kiva/badge/?version=latest)](http://kiva.readthedocs.org/en/latest/?badge=latest)
 [![Build Status](https://travis-ci.org/big-ladder/kiva.svg?branch=develop)](https://travis-ci.org/big-ladder/kiva)
-[![Build Status](https://ci.appveyor.com/api/projects/status/pv2c4no2mv4uds26/branch/develop?svg=true)](https://ci.appveyor.com/project/nealkruis/kiva/branch/develop)
+[![Build Status](https://ci.appveyor.com/api/projects/status/pv2c4no2mv4uds26/branch/develop?svg=true)](https://ci.appveyor.com/project/nealkruis/kiva/branch/develop) [![codecov](https://codecov.io/gh/big-ladder/kiva/branch/develop/graph/badge.svg)](https://codecov.io/gh/big-ladder/kiva)
 
 Kiva
 ====
 
-Kiva is a free and open source ground heat transfer calculation tool written in C++. Specifically, Kiva is used
-to calculate heat loss and gain on a timestep basis from building foundations. The goal is
-to create a tool that can integrate the multi-dimensional heat transfer into standard building energy simulation engines.
+Kiva is a free and open source ground heat transfer calculation tool written in
+C++. Specifically, Kiva is used to calculate heat loss and gain on a timestep
+basis from building foundations. The goal is to create a tool that can integrate
+the multi-dimensional heat transfer into standard building energy simulation
+engines.
 
 Documentation
 -------------
@@ -23,6 +27,16 @@ Pre-requisites:
 
 1. A C++ compiler (e.g., Clang, GCC, MSVC)
 2. CMake
+
+Building Kiva from source
+-------------------------
+
+1. Clone the git repository, or download and extract the source code (`tar.gz` or `zip`).
+2. Make a directory called `build` inside the top level of your source.
+3. Open a console in the `build` directory.
+4. Type `cmake ..`.
+5. Type `cmake --build . --config Release`.
+6. The Kiva executable (`kiva` or `kiva.exe`) will appear in your build directory.
 
 If you'd like to contribute to this code or if you have questions, send an email to Neal
 Kruis (neal.kruis AT bigladdersoftware DOT com).

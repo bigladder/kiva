@@ -1,7 +1,8 @@
-/* Copyright (c) 2012-2016 Big Ladder Software. All rights reserved.
+/* Copyright (c) 2012-2017 Big Ladder Software LLC. All rights reserved.
 * See the LICENSE file for additional terms and conditions. */
 
 #include "Simulator.hpp"
+#include "Errors.hpp"
 
 using namespace Kiva;
 
@@ -11,15 +12,24 @@ Simulator::Simulator(WeatherData &weatherData, Input &input, std::string outputF
   weatherData(weatherData), input(input), ground(input.foundation,input.output.outputReport.outputMap)
 {
   // set up output file
+  boost::filesystem::path outputPath(outputFileName);
+  outputDir = outputPath.parent_path();
   outputFile.open(outputFileName.c_str());
   outputFile << "Timestamp" << printOutputHeaders() << std::endl;
 
   annualAverageDryBulbTemperature = weatherData.dryBulbTemp.getAverage();
 
-  std::cout << "Creating Domain..." << std::endl;
+  showMessage(MSG_INFO, "Creating Domain...");
 
   if (input.foundation.deepGroundBoundary == Foundation::DGB_AUTO)
     input.foundation.deepGroundTemperature = annualAverageDryBulbTemperature;
+
+  if (!input.foundation.useDetailedExposedPerimeter || !isConvex(input.foundation.polygon))
+  {
+    if (input.foundation.reductionStrategy == Foundation::RS_BOUNDARY) {
+      input.foundation.reductionStrategy = Foundation::RS_AP;
+    }
+  }
 
   if (input.foundation.reductionStrategy == Foundation::RS_BOUNDARY)
   {
@@ -29,10 +39,15 @@ Simulator::Simulator(WeatherData &weatherData, Input &input, std::string outputF
 
   ground.buildDomain();
 
-  std::cout << "  X Cells: " << ground.nX << std::endl;
-  std::cout << "  Y Cells: " << ground.nY << std::endl;
-  std::cout << "  Z Cells: " << ground.nZ << std::endl;
-  std::cout << "  Total Cells: " << ground.nX*ground.nY*ground.nZ << std::endl;
+  std::stringstream ss;
+
+  ss <<
+  "  X Cells: " << ground.nX << "\n" <<
+  "  Y Cells: " << ground.nY << "\n" <<
+  "  Z Cells: " << ground.nZ << "\n" <<
+  "  Total Cells: " << ground.nX*ground.nY*ground.nZ;
+
+  showMessage(MSG_INFO, ss.str());
 
   // Initial Conditions
   initializeConditions();
@@ -54,7 +69,7 @@ void Simulator::initializeConditions()
 
   if (input.foundation.numericalScheme != Foundation::NS_STEADY_STATE)  // Intialization not necessary for steady state calculations
   {
-    std::cout << "Initializing Temperatures..." << std::endl;
+    showMessage(MSG_INFO, "Initializing Temperatures...");
 
     // Calculate initial time in seconds (simulation start minus warmup and acceleration periods)
     boost::posix_time::time_duration& simulationTimestep = input.simulationControl.timestep;
@@ -133,80 +148,102 @@ void Simulator::initializeConditions()
 
 void Simulator::initializePlots()
 {
-  for (std::size_t p = 0; p < input.output.outputAnimations.size(); p++)
+  for (std::size_t p = 0; p < input.output.outputSnapshots.size(); p++)
   {
-    if (!input.output.outputAnimations[p].startDateSet)
-      input.output.outputAnimations[p].startDate = input.simulationControl.startDate;
+    if (!input.output.outputSnapshots[p].startDateSet)
+      input.output.outputSnapshots[p].startDate = input.simulationControl.startDate;
 
-    if (!input.output.outputAnimations[p].endDateSet)
-      input.output.outputAnimations[p].endDate = input.simulationControl.endDate;
+    if (!input.output.outputSnapshots[p].endDateSet)
+      input.output.outputSnapshots[p].endDate = input.simulationControl.endDate;
 
     if (ground.foundation.numberOfDimensions == 3)
     {
-      if (!input.output.outputAnimations[p].xRangeSet)
+      if (!input.output.outputSnapshots[p].xRangeSet)
       {
-        input.output.outputAnimations[p].xRange.first = ground.domain.meshX.dividers[0];
-        input.output.outputAnimations[p].xRange.second = ground.domain.meshX.dividers[ground.nX];
+        input.output.outputSnapshots[p].snapshotSettings.xRange.first = ground.domain.meshX.dividers[0];
+        input.output.outputSnapshots[p].snapshotSettings.xRange.second = ground.domain.meshX.dividers[ground.nX];
       }
 
-      if (!input.output.outputAnimations[p].yRangeSet)
+      if (!input.output.outputSnapshots[p].yRangeSet)
       {
-        input.output.outputAnimations[p].yRange.first = ground.domain.meshY.dividers[0];
-        input.output.outputAnimations[p].yRange.second = ground.domain.meshY.dividers[ground.nY];
+        input.output.outputSnapshots[p].snapshotSettings.yRange.first = ground.domain.meshY.dividers[0];
+        input.output.outputSnapshots[p].snapshotSettings.yRange.second = ground.domain.meshY.dividers[ground.nY];
       }
 
-      if (!input.output.outputAnimations[p].zRangeSet)
+      if (!input.output.outputSnapshots[p].zRangeSet)
       {
 
-        if (!input.output.outputAnimations[p].xRangeSet && !input.output.outputAnimations[p].yRangeSet)
+        if (!input.output.outputSnapshots[p].xRangeSet && !input.output.outputSnapshots[p].yRangeSet)
         {
-          input.output.outputAnimations[p].zRange.first = 0;
-          input.output.outputAnimations[p].zRange.second = 0;
+          input.output.outputSnapshots[p].snapshotSettings.zRange.first = 0;
+          input.output.outputSnapshots[p].snapshotSettings.zRange.second = 0;
         }
         else
         {
-          input.output.outputAnimations[p].zRange.first = ground.domain.meshZ.dividers[0];
-          input.output.outputAnimations[p].zRange.second = ground.domain.meshZ.dividers[ground.nZ];
+          input.output.outputSnapshots[p].snapshotSettings.zRange.first = ground.domain.meshZ.dividers[0];
+          input.output.outputSnapshots[p].snapshotSettings.zRange.second = ground.domain.meshZ.dividers[ground.nZ];
         }
       }
 
 
     }
+    else if (ground.foundation.numberOfDimensions == 2)
+    {
+      if (!input.output.outputSnapshots[p].xRangeSet)
+      {
+        input.output.outputSnapshots[p].snapshotSettings.xRange.first = ground.domain.meshX.dividers[0];
+        input.output.outputSnapshots[p].snapshotSettings.xRange.second = ground.domain.meshX.dividers[ground.nX];
+      }
+
+      if (!input.output.outputSnapshots[p].yRangeSet)
+      {
+        input.output.outputSnapshots[p].snapshotSettings.yRange.first = 0.5;
+        input.output.outputSnapshots[p].snapshotSettings.yRange.second = 0.5;
+      }
+
+      if (!input.output.outputSnapshots[p].zRangeSet)
+      {
+        input.output.outputSnapshots[p].snapshotSettings.zRange.first = ground.domain.meshZ.dividers[0];
+        input.output.outputSnapshots[p].snapshotSettings.zRange.second = ground.domain.meshZ.dividers[ground.nZ];
+      }
+    }
     else
     {
-      if (!input.output.outputAnimations[p].xRangeSet)
+      if (!input.output.outputSnapshots[p].xRangeSet)
       {
-        input.output.outputAnimations[p].xRange.first = ground.domain.meshX.dividers[0];
-        input.output.outputAnimations[p].xRange.second = ground.domain.meshX.dividers[ground.nX];
+        input.output.outputSnapshots[p].snapshotSettings.xRange.first = 0.5;
+        input.output.outputSnapshots[p].snapshotSettings.xRange.second = 0.5;
       }
 
-      if (!input.output.outputAnimations[p].yRangeSet)
+      if (!input.output.outputSnapshots[p].yRangeSet)
       {
-        input.output.outputAnimations[p].yRange.first = 0.5;
-        input.output.outputAnimations[p].yRange.second = 0.5;
+        input.output.outputSnapshots[p].snapshotSettings.yRange.first = 0.5;
+        input.output.outputSnapshots[p].snapshotSettings.yRange.second = 0.5;
       }
 
-      if (!input.output.outputAnimations[p].zRangeSet)
+      if (!input.output.outputSnapshots[p].zRangeSet)
       {
-        input.output.outputAnimations[p].zRange.first = ground.domain.meshZ.dividers[0];
-        input.output.outputAnimations[p].zRange.second = ground.domain.meshZ.dividers[ground.nZ];
+        input.output.outputSnapshots[p].snapshotSettings.zRange.first = ground.domain.meshZ.dividers[0];
+        input.output.outputSnapshots[p].snapshotSettings.zRange.second = ground.domain.meshZ.dividers[ground.nZ];
       }
     }
 
-    plots.push_back(GroundPlot(input.output.outputAnimations[p],ground.domain,input.foundation.blocks));
+    input.output.outputSnapshots[p].snapshotSettings.dir = (outputDir / input.output.outputSnapshots[p].snapshotSettings.dir).string();
 
-    boost::posix_time::ptime startTime(input.output.outputAnimations[p].startDate,boost::posix_time::hours(0));;
-    boost::posix_time::ptime endTime(input.output.outputAnimations[p].endDate + boost::gregorian::days(1));
+    plots.emplace_back(input.output.outputSnapshots[p].snapshotSettings,ground.domain,input.foundation);
 
-    plots[p].tStart = startTime;
-    plots[p].nextPlotTime = startTime;
-    plots[p].tEnd = endTime;
+    boost::posix_time::ptime startTime(input.output.outputSnapshots[p].startDate,boost::posix_time::hours(0));
+    boost::posix_time::ptime endTime(input.output.outputSnapshots[p].endDate + boost::gregorian::days(1));
+
+    plots[p].tStart = (startTime - input.simulationControl.startTime).total_seconds();
+    plots[p].nextPlotTime = (startTime - input.simulationControl.startTime).total_seconds();
+    plots[p].tEnd = (endTime - input.simulationControl.startTime).total_seconds();
   }
 }
 
 void Simulator::simulate()
 {
-  std::cout << "Beginning Simulation..." << std::endl;
+  showMessage(MSG_INFO, "Beginning Simulation...");
 
   boost::posix_time::ptime simStart = input.simulationControl.startTime;
   boost::posix_time::ptime simEnd(input.simulationControl.endDate + boost::gregorian::days(1));
@@ -233,7 +270,7 @@ void Simulator::simulate()
 
   }
 
-  std::cout << "  " << simEnd - input.simulationControl.timestep << " (100%)" << std::endl;
+  showMessage(MSG_INFO, "  " + to_simple_string(simEnd - input.simulationControl.timestep) + " (100%)");
 
 }
 
@@ -241,7 +278,7 @@ void Simulator::plot(boost::posix_time::ptime t)
 {
   for (std::size_t p = 0; p < plots.size(); p++)
   {
-    if (plots[p].makeNewFrame(t))
+    if (plots[p].makeNewFrame((t - input.simulationControl.startTime).total_seconds()))
     {
       std::string timeStamp = to_simple_string(t);
 
@@ -255,9 +292,9 @@ void Simulator::plot(boost::posix_time::ptime t)
           for(size_t i = plots[p].iMin; i <= plots[p].iMax; i++)
           {
             std::size_t index = (i-plots[p].iMin)+nI*(j-plots[p].jMin)+nI*nJ*(k-plots[p].kMin);
-            if (input.output.outputAnimations[p].plotType == OutputAnimation::P_TEMP)
+            if (input.output.outputSnapshots[p].snapshotSettings.plotType == SnapshotSettings::P_TEMP)
             {
-              if (input.output.outputAnimations[p].outputUnits == OutputAnimation::IP)
+              if (input.output.outputSnapshots[p].snapshotSettings.outputUnits == SnapshotSettings::IP)
                 plots[p].TDat.a[index] = (ground.TNew[i][j][k] - 273.15)*9/5 + 32.0;
               else
                 plots[p].TDat.a[index] = ground.TNew[i][j][k] - 273.15;
@@ -271,13 +308,13 @@ void Simulator::plot(boost::posix_time::ptime t)
               double Qz = Qflux[2];
               double Qmag = sqrt(Qx*Qx + Qy*Qy + Qz*Qz);
 
-              if (input.output.outputAnimations[p].fluxDir == OutputAnimation::D_M)
+              if (input.output.outputSnapshots[p].snapshotSettings.fluxDir == SnapshotSettings::D_M)
                 plots[p].TDat.a[index] = Qmag/(du*du);
-              else if (input.output.outputAnimations[p].fluxDir == OutputAnimation::D_X)
+              else if (input.output.outputSnapshots[p].snapshotSettings.fluxDir == SnapshotSettings::D_X)
                 plots[p].TDat.a[index] = Qx/(du*du);
-              else if (input.output.outputAnimations[p].fluxDir == OutputAnimation::D_Y)
+              else if (input.output.outputSnapshots[p].snapshotSettings.fluxDir == SnapshotSettings::D_Y)
                 plots[p].TDat.a[index] = Qy/(du*du);
-              else if (input.output.outputAnimations[p].fluxDir == OutputAnimation::D_Z)
+              else if (input.output.outputSnapshots[p].snapshotSettings.fluxDir == SnapshotSettings::D_Z)
                 plots[p].TDat.a[index] = Qz/(du*du);
             }
           }
@@ -319,7 +356,7 @@ void Simulator::plot(boost::posix_time::ptime t)
       }
       output.close();*/
 
-      plots[p].createFrame(timeStamp);
+      plots[p].createFrame(timeStamp.substr(5,timeStamp.size()-5));
     }
   }
 }
@@ -332,11 +369,13 @@ void Simulator::printStatus(boost::posix_time::ptime t)
   {
     if (initPeriod)
     {
-      std::cout << "  " << t << std::endl;
+      showMessage(MSG_INFO, "  " + to_simple_string(t));
     }
     else
     {
-      std::cout << "  " << t << " (" << percentComplete << "%)" << std::endl;
+      std::stringstream ss;
+      ss << "  " << t << " (" << percentComplete << "%)";
+      showMessage(MSG_INFO, ss.str());
     }
 
     prevStatusUpdate = currentTime;
@@ -349,9 +388,6 @@ double Simulator::getInitialTemperature(boost::posix_time::ptime t, double z)
 {
   if (input.initialization.initializationMethod == Initialization::IM_KUSUDA)
   {
-    double minDryBulb = weatherData.dryBulbTemp.getMin();
-    double maxDryBulb = weatherData.dryBulbTemp.getMax();
-
     boost::gregorian::greg_year year = t.date().year();
     boost::gregorian::date dayBegin(year,boost::gregorian::Jan,1);
     boost::posix_time::ptime tYearStart(dayBegin);
@@ -403,7 +439,6 @@ void Simulator::updateBoundaryConditions(boost::posix_time::ptime t)
   bcs.solarAzimuth = weatherData.azimuth.getValue(t);
   bcs.solarAltitude = weatherData.altitude.getValue(t);
   bcs.directNormalFlux = weatherData.directNormalSolar.getValue(t);
-  bcs.globalHorizontalFlux = weatherData.globalHorizontalSolar.getValue(t);
   bcs.diffuseHorizontalFlux = weatherData.diffuseHorizontalSolar.getValue(t);
   bcs.skyEmissivity = weatherData.skyEmissivity.getValue(t);
 
@@ -429,20 +464,28 @@ std::string Simulator::printOutputLine()
   {
 
     double totalValue = 0.0;
+    double totalVA = 0.0;
     double totalArea= 0.0;
     for (auto surface : out.surfaces)
     {
       if (ground.foundation.hasSurface[surface]) {
         totalValue += ground.getSurfaceAverageValue({surface,out.outType});
+        totalVA += ground.getSurfaceAverageValue({surface,out.outType})*ground.foundation.surfaceAreas[surface];
         totalArea += ground.foundation.surfaceAreas[surface];
       }
     }
 
-    if (out.outType == GroundOutput::OT_RATE) {
-      outputLine += ", " + boost::lexical_cast<std::string>(totalValue);
+    if (totalArea > 0.0)
+    {
+      if (out.outType == GroundOutput::OT_RATE) {
+        outputLine += ", " + boost::lexical_cast<std::string>(totalValue);
+      }
+      else {
+        outputLine += ", " + boost::lexical_cast<std::string>(totalVA/totalArea);
+      }
     }
     else {
-      outputLine += ", " + boost::lexical_cast<std::string>(totalValue/totalArea);
+      outputLine += ", NAN";
     }
   }
 

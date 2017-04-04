@@ -1,10 +1,14 @@
-/* Copyright (c) 2012-2016 Big Ladder Software. All rights reserved.
+/* Copyright (c) 2012-2017 Big Ladder Software LLC. All rights reserved.
 * See the LICENSE file for additional terms and conditions. */
 
 #ifndef Ground_CPP
 #define Ground_CPP
 
+#undef PRNTSURF
+
 #include "Ground.hpp"
+#include "Errors.hpp"
+//#include <unsupported/Eigen/SparseExtra>
 
 namespace Kiva {
 
@@ -14,21 +18,17 @@ static const bool TDMA = true;
 
 Ground::Ground(Foundation &foundation) : foundation(foundation)
 {
-
+  pSolver = std::make_shared<Eigen::BiCGSTAB<Eigen::SparseMatrix<double>, Eigen::IncompleteLUT<double>>>();
 }
 
 Ground::Ground(Foundation &foundation, GroundOutput::OutputMap &outputMap)
   : foundation(foundation), groundOutput(outputMap)
 {
-
+  pSolver = std::make_shared<Eigen::BiCGSTAB<Eigen::SparseMatrix<double>, Eigen::IncompleteLUT<double>>>();
 }
 
 Ground::~Ground()
 {
-  lis_matrix_destroy(Amat);
-  lis_vector_destroy(x);
-  lis_vector_destroy(b);
-  lis_solver_destroy(solver); // for whatever reason, this causes a crash
 }
 
 void Ground::buildDomain()
@@ -53,7 +53,8 @@ void Ground::buildDomain()
     VOld.resize(nX,std::vector<std::vector<double> >(nY,std::vector<double>(nZ)));
   }
 
-  if (foundation.numericalScheme == Foundation::NS_ADI && TDMA)
+  if ((foundation.numericalScheme == Foundation::NS_ADI ||
+    foundation.numberOfDimensions == 1) && TDMA)
   {
     a1.resize(nX*nY*nZ, 0.0);
     a2.resize(nX*nY*nZ, 0.0);
@@ -62,30 +63,13 @@ void Ground::buildDomain()
     x_.resize(nX*nY*nZ);
   }
 
-  std::string solverOptionsString = "-i ";
-  solverOptionsString.append(foundation.solver);
-  solverOptionsString.append(" -p ");
-  solverOptionsString.append(foundation.preconditioner);
-  solverOptionsString.append(" -maxiter ");
-  solverOptionsString.append(std::to_string(foundation.maxIterations));
-  solverOptionsString.append(" -initx_zeros false -tol ");
-  solverOptionsString.append(std::to_string(foundation.tolerance));
-
-  std::vector<char> solverChars(solverOptionsString.begin(),solverOptionsString.end());
-  solverChars.push_back('\0');
-  solverOptions = solverChars;
-
-  lis_matrix_create(LIS_COMM_WORLD,&Amat);
-  lis_matrix_set_size(Amat,nX*nY*nZ,nX*nY*nZ);
-
-  lis_vector_create(LIS_COMM_WORLD,&b);
-  lis_vector_set_size(b,0,nX*nY*nZ);
-
-  lis_vector_duplicate(b,&x);
-
-  lis_vector_set_all(283.15,x);  // TODO Set better default
-  lis_solver_create(&solver);
-  lis_solver_set_option(&solverOptions[0],solver);
+  pSolver->setMaxIterations(foundation.maxIterations);
+  pSolver->setTolerance(foundation.tolerance);
+  tripletList.reserve(nX*nY*nZ*(1+2*foundation.numberOfDimensions));
+  Amat.resize(nX*nY*nZ,nX*nY*nZ);
+  b.resize(nX*nY*nZ);
+  x.resize(nX*nY*nZ);
+  x.fill(283.15);
 
   TNew.resize(nX,std::vector<std::vector<double> >(nY,std::vector<double>(nZ)));
   TOld.resize(nX,std::vector<std::vector<double> >(nY,std::vector<double>(nZ)));
@@ -145,18 +129,18 @@ void Ground::calculateADEUpwardSweep()
         case Cell::BOUNDARY:
           {
           double tilt;
-          if (domain.cell[i][j][k].surface.orientation == Surface::Z_POS)
+          if (domain.cell[i][j][k].surfacePtr->orientation == Surface::Z_POS)
             tilt = 0;
-          else if (domain.cell[i][j][k].surface.orientation == Surface::Z_NEG)
+          else if (domain.cell[i][j][k].surfacePtr->orientation == Surface::Z_NEG)
             tilt = PI;
           else
             tilt = PI/2.0;
 
-          switch (domain.cell[i][j][k].surface.boundaryConditionType)
+          switch (domain.cell[i][j][k].surfacePtr->boundaryConditionType)
           {
           case Surface::ZERO_FLUX:
             {
-            switch (domain.cell[i][j][k].surface.orientation)
+            switch (domain.cell[i][j][k].surfacePtr->orientation)
             {
             case Surface::X_NEG:
               U[i][j][k] = UOld[i+1][j][k];
@@ -182,7 +166,7 @@ void Ground::calculateADEUpwardSweep()
 
           case Surface::CONSTANT_TEMPERATURE:
 
-            U[i][j][k] = domain.cell[i][j][k].surface.temperature;
+            U[i][j][k] = domain.cell[i][j][k].surfacePtr->temperature;
             break;
 
           case Surface::INTERIOR_TEMPERATURE:
@@ -197,15 +181,15 @@ void Ground::calculateADEUpwardSweep()
 
           case Surface::INTERIOR_FLUX:
             {
-            double Tair = bcs.indoorTemp;
-            double q = domain.cell[i][j][k].heatGain;
+            double& Tair = bcs.indoorTemp;
+            double& q = domain.cell[i][j][k].heatGain;
 
             double hc = getConvectionCoeff(TOld[i][j][k],
-                    Tair,0.0,1.52,false,tilt);
-            double hr = getSimpleInteriorIRCoeff(domain.cell[i][j][k].surface.emissivity,
+                    Tair,0.0,0.00208,false,tilt);  // TODO Make roughness a property of the interior surfaces
+            double hr = getSimpleInteriorIRCoeff(domain.cell[i][j][k].surfacePtr->emissivity,
                                TOld[i][j][k],Tair);
 
-            switch (domain.cell[i][j][k].surface.orientation)
+            switch (domain.cell[i][j][k].surfacePtr->orientation)
             {
             case Surface::X_NEG:
               U[i][j][k] = (domain.getKXP(i,j,k)*UOld[i+1][j][k]/domain.getDXP(i) +
@@ -242,10 +226,10 @@ void Ground::calculateADEUpwardSweep()
             double eSky = bcs.skyEmissivity;
             double F = getEffectiveExteriorViewFactor(eSky,tilt);
             double hc = getConvectionCoeff(TOld[i][j][k],Tair,v,foundation.surfaceRoughness,true,tilt);
-            double hr = getExteriorIRCoeff(domain.cell[i][j][k].surface.emissivity,TOld[i][j][k],Tair,eSky,tilt);
+            double hr = getExteriorIRCoeff(domain.cell[i][j][k].surfacePtr->emissivity,TOld[i][j][k],Tair,eSky,tilt);
             double q = domain.cell[i][j][k].heatGain;
 
-            switch (domain.cell[i][j][k].surface.orientation)
+            switch (domain.cell[i][j][k].surfacePtr->orientation)
             {
             case Surface::X_NEG:
               U[i][j][k] = (domain.getKXP(i,j,k)*UOld[i+1][j][k]/domain.getDXP(i) +
@@ -306,7 +290,7 @@ void Ground::calculateADEUpwardSweep()
                 + UOld[i][j+1][k]*CYP
                 + Q) /
                 (1.0 - CXM - CZM - CYM);
-          else
+          else if (foundation.numberOfDimensions == 2)
           {
             double CXPC = 0;
             double CXMC = 0;
@@ -325,6 +309,14 @@ void Ground::calculateADEUpwardSweep()
                 + Q) /
                 (1.0 - CXMC - CXM - CZM);
           }
+          else
+          {
+            U[i][j][k] = (UOld[i][j][k]*(1.0 - CZP)
+                - U[i][j][k-1]*CZM
+                + UOld[i][j][k+1]*CZP
+                + Q) /
+                (1.0 - CZM);
+          }
           }
           break;
         }
@@ -336,29 +328,29 @@ void Ground::calculateADEUpwardSweep()
 void Ground::calculateADEDownwardSweep()
 {
   // Downward sweep (Solve V Matrix starting from I, K)
-  for (size_t i = nX - 1; i >= 0 && i < nX; i--)
+  for (size_t i = nX - 1; /* i >= 0 && */ i < nX; i--)
   {
-    for (size_t j = nY - 1; j >= 0 && j < nY; j--)
+    for (size_t j = nY - 1; /* j >= 0 && */ j < nY; j--)
     {
-      for (size_t k = nZ - 1; k >= 0 && k < nZ; k--)
+      for (size_t k = nZ - 1; /* k >= 0 && */ k < nZ; k--)
       {
         switch (domain.cell[i][j][k].cellType)
         {
         case Cell::BOUNDARY:
           {
           double tilt;
-          if (domain.cell[i][j][k].surface.orientation == Surface::Z_POS)
+          if (domain.cell[i][j][k].surfacePtr->orientation == Surface::Z_POS)
             tilt = 0;
-          else if (domain.cell[i][j][k].surface.orientation == Surface::Z_NEG)
+          else if (domain.cell[i][j][k].surfacePtr->orientation == Surface::Z_NEG)
             tilt = PI;
           else
             tilt = PI/2.0;
 
-          switch (domain.cell[i][j][k].surface.boundaryConditionType)
+          switch (domain.cell[i][j][k].surfacePtr->boundaryConditionType)
           {
           case Surface::ZERO_FLUX:
             {
-            switch (domain.cell[i][j][k].surface.orientation)
+            switch (domain.cell[i][j][k].surfacePtr->orientation)
             {
             case Surface::X_NEG:
               V[i][j][k] = V[i+1][j][k];
@@ -384,7 +376,7 @@ void Ground::calculateADEDownwardSweep()
 
           case Surface::CONSTANT_TEMPERATURE:
 
-            V[i][j][k] = domain.cell[i][j][k].surface.temperature;
+            V[i][j][k] = domain.cell[i][j][k].surfacePtr->temperature;
             break;
 
           case Surface::INTERIOR_TEMPERATURE:
@@ -400,14 +392,14 @@ void Ground::calculateADEDownwardSweep()
           case Surface::INTERIOR_FLUX:
             {
             double& Tair = bcs.indoorTemp;
-            double q = 0;
+            double& q = domain.cell[i][j][k].heatGain;
 
             double hc = getConvectionCoeff(TOld[i][j][k],
-                    Tair,0.0,1.52,false,tilt);
-            double hr = getSimpleInteriorIRCoeff(domain.cell[i][j][k].surface.emissivity,
+                    Tair,0.0,0.00208,false,tilt);
+            double hr = getSimpleInteriorIRCoeff(domain.cell[i][j][k].surfacePtr->emissivity,
                                TOld[i][j][k],Tair);
 
-            switch (domain.cell[i][j][k].surface.orientation)
+            switch (domain.cell[i][j][k].surfacePtr->orientation)
             {
             case Surface::X_NEG:
               V[i][j][k] = (domain.getKXP(i,j,k)*V[i+1][j][k]/domain.getDXP(i) +
@@ -444,10 +436,10 @@ void Ground::calculateADEDownwardSweep()
             double& eSky = bcs.skyEmissivity;
             double F = getEffectiveExteriorViewFactor(eSky,tilt);
             double hc = getConvectionCoeff(TOld[i][j][k],Tair,v,foundation.surfaceRoughness,true,tilt);
-            double hr = getExteriorIRCoeff(domain.cell[i][j][k].surface.emissivity,TOld[i][j][k],Tair,eSky,tilt);
-            double q = domain.cell[i][j][k].surface.absorptivity*bcs.globalHorizontalFlux;
+            double hr = getExteriorIRCoeff(domain.cell[i][j][k].surfacePtr->emissivity,TOld[i][j][k],Tair,eSky,tilt);
+            double q = domain.cell[i][j][k].heatGain;
 
-            switch (domain.cell[i][j][k].surface.orientation)
+            switch (domain.cell[i][j][k].surfacePtr->orientation)
             {
             case Surface::X_NEG:
               V[i][j][k] = (domain.getKXP(i,j,k)*V[i+1][j][k]/domain.getDXP(i) +
@@ -509,7 +501,7 @@ void Ground::calculateADEDownwardSweep()
                 + V[i][j+1][k]*CYP
                 + Q) /
                 (1.0 + CXP + CZP + CYP);
-          else
+          else if (foundation.numberOfDimensions == 2)
           {
             double CXPC = 0;
             double CXMC = 0;
@@ -527,6 +519,14 @@ void Ground::calculateADEDownwardSweep()
                 + V[i][j][k+1]*CZP
                 + Q) /
                 (1.0 + CXPC + CXP + CZP);
+          }
+          else
+          {
+            V[i][j][k] = (VOld[i][j][k]*(1.0 + CZM)
+                - VOld[i][j][k-1]*CZM
+                + V[i][j][k+1]*CZP
+                + Q) /
+                (1.0 + CZP);
           }
           }
           break;
@@ -549,18 +549,18 @@ void Ground::calculateExplicit()
         case Cell::BOUNDARY:
           {
           double tilt;
-          if (domain.cell[i][j][k].surface.orientation == Surface::Z_POS)
+          if (domain.cell[i][j][k].surfacePtr->orientation == Surface::Z_POS)
             tilt = 0;
-          else if (domain.cell[i][j][k].surface.orientation == Surface::Z_NEG)
+          else if (domain.cell[i][j][k].surfacePtr->orientation == Surface::Z_NEG)
             tilt = PI;
           else
             tilt = PI/2.0;
 
-          switch (domain.cell[i][j][k].surface.boundaryConditionType)
+          switch (domain.cell[i][j][k].surfacePtr->boundaryConditionType)
           {
           case Surface::ZERO_FLUX:
             {
-            switch (domain.cell[i][j][k].surface.orientation)
+            switch (domain.cell[i][j][k].surfacePtr->orientation)
             {
             case Surface::X_NEG:
               TNew[i][j][k] = TOld[i+1][j][k];
@@ -586,7 +586,7 @@ void Ground::calculateExplicit()
 
           case Surface::CONSTANT_TEMPERATURE:
 
-            TNew[i][j][k] = domain.cell[i][j][k].surface.temperature;
+            TNew[i][j][k] = domain.cell[i][j][k].surfacePtr->temperature;
             break;
 
           case Surface::INTERIOR_TEMPERATURE:
@@ -602,14 +602,14 @@ void Ground::calculateExplicit()
           case Surface::INTERIOR_FLUX:
             {
             double& Tair = bcs.indoorTemp;
-            double q = 0;
+            double& q = domain.cell[i][j][k].heatGain;
 
             double hc = getConvectionCoeff(TOld[i][j][k],
-                    Tair,0.0,1.52,false,tilt);
-            double hr = getSimpleInteriorIRCoeff(domain.cell[i][j][k].surface.emissivity,
+                    Tair,0.0,0.00208,false,tilt);
+            double hr = getSimpleInteriorIRCoeff(domain.cell[i][j][k].surfacePtr->emissivity,
                                TOld[i][j][k],Tair);
 
-            switch (domain.cell[i][j][k].surface.orientation)
+            switch (domain.cell[i][j][k].surfacePtr->orientation)
             {
             case Surface::X_NEG:
               TNew[i][j][k] = (domain.getKXP(i,j,k)*TOld[i+1][j][k]/domain.getDXP(i) +
@@ -646,10 +646,10 @@ void Ground::calculateExplicit()
             double& eSky = bcs.skyEmissivity;
             double F = getEffectiveExteriorViewFactor(eSky,tilt);
             double hc = getConvectionCoeff(TOld[i][j][k],Tair,v,foundation.surfaceRoughness,true,tilt);
-            double hr = getExteriorIRCoeff(domain.cell[i][j][k].surface.emissivity,TOld[i][j][k],Tair,eSky,tilt);
-            double q = domain.cell[i][j][k].surface.absorptivity*bcs.globalHorizontalFlux;
+            double hr = getExteriorIRCoeff(domain.cell[i][j][k].surfacePtr->emissivity,TOld[i][j][k],Tair,eSky,tilt);
+            double q = domain.cell[i][j][k].heatGain;
 
-            switch (domain.cell[i][j][k].surface.orientation)
+            switch (domain.cell[i][j][k].surfacePtr->orientation)
             {
             case Surface::X_NEG:
               TNew[i][j][k] = (domain.getKXP(i,j,k)*TOld[i+1][j][k]/domain.getDXP(i) +
@@ -710,7 +710,7 @@ void Ground::calculateExplicit()
                 - TOld[i][j-1][k]*CYM
                 + TOld[i][j+1][k]*CYP
                 + Q;
-          else
+          else if (foundation.numberOfDimensions == 2)
           {
             double CXPC = 0;
             double CXMC = 0;
@@ -725,6 +725,13 @@ void Ground::calculateExplicit()
             TNew[i][j][k] = TOld[i][j][k]*(1.0 + CXMC + CXM + CZM - CXPC - CXP - CZP)
                 - TOld[i-1][j][k]*(CXMC + CXM)
                 + TOld[i+1][j][k]*(CXPC + CXP)
+                - TOld[i][j][k-1]*CZM
+                + TOld[i][j][k+1]*CZP
+                + Q;
+          }
+          else
+          {
+            TNew[i][j][k] = TOld[i][j][k]*(1.0 + CZM - CZP)
                 - TOld[i][j][k-1]*CZM
                 + TOld[i][j][k+1]*CZP
                 + Q;
@@ -771,18 +778,18 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
         case Cell::BOUNDARY:
           {
           double tilt;
-          if (domain.cell[i][j][k].surface.orientation == Surface::Z_POS)
+          if (domain.cell[i][j][k].surfacePtr->orientation == Surface::Z_POS)
             tilt = 0;
-          else if (domain.cell[i][j][k].surface.orientation == Surface::Z_NEG)
+          else if (domain.cell[i][j][k].surfacePtr->orientation == Surface::Z_NEG)
             tilt = PI;
           else
             tilt = PI/2.0;
 
-          switch (domain.cell[i][j][k].surface.boundaryConditionType)
+          switch (domain.cell[i][j][k].surfacePtr->boundaryConditionType)
           {
           case Surface::ZERO_FLUX:
             {
-            switch (domain.cell[i][j][k].surface.orientation)
+            switch (domain.cell[i][j][k].surfacePtr->orientation)
             {
             case Surface::X_NEG:
               A = 1.0;
@@ -843,7 +850,7 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
             break;
           case Surface::CONSTANT_TEMPERATURE:
             A = 1.0;
-            bVal = domain.cell[i][j][k].surface.temperature;
+            bVal = domain.cell[i][j][k].surfacePtr->temperature;
 
             setAmatValue(index,index,A);
             setbValue(index,bVal);
@@ -864,15 +871,15 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
             break;
           case Surface::INTERIOR_FLUX:
             {
-            double Tair = bcs.indoorTemp;
-            double q = 0;
+            double& Tair = bcs.indoorTemp;
+            double& q = domain.cell[i][j][k].heatGain;
 
             double hc = getConvectionCoeff(TOld[i][j][k],
-                    Tair,0.0,1.52,false,tilt);
-            double hr = getSimpleInteriorIRCoeff(domain.cell[i][j][k].surface.emissivity,
+                    Tair,0.0,0.00208,false,tilt);
+            double hr = getSimpleInteriorIRCoeff(domain.cell[i][j][k].surfacePtr->emissivity,
                                TOld[i][j][k],Tair);
 
-            switch (domain.cell[i][j][k].surface.orientation)
+            switch (domain.cell[i][j][k].surfacePtr->orientation)
             {
             case Surface::X_NEG:
               A = domain.getKXP(i,j,k)/domain.getDXP(i) + (hc + hr);
@@ -939,10 +946,10 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
             double& eSky = bcs.skyEmissivity;
             double F = getEffectiveExteriorViewFactor(eSky,tilt);
             double hc = getConvectionCoeff(TOld[i][j][k],Tair,v,foundation.surfaceRoughness,true,tilt);
-            double hr = getExteriorIRCoeff(domain.cell[i][j][k].surface.emissivity,TOld[i][j][k],Tair,eSky,tilt);
-            double q = domain.cell[i][j][k].surface.absorptivity*bcs.globalHorizontalFlux;
+            double hr = getExteriorIRCoeff(domain.cell[i][j][k].surfacePtr->emissivity,TOld[i][j][k],Tair,eSky,tilt);
+            double q = domain.cell[i][j][k].heatGain;
 
-            switch (domain.cell[i][j][k].surface.orientation)
+            switch (domain.cell[i][j][k].surfacePtr->orientation)
             {
             case Surface::X_NEG:
               A = domain.getKXP(i,j,k)/domain.getDXP(i) + (hc + hr);
@@ -1051,7 +1058,7 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
               setAmatValue(index,index_km,Akm);
               setbValue(index,bVal);
             }
-            else
+            else if (foundation.numberOfDimensions == 2)
             {
               double CXPC = 0;
               double CXMC = 0;
@@ -1073,6 +1080,19 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
               setAmatValue(index,index,A);
               setAmatValue(index,index_ip,Aip);
               setAmatValue(index,index_im,Aim);
+              setAmatValue(index,index_kp,Akp);
+              setAmatValue(index,index_km,Akm);
+              setbValue(index,bVal);
+            }
+            else
+            {
+              A = (CZM - CZP);
+              Akm = -CZM;
+              Akp = CZP;
+
+              bVal = -Q;
+
+              setAmatValue(index,index,A);
               setAmatValue(index,index_kp,Akp);
               setAmatValue(index,index_km,Akm);
               setbValue(index,bVal);
@@ -1124,8 +1144,8 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
               setAmatValue(index,index_kp,Akp);
               setAmatValue(index,index_km,Akm);
               setbValue(index,bVal);
-}
-            else
+            }
+            else if (foundation.numberOfDimensions == 2)
             {
               double CXPC = 0;
               double CXMC = 0;
@@ -1152,6 +1172,22 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
               setAmatValue(index,index,A);
               setAmatValue(index,index_ip,Aip);
               setAmatValue(index,index_im,Aim);
+              setAmatValue(index,index_kp,Akp);
+              setAmatValue(index,index_km,Akm);
+              setbValue(index,bVal);
+            }
+            else
+            {
+              A = (1.0 + f*(CZP - CZM));
+              Akm = f*CZM;
+              Akp = f*(-CZP);
+
+              bVal = TOld[i][j][k]*(1.0 + (1-f)*(CZM - CZP))
+                 - TOld[i][j][k-1]*(1-f)*CZM
+                 + TOld[i][j][k+1]*(1-f)*CZP
+                 + Q;
+
+              setAmatValue(index,index,A);
               setAmatValue(index,index_kp,Akp);
               setAmatValue(index,index_km,Akm);
               setbValue(index,bVal);
@@ -1199,7 +1235,7 @@ void Ground::calculateADI(int dim)
           index = i + nX*j + nX*nY*k;
         else if (dim == 2)
           index = j + nY*i + nY*nX*k;
-        else if (dim == 3)
+        else //if (dim == 3)
           index = k + nZ*i + nZ*nX*j;
 
         double A, Ap, Am, bVal = 0.0;
@@ -1210,18 +1246,18 @@ void Ground::calculateADI(int dim)
         case Cell::BOUNDARY:
           {
           double tilt;
-          if (domain.cell[i][j][k].surface.orientation == Surface::Z_POS)
+          if (domain.cell[i][j][k].surfacePtr->orientation == Surface::Z_POS)
             tilt = 0;
-          else if (domain.cell[i][j][k].surface.orientation == Surface::Z_NEG)
+          else if (domain.cell[i][j][k].surfacePtr->orientation == Surface::Z_NEG)
             tilt = PI;
           else
             tilt = PI/2.0;
 
-          switch (domain.cell[i][j][k].surface.boundaryConditionType)
+          switch (domain.cell[i][j][k].surfacePtr->boundaryConditionType)
           {
           case Surface::ZERO_FLUX:
             {
-            switch (domain.cell[i][j][k].surface.orientation)
+            switch (domain.cell[i][j][k].surfacePtr->orientation)
             {
             case Surface::X_NEG:
               A = 1.0;
@@ -1331,7 +1367,7 @@ void Ground::calculateADI(int dim)
             break;
           case Surface::CONSTANT_TEMPERATURE:
             A = 1.0;
-            bVal = domain.cell[i][j][k].surface.temperature;
+            bVal = domain.cell[i][j][k].surfacePtr->temperature;
 
             setAmatValue(index,index,A);
             setbValue(index,bVal);
@@ -1352,15 +1388,15 @@ void Ground::calculateADI(int dim)
             break;
           case Surface::INTERIOR_FLUX:
             {
-            double Tair = bcs.indoorTemp;
-            double q = 0;
+            double& Tair = bcs.indoorTemp;
+            double& q = domain.cell[i][j][k].heatGain;
 
             double hc = getConvectionCoeff(TOld[i][j][k],
-                    Tair,0.0,1.52,false,tilt);
-            double hr = getSimpleInteriorIRCoeff(domain.cell[i][j][k].surface.emissivity,
+                    Tair,0.0,0.00208,false,tilt);
+            double hr = getSimpleInteriorIRCoeff(domain.cell[i][j][k].surfacePtr->emissivity,
                                TOld[i][j][k],Tair);
 
-            switch (domain.cell[i][j][k].surface.orientation)
+            switch (domain.cell[i][j][k].surfacePtr->orientation)
             {
             case Surface::X_NEG:
               A = domain.getKXP(i,j,k)/domain.getDXP(i) + (hc + hr);
@@ -1475,10 +1511,10 @@ void Ground::calculateADI(int dim)
             double eSky = bcs.skyEmissivity;
             double F = getEffectiveExteriorViewFactor(eSky,tilt);
             double hc = getConvectionCoeff(TOld[i][j][k],Tair,v,foundation.surfaceRoughness,true,tilt);
-            double hr = getExteriorIRCoeff(domain.cell[i][j][k].surface.emissivity,TOld[i][j][k],Tair,eSky,tilt);
-            double q = domain.cell[i][j][k].surface.absorptivity*bcs.globalHorizontalFlux;
+            double hr = getExteriorIRCoeff(domain.cell[i][j][k].surfacePtr->emissivity,TOld[i][j][k],Tair,eSky,tilt);
+            double q = domain.cell[i][j][k].heatGain;
 
-            switch (domain.cell[i][j][k].surface.orientation)
+            switch (domain.cell[i][j][k].surfacePtr->orientation)
             {
             case Surface::X_NEG:
               A = domain.getKXP(i,j,k)/domain.getDXP(i) + (hc + hr);
@@ -1610,10 +1646,15 @@ void Ground::calculateADI(int dim)
             theta = timestep/
                 (3*domain.cell[i][j][k].density*domain.cell[i][j][k].specificHeat);
           }
-          else
+          else if (foundation.numberOfDimensions == 2)
           {
             theta = timestep/
                 (2*domain.cell[i][j][k].density*domain.cell[i][j][k].specificHeat);
+          }
+          else
+          {
+            theta = timestep/
+                (domain.cell[i][j][k].density*domain.cell[i][j][k].specificHeat);
           }
 
           double CXP = domain.cell[i][j][k].cxp*theta;
@@ -1654,7 +1695,7 @@ void Ground::calculateADI(int dim)
                    + TOld[i][j][k+1]*f*CZP
                    + Q;
             }
-            else if (dim == 3) // z
+            else //if (dim == 3) // z
             {
               A = (1.0 + (3 - 2*f)*(CZP - CZM));
               Am = (3 - 2*f)*CZM;
@@ -1669,7 +1710,7 @@ void Ground::calculateADI(int dim)
             }
 
           }
-          else
+          else if (foundation.numberOfDimensions == 2)
           {
             double CXPC = 0;
             double CXMC = 0;
@@ -1690,7 +1731,7 @@ void Ground::calculateADI(int dim)
                    + TOld[i][j][k+1]*f*CZP
                    + Q;
             }
-            else if (dim == 3) // z
+            else //if (dim == 3) // z
             {
               A = 1.0 + (2 - f)*(CZP - CZM);
               Am = (2 - f)*CZM;
@@ -1701,6 +1742,14 @@ void Ground::calculateADI(int dim)
                    + TOld[i+1][j][k]*f*(CXPC + CXP)
                    + Q;
             }
+          }
+          else
+          {
+            A = 1.0 + CZP - CZM;
+            Am = CZM;
+            Ap = -CZP;
+
+            bVal = TOld[i][j][k] + Q;
           }
 
           setAmatValue(index,index,A);
@@ -1728,7 +1777,7 @@ void Ground::calculateADI(int dim)
           index = i + nX*j + nX*nY*k;
         else if (dim == 2)
           index = j + nY*i + nY*nX*k;
-        else if (dim == 3)
+        else //if (dim == 3)
           index = k + nZ*i + nZ*nX*j;
 
         // Read solution into temperature matrix
@@ -1748,6 +1797,7 @@ void Ground::calculate(BoundaryConditions& boundaryConidtions, double ts)
   timestep = ts;
   // update boundary conditions
   setSolarBoundaryConditions();
+  setInteriorRadiationBoundaryConditions();
 
   // Calculate Temperatures
   switch(foundation.numericalScheme)
@@ -1759,10 +1809,13 @@ void Ground::calculate(BoundaryConditions& boundaryConidtions, double ts)
     calculateExplicit();
     break;
   case Foundation::NS_ADI:
-    calculateADI(1);
+    {
+    if (foundation.numberOfDimensions > 1)
+      calculateADI(1);
     if (foundation.numberOfDimensions == 3)
       calculateADI(2);
     calculateADI(3);
+    }
     break;
   case Foundation::NS_IMPLICIT:
     calculateMatrix(Foundation::NS_IMPLICIT);
@@ -1779,7 +1832,8 @@ void Ground::calculate(BoundaryConditions& boundaryConidtions, double ts)
 
 void Ground::setAmatValue(const int i,const int j,const double val)
 {
-  if (foundation.numericalScheme == Foundation::NS_ADI && TDMA)
+  if ((foundation.numericalScheme == Foundation::NS_ADI ||
+    foundation.numberOfDimensions == 1) && TDMA)
   {
     if (j < i)
       a1[i] = val;
@@ -1790,59 +1844,60 @@ void Ground::setAmatValue(const int i,const int j,const double val)
   }
   else
   {
-    lis_matrix_set_value(LIS_INS_VALUE,i,j,val,Amat);
+    tripletList.emplace_back(i,j,val);
   }
 }
 
 void Ground::setbValue(const int i,const double val)
 {
-  if (foundation.numericalScheme == Foundation::NS_ADI && TDMA)
+  if ((foundation.numericalScheme == Foundation::NS_ADI ||
+    foundation.numberOfDimensions == 1) && TDMA)
   {
     b_[i] = val;
   }
   else
   {
-    lis_vector_set_value(LIS_INS_VALUE,i,val,b);
+    b(i) = val;
   }
 }
 
 void Ground::solveLinearSystem()
 {
-  if (foundation.numericalScheme == Foundation::NS_ADI && TDMA)
+  if ((foundation.numericalScheme == Foundation::NS_ADI ||
+    foundation.numberOfDimensions == 1) && TDMA)
   {
     solveTDM(a1,a2,a3,b_,x_);
   }
   else
   {
-    lis_matrix_set_type(Amat,LIS_MATRIX_CSR);
-    lis_matrix_assemble(Amat);
+    int iters;
+    double residual;
 
-    lis_solve(Amat,b,x,solver);
+    bool success;
 
-    int status;
-    lis_solver_get_status(solver, &status);
+    Amat.setFromTriplets(tripletList.begin(), tripletList.end());
+    pSolver->compute(Amat);
+    x = pSolver->solveWithGuess(b,x);
+    int status = pSolver->info();
 
-    if (status != 0) // LIS_MAXITER status
-    {
-      int iters;
-      double residual;
+//    Eigen::saveMarket(Amat, "Amat.mtx");
+//    Eigen::saveMarketVector(b, "b.mtx");
+    success = status == Eigen::Success;
+    if (!success) {
+      iters = pSolver->iterations();
+      residual = pSolver->error();
 
-      lis_solver_get_iter(solver, &iters);
-      lis_solver_get_residualnorm(solver, &residual);
-
-      std::cerr << "Warning: Solution did not converge after ";
-      std::cerr << iters << " iterations." << "\n";
-      std::cerr << "  The final residual was: " << residual << "\n";
-      std::cerr << "  Solver status: " << status << std::endl;
-
+      std::stringstream ss;
+      ss << "Solution did not converge after " << iters << " iterations. The final residual was: (" << residual << ").";
+      showMessage(MSG_ERR, ss.str());
     }
-    //lis_output(Amat,b,x,LIS_FMT_MM,"Matrix.mtx");
   }
 }
 
 void Ground::clearAmat()
 {
-  if (foundation.numericalScheme == Foundation::NS_ADI && TDMA)
+  if ((foundation.numericalScheme == Foundation::NS_ADI ||
+    foundation.numberOfDimensions == 1) && TDMA)
   {
     std::fill(a1.begin(), a1.end(), 0.0);
     std::fill(a2.begin(), a2.end(), 0.0);
@@ -1852,34 +1907,23 @@ void Ground::clearAmat()
   }
   else
   {
-    lis_matrix_destroy(Amat);
-    lis_matrix_create(LIS_COMM_WORLD,&Amat);
-    lis_matrix_set_size(Amat,nX*nY*nZ,nX*nY*nZ);
-
-    lis_vector_destroy(b);
-    lis_vector_create(LIS_COMM_WORLD,&b);
-    lis_vector_set_size(b,0,nX*nY*nZ);
-
-    lis_solver_destroy(solver);
-    lis_solver_create(&solver);
-    lis_solver_set_option(&solverOptions[0],solver);
+    tripletList.clear();
+    tripletList.reserve(nX*nY*nZ*(1+2*foundation.numberOfDimensions));
   }
 }
 
 double Ground::getxValue(const int i)
 {
-  if (foundation.numericalScheme == Foundation::NS_ADI && TDMA)
+  if ((foundation.numericalScheme == Foundation::NS_ADI ||
+    foundation.numberOfDimensions == 1) && TDMA)
   {
     return x_[i];
   }
   else
   {
-    double xVal;
-    lis_vector_get_value(x,i,&xVal);
-    return xVal;
+    return x(i);
   }
 }
-
 
 double Ground::getConvectionCoeff(double Tsurf,
                   double Tamb,
@@ -1936,9 +1980,10 @@ void Ground::calculateSurfaceAverages(){
       constructionRValue = foundation.wall.totalResistance();
     }
 
-    double totalHeatTransferRate = 0;
-    double TA = 0;
-    double totalArea = 0;
+    double totalHeatTransferRate = 0.0;
+    //double TA = 0;
+    double HA = 0.0;
+    double totalArea = 0.0;
 
     double& Tair = bcs.indoorTemp;
 
@@ -1957,36 +2002,67 @@ void Ground::calculateSurfaceAverages(){
           else
             tilt = PI/2.0;
 
+          #ifdef PRNTSURF
+            std::ofstream output;
+            output.open("surface.csv");
+            output  << "x, T, h, q, dx\n";
+          #endif
 
           for (std::size_t index = 0; index < foundation.surfaces[s].indices.size(); index++)
           {
-            std::size_t i = boost::get<0>(foundation.surfaces[s].indices[index]);
-            std::size_t j = boost::get<1>(foundation.surfaces[s].indices[index]);
-            std::size_t k = boost::get<2>(foundation.surfaces[s].indices[index]);
+            std::size_t i = std::get<0>(foundation.surfaces[s].indices[index]);
+            std::size_t j = std::get<1>(foundation.surfaces[s].indices[index]);
+            std::size_t k = std::get<2>(foundation.surfaces[s].indices[index]);
 
-            double h = getConvectionCoeff(TNew[i][j][k],Tair,0.0,1.52,false,tilt)
-                 + getSimpleInteriorIRCoeff(domain.cell[i][j][k].surface.emissivity,
+            double h = getConvectionCoeff(TNew[i][j][k],Tair,0.0,0.00208,false,tilt)
+                 + getSimpleInteriorIRCoeff(domain.cell[i][j][k].surfacePtr->emissivity,
                      TNew[i][j][k],Tair);
 
             double& A = domain.cell[i][j][k].area;
 
             totalArea += A;
             totalHeatTransferRate += h*A*(Tair - TNew[i][j][k]);
-            TA += TNew[i][j][k]*A;
+            //TA += TNew[i][j][k]*A;
+            HA += h*A;
+
+            #ifdef PRNTSURF
+              output <<
+                domain.meshX.centers[i] << ", " <<
+                TNew[i][j][k] << ", " <<
+                h << ", " <<
+                h*(Tair - TNew[i][j][k]) << ", " <<
+                domain.meshX.deltas[i] << "\n";
+            #endif
 
           }
+
+          #ifdef PRNTSURF
+            output.close();
+          #endif
+
         }
       }
     }
 
-    double Tavg = TA/totalArea;
-    groundOutput.outputValues[{surface,GroundOutput::OT_TEMP}] = Tavg;
-    groundOutput.outputValues[{surface,GroundOutput::OT_FLUX}] = totalHeatTransferRate/totalArea;
-    groundOutput.outputValues[{surface,GroundOutput::OT_RATE}] = totalHeatTransferRate/totalArea*surfaceArea;
+    if (totalArea > 0.0) {
+      double Tavg = Tair - totalHeatTransferRate/HA;
+      double hAvg = HA/totalArea;
 
-    double hAvg = totalHeatTransferRate/(totalArea*(Tair - Tavg));
+      groundOutput.outputValues[{surface,GroundOutput::OT_TEMP}] = Tavg;
+      groundOutput.outputValues[{surface,GroundOutput::OT_FLUX}] = totalHeatTransferRate/totalArea;
+      groundOutput.outputValues[{surface,GroundOutput::OT_RATE}] = totalHeatTransferRate/totalArea*surfaceArea;
+      groundOutput.outputValues[{surface,GroundOutput::OT_CONV}] = hAvg;
 
-    groundOutput.outputValues[{surface,GroundOutput::OT_EFF_TEMP}] = Tair - (totalHeatTransferRate/totalArea)*(constructionRValue+1/hAvg) - 273.15;
+      groundOutput.outputValues[{surface,GroundOutput::OT_EFF_TEMP}] = Tair - (totalHeatTransferRate/totalArea)*(constructionRValue+1/hAvg) - 273.15;
+    }
+    else {
+      groundOutput.outputValues[{surface,GroundOutput::OT_TEMP}] = Tair;
+      groundOutput.outputValues[{surface,GroundOutput::OT_FLUX}] = 0.0;
+      groundOutput.outputValues[{surface,GroundOutput::OT_RATE}] = 0.0;
+      groundOutput.outputValues[{surface,GroundOutput::OT_CONV}] = 0.0;
+
+      groundOutput.outputValues[{surface,GroundOutput::OT_EFF_TEMP}] = Tair - 273.15;
+    }
   }
 }
 
@@ -2002,12 +2078,19 @@ std::vector<double> Ground::calculateHeatFlux(const size_t &i, const size_t &j, 
   double Qy = 0;
   double Qz = 0;
 
-  double CXP = -domain.getKXP(i,j,k)*domain.getDXM(i)/(domain.getDXP(i)+domain.getDXM(i))/domain.getDXP(i);
-  double CXM = -domain.getKXM(i,j,k)*domain.getDXP(i)/(domain.getDXP(i)+domain.getDXM(i))/domain.getDXM(i);
+  double CXP = 0;
+  double CXM = 0;
   double CYP = 0;
   double CYM = 0;
   double CZP = -domain.getKZP(i,j,k)*domain.getDZM(k)/(domain.getDZP(k)+domain.getDZM(k))/domain.getDZP(k);
   double CZM = -domain.getKZM(i,j,k)*domain.getDZP(k)/(domain.getDZP(k)+domain.getDZM(k))/domain.getDZM(k);
+
+  if (foundation.numberOfDimensions > 1)
+  {
+    CXP = -domain.getKXP(i,j,k)*domain.getDXM(i)/(domain.getDXP(i)+domain.getDXM(i))/domain.getDXP(i);
+    CXM = -domain.getKXM(i,j,k)*domain.getDXP(i)/(domain.getDXP(i)+domain.getDXM(i))/domain.getDXM(i);
+  }
+
 
   if (foundation.numberOfDimensions == 3)
   {
@@ -2044,7 +2127,7 @@ std::vector<double> Ground::calculateHeatFlux(const size_t &i, const size_t &j, 
   {
     case Cell::BOUNDARY:
       {
-        switch (domain.cell[i][j][k].surface.orientation)
+        switch (domain.cell[i][j][k].surfacePtr->orientation)
         {
           case Surface::X_NEG:
             {
@@ -2094,7 +2177,7 @@ std::vector<double> Ground::calculateHeatFlux(const size_t &i, const size_t &j, 
       break;
     case Cell::ZERO_THICKNESS:
       {
-        int numZeroDims = domain.getNumZeroDims(i,j,k);
+        //int numZeroDims = domain.getNumZeroDims(i,j,k);
 
         std::vector<double> Qm;
         std::vector<double> Qp;
@@ -2159,7 +2242,7 @@ void Ground::calculateBoundaryLayer()
 
   double fluxSum = 0.0;
 
-  double x1_0;
+  double x1_0 = 0.0;
 
   bool firstIndex = true;
 
@@ -2173,7 +2256,6 @@ void Ground::calculateBoundaryLayer()
   for (size_t i = i_min; i < pre.nX; i++)
   {
     double Qz = pre.calculateHeatFlux(i,j,k)[2];
-    double x = pre.domain.meshX.centers[i];
     double x1 = pre.domain.meshX.dividers[i];
     double x2 = pre.domain.meshX.dividers[i+1];
 
@@ -2208,7 +2290,7 @@ void Ground::calculateBoundaryLayer()
 
 double Ground::getBoundaryValue(double dist)
 {
-  double val;
+  double val = 0.0;
   if (dist > boundaryLayer[boundaryLayer.size()-1].first)
     val = 1.0;
   else
@@ -2229,11 +2311,10 @@ double Ground::getBoundaryValue(double dist)
 
 double Ground::getBoundaryDistance(double val)
 {
-  double dist;
+  double dist = 0.0;
   if (val > 1.0 || val < 0.0)
   {
-    std::cerr << "ERROR: Boundary value passed not between 0.0 and 1.0." << std::endl;
-    exit (EXIT_FAILURE);
+    showMessage(MSG_ERR, "Boundary value passed not between 0.0 and 1.0.");
   }
   else
   {
@@ -2255,81 +2336,98 @@ void Ground::setNewBoundaryGeometry()
 {
   double area = boost::geometry::area(foundation.polygon);
   double perimeter = boost::geometry::perimeter(foundation.polygon);
+  double interiorPerimeter = 0.0;
 
   std::size_t nV = foundation.polygon.outer().size();
   for (std::size_t v = 0; v < nV; v++)
   {
-    Point b = foundation.polygon.outer()[v];
+    std::size_t vPrev, vNext, vNext2;
 
-    Point a;
     if (v == 0)
-      a = foundation.polygon.outer()[nV-1];
+      vPrev = nV - 1;
     else
-      a = foundation.polygon.outer()[v-1];
+      vPrev = v - 1;
 
-    Point c;
     if (v == nV -1)
-      c = foundation.polygon.outer()[0];
+      vNext = 0;
     else
-      c = foundation.polygon.outer()[v+1];
+      vNext = v + 1;
 
-    Point d;
-    if (v == nV -2)
-      d = foundation.polygon.outer()[0];
+    if (v == nV - 2)
+      vNext2 = 0;
     else if (v == nV -1)
-      d = foundation.polygon.outer()[1];
+      vNext2 = 1;
     else
-      d = foundation.polygon.outer()[v+2];
+      vNext2 = v + 2;
+
+    Point a = foundation.polygon.outer()[vPrev];
+    Point b = foundation.polygon.outer()[v];
+    Point c = foundation.polygon.outer()[vNext];
+    Point d = foundation.polygon.outer()[vNext2];
 
     // Correct U-turns
-    if (isEqual(getAngle(a,b,c) + getAngle(b,c,d),PI))
+    if (foundation.isExposedPerimeter[vPrev] && foundation.isExposedPerimeter[v] && foundation.isExposedPerimeter[vNext])
     {
-      double AB = getDistance(a,b);
-      double BC = getDistance(b,c);
-      double CD = getDistance(c,d);
-      double edgeDistance = BC;
-      double reductionDistance = std::min(AB,CD);
-      double reductionValue = 1 - getBoundaryValue(edgeDistance);
-      perimeter -= reductionValue*(AB+CD);
+      if (isEqual(getAngle(a,b,c) + getAngle(b,c,d),PI))
+      {
+        double AB = getDistance(a,b);
+        double BC = getDistance(b,c);
+        double CD = getDistance(c,d);
+        double edgeDistance = BC;
+        double reductionDistance = std::min(AB,CD);
+        double reductionValue = 1 - getBoundaryValue(edgeDistance);
+        perimeter -= 2*reductionDistance*reductionValue;
+      }
     }
 
-    double alpha = getAngle(a,b,c);
-    double A = getDistance(a,b);
-    double B = getDistance(b,c);
-
-
-    if (sin(alpha) > 0)
+    if (foundation.isExposedPerimeter[vPrev] && foundation.isExposedPerimeter[v])
     {
-      double f = getBoundaryDistance(1-sin(alpha/2)/(1+cos(alpha/2)))/sin(alpha/2);
+      double alpha = getAngle(a,b,c);
+      double A = getDistance(a,b);
+      double B = getDistance(b,c);
 
-      // Chamfer
-      double d = f/cos(alpha/2);
-      if (A < d || B < d)
+
+      if (sin(alpha) > 0)
       {
-        A = std::min(A,B);
-        B = std::min(A,B);
-      }
-      else
-      {
-        A = d;
-        B = d;
-      }
-      double C = sqrt(A*A + B*B - 2*A*B*cos(alpha));
+        double f = getBoundaryDistance(1-sin(alpha/2)/(1+cos(alpha/2)))/sin(alpha/2);
 
-      perimeter += C - (A + B);
+        // Chamfer
+        double d = f/cos(alpha/2);
+        if (A < d || B < d)
+        {
+          A = std::min(A,B);
+          B = std::min(A,B);
+        }
+        else
+        {
+          A = d;
+          B = d;
+        }
+        double C = sqrt(A*A + B*B - 2*A*B*cos(alpha));
 
+        perimeter += C - (A + B);
+
+      }
+    }
+
+    if (!foundation.isExposedPerimeter[v])
+    {
+      interiorPerimeter += getDistance(b,c);
     }
 
   }
 
   foundation.reductionStrategy = Foundation::RS_CUSTOM;
   foundation.twoParameters = false;
-  foundation.reductionLength2 = area/perimeter;
+  foundation.reductionLength2 = area/(perimeter - interiorPerimeter);
 
 }
 
 void Ground::setSolarBoundaryConditions()
 {
+  if (foundation.numberOfDimensions == 1) {
+    return;
+  }
   for (std::size_t s = 0; s < foundation.surfaces.size() ; s++)
   {
     if (foundation.surfaces[s].type == Surface::ST_GRADE
@@ -2339,12 +2437,12 @@ void Ground::setSolarBoundaryConditions()
       double& azi = bcs.solarAzimuth;
       double& alt = bcs.solarAltitude;
       double& qDN = bcs.directNormalFlux;
-      double& qGH = bcs.globalHorizontalFlux;
       double& qDH = bcs.diffuseHorizontalFlux;
+      double qGH = cos(PI/2 - alt)*qDN + qDH;
       double pssf;
       double q;
 
-      double incidence;
+      double incidence = 0.0;
       double aziYPos = foundation.orientation;
       double aziXPos = PI/2 + foundation.orientation;
       double aziYNeg = PI + foundation.orientation;
@@ -2390,7 +2488,7 @@ void Ground::setSolarBoundaryConditions()
           {
             aziSurf = aziYNeg;
           }
-          else if (foundation.surfaces[s].orientation == Surface::X_NEG)
+          else //if (foundation.surfaces[s].orientation == Surface::X_NEG)
           {
             aziSurf = aziXNeg;
           }
@@ -2462,59 +2560,18 @@ void Ground::setSolarBoundaryConditions()
       double Fg = 1.0 - Fsky;
       double rho_g = 1.0 - foundation.soilAbsorptivity;
 
-#if defined(ENABLE_OPENGL)
-      PixelCounter counter(512, 1, false);
-#endif
-
       for (std::size_t index = 0; index < foundation.surfaces[s].indices.size(); index++)
       {
-        std::size_t i = boost::get<0>(foundation.surfaces[s].indices[index]);
-        std::size_t j = boost::get<1>(foundation.surfaces[s].indices[index]);
-        std::size_t k = boost::get<2>(foundation.surfaces[s].indices[index]);
+        std::size_t i = std::get<0>(foundation.surfaces[s].indices[index]);
+        std::size_t j = std::get<1>(foundation.surfaces[s].indices[index]);
+        std::size_t k = std::get<2>(foundation.surfaces[s].indices[index]);
 
-        double alpha = domain.cell[i][j][k].surface.absorptivity;
+        double alpha = domain.cell[i][j][k].surfacePtr->absorptivity;
 
         if (qGH > 0.0)
         {
-
-#if defined(ENABLE_OPENGL)
-          if (isGreaterThan(domain.cell[i][j][k].area, 0.0))
-          {
-
-            std::vector<Polygon3> shadedSurface(1);
-
-            double xMin, xMax, yMin, yMax, zMin, zMax;
-            xMin = domain.meshX.dividers[i];
-            xMax = domain.meshX.dividers[i+1];
-            yMin = domain.meshY.dividers[j];
-            yMax = domain.meshY.dividers[j+1];
-            zMin = domain.meshZ.dividers[k];
-            zMax = domain.meshZ.dividers[k+1];
-
-
-            Polygon3 poly;
-            poly.outer().push_back(Point3(xMin,yMin,zMax));
-            poly.outer().push_back(Point3(xMin,yMax,zMin));
-            poly.outer().push_back(Point3(xMax,yMax,zMax));
-            poly.outer().push_back(Point3(xMax,yMin,zMin));
-            shadedSurface[0] = poly;
-
-            double areaRatio = counter.getAreaRatio(foundation.orientation,azi,alt,foundation.buildingSurfaces,shadedSurface, 0);
-
-            int pixels = counter.retrievePixelCount(0);
-            pssf = areaRatio*pixels;
-
-          }
-          else
-          {
-#else
           pssf = incidence;
-#endif
-#if defined(ENABLE_OPENGL)
-          }
-#endif
           q = alpha*(qDN*pssf + qDH*Fsky + qGH*Fg*rho_g);
-
         }
         else
         {
@@ -2522,6 +2579,31 @@ void Ground::setSolarBoundaryConditions()
         }
         domain.cell[i][j][k].heatGain = q;
 
+      }
+    }
+  }
+}
+
+void Ground::setInteriorRadiationBoundaryConditions()
+{
+  for (std::size_t s = 0; s < foundation.surfaces.size() ; s++)
+  {
+    if (foundation.surfaces[s].type == Surface::ST_SLAB_CORE
+        || foundation.surfaces[s].type == Surface::ST_SLAB_PERIM
+        || foundation.surfaces[s].type == Surface::ST_WALL_INT)
+    {
+      for (std::size_t index = 0; index < foundation.surfaces[s].indices.size(); index++)
+      {
+        std::size_t i = std::get<0>(foundation.surfaces[s].indices[index]);
+        std::size_t j = std::get<1>(foundation.surfaces[s].indices[index]);
+        std::size_t k = std::get<2>(foundation.surfaces[s].indices[index]);
+
+        if (foundation.surfaces[s].type == Surface::ST_WALL_INT) {
+          domain.cell[i][j][k].heatGain = bcs.wallAbsRadiation;
+        }
+        else {
+          domain.cell[i][j][k].heatGain = bcs.slabAbsRadiation;
+        }
       }
     }
   }
