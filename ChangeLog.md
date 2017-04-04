@@ -11,6 +11,7 @@
 * Better error handling.
 
 ### Features:
+* 64bit Windows, Mac, and Linux versions.
 * Ability to define any block of material within the domain.
 * Add inputs to define the foundation footing.
 * Add ability to define exposed foundation perimeters (including unexposed/core

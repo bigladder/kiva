@@ -39,6 +39,9 @@ else()
 endif()
 
 if(${git_exit_status} MATCHES "0")
+
+  # TODO: Should be "v([0-9]+)\\.([0-9]+)\\.([0-9]+)-?([a-z]*[0-9]*)-[0-9]+-([a-z,0-9])+"
+  #       for v<major>.<minor>.<patch>-<build>-n-<sha>
   string( REGEX REPLACE "v([0-9]+)\\.[0-9]+\\.[0-9]+-[0-9]+-[a-z,0-9]+" "\\1" libkiva_VERSION_MAJOR "${git_version}" )
   string( REGEX REPLACE "v[0-9]+\\.([0-9]+)\\.[0-9]+-[0-9]+-[a-z,0-9]+" "\\1" libkiva_VERSION_MINOR "${git_version}" )
   string( REGEX REPLACE "v[0-9]+\\.[0-9]+\\.([0-9]+)-[0-9]+-[a-z,0-9]+" "\\1" libkiva_VERSION_PATCH "${git_version}" )

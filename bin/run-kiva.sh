@@ -1,6 +1,6 @@
 #!/bin/bash
-
-echo "Kiva(TM) is a command line program. To run it, you must type on the command prompt."
+echo "Kiva(TM) is a command line program. To run it, you must type on the command"
+echo "prompt."
 echo ""
 echo "You can see how to use Kiva by typing:"
 echo ""
