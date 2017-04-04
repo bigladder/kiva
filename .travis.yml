@@ -72,4 +72,7 @@ after_success:
 
 deploy:
   provider: script
-  script: if [[ "$COVERAGE" == false ]]; then "curl --ftp-create-dirs -T kiva*.zip -u $FTP_USER:$FTP_PASSWORD ftp://downloads.bigladdersoftware.com/downloads.bigladdersoftware.com/files/"; fi
+  script: "curl --ftp-create-dirs -T kiva*.zip -u $FTP_USER:$FTP_PASSWORD ftp://downloads.bigladdersoftware.com/downloads.bigladdersoftware.com/files/"
+  on:
+    all_branches: true
+    condition: "\"$COVERAGE\" == false"

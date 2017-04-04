@@ -70,7 +70,7 @@ test_script:
   - if "%COMPILER%"=="MinGW" (ctest --output-on-failure)
   - ruby ..\scripts\log-results.rb
 
-before_deploy:
+after_test:
   - if "%COMPILER%"=="MSVC" (cpack -C "%CONFIG%")
 
 artifacts:
