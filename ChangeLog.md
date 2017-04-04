@@ -1,5 +1,5 @@
-0.4.0 Released ????
--------------------
+0.4.0 Released 4 April 2017
+---------------------------
 ### Fixes:
 * Improve output reporting. 2D simulations now report heat transfer rates
   representative of the 3D inputs.
