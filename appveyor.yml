@@ -14,7 +14,7 @@ cache:
 
 environment:
   global:
-      RT_URL: github.com/big-ladder/kiva-test-results.git
+      RT_URL: github.com/bigladder/kiva-test-results.git
       RT_DIR: build/test/results
       PATOKEN:
         secure: vB8XFwP3e+T61dIGoE2LxtolDMT/nsiFoJ6JMREjIObdHoCsscKOEKYlG0TWW+sx
