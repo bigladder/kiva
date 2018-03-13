@@ -10,7 +10,7 @@ set(kiva_src Main.cpp
 
 set(CMAKE_INSTALL_RPATH "@executable_path")
 
-include_directories(${CMAKE_BINARY_DIR}/src/libkiva/)
+include_directories(${kiva_BINARY_DIR}/src/libkiva/)
 add_executable(kiva ${kiva_src})
 
 set(kiva_link_flags "")

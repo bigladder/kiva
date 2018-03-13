@@ -4,7 +4,7 @@ if(${KIVA_3D})
   add_definitions(-D KIVA_3D )
 endif()
 
-include(${CMAKE_SOURCE_DIR}/cmake/TargetArch.cmake)
+include(TargetArch)
 target_architecture(TARGET_ARCH)
 
 if(${TARGET_ARCH} MATCHES "x86_64" OR ${TARGET_ARCH} MATCHES "ia64" OR ${TARGET_ARCH} MATCHES "ppc64")

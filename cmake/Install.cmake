@@ -11,23 +11,23 @@ else()
 endif()
 
 # Normal release files LICENSE, Change log, and README
-install(FILES "${CMAKE_SOURCE_DIR}/LICENSE" DESTINATION "./")
-set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/LICENSE")
+install(FILES "${kiva_SOURCE_DIR}/LICENSE" DESTINATION "./")
+set(CPACK_RESOURCE_FILE_LICENSE "${kiva_SOURCE_DIR}/LICENSE")
 
-install(FILES "${CMAKE_SOURCE_DIR}/ChangeLog.md" DESTINATION "./")
+install(FILES "${kiva_SOURCE_DIR}/ChangeLog.md" DESTINATION "./")
 
-set(CPACK_RESOURCE_FILE_README "${CMAKE_SOURCE_DIR}/README.md")
-install(FILES "${CMAKE_SOURCE_DIR}/README.md" DESTINATION "./")
+set(CPACK_RESOURCE_FILE_README "${kiva_SOURCE_DIR}/README.md")
+install(FILES "${kiva_SOURCE_DIR}/README.md" DESTINATION "./")
 
 # Examples and WeatherData
-install(DIRECTORY "${CMAKE_SOURCE_DIR}/examples" DESTINATION "./")
+install(DIRECTORY "${kiva_SOURCE_DIR}/examples" DESTINATION "./")
 
-install(DIRECTORY "${CMAKE_SOURCE_DIR}/weather" DESTINATION "./")
+install(DIRECTORY "${kiva_SOURCE_DIR}/weather" DESTINATION "./")
 
 if(UNIX)
-  install(PROGRAMS "${CMAKE_SOURCE_DIR}/bin/run-kiva.sh" DESTINATION "./")
+  install(PROGRAMS "${kiva_SOURCE_DIR}/bin/run-kiva.sh" DESTINATION "./")
 else()
-  install(FILES "${CMAKE_SOURCE_DIR}/bin/run-kiva.bat" DESTINATION "./")
+  install(FILES "${kiva_SOURCE_DIR}/bin/run-kiva.bat" DESTINATION "./")
 endif()
 
 # Libraries
