@@ -104,7 +104,7 @@ set(kiva_src Algorithms.cpp
              Mesher.hpp
              Version.hpp )
 
-include_directories(${CMAKE_CURRENT_BINARY_DIR})
+include_directories("${kiva_BINARY_DIR}/src/libkiva")
 
 option( KIVA_STATIC_LIB "Make libkiva a static library" ON )
 
