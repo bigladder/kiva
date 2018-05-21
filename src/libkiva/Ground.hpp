@@ -102,6 +102,8 @@ private:
   // Misc. Functions
   void setAmatValue(const int i, const int j, const double val);
   void setbValue(const int i, const double val);
+  void setValuesADI(const int & index, const double & Am, const double & A,
+                              const double & Ap, const double & bVal);
   void solveLinearSystem();
   void clearAmat();
   double getxValue(const int i);

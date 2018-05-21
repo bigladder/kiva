@@ -1238,7 +1238,7 @@ void Ground::calculateADI(int dim)
         else //if (dim == 3)
           index = k + nZ*i + nZ*nX*j;
 
-        double A, Ap, Am, bVal = 0.0;
+        double A{0.0}, Ap{0.0}, Am{0.0}, bVal{0.0};
 
 
         switch (domain.cell[i][j][k].cellType)
@@ -1272,10 +1272,6 @@ void Ground::calculateADI(int dim)
                 Ap = 0.0;
                 bVal = TOld[i+1][j][k];
               }
-
-              setAmatValue(index,index,A);
-              setAmatValue(index,index+1,Ap);
-              setbValue(index,bVal);
               break;
             case Surface::X_POS:
               A = 1.0;
@@ -1289,10 +1285,6 @@ void Ground::calculateADI(int dim)
                 Am = 0.0;
                 bVal = TOld[i-1][j][k];
               }
-
-              setAmatValue(index,index,A);
-              setAmatValue(index,index-1,Am);
-              setbValue(index,bVal);
               break;
             case Surface::Y_NEG:
               A = 1.0;
@@ -1306,10 +1298,6 @@ void Ground::calculateADI(int dim)
                 Ap = 0.0;
                 bVal = TOld[i][j+1][k];
               }
-
-              setAmatValue(index,index,A);
-              setAmatValue(index,index+1,Ap);
-              setbValue(index,bVal);
               break;
             case Surface::Y_POS:
               A = 1.0;
@@ -1323,10 +1311,6 @@ void Ground::calculateADI(int dim)
                 Am = 0.0;
                 bVal = TOld[i][j-1][k];
               }
-
-              setAmatValue(index,index,A);
-              setAmatValue(index,index-1,Am);
-              setbValue(index,bVal);
               break;
             case Surface::Z_NEG:
               A = 1.0;
@@ -1340,10 +1324,6 @@ void Ground::calculateADI(int dim)
                 Ap = 0.0;
                 bVal = TOld[i][j][k+1];
               }
-
-              setAmatValue(index,index,A);
-              setAmatValue(index,index+1,Ap);
-              setbValue(index,bVal);
               break;
             case Surface::Z_POS:
               A = 1.0;
@@ -1357,10 +1337,6 @@ void Ground::calculateADI(int dim)
                 Am = 0.0;
                 bVal = TOld[i][j][k-1];
               }
-
-              setAmatValue(index,index,A);
-              setAmatValue(index,index-1,Am);
-              setbValue(index,bVal);
               break;
             }
             }
@@ -1368,23 +1344,14 @@ void Ground::calculateADI(int dim)
           case Surface::CONSTANT_TEMPERATURE:
             A = 1.0;
             bVal = domain.cell[i][j][k].surfacePtr->temperature;
-
-            setAmatValue(index,index,A);
-            setbValue(index,bVal);
             break;
           case Surface::INTERIOR_TEMPERATURE:
             A = 1.0;
             bVal = bcs.indoorTemp;
-
-            setAmatValue(index,index,A);
-            setbValue(index,bVal);
             break;
           case Surface::EXTERIOR_TEMPERATURE:
             A = 1.0;
             bVal = bcs.outdoorTemp;
-
-            setAmatValue(index,index,A);
-            setbValue(index,bVal);
             break;
           case Surface::INTERIOR_FLUX:
             {
@@ -1410,10 +1377,6 @@ void Ground::calculateADI(int dim)
                 Ap = 0.0;
                 bVal = TOld[i+1][j][k]*domain.getKXP(i,j,k)/domain.getDXP(i) + (hc + hr)*Tair + q;
               }
-
-              setAmatValue(index,index,A);
-              setAmatValue(index,index+1,Ap);
-              setbValue(index,bVal);
               break;
             case Surface::X_POS:
               A = domain.getKXM(i,j,k)/domain.getDXM(i) + (hc + hr);
@@ -1427,10 +1390,6 @@ void Ground::calculateADI(int dim)
                 Am = 0.0;
                 bVal = TOld[i-1][j][k]*domain.getKXM(i,j,k)/domain.getDXM(i) + (hc + hr)*Tair + q;
               }
-
-              setAmatValue(index,index,A);
-              setAmatValue(index,index-1,Am);
-              setbValue(index,bVal);
               break;
             case Surface::Y_NEG:
               A = domain.getKYP(i,j,k)/domain.getDYP(j) + (hc + hr);
@@ -1444,10 +1403,6 @@ void Ground::calculateADI(int dim)
                 Ap = 0.0;
                 bVal = TOld[i][j+1][k]*domain.getKYP(i,j,k)/domain.getDYP(j) + (hc + hr)*Tair + q;
               }
-
-              setAmatValue(index,index,A);
-              setAmatValue(index,index+1,Ap);
-              setbValue(index,bVal);
               break;
             case Surface::Y_POS:
               A = domain.getKYM(i,j,k)/domain.getDYM(j) + (hc + hr);
@@ -1461,10 +1416,6 @@ void Ground::calculateADI(int dim)
                 Am = 0.0;
                 bVal = TOld[i][j-1][k]*domain.getKYM(i,j,k)/domain.getDYM(j) + (hc + hr)*Tair + q;
               }
-
-              setAmatValue(index,index,A);
-              setAmatValue(index,index-1,Am);
-              setbValue(index,bVal);
               break;
             case Surface::Z_NEG:
               A = domain.getKZP(i,j,k)/domain.getDZP(k) + (hc + hr);
@@ -1478,10 +1429,6 @@ void Ground::calculateADI(int dim)
                 Ap = 0.0;
                 bVal = TOld[i][j][k+1]*domain.getKZP(i,j,k)/domain.getDZP(k) + (hc + hr)*Tair + q;
               }
-
-              setAmatValue(index,index,A);
-              setAmatValue(index,index+1,Ap);
-              setbValue(index,bVal);
               break;
             case Surface::Z_POS:
               A = domain.getKZM(i,j,k)/domain.getDZM(k) + (hc + hr);
@@ -1495,10 +1442,6 @@ void Ground::calculateADI(int dim)
                 Am = 0.0;
                 bVal = TOld[i][j][k-1]*domain.getKZM(i,j,k)/domain.getDZM(k) + (hc + hr)*Tair + q;
               }
-
-              setAmatValue(index,index,A);
-              setAmatValue(index,index-1,Am);
-              setbValue(index,bVal);
               break;
             }
             }
@@ -1528,10 +1471,6 @@ void Ground::calculateADI(int dim)
                 Ap = 0.0;
                 bVal = TOld[i+1][j][k]*domain.getKXP(i,j,k)/domain.getDXP(i) + (hc + hr*pow(F,0.25))*Tair + q;
               }
-
-              setAmatValue(index,index,A);
-              setAmatValue(index,index+1,Ap);
-              setbValue(index,bVal);
               break;
             case Surface::X_POS:
               A = domain.getKXM(i,j,k)/domain.getDXM(i) + (hc + hr);
@@ -1545,10 +1484,6 @@ void Ground::calculateADI(int dim)
                 Am = 0.0;
                 bVal = TOld[i-1][j][k]*domain.getKXM(i,j,k)/domain.getDXM(i) + (hc + hr*pow(F,0.25))*Tair + q;
               }
-
-              setAmatValue(index,index,A);
-              setAmatValue(index,index-1,Am);
-              setbValue(index,bVal);
               break;
             case Surface::Y_NEG:
               A = domain.getKYP(i,j,k)/domain.getDYP(j) + (hc + hr);
@@ -1562,10 +1497,6 @@ void Ground::calculateADI(int dim)
                 Ap = 0.0;
                 bVal = TOld[i][j+1][k]*domain.getKYP(i,j,k)/domain.getDYP(j) + (hc + hr*pow(F,0.25))*Tair + q;
               }
-
-              setAmatValue(index,index,A);
-              setAmatValue(index,index+1,Ap);
-              setbValue(index,bVal);
               break;
             case Surface::Y_POS:
               A = domain.getKYM(i,j,k)/domain.getDYM(j) + (hc + hr);
@@ -1579,10 +1510,6 @@ void Ground::calculateADI(int dim)
                 Am = 0.0;
                 bVal = TOld[i][j-1][k]*domain.getKYM(i,j,k)/domain.getDYM(j) + (hc + hr*pow(F,0.25))*Tair + q;
               }
-
-              setAmatValue(index,index,A);
-              setAmatValue(index,index-1,Am);
-              setbValue(index,bVal);
               break;
             case Surface::Z_NEG:
               A = domain.getKZP(i,j,k)/domain.getDZP(k) + (hc + hr);
@@ -1596,10 +1523,6 @@ void Ground::calculateADI(int dim)
                 Ap = 0.0;
                 bVal = TOld[i][j][k+1]*domain.getKZP(i,j,k)/domain.getDZP(k) + (hc + hr*pow(F,0.25))*Tair + q;
               }
-
-              setAmatValue(index,index,A);
-              setAmatValue(index,index+1,Ap);
-              setbValue(index,bVal);
               break;
             case Surface::Z_POS:
               A = domain.getKZM(i,j,k)/domain.getDZM(k) + (hc + hr);
@@ -1613,10 +1536,6 @@ void Ground::calculateADI(int dim)
                 Am = 0.0;
                 bVal = TOld[i][j][k-1]*domain.getKZM(i,j,k)/domain.getDZM(k) + (hc + hr*pow(F,0.25))*Tair + q;
               }
-
-              setAmatValue(index,index,A);
-              setAmatValue(index,index-1,Am);
-              setbValue(index,bVal);
               break;
             }
             }
@@ -1627,16 +1546,10 @@ void Ground::calculateADI(int dim)
         case Cell::INTERIOR_AIR:
           A = 1.0;
           bVal = bcs.indoorTemp;
-
-          setAmatValue(index,index,A);
-          setbValue(index,bVal);
           break;
         case Cell::EXTERIOR_AIR:
           A = 1.0;
           bVal = bcs.outdoorTemp;
-
-          setAmatValue(index,index,A);
-          setbValue(index,bVal);
           break;
         default:
           {
@@ -1751,15 +1664,10 @@ void Ground::calculateADI(int dim)
 
             bVal = TOld[i][j][k] + Q;
           }
-
-          setAmatValue(index,index,A);
-          setAmatValue(index,index-1,Am);
-          setAmatValue(index,index+1,Ap);
-          setbValue(index,bVal);
-
           }
           break;
         }
+        setValuesADI(index, Am, A, Ap, bVal);
       }
     }
   }
@@ -1860,6 +1768,14 @@ void Ground::setbValue(const int i,const double val)
     b(i) = val;
   }
 }
+
+void Ground::setValuesADI(const int & index, const double & Am, const double & A,
+                          const double & Ap, const double & bVal) {
+    a1[index] = Am;
+    a2[index] = A;
+    a3[index] = Ap;
+    b_[index] = bVal;
+};
 
 void Ground::solveLinearSystem()
 {
