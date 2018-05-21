@@ -4,7 +4,17 @@
 #include "fixtures/bestest-fixture.hpp"
 #include "fixtures/typical-fixture.hpp"
 
+#include "Errors.hpp"
+
 using namespace Kiva;
+
+
+std::string dbl_to_string(double dbl) {
+  std::ostringstream strs;
+  strs << dbl;
+  std::string str = strs.str();
+  return str;
+};
 
 TEST_F( BESTESTFixture, GC10a)
 {
@@ -142,6 +152,70 @@ TEST_F( TypicalFixture, Slab)
   EXPECT_NEAR(1.0, 1.0, 1.0);
 }*/
 
+TEST_F( BESTESTFixture, GC10a_calculateADI)
+{
+    fnd.wallTopBoundary = Foundation::WTB_LINEAR_DT;
+    fnd.wallTopInteriorTemperature = 303.15;
+    fnd.wallTopExteriorTemperature = 283.15;
+    fnd.numericalScheme = Foundation::NS_ADI;
+    fnd.numberOfDimensions = 2;
+
+    double temp = calculate();
+    Kiva::showMessage(MSG_INFO, dbl_to_string(temp));
+    EXPECT_NEAR(temp, 2607.32, 0.01);
+}
+
+TEST_F( BESTESTFixture, GC10a_calculateImplicit)
+{
+  fnd.wallTopBoundary = Foundation::WTB_LINEAR_DT;
+  fnd.wallTopInteriorTemperature = 303.15;
+  fnd.wallTopExteriorTemperature = 283.15;
+  fnd.numericalScheme = Foundation::NS_IMPLICIT;
+  fnd.numberOfDimensions = 2;
+
+  double temp = calculate();
+  Kiva::showMessage(MSG_INFO, dbl_to_string(temp));
+  EXPECT_NEAR(temp, 2601.25, 0.01);
+}
+
+TEST_F( BESTESTFixture, GC10a_calculateCrankN)
+{
+  fnd.wallTopBoundary = Foundation::WTB_LINEAR_DT;
+  fnd.wallTopInteriorTemperature = 303.15;
+  fnd.wallTopExteriorTemperature = 283.15;
+  fnd.numericalScheme = Foundation::NS_CRANK_NICOLSON;
+  fnd.numberOfDimensions = 2;
+
+  double temp = calculate();
+  Kiva::showMessage(MSG_INFO, dbl_to_string(temp));
+  EXPECT_NEAR(temp, 2600.87, 0.01);
+}
+
+TEST_F( BESTESTFixture, GC10a_calculateADE)
+{
+  fnd.wallTopBoundary = Foundation::WTB_LINEAR_DT;
+  fnd.wallTopInteriorTemperature = 303.15;
+  fnd.wallTopExteriorTemperature = 283.15;
+  fnd.numericalScheme = Foundation::NS_ADE;
+  fnd.numberOfDimensions = 2;
+
+  double temp = calculate();
+  Kiva::showMessage(MSG_INFO, dbl_to_string(temp));
+  EXPECT_NEAR(temp, 2615.19, 0.01);
+}
+
+TEST_F( BESTESTFixture, GC10a_calculateSteadyState)
+{
+  fnd.wallTopBoundary = Foundation::WTB_LINEAR_DT;
+  fnd.wallTopInteriorTemperature = 303.15;
+  fnd.wallTopExteriorTemperature = 283.15;
+  fnd.numericalScheme = Foundation::NS_STEADY_STATE;
+  fnd.numberOfDimensions = 2;
+
+  double temp = calculate();
+  Kiva::showMessage(MSG_INFO, dbl_to_string(temp));
+  EXPECT_NEAR(temp, 3107.57, 0.01);
+}
 
 // Google Test main
 int
