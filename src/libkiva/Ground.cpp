@@ -124,23 +124,24 @@ void Ground::calculateADEUpwardSweep()
     {
       for (size_t k = 0; k < nZ; k++)
       {
-        switch (domain.cell[i][j][k].cellType)
+        Cell* this_cell = &domain.cell[i][j][k];
+        switch (this_cell->cellType)
         {
         case Cell::BOUNDARY:
           {
           double tilt;
-          if (domain.cell[i][j][k].surfacePtr->orientation == Surface::Z_POS)
+          if (this_cell->surfacePtr->orientation == Surface::Z_POS)
             tilt = 0;
-          else if (domain.cell[i][j][k].surfacePtr->orientation == Surface::Z_NEG)
+          else if (this_cell->surfacePtr->orientation == Surface::Z_NEG)
             tilt = PI;
           else
             tilt = PI/2.0;
 
-          switch (domain.cell[i][j][k].surfacePtr->boundaryConditionType)
+          switch (this_cell->surfacePtr->boundaryConditionType)
           {
           case Surface::ZERO_FLUX:
             {
-            switch (domain.cell[i][j][k].surfacePtr->orientation)
+            switch (this_cell->surfacePtr->orientation)
             {
             case Surface::X_NEG:
               U[i][j][k] = UOld[i+1][j][k];
@@ -166,7 +167,7 @@ void Ground::calculateADEUpwardSweep()
 
           case Surface::CONSTANT_TEMPERATURE:
 
-            U[i][j][k] = domain.cell[i][j][k].surfacePtr->temperature;
+            U[i][j][k] = this_cell->surfacePtr->temperature;
             break;
 
           case Surface::INTERIOR_TEMPERATURE:
@@ -182,14 +183,14 @@ void Ground::calculateADEUpwardSweep()
           case Surface::INTERIOR_FLUX:
             {
             double& Tair = bcs.indoorTemp;
-            double& q = domain.cell[i][j][k].heatGain;
+            double& q = this_cell->heatGain;
 
             double hc = getConvectionCoeff(TOld[i][j][k],
                     Tair,0.0,0.00208,false,tilt);  // TODO Make roughness a property of the interior surfaces
-            double hr = getSimpleInteriorIRCoeff(domain.cell[i][j][k].surfacePtr->emissivity,
+            double hr = getSimpleInteriorIRCoeff(this_cell->surfacePtr->emissivity,
                                TOld[i][j][k],Tair);
 
-            switch (domain.cell[i][j][k].surfacePtr->orientation)
+            switch (this_cell->surfacePtr->orientation)
             {
             case Surface::X_NEG:
               U[i][j][k] = (domain.getKXP(i,j,k)*UOld[i+1][j][k]/domain.getDXP(i) +
@@ -226,10 +227,10 @@ void Ground::calculateADEUpwardSweep()
             double eSky = bcs.skyEmissivity;
             double F = getEffectiveExteriorViewFactor(eSky,tilt);
             double hc = getConvectionCoeff(TOld[i][j][k],Tair,v,foundation.surfaceRoughness,true,tilt);
-            double hr = getExteriorIRCoeff(domain.cell[i][j][k].surfacePtr->emissivity,TOld[i][j][k],Tair,eSky,tilt);
-            double q = domain.cell[i][j][k].heatGain;
+            double hr = getExteriorIRCoeff(this_cell->surfacePtr->emissivity,TOld[i][j][k],Tair,eSky,tilt);
+            double q = this_cell->heatGain;
 
-            switch (domain.cell[i][j][k].surfacePtr->orientation)
+            switch (this_cell->surfacePtr->orientation)
             {
             case Surface::X_NEG:
               U[i][j][k] = (domain.getKXP(i,j,k)*UOld[i+1][j][k]/domain.getDXP(i) +
@@ -270,15 +271,15 @@ void Ground::calculateADEUpwardSweep()
         default:
           {
           double theta = timestep/
-            (domain.cell[i][j][k].density*domain.cell[i][j][k].specificHeat);
+            (this_cell->density*this_cell->specificHeat);
 
-          double CXP = domain.cell[i][j][k].cxp*theta;
-          double CXM = domain.cell[i][j][k].cxm*theta;
-          double CZP = domain.cell[i][j][k].czp*theta;
-          double CZM = domain.cell[i][j][k].czm*theta;
-          double CYP = domain.cell[i][j][k].cyp*theta;
-          double CYM = domain.cell[i][j][k].cym*theta;
-          double Q = domain.cell[i][j][k].heatGain*theta;
+          double CXP = this_cell->cxp*theta;
+          double CXM = this_cell->cxm*theta;
+          double CZP = this_cell->czp*theta;
+          double CZM = this_cell->czm*theta;
+          double CYP = this_cell->cyp*theta;
+          double CYM = this_cell->cym*theta;
+          double Q = this_cell->heatGain*theta;
 
           if (foundation.numberOfDimensions == 3)
             U[i][j][k] = (UOld[i][j][k]*(1.0 - CXP - CZP - CYP)
@@ -298,8 +299,8 @@ void Ground::calculateADEUpwardSweep()
             if (i != 0)
             {
               double r = domain.meshX.centers[i];
-              CXPC = domain.cell[i][j][k].cxp_c*theta/r;
-              CXMC = domain.cell[i][j][k].cxm_c*theta/r;
+              CXPC = this_cell->cxp_c*theta/r;
+              CXMC = this_cell->cxm_c*theta/r;
             }
             U[i][j][k] = (UOld[i][j][k]*(1.0 - CXPC - CXP - CZP)
                 - U[i-1][j][k]*(CXMC + CXM)
@@ -334,23 +335,24 @@ void Ground::calculateADEDownwardSweep()
     {
       for (size_t k = nZ - 1; /* k >= 0 && */ k < nZ; k--)
       {
-        switch (domain.cell[i][j][k].cellType)
+        Cell* this_cell = &domain.cell[i][j][k];
+        switch (this_cell->cellType)
         {
         case Cell::BOUNDARY:
           {
           double tilt;
-          if (domain.cell[i][j][k].surfacePtr->orientation == Surface::Z_POS)
+          if (this_cell->surfacePtr->orientation == Surface::Z_POS)
             tilt = 0;
-          else if (domain.cell[i][j][k].surfacePtr->orientation == Surface::Z_NEG)
+          else if (this_cell->surfacePtr->orientation == Surface::Z_NEG)
             tilt = PI;
           else
             tilt = PI/2.0;
 
-          switch (domain.cell[i][j][k].surfacePtr->boundaryConditionType)
+          switch (this_cell->surfacePtr->boundaryConditionType)
           {
           case Surface::ZERO_FLUX:
             {
-            switch (domain.cell[i][j][k].surfacePtr->orientation)
+            switch (this_cell->surfacePtr->orientation)
             {
             case Surface::X_NEG:
               V[i][j][k] = V[i+1][j][k];
@@ -376,7 +378,7 @@ void Ground::calculateADEDownwardSweep()
 
           case Surface::CONSTANT_TEMPERATURE:
 
-            V[i][j][k] = domain.cell[i][j][k].surfacePtr->temperature;
+            V[i][j][k] = this_cell->surfacePtr->temperature;
             break;
 
           case Surface::INTERIOR_TEMPERATURE:
@@ -392,14 +394,14 @@ void Ground::calculateADEDownwardSweep()
           case Surface::INTERIOR_FLUX:
             {
             double& Tair = bcs.indoorTemp;
-            double& q = domain.cell[i][j][k].heatGain;
+            double& q = this_cell->heatGain;
 
             double hc = getConvectionCoeff(TOld[i][j][k],
                     Tair,0.0,0.00208,false,tilt);
-            double hr = getSimpleInteriorIRCoeff(domain.cell[i][j][k].surfacePtr->emissivity,
+            double hr = getSimpleInteriorIRCoeff(this_cell->surfacePtr->emissivity,
                                TOld[i][j][k],Tair);
 
-            switch (domain.cell[i][j][k].surfacePtr->orientation)
+            switch (this_cell->surfacePtr->orientation)
             {
             case Surface::X_NEG:
               V[i][j][k] = (domain.getKXP(i,j,k)*V[i+1][j][k]/domain.getDXP(i) +
@@ -436,10 +438,10 @@ void Ground::calculateADEDownwardSweep()
             double& eSky = bcs.skyEmissivity;
             double F = getEffectiveExteriorViewFactor(eSky,tilt);
             double hc = getConvectionCoeff(TOld[i][j][k],Tair,v,foundation.surfaceRoughness,true,tilt);
-            double hr = getExteriorIRCoeff(domain.cell[i][j][k].surfacePtr->emissivity,TOld[i][j][k],Tair,eSky,tilt);
-            double q = domain.cell[i][j][k].heatGain;
+            double hr = getExteriorIRCoeff(this_cell->surfacePtr->emissivity,TOld[i][j][k],Tair,eSky,tilt);
+            double q = this_cell->heatGain;
 
-            switch (domain.cell[i][j][k].surfacePtr->orientation)
+            switch (this_cell->surfacePtr->orientation)
             {
             case Surface::X_NEG:
               V[i][j][k] = (domain.getKXP(i,j,k)*V[i+1][j][k]/domain.getDXP(i) +
@@ -481,15 +483,15 @@ void Ground::calculateADEDownwardSweep()
         default:
           {
           double theta = timestep/
-            (domain.cell[i][j][k].density*domain.cell[i][j][k].specificHeat);
+            (this_cell->density*this_cell->specificHeat);
 
-          double CXP = domain.cell[i][j][k].cxp*theta;
-          double CXM = domain.cell[i][j][k].cxm*theta;
-          double CZP = domain.cell[i][j][k].czp*theta;
-          double CZM = domain.cell[i][j][k].czm*theta;
-          double CYP = domain.cell[i][j][k].cyp*theta;
-          double CYM = domain.cell[i][j][k].cym*theta;
-          double Q = domain.cell[i][j][k].heatGain*theta;
+          double CXP = this_cell->cxp*theta;
+          double CXM = this_cell->cxm*theta;
+          double CZP = this_cell->czp*theta;
+          double CZM = this_cell->czm*theta;
+          double CYP = this_cell->cyp*theta;
+          double CYM = this_cell->cym*theta;
+          double Q = this_cell->heatGain*theta;
 
           if (foundation.numberOfDimensions == 3)
             V[i][j][k] = (VOld[i][j][k]*(1.0 + CXM + CZM + CYM)
@@ -509,8 +511,8 @@ void Ground::calculateADEDownwardSweep()
             if (i != 0)
             {
               double r = domain.meshX.centers[i];
-              CXPC = domain.cell[i][j][k].cxp_c*theta/r;
-              CXMC = domain.cell[i][j][k].cxm_c*theta/r;
+              CXPC = this_cell->cxp_c*theta/r;
+              CXMC = this_cell->cxm_c*theta/r;
             }
             V[i][j][k] = (VOld[i][j][k]*(1.0 + CXMC + CXM + CZM)
                 - VOld[i-1][j][k]*(CXMC + CXM)
@@ -544,23 +546,24 @@ void Ground::calculateExplicit()
     {
       for (size_t k = 0; k < nZ; k++)
       {
-        switch (domain.cell[i][j][k].cellType)
+        Cell* this_cell = &domain.cell[i][j][k];
+        switch (this_cell->cellType)
         {
         case Cell::BOUNDARY:
           {
           double tilt;
-          if (domain.cell[i][j][k].surfacePtr->orientation == Surface::Z_POS)
+          if (this_cell->surfacePtr->orientation == Surface::Z_POS)
             tilt = 0;
-          else if (domain.cell[i][j][k].surfacePtr->orientation == Surface::Z_NEG)
+          else if (this_cell->surfacePtr->orientation == Surface::Z_NEG)
             tilt = PI;
           else
             tilt = PI/2.0;
 
-          switch (domain.cell[i][j][k].surfacePtr->boundaryConditionType)
+          switch (this_cell->surfacePtr->boundaryConditionType)
           {
           case Surface::ZERO_FLUX:
             {
-            switch (domain.cell[i][j][k].surfacePtr->orientation)
+            switch (this_cell->surfacePtr->orientation)
             {
             case Surface::X_NEG:
               TNew[i][j][k] = TOld[i+1][j][k];
@@ -586,7 +589,7 @@ void Ground::calculateExplicit()
 
           case Surface::CONSTANT_TEMPERATURE:
 
-            TNew[i][j][k] = domain.cell[i][j][k].surfacePtr->temperature;
+            TNew[i][j][k] = this_cell->surfacePtr->temperature;
             break;
 
           case Surface::INTERIOR_TEMPERATURE:
@@ -602,14 +605,14 @@ void Ground::calculateExplicit()
           case Surface::INTERIOR_FLUX:
             {
             double& Tair = bcs.indoorTemp;
-            double& q = domain.cell[i][j][k].heatGain;
+            double& q = this_cell->heatGain;
 
             double hc = getConvectionCoeff(TOld[i][j][k],
                     Tair,0.0,0.00208,false,tilt);
-            double hr = getSimpleInteriorIRCoeff(domain.cell[i][j][k].surfacePtr->emissivity,
+            double hr = getSimpleInteriorIRCoeff(this_cell->surfacePtr->emissivity,
                                TOld[i][j][k],Tair);
 
-            switch (domain.cell[i][j][k].surfacePtr->orientation)
+            switch (this_cell->surfacePtr->orientation)
             {
             case Surface::X_NEG:
               TNew[i][j][k] = (domain.getKXP(i,j,k)*TOld[i+1][j][k]/domain.getDXP(i) +
@@ -646,10 +649,10 @@ void Ground::calculateExplicit()
             double& eSky = bcs.skyEmissivity;
             double F = getEffectiveExteriorViewFactor(eSky,tilt);
             double hc = getConvectionCoeff(TOld[i][j][k],Tair,v,foundation.surfaceRoughness,true,tilt);
-            double hr = getExteriorIRCoeff(domain.cell[i][j][k].surfacePtr->emissivity,TOld[i][j][k],Tair,eSky,tilt);
-            double q = domain.cell[i][j][k].heatGain;
+            double hr = getExteriorIRCoeff(this_cell->surfacePtr->emissivity,TOld[i][j][k],Tair,eSky,tilt);
+            double q = this_cell->heatGain;
 
-            switch (domain.cell[i][j][k].surfacePtr->orientation)
+            switch (this_cell->surfacePtr->orientation)
             {
             case Surface::X_NEG:
               TNew[i][j][k] = (domain.getKXP(i,j,k)*TOld[i+1][j][k]/domain.getDXP(i) +
@@ -691,15 +694,15 @@ void Ground::calculateExplicit()
         default:
           {
           double theta = timestep/
-            (domain.cell[i][j][k].density*domain.cell[i][j][k].specificHeat);
+            (this_cell->density*this_cell->specificHeat);
 
-          double CXP = domain.cell[i][j][k].cxp*theta;
-          double CXM = domain.cell[i][j][k].cxm*theta;
-          double CZP = domain.cell[i][j][k].czp*theta;
-          double CZM = domain.cell[i][j][k].czm*theta;
-          double CYP = domain.cell[i][j][k].cyp*theta;
-          double CYM = domain.cell[i][j][k].cym*theta;
-          double Q = domain.cell[i][j][k].heatGain*theta;
+          double CXP = this_cell->cxp*theta;
+          double CXM = this_cell->cxm*theta;
+          double CZP = this_cell->czp*theta;
+          double CZM = this_cell->czm*theta;
+          double CYP = this_cell->cyp*theta;
+          double CYM = this_cell->cym*theta;
+          double Q = this_cell->heatGain*theta;
 
           if (foundation.numberOfDimensions == 3)
             TNew[i][j][k] = TOld[i][j][k]*(1.0 + CXM + CZM + CYM - CXP - CZP - CYP)
@@ -718,8 +721,8 @@ void Ground::calculateExplicit()
             if (i != 0)
             {
               double r = domain.meshX.centers[i];
-              CXPC = domain.cell[i][j][k].cxp_c*theta/r;
-              CXMC = domain.cell[i][j][k].cxm_c*theta/r;
+              CXPC = this_cell->cxp_c*theta/r;
+              CXMC = this_cell->cxm_c*theta/r;
             }
 
             TNew[i][j][k] = TOld[i][j][k]*(1.0 + CXMC + CXM + CZM - CXPC - CXP - CZP)
@@ -773,23 +776,24 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
 
         double A, Aip, Aim, Ajp, Ajm, Akp, Akm, bVal = 0.0;
 
-        switch (domain.cell[i][j][k].cellType)
+        Cell* this_cell = &domain.cell[i][j][k];
+        switch (this_cell->cellType)
         {
         case Cell::BOUNDARY:
           {
           double tilt;
-          if (domain.cell[i][j][k].surfacePtr->orientation == Surface::Z_POS)
+          if (this_cell->surfacePtr->orientation == Surface::Z_POS)
             tilt = 0;
-          else if (domain.cell[i][j][k].surfacePtr->orientation == Surface::Z_NEG)
+          else if (this_cell->surfacePtr->orientation == Surface::Z_NEG)
             tilt = PI;
           else
             tilt = PI/2.0;
 
-          switch (domain.cell[i][j][k].surfacePtr->boundaryConditionType)
+          switch (this_cell->surfacePtr->boundaryConditionType)
           {
           case Surface::ZERO_FLUX:
             {
-            switch (domain.cell[i][j][k].surfacePtr->orientation)
+            switch (this_cell->surfacePtr->orientation)
             {
             case Surface::X_NEG:
               A = 1.0;
@@ -850,7 +854,7 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
             break;
           case Surface::CONSTANT_TEMPERATURE:
             A = 1.0;
-            bVal = domain.cell[i][j][k].surfacePtr->temperature;
+            bVal = this_cell->surfacePtr->temperature;
 
             setAmatValue(index,index,A);
             setbValue(index,bVal);
@@ -872,14 +876,14 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
           case Surface::INTERIOR_FLUX:
             {
             double& Tair = bcs.indoorTemp;
-            double& q = domain.cell[i][j][k].heatGain;
+            double& q = this_cell->heatGain;
 
             double hc = getConvectionCoeff(TOld[i][j][k],
                     Tair,0.0,0.00208,false,tilt);
-            double hr = getSimpleInteriorIRCoeff(domain.cell[i][j][k].surfacePtr->emissivity,
+            double hr = getSimpleInteriorIRCoeff(this_cell->surfacePtr->emissivity,
                                TOld[i][j][k],Tair);
 
-            switch (domain.cell[i][j][k].surfacePtr->orientation)
+            switch (this_cell->surfacePtr->orientation)
             {
             case Surface::X_NEG:
               A = domain.getKXP(i,j,k)/domain.getDXP(i) + (hc + hr);
@@ -946,10 +950,10 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
             double& eSky = bcs.skyEmissivity;
             double F = getEffectiveExteriorViewFactor(eSky,tilt);
             double hc = getConvectionCoeff(TOld[i][j][k],Tair,v,foundation.surfaceRoughness,true,tilt);
-            double hr = getExteriorIRCoeff(domain.cell[i][j][k].surfacePtr->emissivity,TOld[i][j][k],Tair,eSky,tilt);
-            double q = domain.cell[i][j][k].heatGain;
+            double hr = getExteriorIRCoeff(this_cell->surfacePtr->emissivity,TOld[i][j][k],Tair,eSky,tilt);
+            double q = this_cell->heatGain;
 
-            switch (domain.cell[i][j][k].surfacePtr->orientation)
+            switch (this_cell->surfacePtr->orientation)
             {
             case Surface::X_NEG:
               A = domain.getKXP(i,j,k)/domain.getDXP(i) + (hc + hr);
@@ -1029,13 +1033,13 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
           {
           if (scheme == Foundation::NS_STEADY_STATE)
           {
-            double CXP = domain.cell[i][j][k].cxp;
-            double CXM = domain.cell[i][j][k].cxm;
-            double CZP = domain.cell[i][j][k].czp;
-            double CZM = domain.cell[i][j][k].czm;
-            double CYP = domain.cell[i][j][k].cyp;
-            double CYM = domain.cell[i][j][k].cym;
-            double Q = domain.cell[i][j][k].heatGain;
+            double CXP = this_cell->cxp;
+            double CXM = this_cell->cxm;
+            double CZP = this_cell->czp;
+            double CZM = this_cell->czm;
+            double CYP = this_cell->cyp;
+            double CYM = this_cell->cym;
+            double Q = this_cell->heatGain;
 
             if (foundation.numberOfDimensions == 3)
             {
@@ -1066,8 +1070,8 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
               if (i != 0)
               {
                 double r = domain.meshX.centers[i];
-                CXPC = domain.cell[i][j][k].cxp_c/r;
-                CXMC = domain.cell[i][j][k].cxm_c/r;
+                CXPC = this_cell->cxp_c/r;
+                CXMC = this_cell->cxm_c/r;
               }
               A = (CXMC + CXM + CZM - CXPC - CXP - CZP);
               Aim = (-CXMC - CXM);
@@ -1101,7 +1105,7 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
           else
           {
             double theta = timestep/
-              (domain.cell[i][j][k].density*domain.cell[i][j][k].specificHeat);
+              (this_cell->density*this_cell->specificHeat);
 
             double f;
             if (scheme == Foundation::NS_IMPLICIT)
@@ -1109,13 +1113,13 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
             else
               f = 0.5;
 
-            double CXP = domain.cell[i][j][k].cxp*theta;
-            double CXM = domain.cell[i][j][k].cxm*theta;
-            double CZP = domain.cell[i][j][k].czp*theta;
-            double CZM = domain.cell[i][j][k].czm*theta;
-            double CYP = domain.cell[i][j][k].cyp*theta;
-            double CYM = domain.cell[i][j][k].cym*theta;
-            double Q = domain.cell[i][j][k].heatGain*theta;
+            double CXP = this_cell->cxp*theta;
+            double CXM = this_cell->cxm*theta;
+            double CZP = this_cell->czp*theta;
+            double CZM = this_cell->czm*theta;
+            double CYP = this_cell->cyp*theta;
+            double CYM = this_cell->cym*theta;
+            double Q = this_cell->heatGain*theta;
 
             if (foundation.numberOfDimensions == 3)
             {
@@ -1153,8 +1157,8 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
               if (i != 0)
               {
                 double r = domain.meshX.centers[i];
-                CXPC = domain.cell[i][j][k].cxp_c*theta/r;
-                CXMC = domain.cell[i][j][k].cxm_c*theta/r;
+                CXPC = this_cell->cxp_c*theta/r;
+                CXMC = this_cell->cxm_c*theta/r;
               }
               A = (1.0 + f*(CXPC + CXP + CZP - CXMC - CXM - CZM));
               Aim = f*(CXMC + CXM);
@@ -1231,6 +1235,7 @@ void Ground::calculateADI(int dim)
       {
 
         int index;
+        Cell* this_cell = &domain.cell[i][j][k];
         if (dim == 1)
           index = i + nX*j + nX*nY*k;
         else if (dim == 2)
@@ -1241,23 +1246,23 @@ void Ground::calculateADI(int dim)
         double A{0.0}, Ap{0.0}, Am{0.0}, bVal{0.0};
 
 
-        switch (domain.cell[i][j][k].cellType)
+        switch (this_cell->cellType)
         {
         case Cell::BOUNDARY:
           {
           double tilt;
-          if (domain.cell[i][j][k].surfacePtr->orientation == Surface::Z_POS)
+          if (this_cell->surfacePtr->orientation == Surface::Z_POS)
             tilt = 0;
-          else if (domain.cell[i][j][k].surfacePtr->orientation == Surface::Z_NEG)
+          else if (this_cell->surfacePtr->orientation == Surface::Z_NEG)
             tilt = PI;
           else
             tilt = PI/2.0;
 
-          switch (domain.cell[i][j][k].surfacePtr->boundaryConditionType)
+          switch (this_cell->surfacePtr->boundaryConditionType)
           {
           case Surface::ZERO_FLUX:
             {
-            switch (domain.cell[i][j][k].surfacePtr->orientation)
+            switch (this_cell->surfacePtr->orientation)
             {
             case Surface::X_NEG:
               A = 1.0;
@@ -1343,7 +1348,7 @@ void Ground::calculateADI(int dim)
             break;
           case Surface::CONSTANT_TEMPERATURE:
             A = 1.0;
-            bVal = domain.cell[i][j][k].surfacePtr->temperature;
+            bVal = this_cell->surfacePtr->temperature;
             break;
           case Surface::INTERIOR_TEMPERATURE:
             A = 1.0;
@@ -1356,14 +1361,14 @@ void Ground::calculateADI(int dim)
           case Surface::INTERIOR_FLUX:
             {
             double& Tair = bcs.indoorTemp;
-            double& q = domain.cell[i][j][k].heatGain;
+            double& q = this_cell->heatGain;
 
             double hc = getConvectionCoeff(TOld[i][j][k],
                     Tair,0.0,0.00208,false,tilt);
-            double hr = getSimpleInteriorIRCoeff(domain.cell[i][j][k].surfacePtr->emissivity,
+            double hr = getSimpleInteriorIRCoeff(this_cell->surfacePtr->emissivity,
                                TOld[i][j][k],Tair);
 
-            switch (domain.cell[i][j][k].surfacePtr->orientation)
+            switch (this_cell->surfacePtr->orientation)
             {
             case Surface::X_NEG:
               A = domain.getKXP(i,j,k)/domain.getDXP(i) + (hc + hr);
@@ -1454,10 +1459,10 @@ void Ground::calculateADI(int dim)
             double eSky = bcs.skyEmissivity;
             double F = getEffectiveExteriorViewFactor(eSky,tilt);
             double hc = getConvectionCoeff(TOld[i][j][k],Tair,v,foundation.surfaceRoughness,true,tilt);
-            double hr = getExteriorIRCoeff(domain.cell[i][j][k].surfacePtr->emissivity,TOld[i][j][k],Tair,eSky,tilt);
-            double q = domain.cell[i][j][k].heatGain;
+            double hr = getExteriorIRCoeff(this_cell->surfacePtr->emissivity,TOld[i][j][k],Tair,eSky,tilt);
+            double q = this_cell->heatGain;
 
-            switch (domain.cell[i][j][k].surfacePtr->orientation)
+            switch (this_cell->surfacePtr->orientation)
             {
             case Surface::X_NEG:
               A = domain.getKXP(i,j,k)/domain.getDXP(i) + (hc + hr);
@@ -1557,26 +1562,26 @@ void Ground::calculateADI(int dim)
           if (foundation.numberOfDimensions == 3)
           {
             theta = timestep/
-                (3*domain.cell[i][j][k].density*domain.cell[i][j][k].specificHeat);
+                (3*this_cell->density*this_cell->specificHeat);
           }
           else if (foundation.numberOfDimensions == 2)
           {
             theta = timestep/
-                (2*domain.cell[i][j][k].density*domain.cell[i][j][k].specificHeat);
+                (2*this_cell->density*this_cell->specificHeat);
           }
           else
           {
             theta = timestep/
-                (domain.cell[i][j][k].density*domain.cell[i][j][k].specificHeat);
+                (this_cell->density*this_cell->specificHeat);
           }
 
-          double CXP = domain.cell[i][j][k].cxp*theta;
-          double CXM = domain.cell[i][j][k].cxm*theta;
-          double CZP = domain.cell[i][j][k].czp*theta;
-          double CZM = domain.cell[i][j][k].czm*theta;
-          double CYP = domain.cell[i][j][k].cyp*theta;
-          double CYM = domain.cell[i][j][k].cym*theta;
-          double Q = domain.cell[i][j][k].heatGain*theta;
+          double CXP = this_cell->cxp*theta;
+          double CXM = this_cell->cxm*theta;
+          double CZP = this_cell->czp*theta;
+          double CZM = this_cell->czm*theta;
+          double CYP = this_cell->cyp*theta;
+          double CYM = this_cell->cym*theta;
+          double Q = this_cell->heatGain*theta;
 
           double f = foundation.fADI;
 
@@ -1630,8 +1635,8 @@ void Ground::calculateADI(int dim)
             if (i != 0)
             {
               double r = domain.meshX.centers[i];
-              CXPC = domain.cell[i][j][k].cxp_c*theta/r;
-              CXMC = domain.cell[i][j][k].cxm_c*theta/r;
+              CXPC = this_cell->cxp_c*theta/r;
+              CXMC = this_cell->cxm_c*theta/r;
             }
             if (dim == 1) // x
             {
@@ -1930,11 +1935,12 @@ void Ground::calculateSurfaceAverages(){
             std::size_t j = std::get<1>(foundation.surfaces[s].indices[index]);
             std::size_t k = std::get<2>(foundation.surfaces[s].indices[index]);
 
+            Cell* this_cell = &domain.cell[i][j][k];
             double h = getConvectionCoeff(TNew[i][j][k],Tair,0.0,0.00208,false,tilt)
-                 + getSimpleInteriorIRCoeff(domain.cell[i][j][k].surfacePtr->emissivity,
+                 + getSimpleInteriorIRCoeff(this_cell->surfacePtr->emissivity,
                      TNew[i][j][k],Tair);
 
-            double& A = domain.cell[i][j][k].area;
+            double& A = this_cell->area;
 
             totalArea += A;
             totalHeatTransferRate += h*A*(Tair - TNew[i][j][k]);
@@ -2039,11 +2045,12 @@ std::vector<double> Ground::calculateHeatFlux(const size_t &i, const size_t &j, 
   if (k != 0)
     DTZM = TNew[i][j][k]-TNew[i][j][k-1];
 
-  switch (domain.cell[i][j][k].cellType)
+  Cell* this_cell = &domain.cell[i][j][k];
+  switch (this_cell->cellType)
   {
     case Cell::BOUNDARY:
       {
-        switch (domain.cell[i][j][k].surfacePtr->orientation)
+        switch (this_cell->surfacePtr->orientation)
         {
           case Surface::X_NEG:
             {
@@ -2482,7 +2489,8 @@ void Ground::setSolarBoundaryConditions()
         std::size_t j = std::get<1>(foundation.surfaces[s].indices[index]);
         std::size_t k = std::get<2>(foundation.surfaces[s].indices[index]);
 
-        double alpha = domain.cell[i][j][k].surfacePtr->absorptivity;
+        Cell* this_cell = &domain.cell[i][j][k];
+        double alpha = this_cell->surfacePtr->absorptivity;
 
         if (qGH > 0.0)
         {
@@ -2493,7 +2501,7 @@ void Ground::setSolarBoundaryConditions()
         {
           q = 0;
         }
-        domain.cell[i][j][k].heatGain = q;
+        this_cell->heatGain = q;
 
       }
     }
@@ -2514,11 +2522,12 @@ void Ground::setInteriorRadiationBoundaryConditions()
         std::size_t j = std::get<1>(foundation.surfaces[s].indices[index]);
         std::size_t k = std::get<2>(foundation.surfaces[s].indices[index]);
 
+        Cell* this_cell = &domain.cell[i][j][k];
         if (foundation.surfaces[s].type == Surface::ST_WALL_INT) {
-          domain.cell[i][j][k].heatGain = bcs.wallAbsRadiation;
+          this_cell->heatGain = bcs.wallAbsRadiation;
         }
         else {
-          domain.cell[i][j][k].heatGain = bcs.slabAbsRadiation;
+          this_cell->heatGain = bcs.slabAbsRadiation;
         }
       }
     }
