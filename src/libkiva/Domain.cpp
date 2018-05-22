@@ -39,8 +39,10 @@ void Domain::setDomain(Foundation &foundation)
   nX = meshX.centers.size();
   nY = meshY.centers.size();
   nZ = meshZ.centers.size();
+  std::tie(stepsize_i, stepsize_j, stepsize_k) = get_step_size();
 
   cell.resize(nX,std::vector<std::vector<Cell> >(nY,std::vector<Cell>(nZ)));
+  dest_index_vector.resize(nX*nY*nZ, std::vector<std::size_t>(3));
 
   for (std::size_t i = 0; i < nX; i++)
   {
@@ -48,7 +50,9 @@ void Domain::setDomain(Foundation &foundation)
     {
       for (std::size_t k = 0; k < nZ; k++)
       {
-
+        std::size_t index = i + nX*j + nX*nY*k;
+        cell[i][j][k].index = index;
+        dest_index_vector[index] = get_dest_index(i, j, k);
         // Set Cell Properties
         cell[i][j][k].density = foundation.soil.density;
         cell[i][j][k].specificHeat = foundation.soil.specificHeat;
@@ -728,6 +732,24 @@ void Domain::printCellTypes()
   }
   output.close();
 
+}
+
+std::tuple<std::size_t, std::size_t, std::size_t> Domain::get_step_size()
+{
+  size_t i_step, j_step, k_step;
+  i_step = 1;
+  j_step = nX;
+  k_step = nX*nY;
+  return std::make_tuple(i_step, j_step, k_step);
+}
+
+std::vector<std::size_t> Domain::get_dest_index(std::size_t i, std::size_t j, std::size_t k)
+{
+  std::vector<std::size_t> dest_index;
+  dest_index.emplace_back(i + nX*j + nX*nY*k);
+  dest_index.emplace_back(j + nY*i + nY*nX*k);
+  dest_index.emplace_back(k + nZ*i + nZ*nX*j);
+  return dest_index;
 }
 
 }

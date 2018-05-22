@@ -39,10 +39,10 @@ public:
   Foundation &foundation;
   GroundOutput groundOutput;
 
-  size_t nX, nY, nZ;
+  size_t nX, nY, nZ, num_cells;
 
-  std::vector<std::vector<std::vector<double>>> TNew; // solution, n+1
-  std::vector<std::vector<std::vector<double>>> TOld; // solution, n
+  std::vector<double> TNew; // solution, n+1
+  std::vector<double> TOld; // solution, n
 
   void buildDomain();
 
@@ -102,11 +102,12 @@ private:
   // Misc. Functions
   void setAmatValue(const int i, const int j, const double val);
   void setbValue(const int i, const double val);
-  void setValuesADI(const int & index, const double & Am, const double & A,
+  void setValuesADI(const std::size_t & index, const double & Am, const double & A,
                               const double & Ap, const double & bVal);
   void solveLinearSystem();
   void clearAmat();
   double getxValue(const int i);
+  std::vector<double> getXvalues();
 
   double getConvectionCoeff(double Tsurf,
                 double Tamb,

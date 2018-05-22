@@ -18,6 +18,8 @@ class Cell
 {
 public:
 
+  std::size_t index;
+
   // inherent properties
   double density;
   double specificHeat;
@@ -64,8 +66,10 @@ public:
     std::size_t nX;
     std::size_t nY;
     std::size_t nZ;
+    std::size_t stepsize_i, stepsize_j, stepsize_k;
 
     std::vector<std::vector<std::vector<Cell>>> cell;
+    std::vector< std::vector<std::size_t> > dest_index_vector;
 
 public:
 
@@ -90,6 +94,8 @@ public:
     void setZeroThicknessCellProperties(std::size_t i, std::size_t j, std::size_t k,
         std::vector<std::tuple<std::size_t,std::size_t,std::size_t> > pointSet);
     void printCellTypes();
+    std::tuple<std::size_t, std::size_t, std::size_t> get_step_size();
+    std::vector<std::size_t> get_dest_index(std::size_t i, std::size_t j, std::size_t k);
 
 };
 

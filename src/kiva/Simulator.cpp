@@ -92,13 +92,15 @@ void Simulator::initializeConditions()
     }
     else
     {
+      std::size_t index;
       for (size_t i = 0; i < ground.nX; ++i)
       {
         for (size_t j = 0; j < ground.nY; ++j)
         {
           for (size_t k = 0; k < ground.nZ; ++k)
           {
-            ground.TOld[i][j][k]= getInitialTemperature(tInit,
+            index = i + ground.nX*j + ground.nX*ground.nY*k;
+            ground.TOld[index]= getInitialTemperature(tInit,
                 ground.domain.meshZ.centers[k]);
           }
         }
@@ -295,9 +297,9 @@ void Simulator::plot(boost::posix_time::ptime t)
             if (input.output.outputSnapshots[p].snapshotSettings.plotType == SnapshotSettings::P_TEMP)
             {
               if (input.output.outputSnapshots[p].snapshotSettings.outputUnits == SnapshotSettings::IP)
-                plots[p].TDat.a[index] = (ground.TNew[i][j][k] - 273.15)*9/5 + 32.0;
+                plots[p].TDat.a[index] = (ground.TNew[i+ground.nX*j+ground.nX*ground.nY*k] - 273.15)*9/5 + 32.0;
               else
-                plots[p].TDat.a[index] = ground.TNew[i][j][k] - 273.15;
+                plots[p].TDat.a[index] = ground.TNew[i+ground.nX*j+ground.nX*ground.nY*k] - 273.15;
             }
             else
             {
