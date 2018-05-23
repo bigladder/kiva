@@ -47,11 +47,11 @@ void Ground::buildDomain()
   // Initialize matices
   if (foundation.numericalScheme == Foundation::NS_ADE)
   {
-    U.resize(nX,std::vector<std::vector<double> >(nY,std::vector<double>(nZ)));
-    UOld.resize(nX,std::vector<std::vector<double> >(nY,std::vector<double>(nZ)));
+    U.resize(num_cells);
+    UOld.resize(num_cells);
 
-    V.resize(nX,std::vector<std::vector<double> >(nY,std::vector<double>(nZ)));
-    VOld.resize(nX,std::vector<std::vector<double> >(nY,std::vector<double>(nZ)));
+    V.resize(num_cells);
+    VOld.resize(num_cells);
   }
 
   if ((foundation.numericalScheme == Foundation::NS_ADI ||
@@ -87,7 +87,7 @@ void Ground::calculateADE()
       for (size_t k = 0; k < nZ; ++k)
       {
         index = i + j*nX + k*nX*nY;
-        UOld[i][j][k] = VOld[i][j][k] = TOld[index];
+        UOld[index] = VOld[index] = TOld[index];
       }
 
     }
@@ -109,7 +109,7 @@ void Ground::calculateADE()
       {
         index = i + j*nX + k*nX*nY;
         // Calculate average of sweeps
-        TNew[index] = 0.5*(U[i][j][k] + V[i][j][k]);
+        TNew[index] = 0.5*(U[index] + V[index]);
 
         // Update old values for next timestep
         TOld[index] = TNew[index];
@@ -149,22 +149,22 @@ void Ground::calculateADEUpwardSweep()
             switch (this_cell->surfacePtr->orientation)
             {
             case Surface::X_NEG:
-              U[i][j][k] = UOld[i+1][j][k];
+              U[index] = UOld[index+domain.stepsize_i];
               break;
             case Surface::X_POS:
-              U[i][j][k] = U[i-1][j][k];
+              U[index] = U[index-domain.stepsize_i];
               break;
             case Surface::Y_NEG:
-              U[i][j][k] = UOld[i][j+1][k];
+              U[index] = UOld[index+domain.stepsize_j];
               break;
             case Surface::Y_POS:
-              U[i][j][k] = U[i][j-1][k];
+              U[index] = U[index-domain.stepsize_j];
               break;
             case Surface::Z_NEG:
-              U[i][j][k] = UOld[i][j][k+1];
+              U[index] = UOld[index+domain.stepsize_k];
               break;
             case Surface::Z_POS:
-              U[i][j][k] = U[i][j][k-1];
+              U[index] = U[index-domain.stepsize_k];
               break;
             }
             }
@@ -172,17 +172,17 @@ void Ground::calculateADEUpwardSweep()
 
           case Surface::CONSTANT_TEMPERATURE:
 
-            U[i][j][k] = this_cell->surfacePtr->temperature;
+            U[index] = this_cell->surfacePtr->temperature;
             break;
 
           case Surface::INTERIOR_TEMPERATURE:
 
-            U[i][j][k] = bcs.indoorTemp;
+            U[index] = bcs.indoorTemp;
             break;
 
           case Surface::EXTERIOR_TEMPERATURE:
 
-            U[i][j][k] = bcs.outdoorTemp;
+            U[index] = bcs.outdoorTemp;
             break;
 
           case Surface::INTERIOR_FLUX:
@@ -198,27 +198,27 @@ void Ground::calculateADEUpwardSweep()
             switch (this_cell->surfacePtr->orientation)
             {
             case Surface::X_NEG:
-              U[i][j][k] = (domain.getKXP(i,j,k)*UOld[i+1][j][k]/domain.getDXP(i) +
+              U[index] = (domain.getKXP(i,j,k)*UOld[index+domain.stepsize_i]/domain.getDXP(i) +
                    (hc + hr)*Tair + q)/(domain.getKXP(i,j,k)/domain.getDXP(i) + (hc + hr));
               break;
             case Surface::X_POS:
-              U[i][j][k] = (domain.getKXM(i,j,k)*U[i-1][j][k]/domain.getDXM(i) +
+              U[index] = (domain.getKXM(i,j,k)*U[index-domain.stepsize_i]/domain.getDXM(i) +
                    (hc + hr)*Tair + q)/(domain.getKXM(i,j,k)/domain.getDXM(i) + (hc + hr));
               break;
             case Surface::Y_NEG:
-              U[i][j][k] = (domain.getKYP(i,j,k)*UOld[i][j+1][k]/domain.getDYP(j) +
+              U[index] = (domain.getKYP(i,j,k)*UOld[index+domain.stepsize_j]/domain.getDYP(j) +
                    (hc + hr)*Tair + q)/(domain.getKYP(i,j,k)/domain.getDYP(j) + (hc + hr));
               break;
             case Surface::Y_POS:
-              U[i][j][k] = (domain.getKYM(i,j,k)*U[i][j-1][k]/domain.getDYM(j) +
+              U[index] = (domain.getKYM(i,j,k)*U[index-domain.stepsize_j]/domain.getDYM(j) +
                    (hc + hr)*Tair + q)/(domain.getKYM(i,j,k)/domain.getDYM(j) + (hc + hr));
               break;
             case Surface::Z_NEG:
-              U[i][j][k] = (domain.getKZP(i,j,k)*UOld[i][j][k+1]/domain.getDZP(k) +
+              U[index] = (domain.getKZP(i,j,k)*UOld[index+domain.stepsize_k]/domain.getDZP(k) +
                    (hc + hr)*Tair + q)/(domain.getKZP(i,j,k)/domain.getDZP(k) + (hc + hr));
               break;
             case Surface::Z_POS:
-              U[i][j][k] = (domain.getKZM(i,j,k)*U[i][j][k-1]/domain.getDZM(k) +
+              U[index] = (domain.getKZM(i,j,k)*U[index-domain.stepsize_k]/domain.getDZM(k) +
                    (hc + hr)*Tair + q)/(domain.getKZM(i,j,k)/domain.getDZM(k) + (hc + hr));
               break;
             }
@@ -238,27 +238,27 @@ void Ground::calculateADEUpwardSweep()
             switch (this_cell->surfacePtr->orientation)
             {
             case Surface::X_NEG:
-              U[i][j][k] = (domain.getKXP(i,j,k)*UOld[i+1][j][k]/domain.getDXP(i) +
+              U[index] = (domain.getKXP(i,j,k)*UOld[index+domain.stepsize_i]/domain.getDXP(i) +
                     (hc + hr*pow(F,0.25))*Tair + q)/(domain.getKXP(i,j,k)/domain.getDXP(i) + (hc + hr));
               break;
             case Surface::X_POS:
-              U[i][j][k] = (domain.getKXM(i,j,k)*U[i-1][j][k]/domain.getDXM(i) +
+              U[index] = (domain.getKXM(i,j,k)*U[index-domain.stepsize_i]/domain.getDXM(i) +
                     (hc + hr*pow(F,0.25))*Tair + q)/(domain.getKXM(i,j,k)/domain.getDXM(i) + (hc + hr));
               break;
             case Surface::Y_NEG:
-              U[i][j][k] = (domain.getKYP(i,j,k)*UOld[i][j+1][k]/domain.getDYP(j) +
+              U[index] = (domain.getKYP(i,j,k)*UOld[index+domain.stepsize_j]/domain.getDYP(j) +
                     (hc + hr*pow(F,0.25))*Tair + q)/(domain.getKYP(i,j,k)/domain.getDYP(j) + (hc + hr));
               break;
             case Surface::Y_POS:
-              U[i][j][k] = (domain.getKYM(i,j,k)*U[i][j-1][k]/domain.getDYM(j) +
+              U[index] = (domain.getKYM(i,j,k)*U[index-domain.stepsize_j]/domain.getDYM(j) +
                     (hc + hr*pow(F,0.25))*Tair + q)/(domain.getKYM(i,j,k)/domain.getDYM(j) + (hc + hr));
               break;
             case Surface::Z_NEG:
-              U[i][j][k] = (domain.getKZP(i,j,k)*UOld[i][j][k+1]/domain.getDZP(k) +
+              U[index] = (domain.getKZP(i,j,k)*UOld[index+domain.stepsize_k]/domain.getDZP(k) +
                     (hc + hr*pow(F,0.25))*Tair + q)/(domain.getKZP(i,j,k)/domain.getDZP(k) + (hc + hr));
               break;
             case Surface::Z_POS:
-              U[i][j][k] = (domain.getKZM(i,j,k)*U[i][j][k-1]/domain.getDZM(k) +
+              U[index] = (domain.getKZM(i,j,k)*U[index-domain.stepsize_k]/domain.getDZM(k) +
                     (hc + hr*pow(F,0.25))*Tair + q)/(domain.getKZM(i,j,k)/domain.getDZM(k) + (hc + hr));
               break;
             }
@@ -268,10 +268,10 @@ void Ground::calculateADEUpwardSweep()
           }
           break;
         case Cell::INTERIOR_AIR:
-          U[i][j][k] = bcs.indoorTemp;
+          U[index] = bcs.indoorTemp;
           break;
         case Cell::EXTERIOR_AIR:
-          U[i][j][k] = bcs.outdoorTemp;
+          U[index] = bcs.outdoorTemp;
           break;
         default:
           {
@@ -287,13 +287,13 @@ void Ground::calculateADEUpwardSweep()
           double Q = this_cell->heatGain*theta;
 
           if (foundation.numberOfDimensions == 3)
-            U[i][j][k] = (UOld[i][j][k]*(1.0 - CXP - CZP - CYP)
-                - U[i-1][j][k]*CXM
-                + UOld[i+1][j][k]*CXP
-                - U[i][j][k-1]*CZM
-                + UOld[i][j][k+1]*CZP
-                - U[i][j-1][k]*CYM
-                + UOld[i][j+1][k]*CYP
+            U[index] = (UOld[index]*(1.0 - CXP - CZP - CYP)
+                - U[index-domain.stepsize_i]*CXM
+                + UOld[index+domain.stepsize_i]*CXP
+                - U[index-domain.stepsize_k]*CZM
+                + UOld[index+domain.stepsize_k]*CZP
+                - U[index-domain.stepsize_j]*CYM
+                + UOld[index+domain.stepsize_j]*CYP
                 + Q) /
                 (1.0 - CXM - CZM - CYM);
           else if (foundation.numberOfDimensions == 2)
@@ -307,19 +307,19 @@ void Ground::calculateADEUpwardSweep()
               CXPC = this_cell->cxp_c*theta/r;
               CXMC = this_cell->cxm_c*theta/r;
             }
-            U[i][j][k] = (UOld[i][j][k]*(1.0 - CXPC - CXP - CZP)
-                - U[i-1][j][k]*(CXMC + CXM)
-                + UOld[i+1][j][k]*(CXPC + CXP)
-                - U[i][j][k-1]*CZM
-                + UOld[i][j][k+1]*CZP
+            U[index] = (UOld[index]*(1.0 - CXPC - CXP - CZP)
+                - U[index-domain.stepsize_i]*(CXMC + CXM)
+                + UOld[index+domain.stepsize_i]*(CXPC + CXP)
+                - U[index-domain.stepsize_k]*CZM
+                + UOld[index+domain.stepsize_k]*CZP
                 + Q) /
                 (1.0 - CXMC - CXM - CZM);
           }
           else
           {
-            U[i][j][k] = (UOld[i][j][k]*(1.0 - CZP)
-                - U[i][j][k-1]*CZM
-                + UOld[i][j][k+1]*CZP
+            U[index] = (UOld[index]*(1.0 - CZP)
+                - U[index-domain.stepsize_k]*CZM
+                + UOld[index+domain.stepsize_k]*CZP
                 + Q) /
                 (1.0 - CZM);
           }
@@ -362,22 +362,22 @@ void Ground::calculateADEDownwardSweep()
             switch (this_cell->surfacePtr->orientation)
             {
             case Surface::X_NEG:
-              V[i][j][k] = V[i+1][j][k];
+              V[index] = V[index+domain.stepsize_i];
               break;
             case Surface::X_POS:
-              V[i][j][k] = VOld[i-1][j][k];
+              V[index] = VOld[index-domain.stepsize_i];
               break;
             case Surface::Y_NEG:
-              V[i][j][k] = V[i][j+1][k];
+              V[index] = V[index+domain.stepsize_j];
               break;
             case Surface::Y_POS:
-              V[i][j][k] = VOld[i][j-1][k];
+              V[index] = VOld[index-domain.stepsize_j];
               break;
             case Surface::Z_NEG:
-              V[i][j][k] = V[i][j][k+1];
+              V[index] = V[index+domain.stepsize_k];
               break;
             case Surface::Z_POS:
-              V[i][j][k] = VOld[i][j][k-1];
+              V[index] = VOld[index-domain.stepsize_k];
               break;
             }
             }
@@ -385,17 +385,17 @@ void Ground::calculateADEDownwardSweep()
 
           case Surface::CONSTANT_TEMPERATURE:
 
-            V[i][j][k] = this_cell->surfacePtr->temperature;
+            V[index] = this_cell->surfacePtr->temperature;
             break;
 
           case Surface::INTERIOR_TEMPERATURE:
 
-            V[i][j][k] = bcs.indoorTemp;
+            V[index] = bcs.indoorTemp;
             break;
 
           case Surface::EXTERIOR_TEMPERATURE:
 
-            V[i][j][k] = bcs.outdoorTemp;
+            V[index] = bcs.outdoorTemp;
             break;
 
           case Surface::INTERIOR_FLUX:
@@ -411,27 +411,27 @@ void Ground::calculateADEDownwardSweep()
             switch (this_cell->surfacePtr->orientation)
             {
             case Surface::X_NEG:
-              V[i][j][k] = (domain.getKXP(i,j,k)*V[i+1][j][k]/domain.getDXP(i) +
+              V[index] = (domain.getKXP(i,j,k)*V[index+domain.stepsize_i]/domain.getDXP(i) +
                     (hc + hr)*Tair + q)/(domain.getKXP(i,j,k)/domain.getDXP(i) + (hc + hr));
               break;
             case Surface::X_POS:
-              V[i][j][k] = (domain.getKXM(i,j,k)*VOld[i-1][j][k]/domain.getDXM(i) +
+              V[index] = (domain.getKXM(i,j,k)*VOld[index-domain.stepsize_i]/domain.getDXM(i) +
                     (hc + hr)*Tair + q)/(domain.getKXM(i,j,k)/domain.getDXM(i) + (hc + hr));
               break;
             case Surface::Y_NEG:
-              V[i][j][k] = (domain.getKYP(i,j,k)*V[i][j+1][k]/domain.getDYP(j) +
+              V[index] = (domain.getKYP(i,j,k)*V[index+domain.stepsize_j]/domain.getDYP(j) +
                     (hc + hr)*Tair + q)/(domain.getKYP(i,j,k)/domain.getDYP(j) + (hc + hr));
               break;
             case Surface::Y_POS:
-              V[i][j][k] = (domain.getKYM(i,j,k)*VOld[i][j-1][k]/domain.getDYM(j) +
+              V[index] = (domain.getKYM(i,j,k)*VOld[index-domain.stepsize_j]/domain.getDYM(j) +
                     (hc + hr)*Tair + q)/(domain.getKYM(i,j,k)/domain.getDYM(j) + (hc + hr));
               break;
             case Surface::Z_NEG:
-              V[i][j][k] = (domain.getKZP(i,j,k)*V[i][j][k+1]/domain.getDZP(k) +
+              V[index] = (domain.getKZP(i,j,k)*V[index+domain.stepsize_k]/domain.getDZP(k) +
                     (hc + hr)*Tair + q)/(domain.getKZP(i,j,k)/domain.getDZP(k) + (hc + hr));
               break;
             case Surface::Z_POS:
-              V[i][j][k] = (domain.getKZM(i,j,k)*VOld[i][j][k-1]/domain.getDZM(k) +
+              V[index] = (domain.getKZM(i,j,k)*VOld[index-domain.stepsize_k]/domain.getDZM(k) +
                     (hc + hr)*Tair + q)/(domain.getKZM(i,j,k)/domain.getDZM(k) + (hc + hr));
               break;
             }
@@ -451,27 +451,27 @@ void Ground::calculateADEDownwardSweep()
             switch (this_cell->surfacePtr->orientation)
             {
             case Surface::X_NEG:
-              V[i][j][k] = (domain.getKXP(i,j,k)*V[i+1][j][k]/domain.getDXP(i) +
+              V[index] = (domain.getKXP(i,j,k)*V[index+domain.stepsize_i]/domain.getDXP(i) +
                   (hc + hr*pow(F,0.25))*Tair + q)/(domain.getKXP(i,j,k)/domain.getDXP(i) + (hc + hr));
               break;
             case Surface::X_POS:
-              V[i][j][k] = (domain.getKXM(i,j,k)*VOld[i-1][j][k]/domain.getDXM(i) +
+              V[index] = (domain.getKXM(i,j,k)*VOld[index-domain.stepsize_i]/domain.getDXM(i) +
                   (hc + hr*pow(F,0.25))*Tair + q)/(domain.getKXM(i,j,k)/domain.getDXM(i) + (hc + hr));
               break;
             case Surface::Y_NEG:
-              V[i][j][k] = (domain.getKYP(i,j,k)*V[i][j+1][k]/domain.getDYP(j) +
+              V[index] = (domain.getKYP(i,j,k)*V[index+domain.stepsize_j]/domain.getDYP(j) +
                   (hc + hr*pow(F,0.25))*Tair + q)/(domain.getKYP(i,j,k)/domain.getDYP(j) + (hc + hr));
               break;
             case Surface::Y_POS:
-              V[i][j][k] = (domain.getKYM(i,j,k)*VOld[i][j-1][k]/domain.getDYM(j) +
+              V[index] = (domain.getKYM(i,j,k)*VOld[index-domain.stepsize_j]/domain.getDYM(j) +
                   (hc + hr*pow(F,0.25))*Tair + q)/(domain.getKYM(i,j,k)/domain.getDYM(j) + (hc + hr));
               break;
             case Surface::Z_NEG:
-              V[i][j][k] = (domain.getKZP(i,j,k)*VOld[i][j][k+1]/domain.getDZP(k) +
+              V[index] = (domain.getKZP(i,j,k)*VOld[index+domain.stepsize_k]/domain.getDZP(k) +
                   (hc + hr*pow(F,0.25))*Tair + q)/(domain.getKZP(i,j,k)/domain.getDZP(k) + (hc + hr));
               break;
             case Surface::Z_POS:
-              V[i][j][k] = (domain.getKZM(i,j,k)*VOld[i][j][k-1]/domain.getDZM(k) +
+              V[index] = (domain.getKZM(i,j,k)*VOld[index-domain.stepsize_k]/domain.getDZM(k) +
                   (hc + hr*pow(F,0.25))*Tair + q)/(domain.getKZM(i,j,k)/domain.getDZM(k) + (hc + hr));
               break;
             }
@@ -482,10 +482,10 @@ void Ground::calculateADEDownwardSweep()
           break;
 
         case Cell::INTERIOR_AIR:
-          V[i][j][k] = bcs.indoorTemp;
+          V[index] = bcs.indoorTemp;
           break;
         case Cell::EXTERIOR_AIR:
-          V[i][j][k] = bcs.outdoorTemp;
+          V[index] = bcs.outdoorTemp;
           break;
         default:
           {
@@ -501,13 +501,13 @@ void Ground::calculateADEDownwardSweep()
           double Q = this_cell->heatGain*theta;
 
           if (foundation.numberOfDimensions == 3)
-            V[i][j][k] = (VOld[i][j][k]*(1.0 + CXM + CZM + CYM)
-                - VOld[i-1][j][k]*CXM
-                + V[i+1][j][k]*CXP
-                - VOld[i][j][k-1]*CZM
-                + V[i][j][k+1]*CZP
-                - VOld[i][j-1][k]*CYM
-                + V[i][j+1][k]*CYP
+            V[index] = (VOld[index]*(1.0 + CXM + CZM + CYM)
+                - VOld[index-domain.stepsize_i]*CXM
+                + V[index+domain.stepsize_i]*CXP
+                - VOld[index-domain.stepsize_k]*CZM
+                + V[index+domain.stepsize_k]*CZP
+                - VOld[index-domain.stepsize_j]*CYM
+                + V[index+domain.stepsize_j]*CYP
                 + Q) /
                 (1.0 + CXP + CZP + CYP);
           else if (foundation.numberOfDimensions == 2)
@@ -521,19 +521,19 @@ void Ground::calculateADEDownwardSweep()
               CXPC = this_cell->cxp_c*theta/r;
               CXMC = this_cell->cxm_c*theta/r;
             }
-            V[i][j][k] = (VOld[i][j][k]*(1.0 + CXMC + CXM + CZM)
-                - VOld[i-1][j][k]*(CXMC + CXM)
-                + V[i+1][j][k]*(CXPC + CXP)
-                - VOld[i][j][k-1]*CZM
-                + V[i][j][k+1]*CZP
+            V[index] = (VOld[index]*(1.0 + CXMC + CXM + CZM)
+                - VOld[index-domain.stepsize_i]*(CXMC + CXM)
+                + V[index+domain.stepsize_i]*(CXPC + CXP)
+                - VOld[index-domain.stepsize_k]*CZM
+                + V[index+domain.stepsize_k]*CZP
                 + Q) /
                 (1.0 + CXPC + CXP + CZP);
           }
           else
           {
-            V[i][j][k] = (VOld[i][j][k]*(1.0 + CZM)
-                - VOld[i][j][k-1]*CZM
-                + V[i][j][k+1]*CZP
+            V[index] = (VOld[index]*(1.0 + CZM)
+                - VOld[index-domain.stepsize_k]*CZM
+                + V[index+domain.stepsize_k]*CZP
                 + Q) /
                 (1.0 + CZP);
           }

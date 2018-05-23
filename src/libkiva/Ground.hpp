@@ -65,10 +65,10 @@ private:
   // Data structures
 
   // ADE
-  std::vector<std::vector<std::vector<double>>> U; // ADE upper sweep, n+1
-  std::vector<std::vector<std::vector<double>>> UOld; // ADE upper sweep, n
-  std::vector<std::vector<std::vector<double>>> V; // ADE lower sweep, n+1
-  std::vector<std::vector<std::vector<double>>> VOld; // ADE lower sweep, n
+  std::vector<double> U; // ADE upper sweep, n+1
+  std::vector<double> UOld; // ADE upper sweep, n
+  std::vector<double> V; // ADE lower sweep, n+1
+  std::vector<double> VOld; // ADE lower sweep, n
 
   // ADI
   std::vector<double> a1; // lower diagonal
