@@ -297,14 +297,14 @@ void Simulator::plot(boost::posix_time::ptime t)
             if (input.output.outputSnapshots[p].snapshotSettings.plotType == SnapshotSettings::P_TEMP)
             {
               if (input.output.outputSnapshots[p].snapshotSettings.outputUnits == SnapshotSettings::IP)
-                plots[p].TDat.a[index] = (ground.TNew[i+ground.nX*j+ground.nX*ground.nY*k] - 273.15)*9/5 + 32.0;
+                plots[p].TDat.a[index] = (ground.TNew[index] - 273.15)*9/5 + 32.0;
               else
-                plots[p].TDat.a[index] = ground.TNew[i+ground.nX*j+ground.nX*ground.nY*k] - 273.15;
+                plots[p].TDat.a[index] = ground.TNew[index] - 273.15;
             }
             else
             {
               double du = plots[p].distanceUnitConversion;
-              std::vector<double> Qflux = ground.calculateHeatFlux(i,j,k);
+              std::vector<double> Qflux = ground.calculateHeatFlux(&ground.domain.cell[index]);
               double Qx = Qflux[0];
               double Qy = Qflux[1];
               double Qz = Qflux[2];

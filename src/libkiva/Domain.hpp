@@ -18,7 +18,7 @@ class Cell
 {
 public:
 
-  std::size_t index;
+  std::size_t i, j, k, index;
 
   // inherent properties
   double density;
@@ -32,13 +32,9 @@ public:
   // derived properties
   double cxp_c;
   double cxm_c;
-  double cxp;
-  double cxm;
-  double cyp;
-  double cym;
-  double czp;
-  double czm;
-
+  double cxp, cxm, cyp, cym, czp, czm;
+  double dxp, dxm, dyp, dym, dzp, dzm;
+  double kxp, kxm, kyp, kym, kzp, kzm;
   // organizational properties
   enum CellType
   {
@@ -53,6 +49,17 @@ public:
   Block* blockPtr;
 
   Surface* surfacePtr;
+  Mesher *meshXptr, *meshYptr, *meshZptr;
+  Cell* i_up_Ptr, *i_down_Ptr, *j_up_Ptr, *j_down_Ptr, *k_up_Ptr, *k_down_Ptr;
+
+  double getKXP();
+  double getKXM();
+  double getKYP();
+  double getKYM();
+  double getKZP();
+  double getKZM();
+  int getNumZeroDims();
+  void setZeroThicknessCellProperties(std::vector<Cell*> pointSet);
 };
 
 class Domain
@@ -63,12 +70,10 @@ public:
     Mesher meshX;
     Mesher meshY;
     Mesher meshZ;
-    std::size_t nX;
-    std::size_t nY;
-    std::size_t nZ;
+    std::size_t nX, nY, nZ;
     std::size_t stepsize_i, stepsize_j, stepsize_k;
 
-    std::vector<std::vector<std::vector<Cell>>> cell;
+    std::vector<Cell> cell;
     std::vector< std::vector<std::size_t> > dest_index_vector;
 
 public:
@@ -82,18 +87,10 @@ public:
     double getDYM(std::size_t j);
     double getDZP(std::size_t k);
     double getDZM(std::size_t k);
-    double getKXP(std::size_t i,std::size_t j,std::size_t k);
-    double getKXM(std::size_t i,std::size_t j,std::size_t k);
-    double getKYP(std::size_t i,std::size_t j,std::size_t k);
-    double getKYM(std::size_t i,std::size_t j,std::size_t k);
-    double getKZP(std::size_t i,std::size_t j,std::size_t k);
-    double getKZM(std::size_t i,std::size_t j,std::size_t k);
-    int getNumZeroDims(std::size_t i,std::size_t j,std::size_t k);
-    void set2DZeroThicknessCellProperties(std::size_t i,std::size_t j,std::size_t k);
-    void set3DZeroThicknessCellProperties(std::size_t i,std::size_t j,std::size_t k);
-    void setZeroThicknessCellProperties(std::size_t i, std::size_t j, std::size_t k,
-        std::vector<std::tuple<std::size_t,std::size_t,std::size_t> > pointSet);
+    void set2DZeroThicknessCellProperties(std::size_t index);
+    void set3DZeroThicknessCellProperties(std::size_t index);
     void printCellTypes();
+    std::tuple<std::size_t, std::size_t, std::size_t> get_coordinates(std::size_t index);
     std::tuple<std::size_t, std::size_t, std::size_t> get_step_size();
     std::vector<std::size_t> get_dest_index(std::size_t i, std::size_t j, std::size_t k);
 
