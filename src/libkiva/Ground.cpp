@@ -274,9 +274,8 @@ void Ground::calculateADEUpwardSweep()
 
             if (this_cell->i != 0)
             {
-              double r = domain.meshX.centers[this_cell->i];
-              CXPC = this_cell->cxp_c*theta/r;
-              CXMC = this_cell->cxm_c*theta/r;
+              CXPC = this_cell->cxp_c*theta/this_cell->r;
+              CXMC = this_cell->cxm_c*theta/this_cell->r;
             }
             U[index] = (UOld[index]*(1.0 - CXPC - CXP - CZP)
                 - U[index-domain.stepsize_i]*(CXMC + CXM)
@@ -474,9 +473,8 @@ void Ground::calculateADEDownwardSweep()
 
             if (this_cell->i != 0)
             {
-              double r = domain.meshX.centers[this_cell->i];
-              CXPC = this_cell->cxp_c*theta/r;
-              CXMC = this_cell->cxm_c*theta/r;
+              CXPC = this_cell->cxp_c*theta/this_cell->r;
+              CXMC = this_cell->cxm_c*theta/this_cell->r;
             }
             V[index] = (VOld[index]*(1.0 + CXMC + CXM + CZM)
                 - VOld[index-domain.stepsize_i]*(CXMC + CXM)
@@ -672,9 +670,8 @@ void Ground::calculateExplicit()
 
             if (this_cell->i != 0)
             {
-              double r = domain.meshX.centers[this_cell->i];
-              CXPC = this_cell->cxp_c*theta/r;
-              CXMC = this_cell->cxm_c*theta/r;
+              CXPC = this_cell->cxp_c*theta/this_cell->r;
+              CXMC = this_cell->cxm_c*theta/this_cell->r;
             }
 
             TNew[index] = TOld[index]*(1.0 + CXMC + CXM + CZM - CXPC - CXP - CZP)
@@ -998,9 +995,8 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
 
               if (this_cell->i != 0)
               {
-                double r = domain.meshX.centers[this_cell->i];
-                CXPC = this_cell->cxp_c/r;
-                CXMC = this_cell->cxm_c/r;
+                CXPC = this_cell->cxp_c/this_cell->r;
+                CXMC = this_cell->cxm_c/this_cell->r;
               }
               A = (CXMC + CXM + CZM - CXPC - CXP - CZP);
               Aim = (-CXMC - CXM);
@@ -1085,9 +1081,8 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
 
               if (this_cell->i != 0)
               {
-                double r = domain.meshX.centers[this_cell->i];
-                CXPC = this_cell->cxp_c*theta/r;
-                CXMC = this_cell->cxm_c*theta/r;
+                CXPC = this_cell->cxp_c*theta/this_cell->r;
+                CXMC = this_cell->cxm_c*theta/this_cell->r;
               }
               A = (1.0 + f*(CXPC + CXP + CZP - CXMC - CXM - CZM));
               Aim = f*(CXMC + CXM);
@@ -1533,9 +1528,8 @@ void Ground::calculateADI(int dim)
             double CXMC = 0;
             if (this_cell->i != 0)
             {
-              double r = domain.meshX.centers[this_cell->i];
-              CXPC = this_cell->cxp_c*theta/r;
-              CXMC = this_cell->cxm_c*theta/r;
+              CXPC = this_cell->cxp_c*theta/this_cell->r;
+              CXMC = this_cell->cxm_c*theta/this_cell->r;
             }
             if (dim == 1) // x
             {

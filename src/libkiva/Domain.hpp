@@ -26,7 +26,7 @@ public:
   double conductivity;
 
   double volume;
-  double area;
+  double area, r;
   double heatGain;
 
   // derived properties

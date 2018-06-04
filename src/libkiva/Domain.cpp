@@ -101,6 +101,9 @@ void Domain::setDomain(Foundation &foundation)
         }
         else if (foundation.numberOfDimensions == 2)
         {
+          if (i != 0)
+            this_cell->r = meshX.centers[i];
+
           if (isEqual(meshX.deltas[i], 0.0) ||
             isEqual(meshZ.deltas[k], 0.0))
           {
