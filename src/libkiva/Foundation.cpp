@@ -84,6 +84,16 @@ void Surface::setSquarePolygon()
   polygon.outer().push_back(Point(xMax,yMin));
 }
 
+void Surface::calcTilt()
+{
+  if (orientation == Surface::Z_POS)
+    tilt = 0;
+  else if (orientation == Surface::Z_NEG)
+    tilt = PI;
+  else
+    tilt = PI/2.0;
+}
+
 inline bool compareRanges(RangeType first,  RangeType second)
 {
   return (first.range.first < second.range.first);

@@ -151,9 +151,10 @@ public:
 
   std::vector<std::size_t> indices;
 
-  double area;
+  double area, tilt;
 
   void setSquarePolygon();
+  void calcTilt();
 };
 
 class RangeType

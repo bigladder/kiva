@@ -363,6 +363,7 @@ void Domain::setDomain(Foundation &foundation)
 
   for (std::size_t s = 0; s < foundation.surfaces.size(); s++)
   {
+    foundation.surfaces[s].calcTilt();
     foundation.surfaces[s].area = 0;
     for (auto index: foundation.surfaces[s].indices)
     {

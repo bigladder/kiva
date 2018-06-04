@@ -111,13 +111,6 @@ void Ground::calculateADEUpwardSweep()
         {
         case Cell::BOUNDARY:
           {
-          double tilt;
-          if (this_cell->surfacePtr->orientation == Surface::Z_POS)
-            tilt = 0;
-          else if (this_cell->surfacePtr->orientation == Surface::Z_NEG)
-            tilt = PI;
-          else
-            tilt = PI/2.0;
 
           switch (this_cell->surfacePtr->boundaryConditionType)
           {
@@ -168,7 +161,7 @@ void Ground::calculateADEUpwardSweep()
             double& q = this_cell->heatGain;
 
             double hc = getConvectionCoeff(TOld[index],
-                    Tair,0.0,0.00208,false,tilt);  // TODO Make roughness a property of the interior surfaces
+                    Tair,0.0,0.00208,false,this_cell->surfacePtr->tilt);  // TODO Make roughness a property of the interior surfaces
             double hr = getSimpleInteriorIRCoeff(this_cell->surfacePtr->emissivity,
                                TOld[index],Tair);
 
@@ -207,6 +200,7 @@ void Ground::calculateADEUpwardSweep()
             double Tair = bcs.outdoorTemp;
             double v = bcs.localWindSpeed;
             double eSky = bcs.skyEmissivity;
+            double tilt = this_cell->surfacePtr->tilt;
             double F = getEffectiveExteriorViewFactor(eSky,tilt);
             double hc = getConvectionCoeff(TOld[index],Tair,v,foundation.surfaceRoughness,true,tilt);
             double hr = getExteriorIRCoeff(this_cell->surfacePtr->emissivity,TOld[index],Tair,eSky,tilt);
@@ -316,13 +310,6 @@ void Ground::calculateADEDownwardSweep()
         {
         case Cell::BOUNDARY:
           {
-          double tilt;
-          if (this_cell->surfacePtr->orientation == Surface::Z_POS)
-            tilt = 0;
-          else if (this_cell->surfacePtr->orientation == Surface::Z_NEG)
-            tilt = PI;
-          else
-            tilt = PI/2.0;
 
           switch (this_cell->surfacePtr->boundaryConditionType)
           {
@@ -373,7 +360,7 @@ void Ground::calculateADEDownwardSweep()
             double& q = this_cell->heatGain;
 
             double hc = getConvectionCoeff(TOld[index],
-                    Tair,0.0,0.00208,false,tilt);
+                    Tair,0.0,0.00208,false,this_cell->surfacePtr->tilt);
             double hr = getSimpleInteriorIRCoeff(this_cell->surfacePtr->emissivity,
                                TOld[index],Tair);
 
@@ -412,6 +399,7 @@ void Ground::calculateADEDownwardSweep()
             double& Tair = bcs.outdoorTemp;
             double& v = bcs.localWindSpeed;
             double& eSky = bcs.skyEmissivity;
+            double tilt = this_cell->surfacePtr->tilt;
             double F = getEffectiveExteriorViewFactor(eSky,tilt);
             double hc = getConvectionCoeff(TOld[index],Tair,v,foundation.surfaceRoughness,true,tilt);
             double hr = getExteriorIRCoeff(this_cell->surfacePtr->emissivity,TOld[index],Tair,eSky,tilt);
@@ -521,13 +509,6 @@ void Ground::calculateExplicit()
         {
         case Cell::BOUNDARY:
           {
-          double tilt;
-          if (this_cell->surfacePtr->orientation == Surface::Z_POS)
-            tilt = 0;
-          else if (this_cell->surfacePtr->orientation == Surface::Z_NEG)
-            tilt = PI;
-          else
-            tilt = PI/2.0;
 
           switch (this_cell->surfacePtr->boundaryConditionType)
           {
@@ -578,7 +559,7 @@ void Ground::calculateExplicit()
             double& q = this_cell->heatGain;
 
             double hc = getConvectionCoeff(TOld[index],
-                    Tair,0.0,0.00208,false,tilt);
+                    Tair,0.0,0.00208,false,this_cell->surfacePtr->tilt);
             double hr = getSimpleInteriorIRCoeff(this_cell->surfacePtr->emissivity,
                                TOld[index],Tair);
 
@@ -617,6 +598,7 @@ void Ground::calculateExplicit()
             double& Tair = bcs.outdoorTemp;
             double& v = bcs.localWindSpeed;
             double& eSky = bcs.skyEmissivity;
+            double tilt = this_cell->surfacePtr->tilt;
             double F = getEffectiveExteriorViewFactor(eSky,tilt);
             double hc = getConvectionCoeff(TOld[index],Tair,v,foundation.surfaceRoughness,true,tilt);
             double hr = getExteriorIRCoeff(this_cell->surfacePtr->emissivity,TOld[index],Tair,eSky,tilt);
@@ -734,13 +716,6 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
         {
         case Cell::BOUNDARY:
           {
-          double tilt;
-          if (this_cell->surfacePtr->orientation == Surface::Z_POS)
-            tilt = 0;
-          else if (this_cell->surfacePtr->orientation == Surface::Z_NEG)
-            tilt = PI;
-          else
-            tilt = PI/2.0;
 
           switch (this_cell->surfacePtr->boundaryConditionType)
           {
@@ -832,7 +807,7 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
             double& q = this_cell->heatGain;
 
             double hc = getConvectionCoeff(TOld[index],
-                    Tair,0.0,0.00208,false,tilt);
+                    Tair,0.0,0.00208,false,this_cell->surfacePtr->tilt);
             double hr = getSimpleInteriorIRCoeff(this_cell->surfacePtr->emissivity,
                                TOld[index],Tair);
 
@@ -901,6 +876,7 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
             double& Tair = bcs.outdoorTemp;
             double& v = bcs.localWindSpeed;
             double& eSky = bcs.skyEmissivity;
+            double tilt = this_cell->surfacePtr->tilt;
             double F = getEffectiveExteriorViewFactor(eSky,tilt);
             double hc = getConvectionCoeff(TOld[index],Tair,v,foundation.surfaceRoughness,true,tilt);
             double hr = getExteriorIRCoeff(this_cell->surfacePtr->emissivity,TOld[index],Tair,eSky,tilt);
@@ -1180,14 +1156,6 @@ void Ground::calculateADI(int dim)
         {
         case Cell::BOUNDARY:
           {
-          double tilt;
-          if (this_cell->surfacePtr->orientation == Surface::Z_POS)
-            tilt = 0;
-          else if (this_cell->surfacePtr->orientation == Surface::Z_NEG)
-            tilt = PI;
-          else
-            tilt = PI/2.0;
-
           switch (this_cell->surfacePtr->boundaryConditionType)
           {
           case Surface::ZERO_FLUX:
@@ -1294,7 +1262,7 @@ void Ground::calculateADI(int dim)
             double& q = this_cell->heatGain;
 
             double hc = getConvectionCoeff(TOld[index],
-                    Tair,0.0,0.00208,false,tilt);
+                    Tair,0.0,0.00208,false,this_cell->surfacePtr->tilt);
             double hr = getSimpleInteriorIRCoeff(this_cell->surfacePtr->emissivity,
                                TOld[index],Tair);
 
@@ -1387,6 +1355,7 @@ void Ground::calculateADI(int dim)
             double Tair = bcs.outdoorTemp;
             double v = bcs.localWindSpeed;
             double eSky = bcs.skyEmissivity;
+            double tilt = this_cell->surfacePtr->tilt;
             double F = getEffectiveExteriorViewFactor(eSky,tilt);
             double hc = getConvectionCoeff(TOld[index],Tair,v,foundation.surfaceRoughness,true,tilt);
             double hr = getExteriorIRCoeff(this_cell->surfacePtr->emissivity,TOld[index],Tair,eSky,tilt);
@@ -1842,16 +1811,9 @@ void Ground::calculateSurfaceAverages(){
       // Find surface(s)
       for (size_t s = 0; s < foundation.surfaces.size(); s++)
       {
+        double tilt = foundation.surfaces[s].tilt;
         if (foundation.surfaces[s].type == surface)
         {
-          // Find tilt
-          double tilt;
-          if (foundation.surfaces[s].orientation == Surface::Z_POS)
-            tilt = 0.0;
-          else if (foundation.surfaces[s].orientation == Surface::Z_NEG)
-            tilt = PI;
-          else
-            tilt = PI/2.0;
 
           #ifdef PRNTSURF
             std::ofstream output;
@@ -2299,21 +2261,17 @@ void Ground::setSolarBoundaryConditions()
       double aziYNeg = PI + foundation.orientation;
       double aziXNeg = 3*PI/2 + foundation.orientation;
 
-      double tilt;
+      double tilt = foundation.surfaces[s].tilt;
       if (foundation.surfaces[s].orientation == Surface::Z_POS)
       {
-        tilt = 0.0;
         incidence = cos(PI/2 - alt);
       }
       else if (foundation.surfaces[s].orientation == Surface::Z_NEG)
       {
-        tilt = PI;
         incidence = cos(PI/2 - alt - PI);
       }
       else
       {
-        tilt = PI/2.0;
-
         if (foundation.numberOfDimensions == 2)
         {
           // incidence is the average incidence on the exterior of a vertical cylinder
