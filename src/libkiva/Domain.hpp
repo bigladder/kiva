@@ -35,6 +35,7 @@ public:
   double cxp, cxm, cyp, cym, czp, czm;
   double dxp, dxm, dyp, dym, dzp, dzm;
   double kxp, kxm, kyp, kym, kzp, kzm;
+  double *told_ptr;
   // organizational properties
   enum CellType
   {

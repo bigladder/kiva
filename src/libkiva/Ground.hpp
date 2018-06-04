@@ -127,6 +127,7 @@ private:
   double getBoundaryValue(double dist);
 
   double getBoundaryDistance(double val);
+  void link_cells_to_temp();
 
 };
 
