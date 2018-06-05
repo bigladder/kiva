@@ -57,7 +57,8 @@ void Domain::setDomain(Foundation &foundation)
   std::tie(stepsize_i, stepsize_j, stepsize_k) = get_step_size();
 
   cell.resize(nX*nY*nZ);
-  dest_index_vector.resize(nX*nY*nZ, std::vector<std::size_t>(3));
+  dest_index_vector.resize(3, std::vector<std::size_t>(nX*nY*nZ));
+  std::vector<std::size_t> temp_di(3);
 
   for (std::size_t index = 0; index < nX*nY*nZ; index++)
   {
@@ -66,7 +67,10 @@ void Domain::setDomain(Foundation &foundation)
 
         Cell* this_cell = &cell[index];
         this_cell->index = index;
-        dest_index_vector[index] = get_dest_index(i, j, k);
+        temp_di = get_dest_index(i, j, k);
+        for (std::size_t d=0; d<3; d++) {
+            dest_index_vector[d][index] = temp_di[d];
+        }
         // Set Cell Properties
         this_cell->density = foundation.soil.density;
         this_cell->specificHeat = foundation.soil.specificHeat;

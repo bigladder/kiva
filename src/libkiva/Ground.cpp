@@ -1144,7 +1144,7 @@ void Ground::calculateADI(int dim)
   {
         Cell* this_cell = &domain.cell[index];
         index = this_cell->index;
-        dest_index = domain.dest_index_vector[index][dim-1];
+        dest_index = domain.dest_index_vector[dim-1][index];
 
         double A{0.0}, Ap{0.0}, Am{0.0}, bVal{0.0};
 
@@ -1558,12 +1558,10 @@ void Ground::calculateADI(int dim)
 
   solveLinearSystem();
 
-  for (size_t index = 0; index < num_cells; ++index)
-  {
-    dest_index = domain.dest_index_vector[index][dim-1];
-
-      // Read solution into temperature matrix
-    TNew[index] = getxValue(dest_index);
+  std::size_t index{0};
+  for (auto di : domain.dest_index_vector[dim-1]) {
+      TNew[index] = getxValue(di);
+      index++;
   }
   // Update old values for next timestep
   TOld.assign(TNew.begin(), TNew.end());
