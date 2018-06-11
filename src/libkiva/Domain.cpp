@@ -211,12 +211,7 @@ void Domain::setDomain(Foundation &foundation)
   {
     std::size_t index = this_cell.index;
 
-    this_cell.i_up_Ptr = &cell[index+stepsize_i];
-    this_cell.i_down_Ptr = &cell[index-stepsize_i];
-    this_cell.j_up_Ptr = &cell[index+stepsize_j];
-    this_cell.j_down_Ptr = &cell[index-stepsize_j];
-    this_cell.k_up_Ptr = &cell[index+stepsize_k];
-    this_cell.k_down_Ptr = &cell[index-stepsize_k];
+    this_cell.setNeighbors(cell, stepsize_i, stepsize_j, stepsize_k);
 
     // PDE Coefficients
     this_cell.setDistances(dxp_vector[this_cell.i], dxm_vector[this_cell.i],
