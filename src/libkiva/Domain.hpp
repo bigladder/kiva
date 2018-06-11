@@ -7,6 +7,7 @@
 #include "Foundation.hpp"
 #include "Mesher.hpp"
 #include "Functions.hpp"
+#include "Cell.hpp"
 
 #include <fstream>
 #include <memory>
@@ -14,54 +15,6 @@
 
 namespace Kiva {
 
-class Cell
-{
-public:
-
-  std::size_t i, j, k, index;
-
-  // inherent properties
-  double density;
-  double specificHeat;
-  double conductivity;
-
-  double volume;
-  double area, r;
-  double heatGain;
-
-  // derived properties
-  double cxp_c;
-  double cxm_c;
-  double cxp, cxm, cyp, cym, czp, czm;
-  double dxp, dxm, dyp, dym, dzp, dzm;
-  double kxp, kxm, kyp, kym, kzp, kzm;
-  double *told_ptr;
-  // organizational properties
-  enum CellType
-  {
-    EXTERIOR_AIR,  // 0
-    INTERIOR_AIR,  // 1
-    NORMAL,  // 2
-    BOUNDARY,  // 3
-    ZERO_THICKNESS  // 4
-  };
-  CellType cellType;
-
-  Block* blockPtr;
-
-  Surface* surfacePtr;
-  Mesher *meshXptr, *meshYptr, *meshZptr;
-  Cell* i_up_Ptr, *i_down_Ptr, *j_up_Ptr, *j_down_Ptr, *k_up_Ptr, *k_down_Ptr;
-
-  double getKXP();
-  double getKXM();
-  double getKYP();
-  double getKYM();
-  double getKZP();
-  double getKZM();
-  int getNumZeroDims();
-  void setZeroThicknessCellProperties(std::vector<Cell*> pointSet);
-};
 
 class Domain
 {
@@ -82,6 +35,7 @@ public:
     Domain();
     Domain(Foundation &foundation);
     void setDomain(Foundation &foundation);
+    int getNumZeroDims(std::size_t i, std::size_t j, std::size_t k);
     double getDXP(std::size_t i);
     double getDXM(std::size_t i);
     double getDYP(std::size_t j);

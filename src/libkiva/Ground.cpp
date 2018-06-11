@@ -111,7 +111,7 @@ void Ground::calculateADEUpwardSweep()
         Cell* this_cell = &domain.cell[index];
         switch (this_cell->cellType)
         {
-        case Cell::BOUNDARY:
+        case CellType::BOUNDARY:
           {
 
           switch (this_cell->surfacePtr->boundaryConditionType)
@@ -240,10 +240,10 @@ void Ground::calculateADEUpwardSweep()
           }
           }
           break;
-        case Cell::INTERIOR_AIR:
+        case CellType::INTERIOR_AIR:
           U[index] = bcs.indoorTemp;
           break;
-        case Cell::EXTERIOR_AIR:
+        case CellType::EXTERIOR_AIR:
           U[index] = bcs.outdoorTemp;
           break;
         default:
@@ -309,7 +309,7 @@ void Ground::calculateADEDownwardSweep()
         Cell* this_cell = &domain.cell[index];
         switch (this_cell->cellType)
         {
-        case Cell::BOUNDARY:
+        case CellType::BOUNDARY:
           {
 
           switch (this_cell->surfacePtr->boundaryConditionType)
@@ -439,10 +439,10 @@ void Ground::calculateADEDownwardSweep()
           }
           break;
 
-        case Cell::INTERIOR_AIR:
+        case CellType::INTERIOR_AIR:
           V[index] = bcs.indoorTemp;
           break;
-        case Cell::EXTERIOR_AIR:
+        case CellType::EXTERIOR_AIR:
           V[index] = bcs.outdoorTemp;
           break;
         default:
@@ -507,7 +507,7 @@ void Ground::calculateExplicit()
         Cell* this_cell = &domain.cell[index];
         switch (this_cell->cellType)
         {
-        case Cell::BOUNDARY:
+        case CellType::BOUNDARY:
           {
 
           switch (this_cell->surfacePtr->boundaryConditionType)
@@ -636,11 +636,11 @@ void Ground::calculateExplicit()
           }
           }
           break;
-        case Cell::INTERIOR_AIR:
+        case CellType::INTERIOR_AIR:
           TNew[index] = bcs.indoorTemp;
           break;
 
-        case Cell::EXTERIOR_AIR:
+        case CellType::EXTERIOR_AIR:
           TNew[index] = bcs.outdoorTemp;
           break;
         default:
@@ -713,7 +713,7 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
 
         switch (this_cell->cellType)
         {
-        case Cell::BOUNDARY:
+        case CellType::BOUNDARY:
           {
 
           switch (this_cell->surfacePtr->boundaryConditionType)
@@ -943,14 +943,14 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
           }
           }
           break;
-        case Cell::INTERIOR_AIR:
+        case CellType::INTERIOR_AIR:
           A = 1.0;
           bVal = bcs.indoorTemp;
 
           setAmatValue(index,index,A);
           setbValue(index,bVal);
           break;
-        case Cell::EXTERIOR_AIR:
+        case CellType::EXTERIOR_AIR:
           A = 1.0;
           bVal = bcs.outdoorTemp;
 
@@ -1151,7 +1151,7 @@ void Ground::calculateADI(int dim)
 
         switch (this_cell->cellType)
         {
-        case Cell::BOUNDARY:
+        case CellType::BOUNDARY:
           {
           switch (this_cell->surfacePtr->boundaryConditionType)
           {
@@ -1444,11 +1444,11 @@ void Ground::calculateADI(int dim)
           }
           }
           break;
-        case Cell::INTERIOR_AIR:
+        case CellType::INTERIOR_AIR:
           A = 1.0;
           bVal = bcs.indoorTemp;
           break;
-        case Cell::EXTERIOR_AIR:
+        case CellType::EXTERIOR_AIR:
           A = 1.0;
           bVal = bcs.outdoorTemp;
           break;
@@ -1917,7 +1917,7 @@ std::vector<double> Ground::calculateHeatFlux(Cell* this_cell)
 
   switch (this_cell->cellType)
   {
-    case Cell::BOUNDARY:
+    case CellType::BOUNDARY:
       {
         switch (this_cell->surfacePtr->orientation)
         {
@@ -1963,11 +1963,11 @@ std::vector<double> Ground::calculateHeatFlux(Cell* this_cell)
         Qz = CZP*DTZP + CZM*DTZM;
       }
       break;
-    case Cell::INTERIOR_AIR:
+    case CellType::INTERIOR_AIR:
       break;
-    case Cell::EXTERIOR_AIR:
+    case CellType::EXTERIOR_AIR:
       break;
-    case Cell::ZERO_THICKNESS:
+    case CellType::ZERO_THICKNESS:
       {
         //int numZeroDims = domain.getNumZeroDims(i,j,k);
 
