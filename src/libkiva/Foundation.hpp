@@ -7,6 +7,7 @@
 #include "Mesher.hpp"
 #include "Functions.hpp"
 #include "Geometry.hpp"
+#include "Algorithms.hpp"
 
 namespace Kiva {
 
@@ -315,6 +316,8 @@ public:
   double netPerimeter;
 
   void createMeshData();
+  double getConvectionCoeff(double Tsurf, double Tamb, double Vair,
+                            double roughness, bool isExterior, double tilt) const;
 };
 
 }

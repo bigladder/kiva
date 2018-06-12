@@ -24,6 +24,10 @@ Cell::Cell(const std::size_t &index, const CellType cellType,
         meshYptr(meshYptr),
         meshZptr(meshZptr)
 {
+  Assemble(foundation);
+}
+
+void Cell::Assemble(const Foundation &foundation) {
   if (blockPtr) {
     density = blockPtr->material.density;
     specificHeat = blockPtr->material.specificHeat;
@@ -34,88 +38,22 @@ Cell::Cell(const std::size_t &index, const CellType cellType,
     conductivity = foundation.soil.conductivity;
   }
   heatGain = 0.0;
-  volume = meshXptr->deltas[i]*meshYptr->deltas[j]*meshZptr->deltas[k];
+  volume = meshXptr->deltas[i] * meshYptr->deltas[j] * meshZptr->deltas[k];
 
-  // for boundary cells, set cell area
-  if (cellType == CellType::BOUNDARY)
-  {
-    if (foundation.numberOfDimensions == 2 &&
-        foundation.coordinateSystem == Foundation::CS_CYLINDRICAL)
-    {
-      if (surfacePtr->orientation == Surface::X_POS ||
-          surfacePtr->orientation == Surface::X_NEG)
-      {
-        area = 2.0*PI*meshXptr->centers[i]*meshZptr->deltas[k];
-      }
-      else // if (surface.orientation == Surface::Z_POS ||
-        // surface.orientation == Surface::Z_NEG)
-      {
-        area = PI*(meshXptr->dividers[i+1]*meshXptr->dividers[i+1] -
-                   meshXptr->dividers[i]*meshXptr->dividers[i] );
-      }
-    }
-    else if (foundation.numberOfDimensions == 2 &&
-             foundation.coordinateSystem == Foundation::CS_CARTESIAN)
-    {
-      if (surfacePtr->orientation == Surface::X_POS ||
-          surfacePtr->orientation == Surface::X_NEG)
-      {
-        area = 2.0*meshZptr->deltas[k]*foundation.linearAreaMultiplier;
-      }
-      else // if (surface.orientation == Surface::Z_POS ||
-        // surface.orientation == Surface::Z_NEG)
-      {
-        area = 2.0*meshXptr->deltas[i]*foundation.linearAreaMultiplier;
-      }
-    }
-    else if (foundation.numberOfDimensions == 3)
-    {
-      if (surfacePtr->orientation == Surface::X_POS ||
-          surfacePtr->orientation == Surface::X_NEG)
-      {
-        area = meshYptr->deltas[j]*meshZptr->deltas[k];
-      }
-      else if (surfacePtr->orientation == Surface::Y_POS ||
-               surfacePtr->orientation == Surface::Y_NEG)
-      {
-        area = meshXptr->deltas[i]*meshZptr->deltas[k];
-      }
-      else // if (surface.orientation == Surface::Z_POS ||
-        // surface.orientation == Surface::Z_NEG)
-      {
-        area = meshXptr->deltas[i]*meshYptr->deltas[j];
-      }
-
-      if (foundation.useSymmetry)
-      {
-        if (foundation.isXSymm)
-          area = 2*area;
-
-        if (foundation.isYSymm)
-          area = 2*area;
-      }
-    }
-    else
-    {
-      area = 1.0;
-    }
-  }
-
-  if (cellType == CellType::ZERO_THICKNESS & foundation.numberOfDimensions == 2) {
-    if (i != 0)
+  if (foundation.numberOfDimensions == 2) {
       r = meshXptr->centers[i];
   }
 }
 
-void Cell::setNeighbors(std::vector<Cell> &cell_v, std::size_t stepsize_i,
-                        std::size_t stepsize_j, std::size_t stepsize_k)
+void Cell::setNeighbors(std::vector<std::shared_ptr<Cell> > &cell_v, std::size_t stepsize_i, std::size_t stepsize_j,
+                        std::size_t stepsize_k, std::size_t nX, std::size_t nY, std::size_t nZ)
 {
-  i_up_Ptr = &cell_v[index+stepsize_i];
-  i_down_Ptr = &cell_v[index-stepsize_i];
-  j_up_Ptr = &cell_v[index+stepsize_j];
-  j_down_Ptr = &cell_v[index-stepsize_j];
-  k_up_Ptr = &cell_v[index+stepsize_k];
-  k_down_Ptr = &cell_v[index-stepsize_k];
+  if (i != nX-1) i_up_Ptr = cell_v[index+stepsize_i];
+  if (i != 0) i_down_Ptr = cell_v[index-stepsize_i];
+  if (j != nY-1) j_up_Ptr = cell_v[index+stepsize_j];
+  if (j != 0) j_down_Ptr = cell_v[index-stepsize_j];
+  if (k != nZ-1) k_up_Ptr = cell_v[index+stepsize_k];
+  if (k != 0) k_down_Ptr = cell_v[index-stepsize_k];
 }
 
 void Cell::setDistances(double &dxp_in, double &dxm_in, double &dyp_in, double &dym_in,
@@ -263,7 +201,7 @@ void Cell::setWhatever(int ndims, bool cylindrical) {
   }
 }
 
-void Cell::setZeroThicknessCellProperties(std::vector<Cell*> pointSet)
+void Cell::setZeroThicknessCellProperties(std::vector< std::shared_ptr<Cell> > pointSet)
 {
   std::vector<double> volumes;
   std::vector<double> densities;
@@ -651,6 +589,7 @@ void Cell::calcCellSteadyState(const Foundation &foundation,
 }
 
 void Cell::calcCellADI(int dim, const Foundation &foundation, double timestep,
+                       const BoundaryConditions &/*bcs*/,
                        double &Am, double &A, double &Ap, double &bVal) {
   double theta = timestep / (foundation.numberOfDimensions
                              *density*specificHeat);
@@ -750,6 +689,404 @@ void Cell::calcCellADI(int dim, const Foundation &foundation, double timestep,
   }
 }
 
+
+
+
+ExteriorAirCell::ExteriorAirCell(const std::size_t &index, const CellType cellType,
+           const std::size_t &i, const std::size_t &j, const std::size_t &k,
+           const Foundation &foundation, Surface *surfacePtr, Block *blockPtr,
+           Mesher *meshXptr, Mesher *meshYptr, Mesher *meshZptr):
+        Cell(index, cellType, i, j, k, foundation, surfacePtr, blockPtr, meshXptr, meshYptr, meshZptr)
+{}
+
+void ExteriorAirCell::calcCellADI(int /*dim*/, const Foundation &/*foundation*/, double /*timestep*/,
+                                  const BoundaryConditions &bcs,
+                                  double &/*Am*/, double &A, double &/*Ap*/, double &bVal)
+{
+  A = 1.0;
+  bVal = bcs.outdoorTemp;
+};
+
+
+InteriorAirCell::InteriorAirCell(const std::size_t &index, const CellType cellType,
+                                 const std::size_t &i, const std::size_t &j, const std::size_t &k,
+                                 const Foundation &foundation, Surface *surfacePtr, Block *blockPtr,
+                                 Mesher *meshXptr, Mesher *meshYptr, Mesher *meshZptr):
+        Cell(index, cellType, i, j, k, foundation, surfacePtr, blockPtr, meshXptr, meshYptr, meshZptr)
+{}
+
+void InteriorAirCell::calcCellADI(int /*dim*/, const Foundation &/*foundation*/, double /*timestep*/,
+                                  const BoundaryConditions &bcs,
+                                  double &/*Am*/, double &A, double &/*Ap*/, double &bVal)
+{
+  A = 1.0;
+  bVal = bcs.indoorTemp;
+};
+
+
+BoundaryCell::BoundaryCell(const std::size_t &index, const CellType cellType,
+                                 const std::size_t &i, const std::size_t &j, const std::size_t &k,
+                                 const Foundation &foundation, Surface *surfacePtr, Block *blockPtr,
+                                 Mesher *meshXptr, Mesher *meshYptr, Mesher *meshZptr):
+        Cell(index, cellType, i, j, k, foundation, surfacePtr, blockPtr, meshXptr, meshYptr, meshZptr)
+{
+    if (foundation.numberOfDimensions == 2 &&
+        foundation.coordinateSystem == Foundation::CS_CYLINDRICAL)
+    {
+      if (surfacePtr->orientation == Surface::X_POS ||
+          surfacePtr->orientation == Surface::X_NEG)
+      {
+        area = 2.0 * PI * meshXptr->centers[i] * meshZptr->deltas[k];
+      }
+      else // if (surface.orientation == Surface::Z_POS ||
+        // surface.orientation == Surface::Z_NEG)
+      {
+        area = PI * (meshXptr->dividers[i + 1] * meshXptr->dividers[i + 1] -
+                     meshXptr->dividers[i]*meshXptr->dividers[i] );
+      }
+    }
+    else if (foundation.numberOfDimensions == 2 &&
+             foundation.coordinateSystem == Foundation::CS_CARTESIAN)
+    {
+      if (surfacePtr->orientation == Surface::X_POS ||
+          surfacePtr->orientation == Surface::X_NEG)
+      {
+        area = 2.0 * meshZptr->deltas[k] * foundation.linearAreaMultiplier;
+      }
+      else // if (surface.orientation == Surface::Z_POS ||
+        // surface.orientation == Surface::Z_NEG)
+      {
+        area = 2.0 * meshXptr->deltas[i] * foundation.linearAreaMultiplier;
+      }
+    }
+    else if (foundation.numberOfDimensions == 3)
+    {
+      if (surfacePtr->orientation == Surface::X_POS ||
+          surfacePtr->orientation == Surface::X_NEG)
+      {
+        area = meshYptr->deltas[j] * meshZptr->deltas[k];
+      }
+      else if (surfacePtr->orientation == Surface::Y_POS ||
+               surfacePtr->orientation == Surface::Y_NEG)
+      {
+        area = meshXptr->deltas[i] * meshZptr->deltas[k];
+      }
+      else // if (surface.orientation == Surface::Z_POS ||
+        // surface.orientation == Surface::Z_NEG)
+      {
+        area = meshXptr->deltas[i] * meshYptr->deltas[j];
+      }
+
+      if (foundation.useSymmetry)
+      {
+        if (foundation.isXSymm)
+          area = 2 * area;
+
+        if (foundation.isYSymm)
+          area = 2 * area;
+      }
+    }
+    else  /* if (foundatin.numberOfDimensions == 1) */
+    {
+      area = 1.0;
+    }
+}
+
+void BoundaryCell::calcCellADI(int dim, const Foundation &foundation, double /*timestep*/,
+                               const BoundaryConditions &bcs,
+                               double &Am, double &A, double &Ap, double &bVal)
+{
+  switch (surfacePtr->boundaryConditionType)
+  {
+    case Surface::ZERO_FLUX:
+    {
+      switch (surfacePtr->orientation)
+      {
+        case Surface::X_NEG:
+          A = 1.0;
+
+          if (dim == 1)
+          {
+            Ap = -1.0;
+            bVal = 0;
+          }
+          else
+          {
+            Ap = 0.0;
+            bVal = *i_up_Ptr->told_ptr;
+          }
+          break;
+        case Surface::X_POS:
+          A = 1.0;
+          if (dim == 1)
+          {
+            Am = -1.0;
+            bVal = 0;
+          }
+          else
+          {
+            Am = 0.0;
+            bVal = *i_down_Ptr->told_ptr;
+          }
+          break;
+        case Surface::Y_NEG:
+          A = 1.0;
+          if (dim == 2)
+          {
+            Ap = -1.0;
+            bVal = 0;
+          }
+          else
+          {
+            Ap = 0.0;
+            bVal = *j_up_Ptr->told_ptr;
+          }
+          break;
+        case Surface::Y_POS:
+          A = 1.0;
+          if (dim == 2)
+          {
+            Am = -1.0;
+            bVal = 0;
+          }
+          else
+          {
+            Am = 0.0;
+            bVal = *j_down_Ptr->told_ptr;
+          }
+          break;
+        case Surface::Z_NEG:
+          A = 1.0;
+          if (dim == 3)
+          {
+            Ap = -1.0;
+            bVal = 0;
+          }
+          else
+          {
+            Ap = 0.0;
+            bVal = *k_up_Ptr->told_ptr;
+          }
+          break;
+        case Surface::Z_POS:
+          A = 1.0;
+          if (dim == 3)
+          {
+            Am = -1.0;
+            bVal = 0;
+          }
+          else
+          {
+            Am = 0.0;
+            bVal = *k_down_Ptr->told_ptr;
+          }
+          break;
+      }
+    }
+      break;
+    case Surface::CONSTANT_TEMPERATURE:
+      A = 1.0;
+      bVal = surfacePtr->temperature;
+      break;
+    case Surface::INTERIOR_TEMPERATURE:
+      A = 1.0;
+      bVal = bcs.indoorTemp;
+      break;
+    case Surface::EXTERIOR_TEMPERATURE:
+      A = 1.0;
+      bVal = bcs.outdoorTemp;
+      break;
+    case Surface::INTERIOR_FLUX:
+    {
+      double Tair = bcs.indoorTemp;
+      double q = heatGain;
+
+      double hc = foundation.getConvectionCoeff(*told_ptr,
+                                     Tair,0.0,0.00208,false,surfacePtr->tilt);
+      double hr = getSimpleInteriorIRCoeff(surfacePtr->emissivity,
+                                           *told_ptr,Tair);
+
+      switch (surfacePtr->orientation)
+      {
+        case Surface::X_NEG:
+          A = kxp/dxp + (hc + hr);
+          if (dim == 1)
+          {
+            Ap = -kxp/dxp;
+            bVal = (hc + hr)*Tair + q;
+          }
+          else
+          {
+            Ap = 0.0;
+            bVal = *i_up_Ptr->told_ptr*kxp/dxp + (hc + hr)*Tair + q;
+          }
+          break;
+        case Surface::X_POS:
+          A = kxm/dxm + (hc + hr);
+          if (dim == 1)
+          {
+            Am = -kxm/dxm;
+            bVal = (hc + hr)*Tair + q;
+          }
+          else
+          {
+            Am = 0.0;
+            bVal = *i_down_Ptr->told_ptr*kxm/dxm + (hc + hr)*Tair + q;
+          }
+          break;
+        case Surface::Y_NEG:
+          A = kyp/dyp + (hc + hr);
+          if (dim == 2)
+          {
+            Ap = -kyp/dyp;
+            bVal = (hc + hr)*Tair + q;
+          }
+          else
+          {
+            Ap = 0.0;
+            bVal = *j_up_Ptr->told_ptr*kyp/dyp + (hc + hr)*Tair + q;
+          }
+          break;
+        case Surface::Y_POS:
+          A = kym/dym + (hc + hr);
+          if (dim == 2)
+          {
+            Am = -kym/dym;
+            bVal = (hc + hr)*Tair + q;
+          }
+          else
+          {
+            Am = 0.0;
+            bVal = *j_down_Ptr->told_ptr*kym/dym + (hc + hr)*Tair + q;
+          }
+          break;
+        case Surface::Z_NEG:
+          A = kzp/dzp + (hc + hr);
+          if (dim == 3)
+          {
+            Ap = -kzp/dzp;
+            bVal = (hc + hr)*Tair + q;
+          }
+          else
+          {
+            Ap = 0.0;
+            bVal = *k_up_Ptr->told_ptr*kzp/dzp + (hc + hr)*Tair + q;
+          }
+          break;
+        case Surface::Z_POS:
+          A = kzm/dzm + (hc + hr);
+          if (dim == 3)
+          {
+            Am = -kzm/dzm;
+            bVal = (hc + hr)*Tair + q;
+          }
+          else
+          {
+            Am = 0.0;
+            bVal = *k_down_Ptr->told_ptr*kzm/dzm + (hc + hr)*Tair + q;
+          }
+          break;
+      }
+    }
+      break;
+
+    case Surface::EXTERIOR_FLUX:
+    {
+      double Tair = bcs.outdoorTemp;
+      double v = bcs.localWindSpeed;
+      double eSky = bcs.skyEmissivity;
+      double tilt = surfacePtr->tilt;
+      double F = getEffectiveExteriorViewFactor(eSky,tilt);
+      double hc = foundation.getConvectionCoeff(*told_ptr,Tair,v,foundation.surfaceRoughness,true,tilt);
+      double hr = getExteriorIRCoeff(surfacePtr->emissivity,*told_ptr,Tair,eSky,tilt);
+      double q = heatGain;
+
+      switch (surfacePtr->orientation)
+      {
+        case Surface::X_NEG:
+          A = kxp/dxp + (hc + hr);
+          if (dim == 1)
+          {
+            Ap = -kxp/dxp;
+            bVal = (hc + hr*pow(F,0.25))*Tair + q;
+          }
+          else
+          {
+            Ap = 0.0;
+            bVal = *i_up_Ptr->told_ptr*kxp/dxp + (hc + hr*pow(F,0.25))*Tair + q;
+          }
+          break;
+        case Surface::X_POS:
+          A = kxm/dxm + (hc + hr);
+          if (dim == 1)
+          {
+            Am = -kxm/dxm;
+            bVal = (hc + hr*pow(F,0.25))*Tair + q;
+          }
+          else
+          {
+            Am = 0.0;
+            bVal = *i_down_Ptr->told_ptr*kxm/dxm + (hc + hr*pow(F,0.25))*Tair + q;
+          }
+          break;
+        case Surface::Y_NEG:
+          A = kyp/dyp + (hc + hr);
+          if (dim == 2)
+          {
+            Ap = -kyp/dyp;
+            bVal = (hc + hr*pow(F,0.25))*Tair + q;
+          }
+          else
+          {
+            Ap = 0.0;
+            bVal = *j_up_Ptr->told_ptr*kyp/dyp + (hc + hr*pow(F,0.25))*Tair + q;
+          }
+          break;
+        case Surface::Y_POS:
+          A = kym/dym + (hc + hr);
+          if (dim == 2)
+          {
+            Am = -kym/dym;
+            bVal = (hc + hr*pow(F,0.25))*Tair + q;
+          }
+          else
+          {
+            Am = 0.0;
+            bVal = *j_down_Ptr->told_ptr*kym/dym + (hc + hr*pow(F,0.25))*Tair + q;
+          }
+          break;
+        case Surface::Z_NEG:
+          A = kzp/dzp + (hc + hr);
+          if (dim == 3)
+          {
+            Ap = -kzp/dzp;
+            bVal = (hc + hr*pow(F,0.25))*Tair + q;
+          }
+          else
+          {
+            Ap = 0.0;
+            bVal = *k_up_Ptr->told_ptr*kzp/dzp + (hc + hr*pow(F,0.25))*Tair + q;
+          }
+          break;
+        case Surface::Z_POS:
+          A = kzm/dzm + (hc + hr);
+          if (dim == 3)
+          {
+            Am = -kzm/dzm;
+            bVal = (hc + hr*pow(F,0.25))*Tair + q;
+          }
+          else
+          {
+            Am = 0.0;
+            bVal = *k_down_Ptr->told_ptr*kzm/dzm + (hc + hr*pow(F,0.25))*Tair + q;
+          }
+          break;
+      }
+    }
+      break;
+  }
+
+}
 
 }
 

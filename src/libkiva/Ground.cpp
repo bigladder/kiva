@@ -108,7 +108,7 @@ void Ground::calculateADEUpwardSweep()
   // Upward sweep (Solve U Matrix starting from 1, 1)
   for (size_t index = 0; index < num_cells; index++)
   {
-        Cell* this_cell = &domain.cell[index];
+        auto this_cell = domain.cell[index];
         switch (this_cell->cellType)
         {
         case CellType::BOUNDARY:
@@ -260,7 +260,7 @@ void Ground::calculateADEDownwardSweep()
   // Downward sweep (Solve V Matrix starting from I, K)
   for (size_t index = num_cells - 1; /* i >= 0 && */ index < num_cells; index--)
   {
-        Cell* this_cell = &domain.cell[index];
+        auto this_cell = domain.cell[index];
         switch (this_cell->cellType)
         {
         case CellType::BOUNDARY:
@@ -412,7 +412,7 @@ void Ground::calculateExplicit()
 {
   for (size_t index = 0; index < num_cells; index++)
   {
-        Cell* this_cell = &domain.cell[index];
+        auto this_cell = domain.cell[index];
         switch (this_cell->cellType)
         {
         case CellType::BOUNDARY:
@@ -565,7 +565,7 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
 {
   for (int index = 0; index < num_cells; index++)
   {
-        Cell* this_cell = &domain.cell[index];
+        auto this_cell = domain.cell[index];
         int index_ip = index+domain.stepsize_i;
         int index_im = index-domain.stepsize_i;
         int index_jp = index+domain.stepsize_j;
@@ -822,9 +822,7 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
           setbValue(index,bVal);
           break;
         default:
-          {
-            this_cell->calcCellMatrix(scheme, timestep, foundation, tripletList, b, a1, a2, a3, b_);
-          }
+          this_cell->calcCellMatrix(scheme, timestep, foundation, tripletList, b, a1, a2, a3, b_);
           break;
         }
   }
@@ -841,330 +839,18 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
 void Ground::calculateADI(int dim)
 {
   std::size_t dest_index;
-  for (size_t index = 0; index < num_cells; index++)
+  for (auto this_cell : domain.cell)
   {
-        Cell* this_cell = &domain.cell[index];
-        index = this_cell->index;
-        dest_index = domain.dest_index_vector[dim-1][index];
+        dest_index = domain.dest_index_vector[dim-1][this_cell->index];
 
         double A{0.0}, Ap{0.0}, Am{0.0}, bVal{0.0};
-
-
-        switch (this_cell->cellType)
-        {
-        case CellType::BOUNDARY:
-          {
-          switch (this_cell->surfacePtr->boundaryConditionType)
-          {
-          case Surface::ZERO_FLUX:
-            {
-            switch (this_cell->surfacePtr->orientation)
-            {
-            case Surface::X_NEG:
-              A = 1.0;
-
-              if (dim == 1)
-              {
-                Ap = -1.0;
-                bVal = 0;
-              }
-              else
-              {
-                Ap = 0.0;
-                bVal = *this_cell->i_up_Ptr->told_ptr;
-              }
-              break;
-            case Surface::X_POS:
-              A = 1.0;
-              if (dim == 1)
-              {
-                Am = -1.0;
-                bVal = 0;
-              }
-              else
-              {
-                Am = 0.0;
-                bVal = *this_cell->i_down_Ptr->told_ptr;
-              }
-              break;
-            case Surface::Y_NEG:
-              A = 1.0;
-              if (dim == 2)
-              {
-                Ap = -1.0;
-                bVal = 0;
-              }
-              else
-              {
-                Ap = 0.0;
-                bVal = *this_cell->j_up_Ptr->told_ptr;
-              }
-              break;
-            case Surface::Y_POS:
-              A = 1.0;
-              if (dim == 2)
-              {
-                Am = -1.0;
-                bVal = 0;
-              }
-              else
-              {
-                Am = 0.0;
-                bVal = *this_cell->j_down_Ptr->told_ptr;
-              }
-              break;
-            case Surface::Z_NEG:
-              A = 1.0;
-              if (dim == 3)
-              {
-                Ap = -1.0;
-                bVal = 0;
-              }
-              else
-              {
-                Ap = 0.0;
-                bVal = *this_cell->k_up_Ptr->told_ptr;
-              }
-              break;
-            case Surface::Z_POS:
-              A = 1.0;
-              if (dim == 3)
-              {
-                Am = -1.0;
-                bVal = 0;
-              }
-              else
-              {
-                Am = 0.0;
-                bVal = *this_cell->k_down_Ptr->told_ptr;
-              }
-              break;
-            }
-            }
-            break;
-          case Surface::CONSTANT_TEMPERATURE:
-            A = 1.0;
-            bVal = this_cell->surfacePtr->temperature;
-            break;
-          case Surface::INTERIOR_TEMPERATURE:
-            A = 1.0;
-            bVal = bcs.indoorTemp;
-            break;
-          case Surface::EXTERIOR_TEMPERATURE:
-            A = 1.0;
-            bVal = bcs.outdoorTemp;
-            break;
-          case Surface::INTERIOR_FLUX:
-            {
-            double& Tair = bcs.indoorTemp;
-            double& q = this_cell->heatGain;
-
-            double hc = getConvectionCoeff(*this_cell->told_ptr,
-                    Tair,0.0,0.00208,false,this_cell->surfacePtr->tilt);
-            double hr = getSimpleInteriorIRCoeff(this_cell->surfacePtr->emissivity,
-                               *this_cell->told_ptr,Tair);
-
-            switch (this_cell->surfacePtr->orientation)
-            {
-            case Surface::X_NEG:
-              A = this_cell->kxp/this_cell->dxp + (hc + hr);
-              if (dim == 1)
-              {
-                Ap = -this_cell->kxp/this_cell->dxp;
-                bVal = (hc + hr)*Tair + q;
-              }
-              else
-              {
-                Ap = 0.0;
-                bVal = *this_cell->i_up_Ptr->told_ptr*this_cell->kxp/this_cell->dxp + (hc + hr)*Tair + q;
-              }
-              break;
-            case Surface::X_POS:
-              A = this_cell->kxm/this_cell->dxm + (hc + hr);
-              if (dim == 1)
-              {
-                Am = -this_cell->kxm/this_cell->dxm;
-                bVal = (hc + hr)*Tair + q;
-              }
-              else
-              {
-                Am = 0.0;
-                bVal = *this_cell->i_down_Ptr->told_ptr*this_cell->kxm/this_cell->dxm + (hc + hr)*Tair + q;
-              }
-              break;
-            case Surface::Y_NEG:
-              A = this_cell->kyp/this_cell->dyp + (hc + hr);
-              if (dim == 2)
-              {
-                Ap = -this_cell->kyp/this_cell->dyp;
-                bVal = (hc + hr)*Tair + q;
-              }
-              else
-              {
-                Ap = 0.0;
-                bVal = *this_cell->j_up_Ptr->told_ptr*this_cell->kyp/this_cell->dyp + (hc + hr)*Tair + q;
-              }
-              break;
-            case Surface::Y_POS:
-              A = this_cell->kym/this_cell->dym + (hc + hr);
-              if (dim == 2)
-              {
-                Am = -this_cell->kym/this_cell->dym;
-                bVal = (hc + hr)*Tair + q;
-              }
-              else
-              {
-                Am = 0.0;
-                bVal = *this_cell->j_down_Ptr->told_ptr*this_cell->kym/this_cell->dym + (hc + hr)*Tair + q;
-              }
-              break;
-            case Surface::Z_NEG:
-              A = this_cell->kzp/this_cell->dzp + (hc + hr);
-              if (dim == 3)
-              {
-                Ap = -this_cell->kzp/this_cell->dzp;
-                bVal = (hc + hr)*Tair + q;
-              }
-              else
-              {
-                Ap = 0.0;
-                bVal = *this_cell->k_up_Ptr->told_ptr*this_cell->kzp/this_cell->dzp + (hc + hr)*Tair + q;
-              }
-              break;
-            case Surface::Z_POS:
-              A = this_cell->kzm/this_cell->dzm + (hc + hr);
-              if (dim == 3)
-              {
-                Am = -this_cell->kzm/this_cell->dzm;
-                bVal = (hc + hr)*Tair + q;
-              }
-              else
-              {
-                Am = 0.0;
-                bVal = *this_cell->k_down_Ptr->told_ptr*this_cell->kzm/this_cell->dzm + (hc + hr)*Tair + q;
-              }
-              break;
-            }
-            }
-            break;
-
-          case Surface::EXTERIOR_FLUX:
-            {
-            double Tair = bcs.outdoorTemp;
-            double v = bcs.localWindSpeed;
-            double eSky = bcs.skyEmissivity;
-            double tilt = this_cell->surfacePtr->tilt;
-            double F = getEffectiveExteriorViewFactor(eSky,tilt);
-            double hc = getConvectionCoeff(*this_cell->told_ptr,Tair,v,foundation.surfaceRoughness,true,tilt);
-            double hr = getExteriorIRCoeff(this_cell->surfacePtr->emissivity,*this_cell->told_ptr,Tair,eSky,tilt);
-            double q = this_cell->heatGain;
-
-            switch (this_cell->surfacePtr->orientation)
-            {
-            case Surface::X_NEG:
-              A = this_cell->kxp/this_cell->dxp + (hc + hr);
-              if (dim == 1)
-              {
-                Ap = -this_cell->kxp/this_cell->dxp;
-                bVal = (hc + hr*pow(F,0.25))*Tair + q;
-              }
-              else
-              {
-                Ap = 0.0;
-                bVal = *this_cell->i_up_Ptr->told_ptr*this_cell->kxp/this_cell->dxp + (hc + hr*pow(F,0.25))*Tair + q;
-              }
-              break;
-            case Surface::X_POS:
-              A = this_cell->kxm/this_cell->dxm + (hc + hr);
-              if (dim == 1)
-              {
-                Am = -this_cell->kxm/this_cell->dxm;
-                bVal = (hc + hr*pow(F,0.25))*Tair + q;
-              }
-              else
-              {
-                Am = 0.0;
-                bVal = *this_cell->i_down_Ptr->told_ptr*this_cell->kxm/this_cell->dxm + (hc + hr*pow(F,0.25))*Tair + q;
-              }
-              break;
-            case Surface::Y_NEG:
-              A = this_cell->kyp/this_cell->dyp + (hc + hr);
-              if (dim == 2)
-              {
-                Ap = -this_cell->kyp/this_cell->dyp;
-                bVal = (hc + hr*pow(F,0.25))*Tair + q;
-              }
-              else
-              {
-                Ap = 0.0;
-                bVal = *this_cell->j_up_Ptr->told_ptr*this_cell->kyp/this_cell->dyp + (hc + hr*pow(F,0.25))*Tair + q;
-              }
-              break;
-            case Surface::Y_POS:
-              A = this_cell->kym/this_cell->dym + (hc + hr);
-              if (dim == 2)
-              {
-                Am = -this_cell->kym/this_cell->dym;
-                bVal = (hc + hr*pow(F,0.25))*Tair + q;
-              }
-              else
-              {
-                Am = 0.0;
-                bVal = *this_cell->j_down_Ptr->told_ptr*this_cell->kym/this_cell->dym + (hc + hr*pow(F,0.25))*Tair + q;
-              }
-              break;
-            case Surface::Z_NEG:
-              A = this_cell->kzp/this_cell->dzp + (hc + hr);
-              if (dim == 3)
-              {
-                Ap = -this_cell->kzp/this_cell->dzp;
-                bVal = (hc + hr*pow(F,0.25))*Tair + q;
-              }
-              else
-              {
-                Ap = 0.0;
-                bVal = *this_cell->k_up_Ptr->told_ptr*this_cell->kzp/this_cell->dzp + (hc + hr*pow(F,0.25))*Tair + q;
-              }
-              break;
-            case Surface::Z_POS:
-              A = this_cell->kzm/this_cell->dzm + (hc + hr);
-              if (dim == 3)
-              {
-                Am = -this_cell->kzm/this_cell->dzm;
-                bVal = (hc + hr*pow(F,0.25))*Tair + q;
-              }
-              else
-              {
-                Am = 0.0;
-                bVal = *this_cell->k_down_Ptr->told_ptr*this_cell->kzm/this_cell->dzm + (hc + hr*pow(F,0.25))*Tair + q;
-              }
-              break;
-            }
-            }
-            break;
-          }
-          }
-          break;
-        case CellType::INTERIOR_AIR:
-          A = 1.0;
-          bVal = bcs.indoorTemp;
-          break;
-        case CellType::EXTERIOR_AIR:
-          A = 1.0;
-          bVal = bcs.outdoorTemp;
-          break;
-        default:
-          {
-            this_cell->calcCellADI(dim, foundation, timestep, Am, A, Ap, bVal);
-          }
-          break;
-        }
+        this_cell->calcCellADI(dim, foundation, timestep, bcs, Am, A, Ap, bVal);
         setValuesADI(dest_index, Am, A, Ap, bVal);
   }
 
   solveLinearSystem();
 
-  std::size_t index{0};
+  std::size_t index = 0;
   for (auto di : domain.dest_index_vector[dim-1]) {
       TNew[index] = getxValue(di);
       index++;
@@ -1175,9 +861,9 @@ void Ground::calculateADI(int dim)
   clearAmat();
 }
 
-void Ground::calculate(BoundaryConditions& boundaryConidtions, double ts)
+void Ground::calculate(BoundaryConditions& boundaryConditions, double ts)
 {
-  bcs = boundaryConidtions;
+  bcs = boundaryConditions;
   timestep = ts;
   // update boundary conditions
   setSolarBoundaryConditions();
@@ -1409,7 +1095,7 @@ void Ground::calculateSurfaceAverages(){
 
           for (auto index : foundation.surfaces[s].indices)
           {
-            Cell* this_cell = &domain.cell[index];
+            auto this_cell = domain.cell[index];
             double h = getConvectionCoeff(TNew[index],Tair,0.0,0.00208,false,tilt)
                  + getSimpleInteriorIRCoeff(this_cell->surfacePtr->emissivity,
                      TNew[index],Tair);
@@ -1467,7 +1153,7 @@ double Ground::getSurfaceAverageValue(std::pair<Surface::SurfaceType, GroundOutp
   return groundOutput.outputValues[output];
 }
 
-std::vector<double> Ground::calculateHeatFlux(Cell* this_cell)
+std::vector<double> Ground::calculateHeatFlux(std::shared_ptr<Cell> this_cell)
 {
   std::vector<double> Qflux;
   double Qx = 0;
@@ -1654,7 +1340,7 @@ void Ground::calculateBoundaryLayer()
   for (size_t i = i_min; i < pre.nX; i++)
   {
     std::size_t index = i + pre.nX*j + pre.nX*pre.nY*k;
-    double Qz = pre.calculateHeatFlux(&pre.domain.cell[index])[2];
+    double Qz = pre.calculateHeatFlux(pre.domain.cell[index])[2];
     double x1 = pre.domain.meshX.dividers[i];
     double x2 = pre.domain.meshX.dividers[i+1];
 
@@ -1957,7 +1643,7 @@ void Ground::setSolarBoundaryConditions()
 
       for (auto index: foundation.surfaces[s].indices)
       {
-        Cell* this_cell = &domain.cell[index];
+        auto this_cell = domain.cell[index];
         double alpha = this_cell->surfacePtr->absorptivity;
 
         if (qGH > 0.0)
@@ -1986,7 +1672,7 @@ void Ground::setInteriorRadiationBoundaryConditions()
     {
       for (auto index: foundation.surfaces[s].indices)
       {
-        Cell* this_cell = &domain.cell[index];
+        auto this_cell = domain.cell[index];
         if (foundation.surfaces[s].type == Surface::ST_WALL_INT) {
           this_cell->heatGain = bcs.wallAbsRadiation;
         }
@@ -2000,8 +1686,8 @@ void Ground::setInteriorRadiationBoundaryConditions()
 
 void Ground::link_cells_to_temp()
 {
-  for (Cell & this_cell : domain.cell) {
-    this_cell.told_ptr = &TOld[this_cell.index];
+  for (auto this_cell : domain.cell) {
+    this_cell->told_ptr = &TOld[this_cell->index];
   }
 }
 

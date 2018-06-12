@@ -118,9 +118,14 @@ void Domain::setDomain(Foundation &foundation)
     }
 
     // this cell creation needs to be separate from the previous for loop to prevent double-instantiation.
-    if (cellType == CellType::BOUNDARY || cellType == CellType::ZERO_THICKNESS) {
-      cell.emplace_back(Cell(index, cellType, i, j, k, foundation, surfacePtr, nullptr,
-                             &meshX, &meshY, &meshZ));
+    if (cellType == CellType::ZERO_THICKNESS) {
+      std::shared_ptr<Cell> blah(new Cell(index, cellType, i, j, k, foundation, surfacePtr, nullptr,
+                                          &meshX, &meshY, &meshZ));
+      addCell(blah);
+    } else if (cellType == CellType::BOUNDARY) {
+      std::shared_ptr<Cell> blah(new BoundaryCell(index, cellType, i, j, k, foundation, surfacePtr, nullptr,
+                                          &meshX, &meshY, &meshZ));
+      addCell(blah);
     }
 
     if (cellType == CellType::NORMAL) {
@@ -130,12 +135,14 @@ void Domain::setDomain(Foundation &foundation)
             isLessThan(meshZ.centers[k], block.zMax)) {
           if (block.blockType == Block::INTERIOR_AIR) {
             cellType = CellType::INTERIOR_AIR;
-            cell.emplace_back(Cell(index, cellType, i, j, k, foundation, nullptr, &block,
-                                   &meshX, &meshY, &meshZ));
+            std::shared_ptr<Cell> blah(new InteriorAirCell(index, cellType, i, j, k, foundation, nullptr, &block,
+                                                &meshX, &meshY, &meshZ));
+            addCell(blah);
           } else if (block.blockType == Block::EXTERIOR_AIR) {
             cellType = CellType::EXTERIOR_AIR;
-            cell.emplace_back(Cell(index, cellType, i, j, k, foundation, nullptr, &block,
-                                   &meshX, &meshY, &meshZ));
+            std::shared_ptr<Cell> blah(new ExteriorAirCell(index, cellType, i, j, k, foundation, nullptr, &block,
+                                                           &meshX, &meshY, &meshZ));
+            addCell(blah);
           }
         }
       }
@@ -159,23 +166,24 @@ void Domain::setDomain(Foundation &foundation)
           cellType = CellType::ZERO_THICKNESS;
         }
       }
-      cell.emplace_back(Cell(index, cellType, i, j, k, foundation, nullptr, nullptr,
-                             &meshX, &meshY, &meshZ));
+      std::shared_ptr<Cell> blah(new Cell(index, cellType, i, j, k, foundation, nullptr, nullptr,
+                                                     &meshX, &meshY, &meshZ));
+      addCell(blah);
     }
   }
 
   // Set effective properties of zero-thickness cells
   // based on other cells
-  for (auto &this_cell: cell)
+  for (auto this_cell: cell)
   {
-    std::size_t index = this_cell.index;
+    std::size_t index = this_cell->index;
     std::tie(i, j, k) = get_coordinates(index);
 
     int numZeroDims = getNumZeroDims(i, j, k);
 
     if (numZeroDims > 0
-        && this_cell.cellType != CellType::INTERIOR_AIR
-        && this_cell.cellType != CellType::EXTERIOR_AIR)
+        && this_cell->cellType != CellType::INTERIOR_AIR
+        && this_cell->cellType != CellType::EXTERIOR_AIR)
     {
       if (foundation.numberOfDimensions == 3)
       {
@@ -195,11 +203,11 @@ void Domain::setDomain(Foundation &foundation)
         {
           if (isEqual(meshZ.deltas[k], 0.0))
           {
-            std::vector<Cell*> pointSet =
-              {&cell[index - stepsize_k],
-               &cell[index + stepsize_k]};
+            std::vector< std::shared_ptr<Cell> > pointSet =
+              {cell[index - stepsize_k],
+               cell[index + stepsize_k]};
 
-            this_cell.setZeroThicknessCellProperties(pointSet);
+            this_cell->setZeroThicknessCellProperties(pointSet);
           }
         }
       }
@@ -207,18 +215,16 @@ void Domain::setDomain(Foundation &foundation)
   }
 
   // Calculate matrix coefficients
-  for (auto &this_cell: cell)
+  for (auto this_cell: cell)
   {
-    std::size_t index = this_cell.index;
-
-    this_cell.setNeighbors(cell, stepsize_i, stepsize_j, stepsize_k);
+    this_cell->setNeighbors(cell, stepsize_i, stepsize_j, stepsize_k, nX, nY, nZ);
 
     // PDE Coefficients
-    this_cell.setDistances(dxp_vector[this_cell.i], dxm_vector[this_cell.i],
-                           dyp_vector[this_cell.j], dym_vector[this_cell.j],
-                           dzp_vector[this_cell.k], dzm_vector[this_cell.k]);
-    this_cell.setConductivities();
-    this_cell.setWhatever(foundation.numberOfDimensions,
+    this_cell->setDistances(dxp_vector[this_cell->i], dxm_vector[this_cell->i],
+                           dyp_vector[this_cell->j], dym_vector[this_cell->j],
+                           dzp_vector[this_cell->k], dzm_vector[this_cell->k]);
+    this_cell->setConductivities();
+    this_cell->setWhatever(foundation.numberOfDimensions,
                           foundation.coordinateSystem == Foundation::CS_CYLINDRICAL);
   }
 
@@ -228,7 +234,7 @@ void Domain::setDomain(Foundation &foundation)
     surface.area = 0;
     for (auto index: surface.indices)
     {
-      surface.area += cell[index].area;
+      surface.area += cell[index]->area;
     }
   }
 }
@@ -319,108 +325,108 @@ double Domain::getDZM(std::size_t k)
 
 void Domain::set2DZeroThicknessCellProperties(std::size_t index)
 {
-  if (isEqual(meshX.deltas[cell[index].i], 0.0) &&
-    isEqual(meshZ.deltas[cell[index].k], 0.0))
+  if (isEqual(meshX.deltas[cell[index]->i], 0.0) &&
+    isEqual(meshZ.deltas[cell[index]->k], 0.0))
   {
-    std::vector<Cell*> pointSet =
-            {&cell[index - stepsize_i + stepsize_k],
-             &cell[index + stepsize_i + stepsize_k],
-             &cell[index - stepsize_i - stepsize_k],
-             &cell[index + stepsize_i - stepsize_k]};
-    cell[index].setZeroThicknessCellProperties(pointSet);
+    std::vector< std::shared_ptr<Cell> > pointSet =
+            {cell[index - stepsize_i + stepsize_k],
+             cell[index + stepsize_i + stepsize_k],
+             cell[index - stepsize_i - stepsize_k],
+             cell[index + stepsize_i - stepsize_k]};
+    cell[index]->setZeroThicknessCellProperties(pointSet);
   }
-  else if (isEqual(meshX.deltas[cell[index].i], 0.0))
+  else if (isEqual(meshX.deltas[cell[index]->i], 0.0))
   {
-    std::vector<Cell*> pointSet =
-            {&cell[index - stepsize_i],
-             &cell[index + stepsize_i]};
-    cell[index].setZeroThicknessCellProperties(pointSet);
+    std::vector< std::shared_ptr<Cell> > pointSet =
+            {cell[index - stepsize_i],
+             cell[index + stepsize_i]};
+    cell[index]->setZeroThicknessCellProperties(pointSet);
   }
-  else if (isEqual(meshZ.deltas[cell[index].k], 0.0))
+  else if (isEqual(meshZ.deltas[cell[index]->k], 0.0))
   {
-    std::vector<Cell*> pointSet =
-            {&cell[index - stepsize_k],
-             &cell[index + stepsize_k]};
-    cell[index].setZeroThicknessCellProperties(pointSet);
+    std::vector< std::shared_ptr<Cell> > pointSet =
+            {cell[index - stepsize_k],
+             cell[index + stepsize_k]};
+    cell[index]->setZeroThicknessCellProperties(pointSet);
   }
 
 }
 
 void Domain::set3DZeroThicknessCellProperties(std::size_t index)
 {
-  if (isEqual(meshX.deltas[cell[index].i], 0.0) &&
-    isEqual(meshY.deltas[cell[index].j], 0.0) &&
-    isEqual(meshZ.deltas[cell[index].k], 0.0))
+  if (isEqual(meshX.deltas[cell[index]->i], 0.0) &&
+    isEqual(meshY.deltas[cell[index]->j], 0.0) &&
+    isEqual(meshZ.deltas[cell[index]->k], 0.0))
   {
     // Use all 8 full volume cells
-    std::vector<Cell*> pointSet =
-            {&cell[index - stepsize_i - stepsize_j + stepsize_k],
-             &cell[index + stepsize_i - stepsize_j + stepsize_k],
-             &cell[index - stepsize_i - stepsize_j - stepsize_k],
-             &cell[index + stepsize_i - stepsize_j - stepsize_k],
-             &cell[index - stepsize_i + stepsize_j + stepsize_k],
-             &cell[index + stepsize_i + stepsize_j + stepsize_k],
-             &cell[index - stepsize_i + stepsize_j - stepsize_k],
-             &cell[index + stepsize_i + stepsize_j - stepsize_k]};
+    std::vector< std::shared_ptr<Cell> > pointSet =
+            {cell[index - stepsize_i - stepsize_j + stepsize_k],
+             cell[index + stepsize_i - stepsize_j + stepsize_k],
+             cell[index - stepsize_i - stepsize_j - stepsize_k],
+             cell[index + stepsize_i - stepsize_j - stepsize_k],
+             cell[index - stepsize_i + stepsize_j + stepsize_k],
+             cell[index + stepsize_i + stepsize_j + stepsize_k],
+             cell[index - stepsize_i + stepsize_j - stepsize_k],
+             cell[index + stepsize_i + stepsize_j - stepsize_k]};
 
-    cell[index].setZeroThicknessCellProperties(pointSet);
+    cell[index]->setZeroThicknessCellProperties(pointSet);
   }
-  else if (isEqual(meshX.deltas[cell[index].i], 0.0) &&
-    isEqual(meshY.deltas[cell[index].j], 0.0))
+  else if (isEqual(meshX.deltas[cell[index]->i], 0.0) &&
+    isEqual(meshY.deltas[cell[index]->j], 0.0))
   {
-    std::vector<Cell*> pointSet =
-            {&cell[index - stepsize_i - stepsize_j],
-             &cell[index + stepsize_i - stepsize_j],
-             &cell[index - stepsize_i + stepsize_j],
-             &cell[index + stepsize_i + stepsize_j]};
+    std::vector< std::shared_ptr<Cell> > pointSet =
+            {cell[index - stepsize_i - stepsize_j],
+             cell[index + stepsize_i - stepsize_j],
+             cell[index - stepsize_i + stepsize_j],
+             cell[index + stepsize_i + stepsize_j]};
 
-    cell[index].setZeroThicknessCellProperties(pointSet);
+    cell[index]->setZeroThicknessCellProperties(pointSet);
   }
-  else if (isEqual(meshX.deltas[cell[index].i], 0.0) &&
-    isEqual(meshZ.deltas[cell[index].k], 0.0))
+  else if (isEqual(meshX.deltas[cell[index]->i], 0.0) &&
+    isEqual(meshZ.deltas[cell[index]->k], 0.0))
   {
-    std::vector<Cell*> pointSet =
-            {&cell[index - stepsize_i + stepsize_k],
-             &cell[index + stepsize_i + stepsize_k],
-             &cell[index - stepsize_i - stepsize_k],
-             &cell[index + stepsize_i - stepsize_k]};
+    std::vector< std::shared_ptr<Cell> > pointSet =
+            {cell[index - stepsize_i + stepsize_k],
+             cell[index + stepsize_i + stepsize_k],
+             cell[index - stepsize_i - stepsize_k],
+             cell[index + stepsize_i - stepsize_k]};
 
-    cell[index].setZeroThicknessCellProperties(pointSet);
+    cell[index]->setZeroThicknessCellProperties(pointSet);
   }
-  else if (isEqual(meshY.deltas[cell[index].j], 0.0) &&
-    isEqual(meshZ.deltas[cell[index].k], 0.0))
+  else if (isEqual(meshY.deltas[cell[index]->j], 0.0) &&
+    isEqual(meshZ.deltas[cell[index]->k], 0.0))
   {
-    std::vector<Cell*> pointSet =
-            {&cell[index - stepsize_j + stepsize_k],
-             &cell[index + stepsize_j + stepsize_k],
-             &cell[index - stepsize_j - stepsize_k],
-             &cell[index + stepsize_j - stepsize_k],};
+    std::vector< std::shared_ptr<Cell> > pointSet =
+            {cell[index - stepsize_j + stepsize_k],
+             cell[index + stepsize_j + stepsize_k],
+             cell[index - stepsize_j - stepsize_k],
+             cell[index + stepsize_j - stepsize_k],};
 
-    cell[index].setZeroThicknessCellProperties(pointSet);
+    cell[index]->setZeroThicknessCellProperties(pointSet);
   }
-  else if (isEqual(meshX.deltas[cell[index].i], 0.0))
+  else if (isEqual(meshX.deltas[cell[index]->i], 0.0))
   {
-    std::vector<Cell*> pointSet =
-            {&cell[index + stepsize_i],
-             &cell[index - stepsize_i]};
+    std::vector< std::shared_ptr<Cell> > pointSet =
+            {cell[index + stepsize_i],
+             cell[index - stepsize_i]};
 
-    cell[index].setZeroThicknessCellProperties(pointSet);
+    cell[index]->setZeroThicknessCellProperties(pointSet);
   }
-  else if (isEqual(meshY.deltas[cell[index].j], 0.0))
+  else if (isEqual(meshY.deltas[cell[index]->j], 0.0))
   {
-    std::vector<Cell*> pointSet =
-            {&cell[index + stepsize_j],
-             &cell[index - stepsize_j]};
+    std::vector< std::shared_ptr<Cell> > pointSet =
+            {cell[index + stepsize_j],
+             cell[index - stepsize_j]};
 
-    cell[index].setZeroThicknessCellProperties(pointSet);
+    cell[index]->setZeroThicknessCellProperties(pointSet);
   }
-  else if (isEqual(meshZ.deltas[cell[index].k], 0.0))
+  else if (isEqual(meshZ.deltas[cell[index]->k], 0.0))
   {
-    std::vector<Cell*> pointSet =
-            {&cell[index + stepsize_k],
-             &cell[index - stepsize_k]};
+    std::vector< std::shared_ptr<Cell> > pointSet =
+            {cell[index + stepsize_k],
+             cell[index - stepsize_k]};
 
-    cell[index].setZeroThicknessCellProperties(pointSet);
+    cell[index]->setZeroThicknessCellProperties(pointSet);
   }
 
 }
@@ -461,7 +467,7 @@ void Domain::printCellTypes()
     for (std::size_t i = 0; i < nX; i++)
     {
 
-      output << ", " << cell[i + (nY/2)*stepsize_j + k*stepsize_k].cellType;
+      output << ", " << cell[i + (nY/2)*stepsize_j + k*stepsize_k]->cellType;
 
     }
 
@@ -495,6 +501,11 @@ std::vector<std::size_t> Domain::get_dest_index(std::size_t i, std::size_t j, st
   dest_index.emplace_back(j + nY*i + nY*nX*k);
   dest_index.emplace_back(k + nZ*i + nZ*nX*j);
   return dest_index;
+}
+
+void Domain::addCell(std::shared_ptr<Cell> this_cell)
+{
+  cell.emplace_back(std::move(this_cell));
 }
 
 }
