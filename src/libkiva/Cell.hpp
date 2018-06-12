@@ -86,7 +86,8 @@ namespace Kiva {
 
     double calcCellExplicit(double timestep, const Foundation &foundation);
 
-    void calcCellMatrix(Foundation::NumericalScheme scheme, double timestep, const Foundation &foundation,
+    virtual void calcCellMatrix(Foundation::NumericalScheme scheme, double timestep, const Foundation &foundation,
+                        const BoundaryConditions &bcs,
                         std::vector<Eigen::Triplet<double>> &tripletList, Eigen::VectorXd &b,
                         std::vector<double> &a1, std::vector<double> &a2, std::vector<double> &a3,
                         std::vector<double> &b_);
@@ -101,6 +102,12 @@ namespace Kiva {
                              double &Am, double &A, double &Ap, double &bVal);
 
     void Assemble(const Foundation &foundation);
+
+    void setAmatValue(const int i, const int j, const double val, int ndims,
+                      std::vector<Eigen::Triplet<double>> &tripletList,
+                      std::vector<double> &a1, std::vector<double> &a2, std::vector<double> &a3);
+    void setbValue(const int i, const double val, int ndims,
+                   Eigen::VectorXd &b, std::vector<double> &b_);
   };
 
 
@@ -112,9 +119,14 @@ namespace Kiva {
          const Foundation &foundation, Surface *surfacePtr, Block *blockPtr,
          Mesher *meshX, Mesher *meshY, Mesher *meshZ);
 
+    void calcCellMatrix(Foundation::NumericalScheme scheme, double timestep, const Foundation &foundation,
+                        const BoundaryConditions &bcs,
+                        std::vector<Eigen::Triplet<double>> &tripletList, Eigen::VectorXd &b,
+                        std::vector<double> &a1, std::vector<double> &a2, std::vector<double> &a3,
+                        std::vector<double> &b_) override;
     void calcCellADI(int dim, const Foundation &foundation, double timestep,
-                     const BoundaryConditions &bcs,
-                     double &Am, double &A, double &Ap, double &bVal);
+                   const BoundaryConditions &bcs,
+                   double &Am, double &A, double &Ap, double &bVal) override;
   };
 
 
@@ -126,9 +138,14 @@ namespace Kiva {
                     const Foundation &foundation, Surface *surfacePtr, Block *blockPtr,
                     Mesher *meshX, Mesher *meshY, Mesher *meshZ);
 
+    void calcCellMatrix(Foundation::NumericalScheme scheme, double timestep, const Foundation &foundation,
+                        const BoundaryConditions &bcs,
+                        std::vector<Eigen::Triplet<double>> &tripletList, Eigen::VectorXd &b,
+                        std::vector<double> &a1, std::vector<double> &a2, std::vector<double> &a3,
+                        std::vector<double> &b_) override;
     void calcCellADI(int dim, const Foundation &foundation, double timestep,
                      const BoundaryConditions &bcs,
-                     double &Am, double &A, double &Ap, double &bVal);
+                     double &Am, double &A, double &Ap, double &bVal) override;
   };
 
   class BoundaryCell : public Cell {
@@ -139,6 +156,11 @@ namespace Kiva {
                     const Foundation &foundation, Surface *surfacePtr, Block *blockPtr,
                     Mesher *meshX, Mesher *meshY, Mesher *meshZ);
 
+    void calcCellMatrix(Kiva::Foundation::NumericalScheme scheme, double timestep,
+                        const Kiva::Foundation &foundation, const Kiva::BoundaryConditions &bcs,
+                        std::vector<Eigen::Triplet<double>> &tripletList, Eigen::VectorXd &b,
+                        std::vector<double> &a1, std::vector<double> &a2, std::vector<double> &a3,
+                        std::vector<double> &b_) override;
     void calcCellADI(int dim, const Foundation &foundation, double timestep,
                      const BoundaryConditions &bcs,
                      double &Am, double &A, double &Ap, double &bVal) override;

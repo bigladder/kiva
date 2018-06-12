@@ -410,6 +410,7 @@ double Cell::calcCellExplicit(double timestep, const Foundation &foundation)
 }
 
 void Cell::calcCellMatrix(Foundation::NumericalScheme scheme, double timestep, const Foundation &foundation,
+        const BoundaryConditions &/*bcs*/,
         std::vector<Eigen::Triplet<double>> &tripletList, Eigen::VectorXd &b,
         std::vector<double> &a1, std::vector<double> &a2, std::vector<double> &a3, std::vector<double> &b_)
 {
@@ -689,6 +690,29 @@ void Cell::calcCellADI(int dim, const Foundation &foundation, double timestep,
   }
 }
 
+void Cell::setAmatValue(const int i,const int j,const double val, int ndims,
+                        std::vector<Eigen::Triplet<double>> &tripletList,
+                        std::vector<double> &a1, std::vector<double> &a2, std::vector<double> &a3)
+{
+  if (ndims == 1)
+  {
+    if (j < i)        { a1[i] = val; }
+    else if (j == i)  { a2[i] = val; }
+    else              { a3[i] = val; }
+  }
+  else
+  {
+    tripletList.emplace_back(i,j,val);
+  }
+}
+
+void Cell::setbValue(const int i,const double val, int ndims,
+                     Eigen::VectorXd &b, std::vector<double> &b_)
+{
+  if (ndims == 1) { b_[i] = val; }
+  else { b(i) = val; }
+}
+
 
 
 
@@ -708,12 +732,42 @@ void ExteriorAirCell::calcCellADI(int /*dim*/, const Foundation &/*foundation*/,
 };
 
 
+void ExteriorAirCell::calcCellMatrix(Foundation::NumericalScheme /*scheme*/, double /*timestep*/, const Foundation &foundation,
+                          const BoundaryConditions &bcs,
+                          std::vector<Eigen::Triplet<double>> &tripletList, Eigen::VectorXd &b,
+                          std::vector<double> &/*a1*/, std::vector<double> &a2, std::vector<double> &/*a3*/, std::vector<double> &b_) {
+  double A = 1.0;
+  double bVal = bcs.outdoorTemp;
+  if (foundation.numberOfDimensions > 1) {
+    tripletList.emplace_back(index,index,A);
+    b(index) = bVal;
+  } else {
+    a2[index] = A;
+    b_[index] = bVal;
+  }
+}
+
 InteriorAirCell::InteriorAirCell(const std::size_t &index, const CellType cellType,
                                  const std::size_t &i, const std::size_t &j, const std::size_t &k,
                                  const Foundation &foundation, Surface *surfacePtr, Block *blockPtr,
                                  Mesher *meshXptr, Mesher *meshYptr, Mesher *meshZptr):
         Cell(index, cellType, i, j, k, foundation, surfacePtr, blockPtr, meshXptr, meshYptr, meshZptr)
 {}
+
+void InteriorAirCell::calcCellMatrix(Foundation::NumericalScheme /*scheme*/, double /*timestep*/, const Foundation &foundation,
+                                     const BoundaryConditions &bcs,
+                                     std::vector<Eigen::Triplet<double>> &tripletList, Eigen::VectorXd &b,
+                                     std::vector<double> &/*a1*/, std::vector<double> &a2, std::vector<double> &/*a3*/, std::vector<double> &b_) {
+  double A = 1.0;
+  double bVal = bcs.indoorTemp;
+  if (foundation.numberOfDimensions > 1) {
+    tripletList.emplace_back(index,index,A);
+    b(index) = bVal;
+  } else {
+    a2[index] = A;
+    b_[index] = bVal;
+  }
+}
 
 void InteriorAirCell::calcCellADI(int /*dim*/, const Foundation &/*foundation*/, double /*timestep*/,
                                   const BoundaryConditions &bcs,
@@ -1087,6 +1141,262 @@ void BoundaryCell::calcCellADI(int dim, const Foundation &foundation, double /*t
   }
 
 }
+
+void BoundaryCell::calcCellMatrix(Kiva::Foundation::NumericalScheme /*scheme*/, double /*timestep*/,
+                                  const Kiva::Foundation &foundation, const Kiva::BoundaryConditions &bcs,
+                                  std::vector<Eigen::Triplet<double>> &tripletList, Eigen::VectorXd &b,
+                                  std::vector<double> &a1, std::vector<double> &a2, std::vector<double> &a3,
+                                  std::vector<double> &b_)
+{
+  int ndims = foundation.numberOfDimensions;
+  switch (surfacePtr->boundaryConditionType)
+  {
+    case Surface::ZERO_FLUX:
+    {
+      switch (surfacePtr->orientation)
+      {
+        case Surface::X_NEG: {
+          double A = 1.0;
+          double Aip = -1.0;
+          double bVal = 0.0;
+
+          setAmatValue(index, index, A, ndims, tripletList, a1, a2, a3);
+          setAmatValue(index, i_up_Ptr->index, Aip, ndims, tripletList, a1, a2, a3);
+          setbValue(index, bVal, ndims, b, b_);
+          break;
+        }
+        case Surface::X_POS: {
+          double A = 1.0;
+          double Aim = -1.0;
+          double bVal = 0.0;
+
+          setAmatValue(index, index, A, ndims, tripletList, a1, a2, a3);
+          setAmatValue(index, i_down_Ptr->index, Aim, ndims, tripletList, a1, a2, a3);
+          setbValue(index, bVal, ndims, b, b_);
+          break;
+        }
+        case Surface::Y_NEG: {
+          double A = 1.0;
+          double Ajp = -1.0;
+          double bVal = 0.0;
+
+          setAmatValue(index, index, A, ndims, tripletList, a1, a2, a3);
+          setAmatValue(index, j_up_Ptr->index, Ajp, ndims, tripletList, a1, a2, a3);
+          setbValue(index, bVal, ndims, b, b_);
+          break;
+        }
+        case Surface::Y_POS: {
+          double A = 1.0;
+          double Ajm = -1.0;
+          double bVal = 0.0;
+
+          setAmatValue(index, index, A, ndims, tripletList, a1, a2, a3);
+          setAmatValue(index, j_down_Ptr->index, Ajm, ndims, tripletList, a1, a2, a3);
+          setbValue(index, bVal, ndims, b, b_);
+          break;
+        }
+        case Surface::Z_NEG: {
+          double A = 1.0;
+          double Akp = -1.0;
+          double bVal = 0.0;
+
+          setAmatValue(index, index, A, ndims, tripletList, a1, a2, a3);
+          setAmatValue(index, k_up_Ptr->index, Akp, ndims, tripletList, a1, a2, a3);
+          setbValue(index, bVal, ndims, b, b_);
+          break;
+        }
+        case Surface::Z_POS: {
+          double A = 1.0;
+          double Akm = -1.0;
+          double bVal = 0.0;
+
+          setAmatValue(index, index, A, ndims, tripletList, a1, a2, a3);
+          setAmatValue(index, k_down_Ptr->index, Akm, ndims, tripletList, a1, a2, a3);
+          setbValue(index, bVal, ndims, b, b_);
+          break;
+        }
+      }
+    }
+      break;
+    case Surface::CONSTANT_TEMPERATURE: {
+      double A = 1.0;
+      double bVal = surfacePtr->temperature;
+
+      setAmatValue(index, index, A, ndims, tripletList, a1, a2, a3);
+      setbValue(index, bVal, ndims, b, b_);
+      break;
+    }
+    case Surface::INTERIOR_TEMPERATURE: {
+      double A = 1.0;
+      double bVal = bcs.indoorTemp;
+
+      setAmatValue(index, index, A, ndims, tripletList, a1, a2, a3);
+      setbValue(index, bVal, ndims, b, b_);
+      break;
+    }
+    case Surface::EXTERIOR_TEMPERATURE: {
+      double A = 1.0;
+      double bVal = bcs.outdoorTemp;
+
+      setAmatValue(index, index, A, ndims, tripletList, a1, a2, a3);
+      setbValue(index, bVal, ndims, b, b_);
+      break;
+    }
+    case Surface::INTERIOR_FLUX:
+    {
+      double Tair = bcs.indoorTemp;
+      double q = heatGain;
+
+      double hc = foundation.getConvectionCoeff(*told_ptr,
+                                     Tair,0.0,0.00208,false,surfacePtr->tilt);
+      double hr = getSimpleInteriorIRCoeff(surfacePtr->emissivity,
+                                           *told_ptr,Tair);
+
+      switch (surfacePtr->orientation)
+      {
+        case Surface::X_NEG: {
+          double A = kxp / dxp + (hc + hr);
+          double Aip = -kxp / dxp;
+          double bVal = (hc + hr) * Tair + q;
+
+          setAmatValue(index, index, A, ndims, tripletList, a1, a2, a3);
+          setAmatValue(index, i_up_Ptr->index, Aip, ndims, tripletList, a1, a2, a3);
+          setbValue(index, bVal, ndims, b, b_);
+          break;
+        }
+        case Surface::X_POS: {
+          double A = kxm / dxm + (hc + hr);
+          double Aim = -kxm / dxm;
+          double bVal = (hc + hr) * Tair + q;
+
+          setAmatValue(index, index, A, ndims, tripletList, a1, a2, a3);
+          setAmatValue(index, i_down_Ptr->index, Aim, ndims, tripletList, a1, a2, a3);
+          setbValue(index, bVal, ndims, b, b_);
+          break;
+        }
+        case Surface::Y_NEG: {
+          double A = kyp / dyp + (hc + hr);
+          double Ajp = -kyp / dyp;
+          double bVal = (hc + hr) * Tair + q;
+
+          setAmatValue(index, index, A, ndims, tripletList, a1, a2, a3);
+          setAmatValue(index, j_up_Ptr->index, Ajp, ndims, tripletList, a1, a2, a3);
+          setbValue(index, bVal, ndims, b, b_);
+          break;
+        }
+        case Surface::Y_POS: {
+          double A = kym / dym + (hc + hr);
+          double Ajm = -kym / dym;
+          double bVal = (hc + hr) * Tair + q;
+
+          setAmatValue(index, index, A, ndims, tripletList, a1, a2, a3);
+          setAmatValue(index, j_down_Ptr->index, Ajm, ndims, tripletList, a1, a2, a3);
+          setbValue(index, bVal, ndims, b, b_);
+          break;
+        }
+        case Surface::Z_NEG: {
+          double A = kzp / dzp + (hc + hr);
+          double Akp = -kzp / dzp;
+          double bVal = (hc + hr) * Tair + q;
+
+          setAmatValue(index, index, A, ndims, tripletList, a1, a2, a3);
+          setAmatValue(index, k_up_Ptr->index, Akp, ndims, tripletList, a1, a2, a3);
+          setbValue(index, bVal, ndims, b, b_);
+          break;
+        }
+        case Surface::Z_POS: {
+          double A = kzm / dzm + (hc + hr);
+          double Akm = -kzm / dzm;
+          double bVal = (hc + hr) * Tair + q;
+
+          setAmatValue(index, index, A, ndims, tripletList, a1, a2, a3);
+          setAmatValue(index, k_down_Ptr->index, Akm, ndims, tripletList, a1, a2, a3);
+          setbValue(index, bVal, ndims, b, b_);
+          break;
+        }
+      }
+    }
+    break;
+
+    case Surface::EXTERIOR_FLUX:
+    {
+      double Tair = bcs.outdoorTemp;
+      double v = bcs.localWindSpeed;
+      double eSky = bcs.skyEmissivity;
+      double tilt = surfacePtr->tilt;
+      double F = getEffectiveExteriorViewFactor(eSky,tilt);
+      double hc = foundation.getConvectionCoeff(*told_ptr,Tair,v,foundation.surfaceRoughness,true,tilt);
+      double hr = getExteriorIRCoeff(surfacePtr->emissivity,*told_ptr,Tair,eSky,tilt);
+      double q = heatGain;
+
+      switch (surfacePtr->orientation)
+      {
+        case Surface::X_NEG: {
+          double A = kxp / dxp + (hc + hr);
+          double Aip = -kxp / dxp;
+          double bVal = (hc + hr * pow(F, 0.25)) * Tair + q;
+
+          setAmatValue(index, index, A, ndims, tripletList, a1, a2, a3);
+          setAmatValue(index, i_up_Ptr->index, Aip, ndims, tripletList, a1, a2, a3);
+          setbValue(index, bVal, ndims, b, b_);
+          break;
+        }
+        case Surface::X_POS: {
+          double A = kxm / dxm + (hc + hr);
+          double Aim = -kxm / dxm;
+          double bVal = (hc + hr * pow(F, 0.25)) * Tair + q;
+
+          setAmatValue(index, index, A, ndims, tripletList, a1, a2, a3);
+          setAmatValue(index, i_down_Ptr->index, Aim, ndims, tripletList, a1, a2, a3);
+          setbValue(index, bVal, ndims, b, b_);
+          break;
+        }
+        case Surface::Y_NEG: {
+          double A = kyp / dyp + (hc + hr);
+          double Ajp = -kyp / dyp;
+          double bVal = (hc + hr * pow(F, 0.25)) * Tair + q;
+
+          setAmatValue(index, index, A, ndims, tripletList, a1, a2, a3);
+          setAmatValue(index, j_up_Ptr->index, Ajp, ndims, tripletList, a1, a2, a3);
+          setbValue(index, bVal, ndims, b, b_);
+          break;
+        }
+        case Surface::Y_POS: {
+          double A = kym / dym + (hc + hr);
+          double Ajm = -kym / dym;
+          double bVal = (hc + hr * pow(F, 0.25)) * Tair + q;
+
+          setAmatValue(index, index, A, ndims, tripletList, a1, a2, a3);
+          setAmatValue(index, j_down_Ptr->index, Ajm, ndims, tripletList, a1, a2, a3);
+          setbValue(index, bVal, ndims, b, b_);
+          break;
+        }
+        case Surface::Z_NEG: {
+          double A = kzp / dzp + (hc + hr);
+          double Akp = -kzp / dzp;
+          double bVal = (hc + hr * pow(F, 0.25)) * Tair + q;
+
+          setAmatValue(index, index, A, ndims, tripletList, a1, a2, a3);
+          setAmatValue(index, k_up_Ptr->index, Akp, ndims, tripletList, a1, a2, a3);
+          setbValue(index, bVal, ndims, b, b_);
+          break;
+        }
+        case Surface::Z_POS: {
+          double A = kzm / dzm + (hc + hr);
+          double Akm = -kzm / dzm;
+          double bVal = (hc + hr * pow(F, 0.25)) * Tair + q;
+
+          setAmatValue(index, index, A, ndims, tripletList, a1, a2, a3);
+          setAmatValue(index, k_down_Ptr->index, Akm, ndims, tripletList, a1, a2, a3);
+          setbValue(index, bVal, ndims, b, b_);
+          break;
+        }
+      }
+    }
+      break;
+  }
+}
+
 
 }
 
