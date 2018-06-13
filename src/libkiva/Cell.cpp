@@ -410,13 +410,13 @@ double Cell::calcCellExplicit(double timestep, const Foundation &foundation)
 }
 
 void Cell::calcCellMatrix(Foundation::NumericalScheme scheme, double timestep, const Foundation &foundation,
-        const BoundaryConditions &/*bcs*/,
-        std::vector<Eigen::Triplet<double>> &tripletList, Eigen::VectorXd &b,
-        std::vector<double> &a1, std::vector<double> &a2, std::vector<double> &a3, std::vector<double> &b_)
+                          const BoundaryConditions &/*bcs*/,
+                          double &A, double &Aip, double &Aim, double &Ajp, double &Ajm,
+                          double &Akp, double &Akm, double &bVal)
 {
   if (scheme == Foundation::NS_STEADY_STATE)
   {
-    calcCellSteadyState(foundation, tripletList, b, a1, a2, a3, b_);
+    calcCellSteadyState(foundation, A, Aip, Aim, Ajp, Ajm, Akp, Akm, bVal);
   }
   else
   {
@@ -439,15 +439,15 @@ void Cell::calcCellMatrix(Foundation::NumericalScheme scheme, double timestep, c
 
     if (foundation.numberOfDimensions == 3)
     {
-      double A = (1.0 + f*(CXP + CZP + CYP - CXM - CZM - CYM));
-      double Aim = f*CXM;
-      double Aip = f*(-CXP);
-      double Akm = f*CZM;
-      double Akp = f*(-CZP);
-      double Ajm = f*CYM;
-      double Ajp = f*(-CYP);
+      A = (1.0 + f*(CXP + CZP + CYP - CXM - CZM - CYM));
+      Aim = f*CXM;
+      Aip = f*(-CXP);
+      Akm = f*CZM;
+      Akp = f*(-CZP);
+      Ajm = f*CYM;
+      Ajp = f*(-CYP);
 
-      double bVal = *told_ptr*(1.0 + (1-f)*(CXM + CZM + CYM - CXP - CZP - CYP))
+      bVal = *told_ptr*(1.0 + (1-f)*(CXM + CZM + CYM - CXP - CZP - CYP))
              - *i_down_Ptr->told_ptr*(1-f)*CXM
              + *i_up_Ptr->told_ptr*(1-f)*CXP
              - *j_down_Ptr->told_ptr*(1-f)*CZM
@@ -455,15 +455,6 @@ void Cell::calcCellMatrix(Foundation::NumericalScheme scheme, double timestep, c
              - *k_down_Ptr->told_ptr*(1-f)*CYM
              + *k_up_Ptr->told_ptr*(1-f)*CYP
              + Q;
-
-      tripletList.emplace_back(index,index,A);
-      tripletList.emplace_back(index,i_up_Ptr->index,Aip);
-      tripletList.emplace_back(index,i_down_Ptr->index,Aim);
-      tripletList.emplace_back(index,j_up_Ptr->index,Ajp);
-      tripletList.emplace_back(index,j_down_Ptr->index,Ajm);
-      tripletList.emplace_back(index,k_up_Ptr->index,Akp);
-      tripletList.emplace_back(index,k_down_Ptr->index,Akm);
-      b(index) = bVal;
     }
     else if (foundation.numberOfDimensions == 2)
     {
@@ -475,50 +466,37 @@ void Cell::calcCellMatrix(Foundation::NumericalScheme scheme, double timestep, c
         CXPC = cxp_c*theta/r;
         CXMC = cxm_c*theta/r;
       }
-      double A = (1.0 + f*(CXPC + CXP + CZP - CXMC - CXM - CZM));
-      double Aim = f*(CXMC + CXM);
-      double Aip = f*(-CXPC - CXP);
-      double Akm = f*CZM;
-      double Akp = f*(-CZP);
+      A = (1.0 + f*(CXPC + CXP + CZP - CXMC - CXM - CZM));
+      Aim = f*(CXMC + CXM);
+      Aip = f*(-CXPC - CXP);
+      Akm = f*CZM;
+      Akp = f*(-CZP);
 
-      double bVal = *told_ptr*(1.0 + (1-f)*(CXMC + CXM + CZM - CXPC - CXP - CZP))
+      bVal = *told_ptr*(1.0 + (1-f)*(CXMC + CXM + CZM - CXPC - CXP - CZP))
              - *i_down_Ptr->told_ptr*(1-f)*(CXMC + CXM)
              + *i_up_Ptr->told_ptr*(1-f)*(CXPC + CXP)
              - *k_down_Ptr->told_ptr*(1-f)*CZM
              + *k_up_Ptr->told_ptr*(1-f)*CZP
              + Q;
-
-      tripletList.emplace_back(index,index,A);
-      tripletList.emplace_back(index,i_up_Ptr->index,Aip);
-      tripletList.emplace_back(index,i_down_Ptr->index,Aim);
-      tripletList.emplace_back(index,k_up_Ptr->index,Akp);
-      tripletList.emplace_back(index,k_down_Ptr->index,Akm);
-      b(index) = bVal;
     }
     else
     {
-      double A = (1.0 + f*(CZP - CZM));
-      double Akm = f*CZM;
-      double Akp = f*(-CZP);
+      A = (1.0 + f*(CZP - CZM));
+      Akm = f*CZM;
+      Akp = f*(-CZP);
 
-      double bVal = *told_ptr*(1.0 + (1-f)*(CZM - CZP))
+      bVal = *told_ptr*(1.0 + (1-f)*(CZM - CZP))
              - *k_down_Ptr->told_ptr*(1-f)*CZM
              + *k_up_Ptr->told_ptr*(1-f)*CZP
              + Q;
-
-      a2[index] = A;
-      a3[index] = Akp;
-      a1[index] = Akm;
-      b_[index] = bVal;
     }
   }
 
 }
 
 void Cell::calcCellSteadyState(const Foundation &foundation,
-                               std::vector<Eigen::Triplet<double>> &tripletList, Eigen::VectorXd &b,
-                               std::vector<double> &a1, std::vector<double> &a2, std::vector<double> &a3,
-                               std::vector<double> &b_)
+                               double &A, double &Aip, double &Aim, double &Ajp, double &Ajm,
+                               double &Akp, double &Akm, double &bVal)
 {
   double CXP = cxp;
   double CXM = cxm;
@@ -530,24 +508,15 @@ void Cell::calcCellSteadyState(const Foundation &foundation,
 
   if (foundation.numberOfDimensions == 3)
   {
-    double A = (CXM + CZM + CYM - CXP - CZP - CYP);
-    double Aim = -CXM;
-    double Aip = CXP;
-    double Akm = -CZM;
-    double Akp = CZP;
-    double Ajm = -CYM;
-    double Ajp = CYP;
+    A = (CXM + CZM + CYM - CXP - CZP - CYP);
+    Aim = -CXM;
+    Aip = CXP;
+    Akm = -CZM;
+    Akp = CZP;
+    Ajm = -CYM;
+    Ajp = CYP;
 
-    double bVal = -Q;
-
-    tripletList.emplace_back(index,index,A);
-    tripletList.emplace_back(index,i_up_Ptr->index,Aip);
-    tripletList.emplace_back(index,i_down_Ptr->index,Aim);
-    tripletList.emplace_back(index,j_up_Ptr->index,Ajp);
-    tripletList.emplace_back(index,j_down_Ptr->index,Ajm);
-    tripletList.emplace_back(index,k_up_Ptr->index,Akp);
-    tripletList.emplace_back(index,k_down_Ptr->index,Akm);
-    b(index) = bVal;
+    bVal = -Q;
   }
   else if (foundation.numberOfDimensions == 2)
   {
@@ -559,33 +528,21 @@ void Cell::calcCellSteadyState(const Foundation &foundation,
       CXPC = cxp_c/r;
       CXMC = cxm_c/r;
     }
-    double A = (CXMC + CXM + CZM - CXPC - CXP - CZP);
-    double Aim = (-CXMC - CXM);
-    double Aip = (CXPC + CXP);
-    double Akm = -CZM;
-    double Akp = CZP;
+    A = (CXMC + CXM + CZM - CXPC - CXP - CZP);
+    Aim = (-CXMC - CXM);
+    Aip = (CXPC + CXP);
+    Akm = -CZM;
+    Akp = CZP;
 
-    double bVal = -Q;
-
-    tripletList.emplace_back(index,index,A);
-    tripletList.emplace_back(index,i_up_Ptr->index,Aip);
-    tripletList.emplace_back(index,i_down_Ptr->index,Aim);
-    tripletList.emplace_back(index,k_up_Ptr->index,Akp);
-    tripletList.emplace_back(index,k_down_Ptr->index,Akm);
-    b(index) = bVal;
+    bVal = -Q;
   }
   else
   {
-    double A = (CZM - CZP);
-    double Akm = -CZM;
-    double Akp = CZP;
+    A = (CZM - CZP);
+    Akm = -CZM;
+    Akp = CZP;
 
-    double bVal = -Q;
-
-    a2[index] = A;
-    a3[index] = Akp;
-    a1[index] = Akm;
-    b_[index] = bVal;
+    bVal = -Q;
   }
 }
 
@@ -732,19 +689,13 @@ void ExteriorAirCell::calcCellADI(int /*dim*/, const Foundation &/*foundation*/,
 };
 
 
-void ExteriorAirCell::calcCellMatrix(Foundation::NumericalScheme /*scheme*/, double /*timestep*/, const Foundation &foundation,
-                          const BoundaryConditions &bcs,
-                          std::vector<Eigen::Triplet<double>> &tripletList, Eigen::VectorXd &b,
-                          std::vector<double> &/*a1*/, std::vector<double> &a2, std::vector<double> &/*a3*/, std::vector<double> &b_) {
-  double A = 1.0;
-  double bVal = bcs.outdoorTemp;
-  if (foundation.numberOfDimensions > 1) {
-    tripletList.emplace_back(index,index,A);
-    b(index) = bVal;
-  } else {
-    a2[index] = A;
-    b_[index] = bVal;
-  }
+void ExteriorAirCell::calcCellMatrix(Foundation::NumericalScheme /*scheme*/, double /*timestep*/, const Foundation &/*foundation*/,
+                                     const BoundaryConditions &bcs,
+                                     double &A, double &/*Aip*/, double &/*Aim*/, double &/*Ajp*/, double &/*Ajm*/,
+                                     double &/*Akp*/, double &/*Akm*/, double &bVal)
+{
+  A = 1.0;
+  bVal = bcs.outdoorTemp;
 }
 
 InteriorAirCell::InteriorAirCell(const std::size_t &index, const CellType cellType,
@@ -754,19 +705,14 @@ InteriorAirCell::InteriorAirCell(const std::size_t &index, const CellType cellTy
         Cell(index, cellType, i, j, k, foundation, surfacePtr, blockPtr, meshXptr, meshYptr, meshZptr)
 {}
 
-void InteriorAirCell::calcCellMatrix(Foundation::NumericalScheme /*scheme*/, double /*timestep*/, const Foundation &foundation,
+void InteriorAirCell::calcCellMatrix(Foundation::NumericalScheme /*scheme*/, double /*timestep*/, const Foundation &/*foundation*/,
                                      const BoundaryConditions &bcs,
-                                     std::vector<Eigen::Triplet<double>> &tripletList, Eigen::VectorXd &b,
-                                     std::vector<double> &/*a1*/, std::vector<double> &a2, std::vector<double> &/*a3*/, std::vector<double> &b_) {
-  double A = 1.0;
-  double bVal = bcs.indoorTemp;
-  if (foundation.numberOfDimensions > 1) {
-    tripletList.emplace_back(index,index,A);
-    b(index) = bVal;
-  } else {
-    a2[index] = A;
-    b_[index] = bVal;
-  }
+                                     double &A, double &/*Aip*/, double &/*Aim*/, double &/*Ajp*/, double &/*Ajm*/,
+                                     double &/*Akp*/, double &/*Akm*/, double &bVal)
+{
+  A = 1.0;
+  bVal = bcs.indoorTemp;
+
 }
 
 void InteriorAirCell::calcCellADI(int /*dim*/, const Foundation &/*foundation*/, double /*timestep*/,
@@ -1144,11 +1090,9 @@ void BoundaryCell::calcCellADI(int dim, const Foundation &foundation, double /*t
 
 void BoundaryCell::calcCellMatrix(Kiva::Foundation::NumericalScheme /*scheme*/, double /*timestep*/,
                                   const Kiva::Foundation &foundation, const Kiva::BoundaryConditions &bcs,
-                                  std::vector<Eigen::Triplet<double>> &tripletList, Eigen::VectorXd &b,
-                                  std::vector<double> &a1, std::vector<double> &a2, std::vector<double> &a3,
-                                  std::vector<double> &b_)
+                                  double &A, double &Aip, double &Aim, double &Ajp, double &Ajm,
+                                  double &Akp, double &Akm, double &bVal)
 {
-  int ndims = foundation.numberOfDimensions;
   switch (surfacePtr->boundaryConditionType)
   {
     case Surface::ZERO_FLUX:
@@ -1156,90 +1100,57 @@ void BoundaryCell::calcCellMatrix(Kiva::Foundation::NumericalScheme /*scheme*/, 
       switch (surfacePtr->orientation)
       {
         case Surface::X_NEG: {
-          double A = 1.0;
-          double Aip = -1.0;
-          double bVal = 0.0;
-
-          setAmatValue(index, index, A, ndims, tripletList, a1, a2, a3);
-          setAmatValue(index, i_up_Ptr->index, Aip, ndims, tripletList, a1, a2, a3);
-          setbValue(index, bVal, ndims, b, b_);
+          A = 1.0;
+          Aip = -1.0;
+          bVal = 0.0;
           break;
         }
         case Surface::X_POS: {
-          double A = 1.0;
-          double Aim = -1.0;
-          double bVal = 0.0;
-
-          setAmatValue(index, index, A, ndims, tripletList, a1, a2, a3);
-          setAmatValue(index, i_down_Ptr->index, Aim, ndims, tripletList, a1, a2, a3);
-          setbValue(index, bVal, ndims, b, b_);
+          A = 1.0;
+          Aim = -1.0;
+          bVal = 0.0;
           break;
         }
         case Surface::Y_NEG: {
-          double A = 1.0;
-          double Ajp = -1.0;
-          double bVal = 0.0;
-
-          setAmatValue(index, index, A, ndims, tripletList, a1, a2, a3);
-          setAmatValue(index, j_up_Ptr->index, Ajp, ndims, tripletList, a1, a2, a3);
-          setbValue(index, bVal, ndims, b, b_);
+          A = 1.0;
+          Ajp = -1.0;
+          bVal = 0.0;
           break;
         }
         case Surface::Y_POS: {
-          double A = 1.0;
-          double Ajm = -1.0;
-          double bVal = 0.0;
-
-          setAmatValue(index, index, A, ndims, tripletList, a1, a2, a3);
-          setAmatValue(index, j_down_Ptr->index, Ajm, ndims, tripletList, a1, a2, a3);
-          setbValue(index, bVal, ndims, b, b_);
+          A = 1.0;
+          Ajm = -1.0;
+          bVal = 0.0;
           break;
         }
         case Surface::Z_NEG: {
-          double A = 1.0;
-          double Akp = -1.0;
-          double bVal = 0.0;
-
-          setAmatValue(index, index, A, ndims, tripletList, a1, a2, a3);
-          setAmatValue(index, k_up_Ptr->index, Akp, ndims, tripletList, a1, a2, a3);
-          setbValue(index, bVal, ndims, b, b_);
+          A = 1.0;
+          Akp = -1.0;
+          bVal = 0.0;
           break;
         }
         case Surface::Z_POS: {
-          double A = 1.0;
-          double Akm = -1.0;
-          double bVal = 0.0;
-
-          setAmatValue(index, index, A, ndims, tripletList, a1, a2, a3);
-          setAmatValue(index, k_down_Ptr->index, Akm, ndims, tripletList, a1, a2, a3);
-          setbValue(index, bVal, ndims, b, b_);
+          A = 1.0;
+          Akm = -1.0;
+          bVal = 0.0;
           break;
         }
       }
     }
       break;
     case Surface::CONSTANT_TEMPERATURE: {
-      double A = 1.0;
-      double bVal = surfacePtr->temperature;
-
-      setAmatValue(index, index, A, ndims, tripletList, a1, a2, a3);
-      setbValue(index, bVal, ndims, b, b_);
+      A = 1.0;
+      bVal = surfacePtr->temperature;
       break;
     }
     case Surface::INTERIOR_TEMPERATURE: {
-      double A = 1.0;
-      double bVal = bcs.indoorTemp;
-
-      setAmatValue(index, index, A, ndims, tripletList, a1, a2, a3);
-      setbValue(index, bVal, ndims, b, b_);
+      A = 1.0;
+      bVal = bcs.indoorTemp;
       break;
     }
     case Surface::EXTERIOR_TEMPERATURE: {
-      double A = 1.0;
-      double bVal = bcs.outdoorTemp;
-
-      setAmatValue(index, index, A, ndims, tripletList, a1, a2, a3);
-      setbValue(index, bVal, ndims, b, b_);
+      A = 1.0;
+      bVal = bcs.outdoorTemp;
       break;
     }
     case Surface::INTERIOR_FLUX:
@@ -1255,63 +1166,39 @@ void BoundaryCell::calcCellMatrix(Kiva::Foundation::NumericalScheme /*scheme*/, 
       switch (surfacePtr->orientation)
       {
         case Surface::X_NEG: {
-          double A = kxp / dxp + (hc + hr);
-          double Aip = -kxp / dxp;
-          double bVal = (hc + hr) * Tair + q;
-
-          setAmatValue(index, index, A, ndims, tripletList, a1, a2, a3);
-          setAmatValue(index, i_up_Ptr->index, Aip, ndims, tripletList, a1, a2, a3);
-          setbValue(index, bVal, ndims, b, b_);
+          A = kxp / dxp + (hc + hr);
+          Aip = -kxp / dxp;
+          bVal = (hc + hr) * Tair + q;
           break;
         }
         case Surface::X_POS: {
-          double A = kxm / dxm + (hc + hr);
-          double Aim = -kxm / dxm;
-          double bVal = (hc + hr) * Tair + q;
-
-          setAmatValue(index, index, A, ndims, tripletList, a1, a2, a3);
-          setAmatValue(index, i_down_Ptr->index, Aim, ndims, tripletList, a1, a2, a3);
-          setbValue(index, bVal, ndims, b, b_);
+          A = kxm / dxm + (hc + hr);
+          Aim = -kxm / dxm;
+          bVal = (hc + hr) * Tair + q;
           break;
         }
         case Surface::Y_NEG: {
-          double A = kyp / dyp + (hc + hr);
-          double Ajp = -kyp / dyp;
-          double bVal = (hc + hr) * Tair + q;
-
-          setAmatValue(index, index, A, ndims, tripletList, a1, a2, a3);
-          setAmatValue(index, j_up_Ptr->index, Ajp, ndims, tripletList, a1, a2, a3);
-          setbValue(index, bVal, ndims, b, b_);
+          A = kyp / dyp + (hc + hr);
+          Ajp = -kyp / dyp;
+          bVal = (hc + hr) * Tair + q;
           break;
         }
         case Surface::Y_POS: {
-          double A = kym / dym + (hc + hr);
-          double Ajm = -kym / dym;
-          double bVal = (hc + hr) * Tair + q;
-
-          setAmatValue(index, index, A, ndims, tripletList, a1, a2, a3);
-          setAmatValue(index, j_down_Ptr->index, Ajm, ndims, tripletList, a1, a2, a3);
-          setbValue(index, bVal, ndims, b, b_);
+          A = kym / dym + (hc + hr);
+          Ajm = -kym / dym;
+          bVal = (hc + hr) * Tair + q;
           break;
         }
         case Surface::Z_NEG: {
-          double A = kzp / dzp + (hc + hr);
-          double Akp = -kzp / dzp;
-          double bVal = (hc + hr) * Tair + q;
-
-          setAmatValue(index, index, A, ndims, tripletList, a1, a2, a3);
-          setAmatValue(index, k_up_Ptr->index, Akp, ndims, tripletList, a1, a2, a3);
-          setbValue(index, bVal, ndims, b, b_);
+          A = kzp / dzp + (hc + hr);
+          Akp = -kzp / dzp;
+          bVal = (hc + hr) * Tair + q;
           break;
         }
         case Surface::Z_POS: {
-          double A = kzm / dzm + (hc + hr);
-          double Akm = -kzm / dzm;
-          double bVal = (hc + hr) * Tair + q;
-
-          setAmatValue(index, index, A, ndims, tripletList, a1, a2, a3);
-          setAmatValue(index, k_down_Ptr->index, Akm, ndims, tripletList, a1, a2, a3);
-          setbValue(index, bVal, ndims, b, b_);
+          A = kzm / dzm + (hc + hr);
+          Akm = -kzm / dzm;
+          bVal = (hc + hr) * Tair + q;
           break;
         }
       }
@@ -1332,63 +1219,39 @@ void BoundaryCell::calcCellMatrix(Kiva::Foundation::NumericalScheme /*scheme*/, 
       switch (surfacePtr->orientation)
       {
         case Surface::X_NEG: {
-          double A = kxp / dxp + (hc + hr);
-          double Aip = -kxp / dxp;
-          double bVal = (hc + hr * pow(F, 0.25)) * Tair + q;
-
-          setAmatValue(index, index, A, ndims, tripletList, a1, a2, a3);
-          setAmatValue(index, i_up_Ptr->index, Aip, ndims, tripletList, a1, a2, a3);
-          setbValue(index, bVal, ndims, b, b_);
+          A = kxp / dxp + (hc + hr);
+          Aip = -kxp / dxp;
+          bVal = (hc + hr * pow(F, 0.25)) * Tair + q;
           break;
         }
         case Surface::X_POS: {
-          double A = kxm / dxm + (hc + hr);
-          double Aim = -kxm / dxm;
-          double bVal = (hc + hr * pow(F, 0.25)) * Tair + q;
-
-          setAmatValue(index, index, A, ndims, tripletList, a1, a2, a3);
-          setAmatValue(index, i_down_Ptr->index, Aim, ndims, tripletList, a1, a2, a3);
-          setbValue(index, bVal, ndims, b, b_);
+          A = kxm / dxm + (hc + hr);
+          Aim = -kxm / dxm;
+          bVal = (hc + hr * pow(F, 0.25)) * Tair + q;
           break;
         }
         case Surface::Y_NEG: {
-          double A = kyp / dyp + (hc + hr);
-          double Ajp = -kyp / dyp;
-          double bVal = (hc + hr * pow(F, 0.25)) * Tair + q;
-
-          setAmatValue(index, index, A, ndims, tripletList, a1, a2, a3);
-          setAmatValue(index, j_up_Ptr->index, Ajp, ndims, tripletList, a1, a2, a3);
-          setbValue(index, bVal, ndims, b, b_);
+          A = kyp / dyp + (hc + hr);
+          Ajp = -kyp / dyp;
+          bVal = (hc + hr * pow(F, 0.25)) * Tair + q;
           break;
         }
         case Surface::Y_POS: {
-          double A = kym / dym + (hc + hr);
-          double Ajm = -kym / dym;
-          double bVal = (hc + hr * pow(F, 0.25)) * Tair + q;
-
-          setAmatValue(index, index, A, ndims, tripletList, a1, a2, a3);
-          setAmatValue(index, j_down_Ptr->index, Ajm, ndims, tripletList, a1, a2, a3);
-          setbValue(index, bVal, ndims, b, b_);
+          A = kym / dym + (hc + hr);
+          Ajm = -kym / dym;
+          bVal = (hc + hr * pow(F, 0.25)) * Tair + q;
           break;
         }
         case Surface::Z_NEG: {
-          double A = kzp / dzp + (hc + hr);
-          double Akp = -kzp / dzp;
-          double bVal = (hc + hr * pow(F, 0.25)) * Tair + q;
-
-          setAmatValue(index, index, A, ndims, tripletList, a1, a2, a3);
-          setAmatValue(index, k_up_Ptr->index, Akp, ndims, tripletList, a1, a2, a3);
-          setbValue(index, bVal, ndims, b, b_);
+          A = kzp / dzp + (hc + hr);
+          Akp = -kzp / dzp;
+          bVal = (hc + hr * pow(F, 0.25)) * Tair + q;
           break;
         }
         case Surface::Z_POS: {
-          double A = kzm / dzm + (hc + hr);
-          double Akm = -kzm / dzm;
-          double bVal = (hc + hr * pow(F, 0.25)) * Tair + q;
-
-          setAmatValue(index, index, A, ndims, tripletList, a1, a2, a3);
-          setAmatValue(index, k_down_Ptr->index, Akm, ndims, tripletList, a1, a2, a3);
-          setbValue(index, bVal, ndims, b, b_);
+          A = kzm / dzm + (hc + hr);
+          Akm = -kzm / dzm;
+          bVal = (hc + hr * pow(F, 0.25)) * Tair + q;
           break;
         }
       }

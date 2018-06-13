@@ -566,7 +566,16 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
   for (int index = 0; index < num_cells; index++)
   {
     auto this_cell = domain.cell[index];
-    this_cell->calcCellMatrix(scheme, timestep, foundation, bcs, tripletList, b, a1, a2, a3, b_);
+    double A, Aip{0}, Aim{0}, Ajp{0}, Ajm{0}, Akp{0}, Akm{0}, bVal;
+    this_cell->calcCellMatrix(scheme, timestep, foundation, bcs, A, Aip, Aim, Ajp, Ajm, Akp, Akm, bVal);
+    setAmatValue(index, index, A);
+    if (Aip != 0) { setAmatValue(index, this_cell->i_up_Ptr->index, Aip); }
+    if (Aim != 0) { setAmatValue(index, this_cell->i_down_Ptr->index, Aim); }
+    if (Ajp != 0) { setAmatValue(index, this_cell->j_up_Ptr->index, Ajp); }
+    if (Ajm != 0) { setAmatValue(index, this_cell->j_down_Ptr->index, Ajm); }
+    if (Akp != 0) { setAmatValue(index, this_cell->k_up_Ptr->index, Akp); }
+    if (Akm != 0) { setAmatValue(index, this_cell->k_down_Ptr->index, Akm); }
+    setbValue(index, bVal);
   }
 
   solveLinearSystem();

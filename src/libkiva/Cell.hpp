@@ -87,15 +87,13 @@ namespace Kiva {
     double calcCellExplicit(double timestep, const Foundation &foundation);
 
     virtual void calcCellMatrix(Foundation::NumericalScheme scheme, double timestep, const Foundation &foundation,
-                        const BoundaryConditions &bcs,
-                        std::vector<Eigen::Triplet<double>> &tripletList, Eigen::VectorXd &b,
-                        std::vector<double> &a1, std::vector<double> &a2, std::vector<double> &a3,
-                        std::vector<double> &b_);
+                                const BoundaryConditions &/*bcs*/,
+                                double &A, double &Aip, double &Aim, double &Ajp, double &Ajm,
+                                double &Akp, double &Akm, double &bVal);
 
     void calcCellSteadyState(const Foundation &foundation,
-                             std::vector<Eigen::Triplet<double>> &tripletList, Eigen::VectorXd &b,
-                             std::vector<double> &a1, std::vector<double> &a2, std::vector<double> &a3,
-                             std::vector<double> &b_);
+                             double &A, double &Aip, double &Aim, double &Ajp, double &Ajm,
+                             double &Akp, double &Akm, double &bVal);
 
     virtual void calcCellADI(int dim, const Foundation &foundation, double timestep,
                              const BoundaryConditions &bcs,
@@ -121,9 +119,8 @@ namespace Kiva {
 
     void calcCellMatrix(Foundation::NumericalScheme scheme, double timestep, const Foundation &foundation,
                         const BoundaryConditions &bcs,
-                        std::vector<Eigen::Triplet<double>> &tripletList, Eigen::VectorXd &b,
-                        std::vector<double> &a1, std::vector<double> &a2, std::vector<double> &a3,
-                        std::vector<double> &b_) override;
+                        double &A, double &Aip, double &Aim, double &Ajp, double &Ajm,
+                        double &Akp, double &Akm, double &bVal) override;
     void calcCellADI(int dim, const Foundation &foundation, double timestep,
                    const BoundaryConditions &bcs,
                    double &Am, double &A, double &Ap, double &bVal) override;
@@ -140,9 +137,8 @@ namespace Kiva {
 
     void calcCellMatrix(Foundation::NumericalScheme scheme, double timestep, const Foundation &foundation,
                         const BoundaryConditions &bcs,
-                        std::vector<Eigen::Triplet<double>> &tripletList, Eigen::VectorXd &b,
-                        std::vector<double> &a1, std::vector<double> &a2, std::vector<double> &a3,
-                        std::vector<double> &b_) override;
+                        double &A, double &Aip, double &Aim, double &Ajp, double &Ajm,
+                        double &Akp, double &Akm, double &bVal) override;
     void calcCellADI(int dim, const Foundation &foundation, double timestep,
                      const BoundaryConditions &bcs,
                      double &Am, double &A, double &Ap, double &bVal) override;
@@ -156,11 +152,10 @@ namespace Kiva {
                     const Foundation &foundation, Surface *surfacePtr, Block *blockPtr,
                     Mesher *meshX, Mesher *meshY, Mesher *meshZ);
 
-    void calcCellMatrix(Kiva::Foundation::NumericalScheme scheme, double timestep,
-                        const Kiva::Foundation &foundation, const Kiva::BoundaryConditions &bcs,
-                        std::vector<Eigen::Triplet<double>> &tripletList, Eigen::VectorXd &b,
-                        std::vector<double> &a1, std::vector<double> &a2, std::vector<double> &a3,
-                        std::vector<double> &b_) override;
+    void calcCellMatrix(Foundation::NumericalScheme scheme, double timestep, const Foundation &foundation,
+                        const BoundaryConditions &bcs,
+                        double &A, double &Aip, double &Aim, double &Ajp, double &Ajm,
+                        double &Akp, double &Akm, double &bVal) override;
     void calcCellADI(int dim, const Foundation &foundation, double timestep,
                      const BoundaryConditions &bcs,
                      double &Am, double &A, double &Ap, double &bVal) override;
