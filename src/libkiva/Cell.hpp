@@ -74,7 +74,7 @@ namespace Kiva {
 
     void getKXP(), getKXM(), getKYP(), getKYM(), getKZP(), getKZM();
 
-    void setWhatever(int ndims, bool cylindrical);
+    void setPDEcoefficients(int ndims, bool cylindrical);
 
     void setZeroThicknessCellProperties(std::vector< std::shared_ptr<Cell> > pointSet);
 

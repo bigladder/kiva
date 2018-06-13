@@ -224,8 +224,8 @@ void Domain::setDomain(Foundation &foundation)
                            dyp_vector[this_cell->j], dym_vector[this_cell->j],
                            dzp_vector[this_cell->k], dzm_vector[this_cell->k]);
     this_cell->setConductivities();
-    this_cell->setWhatever(foundation.numberOfDimensions,
-                          foundation.coordinateSystem == Foundation::CS_CYLINDRICAL);
+    this_cell->setPDEcoefficients(foundation.numberOfDimensions,
+                                  foundation.coordinateSystem == Foundation::CS_CYLINDRICAL);
   }
 
   for (auto &surface: foundation.surfaces)

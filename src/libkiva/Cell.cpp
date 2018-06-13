@@ -165,7 +165,7 @@ void Cell::getKZM()
   }
 }
 
-void Cell::setWhatever(int ndims, bool cylindrical) {
+void Cell::setPDEcoefficients(int ndims, bool cylindrical) {
   if (ndims > 1) {
     // Radial X terms
     if (cylindrical)
