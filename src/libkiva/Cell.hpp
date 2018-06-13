@@ -101,11 +101,8 @@ namespace Kiva {
 
     void Assemble(const Foundation &foundation);
 
-    void setAmatValue(const int i, const int j, const double val, int ndims,
-                      std::vector<Eigen::Triplet<double>> &tripletList,
-                      std::vector<double> &a1, std::vector<double> &a2, std::vector<double> &a3);
-    void setbValue(const int i, const double val, int ndims,
-                   Eigen::VectorXd &b, std::vector<double> &b_);
+    void doOutdoorTemp(const BoundaryConditions &bcs, double &A, double &bVal);
+    void doIndoorTemp(const BoundaryConditions &bcs, double &A, double &bVal);
   };
 
 

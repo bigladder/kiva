@@ -48,12 +48,12 @@ void Cell::Assemble(const Foundation &foundation) {
 void Cell::setNeighbors(std::vector<std::shared_ptr<Cell> > &cell_v, std::size_t stepsize_i, std::size_t stepsize_j,
                         std::size_t stepsize_k, std::size_t nX, std::size_t nY, std::size_t nZ)
 {
-  if (i != nX-1) i_up_Ptr = cell_v[index+stepsize_i];
-  if (i != 0) i_down_Ptr = cell_v[index-stepsize_i];
-  if (j != nY-1) j_up_Ptr = cell_v[index+stepsize_j];
-  if (j != 0) j_down_Ptr = cell_v[index-stepsize_j];
-  if (k != nZ-1) k_up_Ptr = cell_v[index+stepsize_k];
-  if (k != 0) k_down_Ptr = cell_v[index-stepsize_k];
+  if (i != nX-1) { i_up_Ptr = cell_v[index+stepsize_i]; }
+  if (i != 0) { i_down_Ptr = cell_v[index-stepsize_i]; }
+  if (j != nY-1) { j_up_Ptr = cell_v[index+stepsize_j]; }
+  if (j != 0) { j_down_Ptr = cell_v[index-stepsize_j]; }
+  if (k != nZ-1) { k_up_Ptr = cell_v[index+stepsize_k]; }
+  if (k != 0) { k_down_Ptr = cell_v[index-stepsize_k]; }
 }
 
 void Cell::setDistances(double &dxp_in, double &dxm_in, double &dyp_in, double &dym_in,
@@ -647,30 +647,17 @@ void Cell::calcCellADI(int dim, const Foundation &foundation, double timestep,
   }
 }
 
-void Cell::setAmatValue(const int i,const int j,const double val, int ndims,
-                        std::vector<Eigen::Triplet<double>> &tripletList,
-                        std::vector<double> &a1, std::vector<double> &a2, std::vector<double> &a3)
+void Cell::doOutdoorTemp(const BoundaryConditions &bcs, double &A, double &bVal)
 {
-  if (ndims == 1)
-  {
-    if (j < i)        { a1[i] = val; }
-    else if (j == i)  { a2[i] = val; }
-    else              { a3[i] = val; }
-  }
-  else
-  {
-    tripletList.emplace_back(i,j,val);
-  }
+  A = 1.0;
+  bVal = bcs.outdoorTemp;
 }
 
-void Cell::setbValue(const int i,const double val, int ndims,
-                     Eigen::VectorXd &b, std::vector<double> &b_)
+void Cell::doIndoorTemp(const BoundaryConditions &bcs, double &A, double &bVal)
 {
-  if (ndims == 1) { b_[i] = val; }
-  else { b(i) = val; }
+  A = 1.0;
+  bVal = bcs.indoorTemp;
 }
-
-
 
 
 ExteriorAirCell::ExteriorAirCell(const std::size_t &index, const CellType cellType,
@@ -684,8 +671,7 @@ void ExteriorAirCell::calcCellADI(int /*dim*/, const Foundation &/*foundation*/,
                                   const BoundaryConditions &bcs,
                                   double &/*Am*/, double &A, double &/*Ap*/, double &bVal)
 {
-  A = 1.0;
-  bVal = bcs.outdoorTemp;
+  doOutdoorTemp(bcs, A, bVal);
 };
 
 
@@ -694,8 +680,7 @@ void ExteriorAirCell::calcCellMatrix(Foundation::NumericalScheme /*scheme*/, dou
                                      double &A, double &/*Aip*/, double &/*Aim*/, double &/*Ajp*/, double &/*Ajm*/,
                                      double &/*Akp*/, double &/*Akm*/, double &bVal)
 {
-  A = 1.0;
-  bVal = bcs.outdoorTemp;
+  doOutdoorTemp(bcs, A, bVal);
 }
 
 InteriorAirCell::InteriorAirCell(const std::size_t &index, const CellType cellType,
@@ -710,17 +695,14 @@ void InteriorAirCell::calcCellMatrix(Foundation::NumericalScheme /*scheme*/, dou
                                      double &A, double &/*Aip*/, double &/*Aim*/, double &/*Ajp*/, double &/*Ajm*/,
                                      double &/*Akp*/, double &/*Akm*/, double &bVal)
 {
-  A = 1.0;
-  bVal = bcs.indoorTemp;
-
+  doIndoorTemp(bcs, A, bVal);
 }
 
 void InteriorAirCell::calcCellADI(int /*dim*/, const Foundation &/*foundation*/, double /*timestep*/,
                                   const BoundaryConditions &bcs,
                                   double &/*Am*/, double &A, double &/*Ap*/, double &bVal)
 {
-  A = 1.0;
-  bVal = bcs.indoorTemp;
+  doIndoorTemp(bcs, A, bVal);
 };
 
 
@@ -889,12 +871,10 @@ void BoundaryCell::calcCellADI(int dim, const Foundation &foundation, double /*t
       bVal = surfacePtr->temperature;
       break;
     case Surface::INTERIOR_TEMPERATURE:
-      A = 1.0;
-      bVal = bcs.indoorTemp;
+      doIndoorTemp(bcs, A, bVal);
       break;
     case Surface::EXTERIOR_TEMPERATURE:
-      A = 1.0;
-      bVal = bcs.outdoorTemp;
+      doOutdoorTemp(bcs, A, bVal);
       break;
     case Surface::INTERIOR_FLUX:
     {
@@ -1144,13 +1124,11 @@ void BoundaryCell::calcCellMatrix(Kiva::Foundation::NumericalScheme /*scheme*/, 
       break;
     }
     case Surface::INTERIOR_TEMPERATURE: {
-      A = 1.0;
-      bVal = bcs.indoorTemp;
+      doIndoorTemp(bcs, A, bVal);
       break;
     }
     case Surface::EXTERIOR_TEMPERATURE: {
-      A = 1.0;
-      bVal = bcs.outdoorTemp;
+      doOutdoorTemp(bcs, A, bVal);
       break;
     }
     case Surface::INTERIOR_FLUX:
