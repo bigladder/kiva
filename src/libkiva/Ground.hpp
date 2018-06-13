@@ -50,9 +50,6 @@ public:
   void setNewBoundaryGeometry();
   void calculate(BoundaryConditions& boundaryConidtions, double ts=0.0);
 
-  std::vector<double> calculateHeatFlux(std::shared_ptr<Cell> this_cell);
-
-
   void calculateSurfaceAverages();
   double getSurfaceAverageValue(std::pair<Surface::SurfaceType, GroundOutput::OutputType> output);
 

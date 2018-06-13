@@ -304,7 +304,8 @@ void Simulator::plot(boost::posix_time::ptime t)
             else
             {
               double du = plots[p].distanceUnitConversion;
-              std::vector<double> Qflux = ground.calculateHeatFlux(ground.domain.cell[index]);
+              std::vector<double> Qflux = ground.domain.cell[index]->calculateHeatFlux(
+                      ground.foundation.numberOfDimensions, ground.TNew, ground.nX, ground.nY, ground.nZ);
               double Qx = Qflux[0];
               double Qy = Qflux[1];
               double Qz = Qflux[2];

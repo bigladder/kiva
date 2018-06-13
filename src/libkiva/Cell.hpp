@@ -99,6 +99,9 @@ namespace Kiva {
                              const BoundaryConditions &bcs,
                              double &Am, double &A, double &Ap, double &bVal);
 
+    virtual std::vector<double> calculateHeatFlux(int ndims, std::vector<double> &TNew,
+                                          std::size_t nX, std::size_t nY, std::size_t nZ);
+
     void Assemble(const Foundation &foundation);
 
     void doOutdoorTemp(const BoundaryConditions &bcs, double &A, double &bVal);
@@ -121,6 +124,8 @@ namespace Kiva {
     void calcCellADI(int dim, const Foundation &foundation, double timestep,
                    const BoundaryConditions &bcs,
                    double &Am, double &A, double &Ap, double &bVal) override;
+    std::vector<double> calculateHeatFlux(int ndims, std::vector<double> &TNew,
+                                          std::size_t nX, std::size_t nY, std::size_t nZ) override;
   };
 
 
@@ -139,6 +144,8 @@ namespace Kiva {
     void calcCellADI(int dim, const Foundation &foundation, double timestep,
                      const BoundaryConditions &bcs,
                      double &Am, double &A, double &Ap, double &bVal) override;
+    std::vector<double> calculateHeatFlux(int ndims, std::vector<double> &TNew,
+                                          std::size_t nX, std::size_t nY, std::size_t nZ) override;
   };
 
   class BoundaryCell : public Cell {
@@ -156,6 +163,9 @@ namespace Kiva {
     void calcCellADI(int dim, const Foundation &foundation, double timestep,
                      const BoundaryConditions &bcs,
                      double &Am, double &A, double &Ap, double &bVal) override;
+    std::vector<double> calculateHeatFlux(int ndims, std::vector<double> &TNew,
+                                          std::size_t nX, std::size_t nY, std::size_t nZ) override;
+
   };
 
 //
