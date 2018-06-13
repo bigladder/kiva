@@ -701,44 +701,9 @@ std::vector<double> Cell::calculateHeatFlux(int ndims, std::vector<double> &TNew
   if (k != 0)
     DTZM = TNew[index]-TNew[k_down_Ptr->index];
 
-  switch (cellType)
-  {
-    case CellType::ZERO_THICKNESS:
-    {
-      //int numZeroDims = domain.getNumZeroDims(i,j,k);
-
-      std::vector<double> Qm;
-      std::vector<double> Qp;
-
-      if (isEqual(meshXptr->deltas[i], 0.0))
-      {
-        Qm = i_down_Ptr->calculateHeatFlux(ndims, TNew, nX, nY, nZ);
-        Qp = i_up_Ptr->calculateHeatFlux(ndims, TNew, nX, nY, nZ);
-      }
-      if (isEqual(meshYptr->deltas[j], 0.0))
-      {
-        Qm = j_down_Ptr->calculateHeatFlux(ndims, TNew, nX, nY, nZ);
-        Qp = j_up_Ptr->calculateHeatFlux(ndims, TNew, nX, nY, nZ);
-      }
-      if (isEqual(meshZptr->deltas[k], 0.0))
-      {
-        Qm = k_down_Ptr->calculateHeatFlux(ndims, TNew, nX, nY, nZ);
-        Qp = k_up_Ptr->calculateHeatFlux(ndims, TNew, nX, nY, nZ);
-      }
-
-      Qx = (Qm[0] + Qp[0])*0.5;
-      Qy = (Qm[1] + Qp[1])*0.5;
-      Qz = (Qm[2] + Qp[2])*0.5;
-    }
-      break;
-    default:
-    {
-      Qx = CXP*DTXP + CXM*DTXM;
-      Qy = CYP*DTYP + CYM*DTYM;
-      Qz = CZP*DTZP + CZM*DTZM;
-    }
-      break;
-  }
+  Qx = CXP*DTXP + CXM*DTXM;
+  Qy = CYP*DTYP + CYM*DTYM;
+  Qz = CZP*DTZP + CZM*DTZM;
 
   Qflux.push_back(Qx);
   Qflux.push_back(Qy);
@@ -1464,6 +1429,53 @@ std::vector<double> BoundaryCell::calculateHeatFlux(int ndims, std::vector<doubl
 
   return Qflux;
 }
+
+
+ZeroThicknessCell::ZeroThicknessCell(const std::size_t &index, const CellType cellType,
+                                 const std::size_t &i, const std::size_t &j, const std::size_t &k,
+                                 const Foundation &foundation, Surface *surfacePtr, Block *blockPtr,
+                                 Mesher *meshXptr, Mesher *meshYptr, Mesher *meshZptr):
+        Cell(index, cellType, i, j, k, foundation, surfacePtr, blockPtr, meshXptr, meshYptr, meshZptr)
+{}
+
+std::vector<double> ZeroThicknessCell::calculateHeatFlux(int ndims, std::vector<double> &TNew,
+                                            std::size_t nX, std::size_t nY, std::size_t nZ)
+{
+  std::vector<double> Qflux;
+  double Qx = 0;
+  double Qy = 0;
+  double Qz = 0;
+
+  std::vector<double> Qm;
+  std::vector<double> Qp;
+
+  if (isEqual(meshXptr->deltas[i], 0.0))
+  {
+    Qm = i_down_Ptr->calculateHeatFlux(ndims, TNew, nX, nY, nZ);
+    Qp = i_up_Ptr->calculateHeatFlux(ndims, TNew, nX, nY, nZ);
+  }
+  if (isEqual(meshYptr->deltas[j], 0.0))
+  {
+    Qm = j_down_Ptr->calculateHeatFlux(ndims, TNew, nX, nY, nZ);
+    Qp = j_up_Ptr->calculateHeatFlux(ndims, TNew, nX, nY, nZ);
+  }
+  if (isEqual(meshZptr->deltas[k], 0.0))
+  {
+    Qm = k_down_Ptr->calculateHeatFlux(ndims, TNew, nX, nY, nZ);
+    Qp = k_up_Ptr->calculateHeatFlux(ndims, TNew, nX, nY, nZ);
+  }
+
+  Qx = (Qm[0] + Qp[0])*0.5;
+  Qy = (Qm[1] + Qp[1])*0.5;
+  Qz = (Qm[2] + Qp[2])*0.5;
+
+  Qflux.push_back(Qx);
+  Qflux.push_back(Qy);
+  Qflux.push_back(Qz);
+
+  return Qflux;
+}
+
 
 }
 

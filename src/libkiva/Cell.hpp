@@ -168,11 +168,19 @@ namespace Kiva {
 
   };
 
-//
-//  class ZeroThicknessCell : public Cell {
-//
-//  };
-//
+
+  class ZeroThicknessCell : public Cell {
+  public:
+
+    ZeroThicknessCell(const std::size_t &index, const CellType cellType,
+                      const std::size_t &i, const std::size_t &j, const std::size_t &k,
+                      const Foundation &foundation, Surface *surfacePtr, Block *blockPtr,
+                      Mesher *meshX, Mesher *meshY, Mesher *meshZ);
+
+    std::vector<double> calculateHeatFlux(int ndims, std::vector<double> &TNew,
+                                          std::size_t nX, std::size_t nY, std::size_t nZ) override;
+  };
+
 }
 
 #endif

@@ -166,9 +166,16 @@ void Domain::setDomain(Foundation &foundation)
           cellType = CellType::ZERO_THICKNESS;
         }
       }
-      std::shared_ptr<Cell> blah(new Cell(index, cellType, i, j, k, foundation, nullptr, nullptr,
-                                                     &meshX, &meshY, &meshZ));
-      addCell(blah);
+
+      if (cellType == CellType::ZERO_THICKNESS) {
+        std::shared_ptr<Cell> blah(new ZeroThicknessCell(index, cellType, i, j, k, foundation, nullptr, nullptr,
+                                            &meshX, &meshY, &meshZ));
+        addCell(blah);
+      } else {
+        std::shared_ptr<Cell> blah(new Cell(index, cellType, i, j, k, foundation, nullptr, nullptr,
+                                            &meshX, &meshY, &meshZ));
+        addCell(blah);
+      }
     }
   }
 
