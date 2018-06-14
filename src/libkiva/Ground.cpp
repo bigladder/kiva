@@ -48,10 +48,7 @@ void Ground::buildDomain()
   if (foundation.numericalScheme == Foundation::NS_ADE)
   {
     U.resize(num_cells);
-    UOld.resize(num_cells);
-
     V.resize(num_cells);
-    VOld.resize(num_cells);
   }
 
   if ((foundation.numericalScheme == Foundation::NS_ADI ||
@@ -80,12 +77,6 @@ void Ground::buildDomain()
 
 void Ground::calculateADE()
 {
-  // Set Old values
-  for (size_t index = 0; index < num_cells; ++index)
-  {
-        UOld[index] = VOld[index] = TOld[index];
-  }
-
   // Solve for new values (Main loop)
   #pragma omp parallel sections num_threads(2)
   {
@@ -109,7 +100,7 @@ void Ground::calculateADEUpwardSweep()
   for (size_t index = 0; index < num_cells; index++)
   {
     auto this_cell = domain.cell[index];
-    this_cell->calcCellADEUp(timestep, foundation, bcs, U, UOld);
+    this_cell->calcCellADEUp(timestep, foundation, bcs, U);
   }
 }
 
@@ -119,7 +110,7 @@ void Ground::calculateADEDownwardSweep()
   for (size_t index = num_cells - 1; /* i >= 0 && */ index < num_cells; index--)
   {
     auto this_cell = domain.cell[index];
-    this_cell->calcCellADEDown(timestep, foundation, bcs, V, VOld);
+    this_cell->calcCellADEDown(timestep, foundation, bcs, V);
   }
 }
 

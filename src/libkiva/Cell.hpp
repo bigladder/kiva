@@ -86,10 +86,10 @@ namespace Kiva {
 
     virtual void calcCellADEUp(double timestep, const Foundation &foundation,
                                const BoundaryConditions &bcs,
-                               std::vector<double> &U, std::vector<double> &UOld);
+                               std::vector<double> &U);
     virtual void calcCellADEDown(double timestep, const Foundation &foundation,
                                  const BoundaryConditions &bcs,
-                                 std::vector<double> &V, std::vector<double> &VOld);
+                                 std::vector<double> &V);
 
     double calcCellExplicit(double timestep, const Foundation &foundation);
 
@@ -125,9 +125,9 @@ namespace Kiva {
          Mesher *meshX, Mesher *meshY, Mesher *meshZ);
 
     void calcCellADEUp(double timestep, const Foundation &foundation, const BoundaryConditions &bcs,
-                       std::vector<double> &U, std::vector<double> &UOld) override;
+                       std::vector<double> &U) override;
     void calcCellADEDown(double timestep, const Foundation &foundation, const BoundaryConditions &bcs,
-                       std::vector<double> &v, std::vector<double> &VOld) override;
+                       std::vector<double> &v) override;
     void calcCellMatrix(Foundation::NumericalScheme scheme, double timestep, const Foundation &foundation,
                         const BoundaryConditions &bcs,
                         double &A, double &Aip, double &Aim, double &Ajp, double &Ajm,
@@ -149,9 +149,9 @@ namespace Kiva {
                     Mesher *meshX, Mesher *meshY, Mesher *meshZ);
 
     void calcCellADEUp(double timestep, const Foundation &foundation, const BoundaryConditions &bcs,
-                       std::vector<double> &U, std::vector<double> &UOld) override;
+                       std::vector<double> &U) override;
     void calcCellADEDown(double timestep, const Foundation &foundation, const BoundaryConditions &bcs,
-                       std::vector<double> &v, std::vector<double> &VOld) override;
+                       std::vector<double> &v) override;
     void calcCellMatrix(Foundation::NumericalScheme scheme, double timestep, const Foundation &foundation,
                         const BoundaryConditions &bcs,
                         double &A, double &Aip, double &Aim, double &Ajp, double &Ajm,
@@ -172,9 +172,9 @@ namespace Kiva {
                     Mesher *meshX, Mesher *meshY, Mesher *meshZ);
 
     void calcCellADEUp(double timestep, const Foundation &foundation, const BoundaryConditions &bcs,
-                       std::vector<double> &U, std::vector<double> &UOld) override;
+                       std::vector<double> &U) override;
     void calcCellADEDown(double timestep, const Foundation &foundation, const BoundaryConditions &bcs,
-                         std::vector<double> &V, std::vector<double> &VOld) override;
+                         std::vector<double> &V) override;
     void calcCellMatrix(Foundation::NumericalScheme scheme, double timestep, const Foundation &foundation,
                         const BoundaryConditions &bcs,
                         double &A, double &Aip, double &Aim, double &Ajp, double &Ajm,
