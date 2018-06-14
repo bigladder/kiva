@@ -254,7 +254,7 @@ void Cell::setZeroThicknessCellProperties(std::vector< std::shared_ptr<Cell> > p
 
 
 
-void Cell::calcCellADEUp(double timestep, const Foundation &foundation,
+void Cell::calcCellADEUp(double timestep, const Foundation &foundation, const BoundaryConditions &/*bcs*/,
                          std::vector<double> &U, std::vector<double> &UOld)
 {
   double theta = timestep/
@@ -306,7 +306,7 @@ void Cell::calcCellADEUp(double timestep, const Foundation &foundation,
   }
 }
 
-void Cell::calcCellADEDown(double timestep, const Foundation &foundation,
+void Cell::calcCellADEDown(double timestep, const Foundation &foundation, const BoundaryConditions &/*bcs*/,
                            std::vector<double> &V, std::vector<double> &VOld)
 {
   double theta = timestep/
@@ -733,6 +733,18 @@ ExteriorAirCell::ExteriorAirCell(const std::size_t &index, const CellType cellTy
         Cell(index, cellType, i, j, k, foundation, surfacePtr, blockPtr, meshXptr, meshYptr, meshZptr)
 {}
 
+void ExteriorAirCell::calcCellADEUp(double /*timestep*/, const Foundation &/*foundation*/, const BoundaryConditions &bcs,
+                         std::vector<double> &U, std::vector<double> &/*UOld*/)
+{
+  U[index] = bcs.outdoorTemp;
+}
+
+void ExteriorAirCell::calcCellADEDown(double /*timestep*/, const Foundation &/*foundation*/, const BoundaryConditions &bcs,
+                                     std::vector<double> &V, std::vector<double> &/*VOld*/)
+{
+  V[index] = bcs.outdoorTemp;
+}
+
 void ExteriorAirCell::calcCellADI(int /*dim*/, const Foundation &/*foundation*/, double /*timestep*/,
                                   const BoundaryConditions &bcs,
                                   double &/*Am*/, double &A, double &/*Ap*/, double &bVal)
@@ -768,6 +780,18 @@ InteriorAirCell::InteriorAirCell(const std::size_t &index, const CellType cellTy
                                  Mesher *meshXptr, Mesher *meshYptr, Mesher *meshZptr):
         Cell(index, cellType, i, j, k, foundation, surfacePtr, blockPtr, meshXptr, meshYptr, meshZptr)
 {}
+
+void InteriorAirCell::calcCellADEUp(double /*timestep*/, const Foundation &/*foundation*/, const BoundaryConditions &bcs,
+                                    std::vector<double> &U, std::vector<double> &/*UOld*/)
+{
+  U[index] = bcs.indoorTemp;
+}
+
+void InteriorAirCell::calcCellADEDown(double /*timestep*/, const Foundation &/*foundation*/, const BoundaryConditions &bcs,
+                                      std::vector<double> &V, std::vector<double> &/*VOld*/)
+{
+  V[index] = bcs.indoorTemp;
+}
 
 void InteriorAirCell::calcCellMatrix(Foundation::NumericalScheme /*scheme*/, double /*timestep*/, const Foundation &/*foundation*/,
                                      const BoundaryConditions &bcs,
@@ -857,10 +881,269 @@ BoundaryCell::BoundaryCell(const std::size_t &index, const CellType cellType,
           area = 2 * area;
       }
     }
-    else  /* if (foundatin.numberOfDimensions == 1) */
+    else  /* if (foundation.numberOfDimensions == 1) */
     {
       area = 1.0;
     }
+}
+
+void BoundaryCell::calcCellADEUp(double /*timestep*/, const Foundation &foundation, const BoundaryConditions &bcs,
+                                    std::vector<double> &U, std::vector<double> &UOld)
+{
+  switch (surfacePtr->boundaryConditionType)
+  {
+    case Surface::ZERO_FLUX:
+    {
+      switch (surfacePtr->orientation)
+      {
+        case Surface::X_NEG:
+          U[index] = UOld[i_up_Ptr->index];
+          break;
+        case Surface::X_POS:
+          U[index] = U[i_down_Ptr->index];
+          break;
+        case Surface::Y_NEG:
+          U[index] = UOld[j_up_Ptr->index];
+          break;
+        case Surface::Y_POS:
+          U[index] = U[j_down_Ptr->index];
+          break;
+        case Surface::Z_NEG:
+          U[index] = UOld[k_up_Ptr->index];
+          break;
+        case Surface::Z_POS:
+          U[index] = U[k_down_Ptr->index];
+          break;
+      }
+    }
+      break;
+
+    case Surface::CONSTANT_TEMPERATURE:
+
+      U[index] = surfacePtr->temperature;
+      break;
+
+    case Surface::INTERIOR_TEMPERATURE:
+
+      U[index] = bcs.indoorTemp;
+      break;
+
+    case Surface::EXTERIOR_TEMPERATURE:
+
+      U[index] = bcs.outdoorTemp;
+      break;
+
+    case Surface::INTERIOR_FLUX:
+    {
+      double Tair = bcs.indoorTemp;
+      double q = heatGain;
+
+      double hc = foundation.getConvectionCoeff(*told_ptr,
+                                     Tair,0.0,0.00208,false,surfacePtr->tilt);  // TODO Make roughness a property of the interior surfaces
+      double hr = getSimpleInteriorIRCoeff(surfacePtr->emissivity,
+                                           *told_ptr,Tair);
+
+      switch (surfacePtr->orientation)
+      {
+        case Surface::X_NEG:
+          U[index] = (kxp*UOld[i_up_Ptr->index]/dxp +
+                      (hc + hr)*Tair + q)/(kxp/dxp + (hc + hr));
+          break;
+        case Surface::X_POS:
+          U[index] = (kxm*U[i_down_Ptr->index]/dxm +
+                      (hc + hr)*Tair + q)/(kxm/dxm + (hc + hr));
+          break;
+        case Surface::Y_NEG:
+          U[index] = (kyp*UOld[j_up_Ptr->index]/dyp +
+                      (hc + hr)*Tair + q)/(kyp/dyp + (hc + hr));
+          break;
+        case Surface::Y_POS:
+          U[index] = (kym*U[j_down_Ptr->index]/dym +
+                      (hc + hr)*Tair + q)/(kym/dym + (hc + hr));
+          break;
+        case Surface::Z_NEG:
+          U[index] = (kzp*UOld[k_up_Ptr->index]/dzp +
+                      (hc + hr)*Tair + q)/(kzp/dzp + (hc + hr));
+          break;
+        case Surface::Z_POS:
+          U[index] = (kzm*U[k_down_Ptr->index]/dzm +
+                      (hc + hr)*Tair + q)/(kzm/dzm + (hc + hr));
+          break;
+      }
+    }
+      break;
+
+    case Surface::EXTERIOR_FLUX:
+    {
+      double Tair = bcs.outdoorTemp;
+      double v = bcs.localWindSpeed;
+      double eSky = bcs.skyEmissivity;
+      double tilt = surfacePtr->tilt;
+      double F = getEffectiveExteriorViewFactor(eSky,tilt);
+      double hc = foundation.getConvectionCoeff(*told_ptr,Tair,v,foundation.surfaceRoughness,true,tilt);
+      double hr = getExteriorIRCoeff(surfacePtr->emissivity,*told_ptr,Tair,eSky,tilt);
+      double q = heatGain;
+
+      switch (surfacePtr->orientation)
+      {
+        case Surface::X_NEG:
+          U[index] = (kxp*UOld[i_up_Ptr->index]/dxp +
+                      (hc + hr*pow(F,0.25))*Tair + q)/(kxp/dxp + (hc + hr));
+          break;
+        case Surface::X_POS:
+          U[index] = (kxm*U[i_down_Ptr->index]/dxm +
+                      (hc + hr*pow(F,0.25))*Tair + q)/(kxm/dxm + (hc + hr));
+          break;
+        case Surface::Y_NEG:
+          U[index] = (kyp*UOld[j_up_Ptr->index]/dyp +
+                      (hc + hr*pow(F,0.25))*Tair + q)/(kyp/dyp + (hc + hr));
+          break;
+        case Surface::Y_POS:
+          U[index] = (kym*U[j_down_Ptr->index]/dym +
+                      (hc + hr*pow(F,0.25))*Tair + q)/(kym/dym + (hc + hr));
+          break;
+        case Surface::Z_NEG:
+          U[index] = (kzp*UOld[k_up_Ptr->index]/dzp +
+                      (hc + hr*pow(F,0.25))*Tair + q)/(kzp/dzp + (hc + hr));
+          break;
+        case Surface::Z_POS:
+          U[index] = (kzm*U[k_down_Ptr->index]/dzm +
+                      (hc + hr*pow(F,0.25))*Tair + q)/(kzm/dzm + (hc + hr));
+          break;
+      }
+    }
+      break;
+  }
+
+}
+
+void BoundaryCell::calcCellADEDown(double /*timestep*/, const Foundation &foundation, const BoundaryConditions &bcs,
+                                 std::vector<double> &V, std::vector<double> &VOld)
+{
+  switch (surfacePtr->boundaryConditionType)
+  {
+    case Surface::ZERO_FLUX:
+    {
+      switch (surfacePtr->orientation)
+      {
+        case Surface::X_NEG:
+          V[index] = V[i_up_Ptr->index];
+          break;
+        case Surface::X_POS:
+          V[index] = VOld[i_down_Ptr->index];
+          break;
+        case Surface::Y_NEG:
+          V[index] = V[j_up_Ptr->index];
+          break;
+        case Surface::Y_POS:
+          V[index] = VOld[j_down_Ptr->index];
+          break;
+        case Surface::Z_NEG:
+          V[index] = V[k_up_Ptr->index];
+          break;
+        case Surface::Z_POS:
+          V[index] = VOld[k_down_Ptr->index];
+          break;
+      }
+    }
+      break;
+
+    case Surface::CONSTANT_TEMPERATURE:
+
+      V[index] = surfacePtr->temperature;
+      break;
+
+    case Surface::INTERIOR_TEMPERATURE:
+
+      V[index] = bcs.indoorTemp;
+      break;
+
+    case Surface::EXTERIOR_TEMPERATURE:
+
+      V[index] = bcs.outdoorTemp;
+      break;
+
+    case Surface::INTERIOR_FLUX:
+    {
+      double Tair = bcs.indoorTemp;
+      double q = heatGain;
+
+      double hc = foundation.getConvectionCoeff(*told_ptr,
+                                     Tair,0.0,0.00208,false,surfacePtr->tilt);
+      double hr = getSimpleInteriorIRCoeff(surfacePtr->emissivity,
+                                           *told_ptr,Tair);
+
+      switch (surfacePtr->orientation)
+      {
+        case Surface::X_NEG:
+          V[index] = (kxp*V[i_up_Ptr->index]/dxp +
+                      (hc + hr)*Tair + q)/(kxp/dxp + (hc + hr));
+          break;
+        case Surface::X_POS:
+          V[index] = (kxm*VOld[i_down_Ptr->index]/dxm +
+                      (hc + hr)*Tair + q)/(kxm/dxm + (hc + hr));
+          break;
+        case Surface::Y_NEG:
+          V[index] = (kyp*V[j_up_Ptr->index]/dyp +
+                      (hc + hr)*Tair + q)/(kyp/dyp + (hc + hr));
+          break;
+        case Surface::Y_POS:
+          V[index] = (kym*VOld[j_down_Ptr->index]/dym +
+                      (hc + hr)*Tair + q)/(kym/dym + (hc + hr));
+          break;
+        case Surface::Z_NEG:
+          V[index] = (kzp*V[k_up_Ptr->index]/dzp +
+                      (hc + hr)*Tair + q)/(kzp/dzp + (hc + hr));
+          break;
+        case Surface::Z_POS:
+          V[index] = (kzm*VOld[k_down_Ptr->index]/dzm +
+                      (hc + hr)*Tair + q)/(kzm/dzm + (hc + hr));
+          break;
+      }
+    }
+      break;
+
+    case Surface::EXTERIOR_FLUX:
+    {
+      double Tair = bcs.outdoorTemp;
+      double v = bcs.localWindSpeed;
+      double eSky = bcs.skyEmissivity;
+      double tilt = surfacePtr->tilt;
+      double F = getEffectiveExteriorViewFactor(eSky,tilt);
+      double hc = foundation.getConvectionCoeff(*told_ptr,Tair,v,foundation.surfaceRoughness,true,tilt);
+      double hr = getExteriorIRCoeff(surfacePtr->emissivity,*told_ptr,Tair,eSky,tilt);
+      double q = heatGain;
+
+      switch (surfacePtr->orientation)
+      {
+        case Surface::X_NEG:
+          V[index] = (kxp*V[i_up_Ptr->index]/dxp +
+                      (hc + hr*pow(F,0.25))*Tair + q)/(kxp/dxp + (hc + hr));
+          break;
+        case Surface::X_POS:
+          V[index] = (kxm*VOld[i_down_Ptr->index]/dxm +
+                      (hc + hr*pow(F,0.25))*Tair + q)/(kxm/dxm + (hc + hr));
+          break;
+        case Surface::Y_NEG:
+          V[index] = (kyp*V[j_up_Ptr->index]/dyp +
+                      (hc + hr*pow(F,0.25))*Tair + q)/(kyp/dyp + (hc + hr));
+          break;
+        case Surface::Y_POS:
+          V[index] = (kym*VOld[j_down_Ptr->index]/dym +
+                      (hc + hr*pow(F,0.25))*Tair + q)/(kym/dym + (hc + hr));
+          break;
+        case Surface::Z_NEG:
+          V[index] = (kzp*VOld[k_up_Ptr->index]/dzp +
+                      (hc + hr*pow(F,0.25))*Tair + q)/(kzp/dzp + (hc + hr));
+          break;
+        case Surface::Z_POS:
+          V[index] = (kzm*VOld[k_down_Ptr->index]/dzm +
+                      (hc + hr*pow(F,0.25))*Tair + q)/(kzm/dzm + (hc + hr));
+          break;
+      }
+    }
+      break;
+  }
 }
 
 void BoundaryCell::calcCellADI(int dim, const Foundation &foundation, double /*timestep*/,
