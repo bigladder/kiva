@@ -4,7 +4,6 @@
 #include "fixtures/bestest-fixture.hpp"
 #include "fixtures/typical-fixture.hpp"
 
-#include "Cell.hpp"
 #include "Errors.hpp"
 
 using namespace Kiva;
