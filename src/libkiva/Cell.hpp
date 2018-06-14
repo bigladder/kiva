@@ -73,7 +73,12 @@ namespace Kiva {
 
     void setConductivities();
 
-    void getKXP(), getKXM(), getKYP(), getKYM(), getKZP(), getKZM();
+    void getKXP();
+    void getKXM();
+    void getKYP();
+    void getKYM();
+    void getKZP();
+    void getKZM();
 
     void setPDEcoefficients(int ndims, bool cylindrical);
 
