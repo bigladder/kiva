@@ -119,13 +119,11 @@ void Domain::setDomain(Foundation &foundation)
 
     // this cell creation needs to be separate from the previous for loop to prevent double-instantiation.
     if (cellType == CellType::ZERO_THICKNESS) {
-      std::shared_ptr<Cell> blah(new Cell(index, cellType, i, j, k, foundation, surfacePtr, nullptr,
+      addCell(std::make_shared<ZeroThicknessCell>(index, cellType, i, j, k, foundation, surfacePtr, nullptr,
                                           &meshX, &meshY, &meshZ));
-      addCell(blah);
     } else if (cellType == CellType::BOUNDARY) {
-      std::shared_ptr<Cell> blah(new BoundaryCell(index, cellType, i, j, k, foundation, surfacePtr, nullptr,
+      addCell(std::make_shared<BoundaryCell>(index, cellType, i, j, k, foundation, surfacePtr, nullptr,
                                           &meshX, &meshY, &meshZ));
-      addCell(blah);
     }
 
     if (cellType == CellType::NORMAL) {
@@ -135,14 +133,12 @@ void Domain::setDomain(Foundation &foundation)
             isLessThan(meshZ.centers[k], block.zMax)) {
           if (block.blockType == Block::INTERIOR_AIR) {
             cellType = CellType::INTERIOR_AIR;
-            std::shared_ptr<Cell> blah(new InteriorAirCell(index, cellType, i, j, k, foundation, nullptr, &block,
+            addCell(std::make_shared<InteriorAirCell>(index, cellType, i, j, k, foundation, nullptr, &block,
                                                 &meshX, &meshY, &meshZ));
-            addCell(blah);
           } else if (block.blockType == Block::EXTERIOR_AIR) {
             cellType = CellType::EXTERIOR_AIR;
-            std::shared_ptr<Cell> blah(new ExteriorAirCell(index, cellType, i, j, k, foundation, nullptr, &block,
+            addCell(std::make_shared<ExteriorAirCell>(index, cellType, i, j, k, foundation, nullptr, &block,
                                                            &meshX, &meshY, &meshZ));
-            addCell(blah);
           }
         }
       }
@@ -168,13 +164,11 @@ void Domain::setDomain(Foundation &foundation)
       }
 
       if (cellType == CellType::ZERO_THICKNESS) {
-        std::shared_ptr<Cell> blah(new ZeroThicknessCell(index, cellType, i, j, k, foundation, nullptr, nullptr,
+        addCell(std::make_shared<ZeroThicknessCell>(index, cellType, i, j, k, foundation, nullptr, nullptr,
                                             &meshX, &meshY, &meshZ));
-        addCell(blah);
       } else {
-        std::shared_ptr<Cell> blah(new Cell(index, cellType, i, j, k, foundation, nullptr, nullptr,
+        addCell(std::make_shared<Cell>(index, cellType, i, j, k, foundation, nullptr, nullptr,
                                             &meshX, &meshY, &meshZ));
-        addCell(blah);
       }
     }
   }

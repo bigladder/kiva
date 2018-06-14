@@ -150,25 +150,28 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
   clearAmat();
 }
 
-void Ground::calculateADI(int dim)
-{
-  std::size_t dest_index;
-  for (auto this_cell : domain.cell)
-  {
-    dest_index = domain.dest_index_vector[dim-1][this_cell->index];
+void Ground::calculateADI(int dim) {
+  double A, Ap, Am, bVal;
 
-    double A{0.0}, Ap{0.0}, Am{0.0}, bVal{0.0};
-    this_cell->calcCellADI(dim, foundation, timestep, bcs, Am, A, Ap, bVal);
-    setValuesADI(dest_index, Am, A, Ap, bVal);
+  auto dest_index = domain.dest_index_vector[dim-1].begin();
+  auto cell_iter = domain.cell.begin();
+  for ( ; dest_index<domain.dest_index_vector[dim-1].end(); ++cell_iter, ++dest_index) {
+    A = 0.0;
+    Ap = 0.0;
+    Am = 0.0;
+    bVal = 0.0;
+    (*cell_iter)->calcCellADI(dim, foundation, timestep, bcs, Am, A, Ap, bVal);
+    setValuesADI(*dest_index, Am, A, Ap, bVal);
   }
 
   solveLinearSystem();
 
   std::size_t index = 0;
-  for (auto di : domain.dest_index_vector[dim-1]) {
-      TNew[index] = getxValue(di);
-      index++;
+  dest_index = domain.dest_index_vector[dim-1].begin();
+  for ( ; dest_index<domain.dest_index_vector[dim-1].end(); ++index, ++dest_index) {
+      TNew[index] = x_[*dest_index];
   }
+
   // Update old values for next timestep
   TOld.assign(TNew.begin(), TNew.end());
 
