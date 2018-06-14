@@ -8,6 +8,7 @@
 #include "Mesher.hpp"
 #include "Functions.hpp"
 #include "Cell.hpp"
+#include "libkiva_export.h"
 
 #include <fstream>
 #include <memory>
@@ -15,8 +16,7 @@
 
 namespace Kiva {
 
-
-class Domain
+class LIBKIVA_EXPORT Domain
 {
 public:
 

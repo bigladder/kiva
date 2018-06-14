@@ -9,6 +9,7 @@
 #include "Functions.hpp"
 #include "BoundaryConditions.hpp"
 #include "Algorithms.hpp"
+#include "libkiva_export.h"
 
 #include <fstream>
 #include <memory>
@@ -27,7 +28,7 @@ namespace Kiva {
     ZERO_THICKNESS  // 4
   };
 
-  class Cell {
+  class LIBKIVA_EXPORT Cell {
   public:
 
     Cell(const std::size_t &index, const CellType cellType,
