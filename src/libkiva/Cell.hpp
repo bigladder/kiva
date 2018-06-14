@@ -91,7 +91,8 @@ namespace Kiva {
                                  const BoundaryConditions &bcs,
                                  std::vector<double> &V);
 
-    double calcCellExplicit(double timestep, const Foundation &foundation);
+    virtual double calcCellExplicit(double timestep, const Foundation &foundation,
+                                    const BoundaryConditions &bcs);
 
     virtual void calcCellMatrix(Foundation::NumericalScheme scheme, double timestep, const Foundation &foundation,
                                 const BoundaryConditions &bcs,
@@ -128,6 +129,8 @@ namespace Kiva {
                        std::vector<double> &U) override;
     void calcCellADEDown(double timestep, const Foundation &foundation, const BoundaryConditions &bcs,
                        std::vector<double> &v) override;
+    double calcCellExplicit(double timestep, const Foundation &foundation,
+                                    const BoundaryConditions &bcs) override;
     void calcCellMatrix(Foundation::NumericalScheme scheme, double timestep, const Foundation &foundation,
                         const BoundaryConditions &bcs,
                         double &A, double &Aip, double &Aim, double &Ajp, double &Ajm,
@@ -152,6 +155,8 @@ namespace Kiva {
                        std::vector<double> &U) override;
     void calcCellADEDown(double timestep, const Foundation &foundation, const BoundaryConditions &bcs,
                        std::vector<double> &v) override;
+    double calcCellExplicit(double timestep, const Foundation &foundation,
+                            const BoundaryConditions &bcs) override;
     void calcCellMatrix(Foundation::NumericalScheme scheme, double timestep, const Foundation &foundation,
                         const BoundaryConditions &bcs,
                         double &A, double &Aip, double &Aim, double &Ajp, double &Ajm,
@@ -175,6 +180,8 @@ namespace Kiva {
                        std::vector<double> &U) override;
     void calcCellADEDown(double timestep, const Foundation &foundation, const BoundaryConditions &bcs,
                          std::vector<double> &V) override;
+    double calcCellExplicit(double timestep, const Foundation &foundation,
+                            const BoundaryConditions &bcs) override;
     void calcCellMatrix(Foundation::NumericalScheme scheme, double timestep, const Foundation &foundation,
                         const BoundaryConditions &bcs,
                         double &A, double &Aip, double &Aim, double &Ajp, double &Ajm,
