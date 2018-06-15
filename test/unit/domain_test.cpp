@@ -29,9 +29,9 @@ TEST_F( DomainFixture, domain_basics)
   EXPECT_EQ(domain->nX, 41);
   EXPECT_EQ(domain->nY, 1);
   EXPECT_EQ(domain->nZ, 19);
-  EXPECT_EQ(domain->stepsize_i, 1);
-  EXPECT_EQ(domain->stepsize_j, 41);
-  EXPECT_EQ(domain->stepsize_k, 41);
+  EXPECT_EQ(domain->stepsize[0], 1);
+  EXPECT_EQ(domain->stepsize[1], 41);
+  EXPECT_EQ(domain->stepsize[2], 41);
 
   EXPECT_EQ(domain->dest_index_vector.size(), 3);
   EXPECT_EQ(domain->dest_index_vector[2].size(), domain->nX*domain->nY*domain->nZ);

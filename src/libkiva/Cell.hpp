@@ -33,10 +33,12 @@ namespace Kiva {
 
     Cell(const std::size_t &index, const CellType cellType,
          const std::size_t &i, const std::size_t &j, const std::size_t &k,
+         std::size_t *stepsize,
          const Foundation &foundation, Surface *surfacePtr, Block *blockPtr,
          Mesher *meshX, Mesher *meshY, Mesher *meshZ);
 
     std::size_t i, j, k, index;
+    std::size_t *stepsize;
 
     // inherent properties
     double density;
@@ -65,7 +67,6 @@ namespace Kiva {
     std::shared_ptr<Cell> i_up_Ptr, i_down_Ptr, j_up_Ptr, j_down_Ptr, k_up_Ptr, k_down_Ptr;
 
     void setNeighbors(std::vector<std::shared_ptr<Cell> > &cell_v,
-                      std::size_t stepsize_i, std::size_t stepsize_j, std::size_t stepsize_k,
                       std::size_t nX, std::size_t nY, std::size_t nZ);
 
     void setDistances(double &dxp_in, double &dxm_in, double &dyp_in, double &dym_in,
@@ -121,9 +122,10 @@ namespace Kiva {
   public:
 
     ExteriorAirCell(const std::size_t &index, const CellType cellType,
-         const std::size_t &i, const std::size_t &j, const std::size_t &k,
-         const Foundation &foundation, Surface *surfacePtr, Block *blockPtr,
-         Mesher *meshX, Mesher *meshY, Mesher *meshZ);
+                    const std::size_t &i, const std::size_t &j, const std::size_t &k,
+                    std::size_t *stepsize,
+                    const Foundation &foundation, Surface *surfacePtr, Block *blockPtr,
+                    Mesher *meshX, Mesher *meshY, Mesher *meshZ);
 
     void calcCellADEUp(double timestep, const Foundation &foundation, const BoundaryConditions &bcs,
                        std::vector<double> &U) override;
@@ -148,6 +150,7 @@ namespace Kiva {
 
     InteriorAirCell(const std::size_t &index, const CellType cellType,
                     const std::size_t &i, const std::size_t &j, const std::size_t &k,
+                    std::size_t *stepsize,
                     const Foundation &foundation, Surface *surfacePtr, Block *blockPtr,
                     Mesher *meshX, Mesher *meshY, Mesher *meshZ);
 
@@ -173,7 +176,8 @@ namespace Kiva {
 
     BoundaryCell(const std::size_t &index, const CellType cellType,
                     const std::size_t &i, const std::size_t &j, const std::size_t &k,
-                    const Foundation &foundation, Surface *surfacePtr, Block *blockPtr,
+                 std::size_t *stepsize,
+                 const Foundation &foundation, Surface *surfacePtr, Block *blockPtr,
                     Mesher *meshX, Mesher *meshY, Mesher *meshZ);
 
     void calcCellADEUp(double timestep, const Foundation &foundation, const BoundaryConditions &bcs,
@@ -200,6 +204,7 @@ namespace Kiva {
 
     ZeroThicknessCell(const std::size_t &index, const CellType cellType,
                       const std::size_t &i, const std::size_t &j, const std::size_t &k,
+                      std::size_t *stepsize,
                       const Foundation &foundation, Surface *surfacePtr, Block *blockPtr,
                       Mesher *meshX, Mesher *meshY, Mesher *meshZ);
 

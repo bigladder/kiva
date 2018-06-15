@@ -53,8 +53,9 @@ void Domain::setDomain(Foundation &foundation)
       dzm_vector.emplace_back(getDZM(k));
   }
 
-  std::tie(stepsize_i, stepsize_j, stepsize_k) = get_step_size();
-
+  stepsize[0] = 1;
+  stepsize[1] = nX;
+  stepsize[2] = nX*nY;
   cell.reserve(nX*nY*nZ);
   dest_index_vector.resize(3, std::vector<std::size_t>(nX*nY*nZ));
   std::vector<std::size_t> temp_di(3);
@@ -119,10 +120,10 @@ void Domain::setDomain(Foundation &foundation)
 
     // this cell creation needs to be separate from the previous for loop to prevent double-instantiation.
     if (cellType == CellType::ZERO_THICKNESS) {
-      addCell(std::make_shared<ZeroThicknessCell>(index, cellType, i, j, k, foundation, surfacePtr, nullptr,
+      addCell(std::make_shared<ZeroThicknessCell>(index, cellType, i, j, k, stepsize, foundation, surfacePtr, nullptr,
                                           &meshX, &meshY, &meshZ));
     } else if (cellType == CellType::BOUNDARY) {
-      addCell(std::make_shared<BoundaryCell>(index, cellType, i, j, k, foundation, surfacePtr, nullptr,
+      addCell(std::make_shared<BoundaryCell>(index, cellType, i, j, k, stepsize, foundation, surfacePtr, nullptr,
                                           &meshX, &meshY, &meshZ));
     }
 
@@ -133,11 +134,11 @@ void Domain::setDomain(Foundation &foundation)
             isLessThan(meshZ.centers[k], block.zMax)) {
           if (block.blockType == Block::INTERIOR_AIR) {
             cellType = CellType::INTERIOR_AIR;
-            addCell(std::make_shared<InteriorAirCell>(index, cellType, i, j, k, foundation, nullptr, &block,
+            addCell(std::make_shared<InteriorAirCell>(index, cellType, i, j, k, stepsize, foundation, nullptr, &block,
                                                 &meshX, &meshY, &meshZ));
           } else if (block.blockType == Block::EXTERIOR_AIR) {
             cellType = CellType::EXTERIOR_AIR;
-            addCell(std::make_shared<ExteriorAirCell>(index, cellType, i, j, k, foundation, nullptr, &block,
+            addCell(std::make_shared<ExteriorAirCell>(index, cellType, i, j, k, stepsize, foundation, nullptr, &block,
                                                            &meshX, &meshY, &meshZ));
           }
         }
@@ -164,10 +165,10 @@ void Domain::setDomain(Foundation &foundation)
       }
 
       if (cellType == CellType::ZERO_THICKNESS) {
-        addCell(std::make_shared<ZeroThicknessCell>(index, cellType, i, j, k, foundation, nullptr, nullptr,
+        addCell(std::make_shared<ZeroThicknessCell>(index, cellType, i, j, k, stepsize, foundation, nullptr, nullptr,
                                             &meshX, &meshY, &meshZ));
       } else {
-        addCell(std::make_shared<Cell>(index, cellType, i, j, k, foundation, nullptr, nullptr,
+        addCell(std::make_shared<Cell>(index, cellType, i, j, k, stepsize, foundation, nullptr, nullptr,
                                             &meshX, &meshY, &meshZ));
       }
     }
@@ -205,8 +206,8 @@ void Domain::setDomain(Foundation &foundation)
           if (isEqual(meshZ.deltas[k], 0.0))
           {
             std::vector< std::shared_ptr<Cell> > pointSet =
-              {cell[index - stepsize_k],
-               cell[index + stepsize_k]};
+              {cell[index - stepsize[2]],
+               cell[index + stepsize[2]]};
 
             this_cell->setZeroThicknessCellProperties(pointSet);
           }
@@ -218,7 +219,7 @@ void Domain::setDomain(Foundation &foundation)
   // Calculate matrix coefficients
   for (auto this_cell: cell)
   {
-    this_cell->setNeighbors(cell, stepsize_i, stepsize_j, stepsize_k, nX, nY, nZ);
+    this_cell->setNeighbors(cell, nX, nY, nZ);
 
     // PDE Coefficients
     this_cell->setDistances(dxp_vector[this_cell->i], dxm_vector[this_cell->i],
@@ -330,24 +331,24 @@ void Domain::set2DZeroThicknessCellProperties(std::size_t index)
     isEqual(meshZ.deltas[cell[index]->k], 0.0))
   {
     std::vector< std::shared_ptr<Cell> > pointSet =
-            {cell[index - stepsize_i + stepsize_k],
-             cell[index + stepsize_i + stepsize_k],
-             cell[index - stepsize_i - stepsize_k],
-             cell[index + stepsize_i - stepsize_k]};
+            {cell[index - stepsize[0] + stepsize[2]],
+             cell[index + stepsize[0] + stepsize[2]],
+             cell[index - stepsize[0] - stepsize[2]],
+             cell[index + stepsize[0] - stepsize[2]]};
     cell[index]->setZeroThicknessCellProperties(pointSet);
   }
   else if (isEqual(meshX.deltas[cell[index]->i], 0.0))
   {
     std::vector< std::shared_ptr<Cell> > pointSet =
-            {cell[index - stepsize_i],
-             cell[index + stepsize_i]};
+            {cell[index - stepsize[0]],
+             cell[index + stepsize[0]]};
     cell[index]->setZeroThicknessCellProperties(pointSet);
   }
   else if (isEqual(meshZ.deltas[cell[index]->k], 0.0))
   {
     std::vector< std::shared_ptr<Cell> > pointSet =
-            {cell[index - stepsize_k],
-             cell[index + stepsize_k]};
+            {cell[index - stepsize[2]],
+             cell[index + stepsize[2]]};
     cell[index]->setZeroThicknessCellProperties(pointSet);
   }
 
@@ -361,14 +362,14 @@ void Domain::set3DZeroThicknessCellProperties(std::size_t index)
   {
     // Use all 8 full volume cells
     std::vector< std::shared_ptr<Cell> > pointSet =
-            {cell[index - stepsize_i - stepsize_j + stepsize_k],
-             cell[index + stepsize_i - stepsize_j + stepsize_k],
-             cell[index - stepsize_i - stepsize_j - stepsize_k],
-             cell[index + stepsize_i - stepsize_j - stepsize_k],
-             cell[index - stepsize_i + stepsize_j + stepsize_k],
-             cell[index + stepsize_i + stepsize_j + stepsize_k],
-             cell[index - stepsize_i + stepsize_j - stepsize_k],
-             cell[index + stepsize_i + stepsize_j - stepsize_k]};
+            {cell[index - stepsize[0] - stepsize[1] + stepsize[2]],
+             cell[index + stepsize[0] - stepsize[1] + stepsize[2]],
+             cell[index - stepsize[0] - stepsize[1] - stepsize[2]],
+             cell[index + stepsize[0] - stepsize[1] - stepsize[2]],
+             cell[index - stepsize[0] + stepsize[1] + stepsize[2]],
+             cell[index + stepsize[0] + stepsize[1] + stepsize[2]],
+             cell[index - stepsize[0] + stepsize[1] - stepsize[2]],
+             cell[index + stepsize[0] + stepsize[1] - stepsize[2]]};
 
     cell[index]->setZeroThicknessCellProperties(pointSet);
   }
@@ -376,10 +377,10 @@ void Domain::set3DZeroThicknessCellProperties(std::size_t index)
     isEqual(meshY.deltas[cell[index]->j], 0.0))
   {
     std::vector< std::shared_ptr<Cell> > pointSet =
-            {cell[index - stepsize_i - stepsize_j],
-             cell[index + stepsize_i - stepsize_j],
-             cell[index - stepsize_i + stepsize_j],
-             cell[index + stepsize_i + stepsize_j]};
+            {cell[index - stepsize[0] - stepsize[1]],
+             cell[index + stepsize[0] - stepsize[1]],
+             cell[index - stepsize[0] + stepsize[1]],
+             cell[index + stepsize[0] + stepsize[1]]};
 
     cell[index]->setZeroThicknessCellProperties(pointSet);
   }
@@ -387,10 +388,10 @@ void Domain::set3DZeroThicknessCellProperties(std::size_t index)
     isEqual(meshZ.deltas[cell[index]->k], 0.0))
   {
     std::vector< std::shared_ptr<Cell> > pointSet =
-            {cell[index - stepsize_i + stepsize_k],
-             cell[index + stepsize_i + stepsize_k],
-             cell[index - stepsize_i - stepsize_k],
-             cell[index + stepsize_i - stepsize_k]};
+            {cell[index - stepsize[0] + stepsize[2]],
+             cell[index + stepsize[0] + stepsize[2]],
+             cell[index - stepsize[0] - stepsize[2]],
+             cell[index + stepsize[0] - stepsize[2]]};
 
     cell[index]->setZeroThicknessCellProperties(pointSet);
   }
@@ -398,34 +399,34 @@ void Domain::set3DZeroThicknessCellProperties(std::size_t index)
     isEqual(meshZ.deltas[cell[index]->k], 0.0))
   {
     std::vector< std::shared_ptr<Cell> > pointSet =
-            {cell[index - stepsize_j + stepsize_k],
-             cell[index + stepsize_j + stepsize_k],
-             cell[index - stepsize_j - stepsize_k],
-             cell[index + stepsize_j - stepsize_k],};
+            {cell[index - stepsize[1] + stepsize[2]],
+             cell[index + stepsize[1] + stepsize[2]],
+             cell[index - stepsize[1] - stepsize[2]],
+             cell[index + stepsize[1] - stepsize[2]],};
 
     cell[index]->setZeroThicknessCellProperties(pointSet);
   }
   else if (isEqual(meshX.deltas[cell[index]->i], 0.0))
   {
     std::vector< std::shared_ptr<Cell> > pointSet =
-            {cell[index + stepsize_i],
-             cell[index - stepsize_i]};
+            {cell[index + stepsize[0]],
+             cell[index - stepsize[0]]};
 
     cell[index]->setZeroThicknessCellProperties(pointSet);
   }
   else if (isEqual(meshY.deltas[cell[index]->j], 0.0))
   {
     std::vector< std::shared_ptr<Cell> > pointSet =
-            {cell[index + stepsize_j],
-             cell[index - stepsize_j]};
+            {cell[index + stepsize[1]],
+             cell[index - stepsize[1]]};
 
     cell[index]->setZeroThicknessCellProperties(pointSet);
   }
   else if (isEqual(meshZ.deltas[cell[index]->k], 0.0))
   {
     std::vector< std::shared_ptr<Cell> > pointSet =
-            {cell[index + stepsize_k],
-             cell[index - stepsize_k]};
+            {cell[index + stepsize[2]],
+             cell[index - stepsize[2]]};
 
     cell[index]->setZeroThicknessCellProperties(pointSet);
   }
@@ -468,7 +469,7 @@ void Domain::printCellTypes()
     for (std::size_t i = 0; i < nX; i++)
     {
 
-      output << ", " << cell[i + (nY/2)*stepsize_j + k*stepsize_k]->cellType;
+      output << ", " << cell[i + (nY/2)*stepsize[1] + k*stepsize[2]]->cellType;
 
     }
 
@@ -484,15 +485,6 @@ std::tuple<std::size_t, std::size_t, std::size_t> Domain::get_coordinates(std::s
     j = ((index - i) % nY) / nX;
     k = (index - i - nX*j) / (nX*nY);
     return std::make_tuple(i, j, k);
-}
-
-std::tuple<std::size_t, std::size_t, std::size_t> Domain::get_step_size()
-{
-  size_t i_step, j_step, k_step;
-  i_step = 1;
-  j_step = nX;
-  k_step = nX*nY;
-  return std::make_tuple(i_step, j_step, k_step);
 }
 
 std::vector<std::size_t> Domain::get_dest_index(std::size_t i, std::size_t j, std::size_t k)

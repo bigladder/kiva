@@ -13,10 +13,12 @@ static const double PI = 4.0*atan(1.0);
 
 Cell::Cell(const std::size_t &index, const CellType cellType,
            const std::size_t &i, const std::size_t &j, const std::size_t &k,
+           std::size_t *stepsize,
            const Foundation &foundation, Surface *surfacePtr, Block *blockPtr,
            Mesher *meshXptr, Mesher *meshYptr, Mesher *meshZptr):
         i(i), j(j), k(k),
         index(index),
+        stepsize(stepsize),
         cellType(cellType),
         blockPtr(blockPtr),
         surfacePtr(surfacePtr),
@@ -45,15 +47,15 @@ void Cell::Assemble(const Foundation &foundation) {
   }
 }
 
-void Cell::setNeighbors(std::vector<std::shared_ptr<Cell> > &cell_v, std::size_t stepsize_i, std::size_t stepsize_j,
-                        std::size_t stepsize_k, std::size_t nX, std::size_t nY, std::size_t nZ)
+void Cell::setNeighbors(std::vector<std::shared_ptr<Cell> > &cell_v,
+                        std::size_t nX, std::size_t nY, std::size_t nZ)
 {
-  if (i != nX-1) { i_up_Ptr = cell_v[index+stepsize_i]; }
-  if (i != 0) { i_down_Ptr = cell_v[index-stepsize_i]; }
-  if (j != nY-1) { j_up_Ptr = cell_v[index+stepsize_j]; }
-  if (j != 0) { j_down_Ptr = cell_v[index-stepsize_j]; }
-  if (k != nZ-1) { k_up_Ptr = cell_v[index+stepsize_k]; }
-  if (k != 0) { k_down_Ptr = cell_v[index-stepsize_k]; }
+  if (i != nX-1) { i_up_Ptr = cell_v[index+stepsize[0]]; }
+  if (i != 0) { i_down_Ptr = cell_v[index-stepsize[0]]; }
+  if (j != nY-1) { j_up_Ptr = cell_v[index+stepsize[1]]; }
+  if (j != 0) { j_down_Ptr = cell_v[index-stepsize[1]]; }
+  if (k != nZ-1) { k_up_Ptr = cell_v[index+stepsize[2]]; }
+  if (k != 0) { k_down_Ptr = cell_v[index-stepsize[2]]; }
 }
 
 void Cell::setDistances(double &dxp_in, double &dxm_in, double &dyp_in, double &dym_in,
@@ -572,10 +574,10 @@ void Cell::calcCellADI(int dim, const Foundation &foundation, double timestep,
       Ap = (3 - 2*f)*(-CXP);
 
       bVal = *told_ptr*(1.0 + f*(CZM + CYM - CZP - CYP))
-             - *k_down_Ptr->told_ptr*f*CZM
-             + *k_up_Ptr->told_ptr*f*CZP
-             - *j_down_Ptr->told_ptr*f*CYM
-             + *j_up_Ptr->told_ptr*f*CYP
+             - *(told_ptr-stepsize[2])*f*CZM
+             + *(told_ptr+stepsize[2])*f*CZP
+             - *(told_ptr-stepsize[1])*f*CYM
+             + *(told_ptr+stepsize[1])*f*CYP
              + Q;
     }
     else if (dim == 2) // y
@@ -585,10 +587,10 @@ void Cell::calcCellADI(int dim, const Foundation &foundation, double timestep,
       Ap = (3 - 2*f)*(-CYP);
 
       bVal = *told_ptr*(1.0 + f*(CXM + CZM - CXP - CZP))
-             - *i_down_Ptr->told_ptr*f*CXM
-             + *i_up_Ptr->told_ptr*f*CXP
-             - *k_down_Ptr->told_ptr*f*CZM
-             + *k_up_Ptr->told_ptr*f*CZP
+             - *(told_ptr-stepsize[0])*f*CXM
+             + *(told_ptr+stepsize[0])*f*CXP
+             - *(told_ptr-stepsize[2])*f*CZM
+             + *(told_ptr+stepsize[2])*f*CZP
              + Q;
     }
     else //if (dim == 3) // z
@@ -598,10 +600,10 @@ void Cell::calcCellADI(int dim, const Foundation &foundation, double timestep,
       Ap = (3 - 2*f)*(-CZP);
 
       bVal = *told_ptr*(1.0 + f*(CXM + CYM - CXP - CYP))
-             - *i_down_Ptr->told_ptr*f*CXM
-             + *i_up_Ptr->told_ptr*f*CXP
-             - *j_down_Ptr->told_ptr*f*CYM
-             + *j_up_Ptr->told_ptr*f*CYP
+             - *(told_ptr-stepsize[0])*f*CXM
+             + *(told_ptr+stepsize[0])*f*CXP
+             - *(told_ptr-stepsize[1])*f*CYM
+             + *(told_ptr+stepsize[1])*f*CYP
              + Q;
     }
 
@@ -622,8 +624,8 @@ void Cell::calcCellADI(int dim, const Foundation &foundation, double timestep,
       Ap = (2 - f)*(-CXPC - CXP);
 
       bVal = *told_ptr*(1.0 + f*(CZM - CZP))
-             - *k_down_Ptr->told_ptr*f*CZM
-             + *k_up_Ptr->told_ptr*f*CZP
+             - *(told_ptr-stepsize[2])*f*CZM
+             + *(told_ptr+stepsize[2])*f*CZP
              + Q;
     }
     else //if (dim == 3) // z
@@ -633,8 +635,8 @@ void Cell::calcCellADI(int dim, const Foundation &foundation, double timestep,
       Ap = (2 - f)*(-CZP);
 
       bVal = *told_ptr*(1.0 + f*(CXMC + CXM - CXPC - CXP))
-             - *i_down_Ptr->told_ptr*f*(CXMC + CXM)
-             + *i_up_Ptr->told_ptr*f*(CXPC + CXP)
+             - *(told_ptr-stepsize[0])*f*(CXMC + CXM)
+             + *(told_ptr+stepsize[0])*f*(CXPC + CXP)
              + Q;
     }
   }
@@ -728,10 +730,11 @@ void Cell::doIndoorTemp(const BoundaryConditions &bcs, double &A, double &bVal)
 
 
 ExteriorAirCell::ExteriorAirCell(const std::size_t &index, const CellType cellType,
-           const std::size_t &i, const std::size_t &j, const std::size_t &k,
-           const Foundation &foundation, Surface *surfacePtr, Block *blockPtr,
-           Mesher *meshXptr, Mesher *meshYptr, Mesher *meshZptr):
-        Cell(index, cellType, i, j, k, foundation, surfacePtr, blockPtr, meshXptr, meshYptr, meshZptr)
+                                 const std::size_t &i, const std::size_t &j, const std::size_t &k,
+                                 std::size_t *stepsize,
+                                 const Foundation &foundation, Surface *surfacePtr, Block *blockPtr,
+                                 Mesher *meshXptr, Mesher *meshYptr, Mesher *meshZptr):
+        Cell(index, cellType, i, j, k, stepsize, foundation, surfacePtr, blockPtr, meshXptr, meshYptr, meshZptr)
 {}
 
 void ExteriorAirCell::calcCellADEUp(double /*timestep*/, const Foundation &/*foundation*/, const BoundaryConditions &bcs,
@@ -783,9 +786,10 @@ std::vector<double> ExteriorAirCell::calculateHeatFlux(int /*ndims*/, std::vecto
 
 InteriorAirCell::InteriorAirCell(const std::size_t &index, const CellType cellType,
                                  const std::size_t &i, const std::size_t &j, const std::size_t &k,
+                                 std::size_t *stepsize,
                                  const Foundation &foundation, Surface *surfacePtr, Block *blockPtr,
                                  Mesher *meshXptr, Mesher *meshYptr, Mesher *meshZptr):
-        Cell(index, cellType, i, j, k, foundation, surfacePtr, blockPtr, meshXptr, meshYptr, meshZptr)
+        Cell(index, cellType, i, j, k, stepsize, foundation, surfacePtr, blockPtr, meshXptr, meshYptr, meshZptr)
 {}
 
 void InteriorAirCell::calcCellADEUp(double /*timestep*/, const Foundation &/*foundation*/, const BoundaryConditions &bcs,
@@ -833,10 +837,11 @@ std::vector<double> InteriorAirCell::calculateHeatFlux(int /*ndims*/, std::vecto
 
 
 BoundaryCell::BoundaryCell(const std::size_t &index, const CellType cellType,
-                                 const std::size_t &i, const std::size_t &j, const std::size_t &k,
-                                 const Foundation &foundation, Surface *surfacePtr, Block *blockPtr,
-                                 Mesher *meshXptr, Mesher *meshYptr, Mesher *meshZptr):
-        Cell(index, cellType, i, j, k, foundation, surfacePtr, blockPtr, meshXptr, meshYptr, meshZptr)
+                           const std::size_t &i, const std::size_t &j, const std::size_t &k,
+                           std::size_t *stepsize,
+                           const Foundation &foundation, Surface *surfacePtr, Block *blockPtr,
+                           Mesher *meshXptr, Mesher *meshYptr, Mesher *meshZptr):
+        Cell(index, cellType, i, j, k, stepsize, foundation, surfacePtr, blockPtr, meshXptr, meshYptr, meshZptr)
 {
     if (foundation.numberOfDimensions == 2 &&
         foundation.coordinateSystem == Foundation::CS_CYLINDRICAL)
@@ -1285,7 +1290,7 @@ void BoundaryCell::calcCellADI(int dim, const Foundation &foundation, double /*t
           else
           {
             Ap = 0.0;
-            bVal = *i_up_Ptr->told_ptr;
+            bVal = *(told_ptr+stepsize[0]);
           }
           break;
         case Surface::X_POS:
@@ -1298,7 +1303,7 @@ void BoundaryCell::calcCellADI(int dim, const Foundation &foundation, double /*t
           else
           {
             Am = 0.0;
-            bVal = *i_down_Ptr->told_ptr;
+            bVal = *(told_ptr-stepsize[0]);
           }
           break;
         case Surface::Y_NEG:
@@ -1311,7 +1316,7 @@ void BoundaryCell::calcCellADI(int dim, const Foundation &foundation, double /*t
           else
           {
             Ap = 0.0;
-            bVal = *j_up_Ptr->told_ptr;
+            bVal = *(told_ptr+stepsize[1]);
           }
           break;
         case Surface::Y_POS:
@@ -1324,7 +1329,7 @@ void BoundaryCell::calcCellADI(int dim, const Foundation &foundation, double /*t
           else
           {
             Am = 0.0;
-            bVal = *j_down_Ptr->told_ptr;
+            bVal = *(told_ptr-stepsize[1]);
           }
           break;
         case Surface::Z_NEG:
@@ -1337,7 +1342,7 @@ void BoundaryCell::calcCellADI(int dim, const Foundation &foundation, double /*t
           else
           {
             Ap = 0.0;
-            bVal = *k_up_Ptr->told_ptr;
+            bVal = *(told_ptr+stepsize[2]);
           }
           break;
         case Surface::Z_POS:
@@ -1350,7 +1355,7 @@ void BoundaryCell::calcCellADI(int dim, const Foundation &foundation, double /*t
           else
           {
             Am = 0.0;
-            bVal = *k_down_Ptr->told_ptr;
+            bVal = *(told_ptr-stepsize[2]);
           }
           break;
       }
@@ -1388,7 +1393,7 @@ void BoundaryCell::calcCellADI(int dim, const Foundation &foundation, double /*t
           else
           {
             Ap = 0.0;
-            bVal = *i_up_Ptr->told_ptr*kxp/dxp + (hc + hr)*Tair + q;
+            bVal = *(told_ptr+stepsize[0])*kxp/dxp + (hc + hr)*Tair + q;
           }
           break;
         case Surface::X_POS:
@@ -1401,7 +1406,7 @@ void BoundaryCell::calcCellADI(int dim, const Foundation &foundation, double /*t
           else
           {
             Am = 0.0;
-            bVal = *i_down_Ptr->told_ptr*kxm/dxm + (hc + hr)*Tair + q;
+            bVal = *(told_ptr-stepsize[0])*kxm/dxm + (hc + hr)*Tair + q;
           }
           break;
         case Surface::Y_NEG:
@@ -1414,7 +1419,7 @@ void BoundaryCell::calcCellADI(int dim, const Foundation &foundation, double /*t
           else
           {
             Ap = 0.0;
-            bVal = *j_up_Ptr->told_ptr*kyp/dyp + (hc + hr)*Tair + q;
+            bVal = *(told_ptr+stepsize[1])*kyp/dyp + (hc + hr)*Tair + q;
           }
           break;
         case Surface::Y_POS:
@@ -1427,7 +1432,7 @@ void BoundaryCell::calcCellADI(int dim, const Foundation &foundation, double /*t
           else
           {
             Am = 0.0;
-            bVal = *j_down_Ptr->told_ptr*kym/dym + (hc + hr)*Tair + q;
+            bVal = *(told_ptr-stepsize[1])*kym/dym + (hc + hr)*Tair + q;
           }
           break;
         case Surface::Z_NEG:
@@ -1440,7 +1445,7 @@ void BoundaryCell::calcCellADI(int dim, const Foundation &foundation, double /*t
           else
           {
             Ap = 0.0;
-            bVal = *k_up_Ptr->told_ptr*kzp/dzp + (hc + hr)*Tair + q;
+            bVal = *(told_ptr+stepsize[2])*kzp/dzp + (hc + hr)*Tair + q;
           }
           break;
         case Surface::Z_POS:
@@ -1453,7 +1458,7 @@ void BoundaryCell::calcCellADI(int dim, const Foundation &foundation, double /*t
           else
           {
             Am = 0.0;
-            bVal = *k_down_Ptr->told_ptr*kzm/dzm + (hc + hr)*Tair + q;
+            bVal = *(told_ptr-stepsize[2])*kzm/dzm + (hc + hr)*Tair + q;
           }
           break;
       }
@@ -1483,7 +1488,7 @@ void BoundaryCell::calcCellADI(int dim, const Foundation &foundation, double /*t
           else
           {
             Ap = 0.0;
-            bVal = *i_up_Ptr->told_ptr*kxp/dxp + (hc + hr*pow(F,0.25))*Tair + q;
+            bVal = *(told_ptr+stepsize[0])*kxp/dxp + (hc + hr*pow(F,0.25))*Tair + q;
           }
           break;
         case Surface::X_POS:
@@ -1496,7 +1501,7 @@ void BoundaryCell::calcCellADI(int dim, const Foundation &foundation, double /*t
           else
           {
             Am = 0.0;
-            bVal = *i_down_Ptr->told_ptr*kxm/dxm + (hc + hr*pow(F,0.25))*Tair + q;
+            bVal = *(told_ptr-stepsize[0])*kxm/dxm + (hc + hr*pow(F,0.25))*Tair + q;
           }
           break;
         case Surface::Y_NEG:
@@ -1509,7 +1514,7 @@ void BoundaryCell::calcCellADI(int dim, const Foundation &foundation, double /*t
           else
           {
             Ap = 0.0;
-            bVal = *j_up_Ptr->told_ptr*kyp/dyp + (hc + hr*pow(F,0.25))*Tair + q;
+            bVal = *(told_ptr+stepsize[1])*kyp/dyp + (hc + hr*pow(F,0.25))*Tair + q;
           }
           break;
         case Surface::Y_POS:
@@ -1522,7 +1527,7 @@ void BoundaryCell::calcCellADI(int dim, const Foundation &foundation, double /*t
           else
           {
             Am = 0.0;
-            bVal = *j_down_Ptr->told_ptr*kym/dym + (hc + hr*pow(F,0.25))*Tair + q;
+            bVal = *(told_ptr-stepsize[1])*kym/dym + (hc + hr*pow(F,0.25))*Tair + q;
           }
           break;
         case Surface::Z_NEG:
@@ -1535,7 +1540,7 @@ void BoundaryCell::calcCellADI(int dim, const Foundation &foundation, double /*t
           else
           {
             Ap = 0.0;
-            bVal = *k_up_Ptr->told_ptr*kzp/dzp + (hc + hr*pow(F,0.25))*Tair + q;
+            bVal = *(told_ptr+stepsize[2])*kzp/dzp + (hc + hr*pow(F,0.25))*Tair + q;
           }
           break;
         case Surface::Z_POS:
@@ -1548,7 +1553,7 @@ void BoundaryCell::calcCellADI(int dim, const Foundation &foundation, double /*t
           else
           {
             Am = 0.0;
-            bVal = *k_down_Ptr->told_ptr*kzm/dzm + (hc + hr*pow(F,0.25))*Tair + q;
+            bVal = *(told_ptr-stepsize[2])*kzm/dzm + (hc + hr*pow(F,0.25))*Tair + q;
           }
           break;
       }
@@ -1834,9 +1839,10 @@ std::vector<double> BoundaryCell::calculateHeatFlux(int ndims, std::vector<doubl
 
 ZeroThicknessCell::ZeroThicknessCell(const std::size_t &index, const CellType cellType,
                                  const std::size_t &i, const std::size_t &j, const std::size_t &k,
+                                 std::size_t *stepsize,
                                  const Foundation &foundation, Surface *surfacePtr, Block *blockPtr,
                                  Mesher *meshXptr, Mesher *meshYptr, Mesher *meshZptr):
-        Cell(index, cellType, i, j, k, foundation, surfacePtr, blockPtr, meshXptr, meshYptr, meshZptr)
+        Cell(index, cellType, i, j, k, stepsize, foundation, surfacePtr, blockPtr, meshXptr, meshYptr, meshZptr)
 {}
 
 std::vector<double> ZeroThicknessCell::calculateHeatFlux(int ndims, std::vector<double> &TNew,

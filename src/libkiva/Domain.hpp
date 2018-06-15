@@ -25,7 +25,7 @@ public:
     Mesher meshY;
     Mesher meshZ;
     std::size_t nX, nY, nZ;
-    std::size_t stepsize_i, stepsize_j, stepsize_k;
+    std::size_t stepsize[3];
 
     std::vector< std::shared_ptr<Cell> > cell;
     std::vector< std::vector<std::size_t> > dest_index_vector;
@@ -46,7 +46,6 @@ public:
     void set3DZeroThicknessCellProperties(std::size_t index);
     void printCellTypes();
     std::tuple<std::size_t, std::size_t, std::size_t> get_coordinates(std::size_t index);
-    std::tuple<std::size_t, std::size_t, std::size_t> get_step_size();
     std::vector<std::size_t> get_dest_index(std::size_t i, std::size_t j, std::size_t k);
     void addCell(std::shared_ptr<Cell>);
 };
