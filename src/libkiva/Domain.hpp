@@ -47,7 +47,6 @@ public:
     void printCellTypes();
     std::tuple<std::size_t, std::size_t, std::size_t> get_coordinates(std::size_t index);
     std::vector<std::size_t> get_dest_index(std::size_t i, std::size_t j, std::size_t k);
-    void addCell(std::shared_ptr<Cell>);
 };
 
 }

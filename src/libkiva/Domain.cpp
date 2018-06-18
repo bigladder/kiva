@@ -120,11 +120,13 @@ void Domain::setDomain(Foundation &foundation)
 
     // this cell creation needs to be separate from the previous for loop to prevent double-instantiation.
     if (cellType == CellType::ZERO_THICKNESS) {
-      addCell(std::make_shared<ZeroThicknessCell>(index, cellType, i, j, k, stepsize, foundation, surfacePtr, nullptr,
-                                          &meshX, &meshY, &meshZ));
+      std::shared_ptr<ZeroThicknessCell> sp = std::make_shared<ZeroThicknessCell>(index, cellType, i, j, k, stepsize, foundation, surfacePtr, nullptr,
+                                                        &meshX, &meshY, &meshZ);
+      cell.emplace_back(std::move(sp));
     } else if (cellType == CellType::BOUNDARY) {
-      addCell(std::make_shared<BoundaryCell>(index, cellType, i, j, k, stepsize, foundation, surfacePtr, nullptr,
-                                          &meshX, &meshY, &meshZ));
+      std::shared_ptr<BoundaryCell> sp = std::make_shared<BoundaryCell>(index, cellType, i, j, k, stepsize, foundation, surfacePtr, nullptr,
+                                                        &meshX, &meshY, &meshZ);
+      cell.emplace_back(std::move(sp));
     }
 
     if (cellType == CellType::NORMAL) {
@@ -134,12 +136,14 @@ void Domain::setDomain(Foundation &foundation)
             isLessThan(meshZ.centers[k], block.zMax)) {
           if (block.blockType == Block::INTERIOR_AIR) {
             cellType = CellType::INTERIOR_AIR;
-            addCell(std::make_shared<InteriorAirCell>(index, cellType, i, j, k, stepsize, foundation, nullptr, &block,
-                                                &meshX, &meshY, &meshZ));
+            std::shared_ptr<InteriorAirCell> sp = std::make_shared<InteriorAirCell>(index, cellType, i, j, k, stepsize, foundation, nullptr, &block,
+                                                              &meshX, &meshY, &meshZ);
+            cell.emplace_back(std::move(sp));
           } else if (block.blockType == Block::EXTERIOR_AIR) {
             cellType = CellType::EXTERIOR_AIR;
-            addCell(std::make_shared<ExteriorAirCell>(index, cellType, i, j, k, stepsize, foundation, nullptr, &block,
-                                                           &meshX, &meshY, &meshZ));
+            std::shared_ptr<ExteriorAirCell> sp = std::make_shared<ExteriorAirCell>(index, cellType, i, j, k, stepsize, foundation, nullptr, &block,
+                                                              &meshX, &meshY, &meshZ);
+            cell.emplace_back(std::move(sp));
           }
         }
       }
@@ -165,11 +169,13 @@ void Domain::setDomain(Foundation &foundation)
       }
 
       if (cellType == CellType::ZERO_THICKNESS) {
-        addCell(std::make_shared<ZeroThicknessCell>(index, cellType, i, j, k, stepsize, foundation, nullptr, nullptr,
-                                            &meshX, &meshY, &meshZ));
+        std::shared_ptr<ZeroThicknessCell> sp = std::make_shared<ZeroThicknessCell>(index, cellType, i, j, k, stepsize, foundation, nullptr, nullptr,
+                                                          &meshX, &meshY, &meshZ);
+        cell.emplace_back(std::move(sp));
       } else {
-        addCell(std::make_shared<Cell>(index, cellType, i, j, k, stepsize, foundation, nullptr, nullptr,
-                                            &meshX, &meshY, &meshZ));
+        std::shared_ptr<Cell> sp = std::make_shared<Cell>(index, cellType, i, j, k, stepsize, foundation, nullptr, nullptr,
+                                     &meshX, &meshY, &meshZ);
+        cell.emplace_back(std::move(sp));
       }
     }
   }
@@ -494,11 +500,6 @@ std::vector<std::size_t> Domain::get_dest_index(std::size_t i, std::size_t j, st
   dest_index.emplace_back(j + nY*i + nY*nX*k);
   dest_index.emplace_back(k + nZ*i + nZ*nX*j);
   return dest_index;
-}
-
-void Domain::addCell(std::shared_ptr<Cell> this_cell)
-{
-  cell.emplace_back(std::move(this_cell));
 }
 
 }

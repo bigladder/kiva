@@ -166,7 +166,7 @@ void Ground::calculateADI(int dim) {
 
   solveLinearSystem();
 
-  std::size_t index = 0;
+  std::size_t index{0};
   dest_index = domain.dest_index_vector[dim-1].begin();
   for ( ; dest_index<domain.dest_index_vector[dim-1].end(); ++index, ++dest_index) {
       TNew[index] = x_[*dest_index];
