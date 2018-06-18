@@ -64,33 +64,27 @@ namespace Kiva {
 
     Surface *surfacePtr;
     Mesher *meshXptr, *meshYptr, *meshZptr;
-    std::shared_ptr<Cell> i_up_Ptr, i_down_Ptr, j_up_Ptr, j_down_Ptr, k_up_Ptr, k_down_Ptr;
-
-    void setNeighbors(std::vector<std::shared_ptr<Cell> > &cell_v,
-                      std::size_t nX, std::size_t nY, std::size_t nZ);
 
     void setDistances(double &dxp_in, double &dxm_in, double &dyp_in, double &dym_in,
                       double &dzp_in, double &dzm_in);
 
-    void setConductivities();
+    void setConductivities(const std::vector< std::shared_ptr<Cell> > &cell_v);
 
-    void getKXP();
-    void getKXM();
-    void getKYP();
-    void getKYM();
-    void getKZP();
-    void getKZM();
+    void getKXP(const std::vector< std::shared_ptr<Cell> > &cell_v);
+    void getKXM(const std::vector< std::shared_ptr<Cell> > &cell_v);
+    void getKYP(const std::vector< std::shared_ptr<Cell> > &cell_v);
+    void getKYM(const std::vector< std::shared_ptr<Cell> > &cell_v);
+    void getKZP(const std::vector< std::shared_ptr<Cell> > &cell_v);
+    void getKZM(const std::vector< std::shared_ptr<Cell> > &cell_v);
 
     void setPDEcoefficients(int ndims, bool cylindrical);
 
     void setZeroThicknessCellProperties(std::vector< std::shared_ptr<Cell> > pointSet);
 
-    virtual void calcCellADEUp(double timestep, const Foundation &foundation,
-                               const BoundaryConditions &bcs,
-                               std::vector<double> &U);
+    virtual void calcCellADEUp(double timestep, const Foundation &foundation, const BoundaryConditions &bcs,
+                       double &U);
     virtual void calcCellADEDown(double timestep, const Foundation &foundation,
-                                 const BoundaryConditions &bcs,
-                                 std::vector<double> &V);
+                                 const BoundaryConditions &bcs, double &V);
 
     virtual double calcCellExplicit(double timestep, const Foundation &foundation,
                                     const BoundaryConditions &bcs);
@@ -108,8 +102,9 @@ namespace Kiva {
                              const BoundaryConditions &bcs,
                              double &Am, double &A, double &Ap, double &bVal);
 
-    virtual std::vector<double> calculateHeatFlux(int ndims, std::vector<double> &TNew,
-                                          std::size_t nX, std::size_t nY, std::size_t nZ);
+    virtual std::vector<double> calculateHeatFlux(int ndims, double &TNew,
+                                                  std::size_t nX, std::size_t nY, std::size_t nZ,
+                                                  const std::vector< std::shared_ptr<Cell> > &cell_v);
 
     void Assemble(const Foundation &foundation);
 
@@ -128,9 +123,9 @@ namespace Kiva {
                     Mesher *meshX, Mesher *meshY, Mesher *meshZ);
 
     void calcCellADEUp(double timestep, const Foundation &foundation, const BoundaryConditions &bcs,
-                       std::vector<double> &U) override;
+                       double &U) override;
     void calcCellADEDown(double timestep, const Foundation &foundation, const BoundaryConditions &bcs,
-                       std::vector<double> &v) override;
+                       double &v) override;
     double calcCellExplicit(double timestep, const Foundation &foundation,
                                     const BoundaryConditions &bcs) override;
     void calcCellMatrix(Foundation::NumericalScheme scheme, double timestep, const Foundation &foundation,
@@ -140,8 +135,9 @@ namespace Kiva {
     void calcCellADI(int dim, const Foundation &foundation, double timestep,
                    const BoundaryConditions &bcs,
                    double &Am, double &A, double &Ap, double &bVal) override;
-    std::vector<double> calculateHeatFlux(int ndims, std::vector<double> &TNew,
-                                          std::size_t nX, std::size_t nY, std::size_t nZ) override;
+    std::vector<double> calculateHeatFlux(int ndims, double &TNew,
+                                          std::size_t nX, std::size_t nY, std::size_t nZ,
+                                          const std::vector< std::shared_ptr<Cell> > &cell_v) override;
   };
 
 
@@ -155,9 +151,9 @@ namespace Kiva {
                     Mesher *meshX, Mesher *meshY, Mesher *meshZ);
 
     void calcCellADEUp(double timestep, const Foundation &foundation, const BoundaryConditions &bcs,
-                       std::vector<double> &U) override;
+                       double &U) override;
     void calcCellADEDown(double timestep, const Foundation &foundation, const BoundaryConditions &bcs,
-                       std::vector<double> &v) override;
+                       double &v) override;
     double calcCellExplicit(double timestep, const Foundation &foundation,
                             const BoundaryConditions &bcs) override;
     void calcCellMatrix(Foundation::NumericalScheme scheme, double timestep, const Foundation &foundation,
@@ -167,8 +163,9 @@ namespace Kiva {
     void calcCellADI(int dim, const Foundation &foundation, double timestep,
                      const BoundaryConditions &bcs,
                      double &Am, double &A, double &Ap, double &bVal) override;
-    std::vector<double> calculateHeatFlux(int ndims, std::vector<double> &TNew,
-                                          std::size_t nX, std::size_t nY, std::size_t nZ) override;
+    std::vector<double> calculateHeatFlux(int ndims, double &TNew,
+                                          std::size_t nX, std::size_t nY, std::size_t nZ,
+                                          const std::vector< std::shared_ptr<Cell> > &cell_v) override;
   };
 
   class BoundaryCell : public Cell {
@@ -181,9 +178,9 @@ namespace Kiva {
                     Mesher *meshX, Mesher *meshY, Mesher *meshZ);
 
     void calcCellADEUp(double timestep, const Foundation &foundation, const BoundaryConditions &bcs,
-                       std::vector<double> &U) override;
+                       double &U) override;
     void calcCellADEDown(double timestep, const Foundation &foundation, const BoundaryConditions &bcs,
-                         std::vector<double> &V) override;
+                         double &V) override;
     double calcCellExplicit(double timestep, const Foundation &foundation,
                             const BoundaryConditions &bcs) override;
     void calcCellMatrix(Foundation::NumericalScheme scheme, double timestep, const Foundation &foundation,
@@ -193,8 +190,9 @@ namespace Kiva {
     void calcCellADI(int dim, const Foundation &foundation, double timestep,
                      const BoundaryConditions &bcs,
                      double &Am, double &A, double &Ap, double &bVal) override;
-    std::vector<double> calculateHeatFlux(int ndims, std::vector<double> &TNew,
-                                          std::size_t nX, std::size_t nY, std::size_t nZ) override;
+    std::vector<double> calculateHeatFlux(int ndims, double &TNew,
+                                          std::size_t nX, std::size_t nY, std::size_t nZ,
+                                          const std::vector< std::shared_ptr<Cell> > &cell_v) override;
 
   };
 
@@ -208,8 +206,9 @@ namespace Kiva {
                       const Foundation &foundation, Surface *surfacePtr, Block *blockPtr,
                       Mesher *meshX, Mesher *meshY, Mesher *meshZ);
 
-    std::vector<double> calculateHeatFlux(int ndims, std::vector<double> &TNew,
-                                          std::size_t nX, std::size_t nY, std::size_t nZ) override;
+    std::vector<double> calculateHeatFlux(int ndims, double &TNew,
+                                          std::size_t nX, std::size_t nY, std::size_t nZ,
+                                          const std::vector< std::shared_ptr<Cell> > &cell_v) override;
   };
 
 }

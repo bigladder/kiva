@@ -47,17 +47,6 @@ void Cell::Assemble(const Foundation &foundation) {
   }
 }
 
-void Cell::setNeighbors(std::vector<std::shared_ptr<Cell> > &cell_v,
-                        std::size_t nX, std::size_t nY, std::size_t nZ)
-{
-  if (i != nX-1) { i_up_Ptr = cell_v[index+stepsize[0]]; }
-  if (i != 0) { i_down_Ptr = cell_v[index-stepsize[0]]; }
-  if (j != nY-1) { j_up_Ptr = cell_v[index+stepsize[1]]; }
-  if (j != 0) { j_down_Ptr = cell_v[index-stepsize[1]]; }
-  if (k != nZ-1) { k_up_Ptr = cell_v[index+stepsize[2]]; }
-  if (k != 0) { k_down_Ptr = cell_v[index-stepsize[2]]; }
-}
-
 void Cell::setDistances(double &dxp_in, double &dxm_in, double &dyp_in, double &dym_in,
                         double &dzp_in, double &dzm_in) {
   dxp = dxp_in;
@@ -68,16 +57,16 @@ void Cell::setDistances(double &dxp_in, double &dxm_in, double &dyp_in, double &
   dzm = dzm_in;
 }
 
-void Cell::setConductivities() {
-  getKXP();
-  getKXM();
-  getKYP();
-  getKYM();
-  getKZP();
-  getKZM();
+void Cell::setConductivities(const std::vector< std::shared_ptr<Cell> > &cell_v) {
+  getKXP(cell_v);
+  getKXM(cell_v);
+  getKYP(cell_v);
+  getKYM(cell_v);
+  getKZP(cell_v);
+  getKZM(cell_v);
 }
 
-void Cell::getKXP()
+void Cell::getKXP(const std::vector< std::shared_ptr<Cell> > &cell_v)
 {
   if (i == meshXptr->centers.size() - 1)
   {
@@ -88,11 +77,11 @@ void Cell::getKXP()
   else
   {
     kxp = 1/(meshXptr->deltas[i]/(2*dxp*conductivity) +
-             meshXptr->deltas[i + 1]/(2*dxp*i_up_Ptr->conductivity));
+             meshXptr->deltas[i + 1]/(2*dxp*cell_v[index + stepsize[0]]->conductivity));
   }
 }
 
-void Cell::getKXM()
+void Cell::getKXM(const std::vector< std::shared_ptr<Cell> > &cell_v)
 {
   if (i == 0)
   {
@@ -103,11 +92,11 @@ void Cell::getKXM()
   else
   {
     kxm = 1/(meshXptr->deltas[i]/(2*dxm*conductivity) +
-             meshXptr->deltas[i - 1]/(2*dxm*i_down_Ptr->conductivity));
+             meshXptr->deltas[i - 1]/(2*dxm*cell_v[index - stepsize[0]]->conductivity));
   }
 }
 
-void Cell::getKYP()
+void Cell::getKYP(const std::vector< std::shared_ptr<Cell> > &cell_v)
 {
   if (j == meshYptr->centers.size() - 1)
   {
@@ -118,11 +107,11 @@ void Cell::getKYP()
   else
   {
     kyp = 1/(meshYptr->deltas[j]/(2*dyp*conductivity) +
-             meshYptr->deltas[j + 1]/(2*dyp*j_up_Ptr->conductivity));
+             meshYptr->deltas[j + 1]/(2*dyp*cell_v[index + stepsize[1]]->conductivity));
   }
 }
 
-void Cell::getKYM()
+void Cell::getKYM(const std::vector< std::shared_ptr<Cell> > &cell_v)
 {
   if (j == 0)
   {
@@ -133,11 +122,11 @@ void Cell::getKYM()
   else
   {
     kym = 1/(meshYptr->deltas[j]/(2*dym*conductivity) +
-             meshYptr->deltas[j - 1]/(2*dym*j_down_Ptr->conductivity));
+             meshYptr->deltas[j - 1]/(2*dym*cell_v[index - stepsize[1]]->conductivity));
   }
 }
 
-void Cell::getKZP()
+void Cell::getKZP(const std::vector< std::shared_ptr<Cell> > &cell_v)
 {
   if (k == meshZptr->centers.size() - 1)
   {
@@ -148,11 +137,11 @@ void Cell::getKZP()
   else
   {
     kzp = 1/(meshZptr->deltas[k]/(2*dzp*conductivity) +
-             meshZptr->deltas[k + 1]/(2*dzp*k_up_Ptr->conductivity));
+             meshZptr->deltas[k + 1]/(2*dzp*cell_v[index + stepsize[2]]->conductivity));
   }
 }
 
-void Cell::getKZM()
+void Cell::getKZM(const std::vector< std::shared_ptr<Cell> > &cell_v)
 {
   if (k == 0)
   {
@@ -163,7 +152,7 @@ void Cell::getKZM()
   else
   {
     kzm = 1/(meshZptr->deltas[k]/(2*dzm*conductivity) +
-             meshZptr->deltas[k - 1]/(2*dzm*k_down_Ptr->conductivity));
+             meshZptr->deltas[k - 1]/(2*dzm*cell_v[index - stepsize[2]]->conductivity));
   }
 }
 
@@ -257,7 +246,7 @@ void Cell::setZeroThicknessCellProperties(std::vector< std::shared_ptr<Cell> > p
 
 
 void Cell::calcCellADEUp(double timestep, const Foundation &foundation, const BoundaryConditions &/*bcs*/,
-                         std::vector<double> &U)
+                         double &U)
 {
   double theta = timestep/
                  (density*specificHeat);
@@ -271,15 +260,15 @@ void Cell::calcCellADEUp(double timestep, const Foundation &foundation, const Bo
   double Q = heatGain*theta;
 
   if (foundation.numberOfDimensions == 3)
-    U[index] = (*told_ptr*(1.0 - CXP - CZP - CYP)
-                - U[i_down_Ptr->index]*CXM
-                + *i_up_Ptr->told_ptr*CXP
-                - U[k_down_Ptr->index]*CZM
-                + *k_up_Ptr->told_ptr*CZP
-                - U[j_down_Ptr->index]*CYM
-                + *j_up_Ptr->told_ptr*CYP
-                + Q) /
-               (1.0 - CXM - CZM - CYM);
+    U = (*told_ptr*(1.0 - CXP - CZP - CYP)
+            - *(&U - stepsize[0])*CXM
+            + *(told_ptr + stepsize[0])*CXP
+            - *(&U - stepsize[2])*CZM
+            + *(told_ptr + stepsize[2])*CZP
+            - *(&U - stepsize[1])*CYM
+            + *(told_ptr + stepsize[1])*CYP
+            + Q) /
+        (1.0 - CXM - CZM - CYM);
   else if (foundation.numberOfDimensions == 2)
   {
     double CXPC = 0;
@@ -290,26 +279,26 @@ void Cell::calcCellADEUp(double timestep, const Foundation &foundation, const Bo
       CXPC = cxp_c*theta/r;
       CXMC = cxm_c*theta/r;
     }
-    U[index] = (*told_ptr*(1.0 - CXPC - CXP - CZP)
-                - U[i_down_Ptr->index]*(CXMC + CXM)
-                + *i_up_Ptr->told_ptr*(CXPC + CXP)
-                - U[k_down_Ptr->index]*CZM
-                + *k_up_Ptr->told_ptr*CZP
-                + Q) /
-               (1.0 - CXMC - CXM - CZM);
+    U = (*told_ptr*(1.0 - CXPC - CXP - CZP)
+            - *(&U - stepsize[0])*(CXMC + CXM)
+            + *(told_ptr + stepsize[0])*(CXPC + CXP)
+            - *(&U - stepsize[2])*CZM
+            + *(told_ptr + stepsize[2])*CZP
+            + Q) /
+         (1.0 - CXMC - CXM - CZM);
   }
   else
   {
-    U[index] = (*told_ptr*(1.0 - CZP)
-                - U[k_down_Ptr->index]*CZM
-                + *k_up_Ptr->told_ptr*CZP
-                + Q) /
-               (1.0 - CZM);
+    U = (*told_ptr*(1.0 - CZP)
+            - *(&U - stepsize[2])*CZM
+            + *(told_ptr + stepsize[2])*CZP
+            + Q) /
+        (1.0 - CZM);
   }
 }
 
 void Cell::calcCellADEDown(double timestep, const Foundation &foundation, const BoundaryConditions &/*bcs*/,
-                           std::vector<double> &V)
+                           double &V)
 {
   double theta = timestep/
                  (density*specificHeat);
@@ -323,13 +312,13 @@ void Cell::calcCellADEDown(double timestep, const Foundation &foundation, const 
   if (foundation.numberOfDimensions == 3) {
     double CYP = cyp * theta;
     double CYM = cym * theta;
-    V[index] = (*told_ptr * (1.0 + CXM + CZM + CYM)
-                - *i_down_Ptr->told_ptr * CXM
-                + V[i_up_Ptr->index] * CXP
-                - *k_down_Ptr->told_ptr * CZM
-                + V[k_up_Ptr->index] * CZP
-                - *j_down_Ptr->told_ptr * CYM
-                + V[j_up_Ptr->index] * CYP
+    V = (*told_ptr * (1.0 + CXM + CZM + CYM)
+                - *(told_ptr - stepsize[0]) * CXM
+                + *(&V + stepsize[0]) * CXP
+                - *(told_ptr - stepsize[2]) * CZM
+                + *(&V + stepsize[2]) * CZP
+                - *(told_ptr - stepsize[1]) * CYM
+                + *(&V + stepsize[1]) * CYP
                 + Q) /
                (1.0 + CXP + CZP + CYP);
   } else if (foundation.numberOfDimensions == 2)
@@ -342,19 +331,19 @@ void Cell::calcCellADEDown(double timestep, const Foundation &foundation, const 
       CXPC = cxp_c*theta/r;
       CXMC = cxm_c*theta/r;
     }
-    V[index] = (*told_ptr*(1.0 + CXMC + CXM + CZM)
-                - *i_down_Ptr->told_ptr*(CXMC + CXM)
-                + V[i_up_Ptr->index]*(CXPC + CXP)
-                - *k_down_Ptr->told_ptr*CZM
-                + V[k_up_Ptr->index]*CZP
+    V = (*told_ptr*(1.0 + CXMC + CXM + CZM)
+                - *(told_ptr - stepsize[0])*(CXMC + CXM)
+                + *(&V + stepsize[0])*(CXPC + CXP)
+                - *(told_ptr - stepsize[2])*CZM
+                + *(&V + stepsize[2])*CZP
                 + Q) /
                (1.0 + CXPC + CXP + CZP);
   }
   else
   {
-    V[index] = (*told_ptr*(1.0 + CZM)
-                - *k_down_Ptr->told_ptr*CZM
-                + V[k_up_Ptr->index]*CZP
+    V = (*told_ptr*(1.0 + CZM)
+                - *(told_ptr - stepsize[2])*CZM
+                + *(&V + stepsize[2])*CZP
                 + Q) /
                (1.0 + CZP);
   }
@@ -376,12 +365,12 @@ double Cell::calcCellExplicit(double timestep, const Foundation &foundation,
     double CYP = cyp*theta;
     double CYM = cym*theta;
     double TNew = *told_ptr * (1.0 + CXM + CZM + CYM - CXP - CZP - CYP)
-                  - *i_down_Ptr->told_ptr * CXM
-                  + *i_up_Ptr->told_ptr * CXP
-                  - *k_down_Ptr->told_ptr * CZM
-                  + *k_up_Ptr->told_ptr * CZP
-                  - *j_down_Ptr->told_ptr * CYM
-                  + *j_up_Ptr->told_ptr * CYP
+                  - *(told_ptr - stepsize[0]) * CXM
+                  + *(told_ptr + stepsize[0]) * CXP
+                  - *(told_ptr - stepsize[2]) * CZM
+                  + *(told_ptr + stepsize[2]) * CZP
+                  - *(told_ptr - stepsize[1]) * CYM
+                  + *(told_ptr + stepsize[1]) * CYP
                   + Q;
     return TNew;
   }
@@ -397,17 +386,17 @@ double Cell::calcCellExplicit(double timestep, const Foundation &foundation,
     }
 
     double TNew = *told_ptr*(1.0 + CXMC + CXM + CZM - CXPC - CXP - CZP)
-                  - *i_down_Ptr->told_ptr*(CXMC + CXM)
-                  + *i_up_Ptr->told_ptr*(CXPC + CXP)
-                  - *k_down_Ptr->told_ptr*CZM
-                  + *k_up_Ptr->told_ptr*CZP
+                  - *(told_ptr - stepsize[0])*(CXMC + CXM)
+                  + *(told_ptr + stepsize[0])*(CXPC + CXP)
+                  - *(told_ptr - stepsize[2])*CZM
+                  + *(told_ptr + stepsize[2])*CZP
                   + Q;
     return TNew;
   }
 
   double TNew = *told_ptr*(1.0 + CZM - CZP)
-                - *k_down_Ptr->told_ptr*CZM
-                + *k_up_Ptr->told_ptr*CZP
+                - *(told_ptr - stepsize[2])*CZM
+                + *(told_ptr + stepsize[2])*CZP
                 + Q;
   return TNew;
 }
@@ -451,12 +440,12 @@ void Cell::calcCellMatrix(Foundation::NumericalScheme scheme, double timestep, c
       Ajp = f*(-CYP);
 
       bVal = *told_ptr*(1.0 + (1-f)*(CXM + CZM + CYM - CXP - CZP - CYP))
-             - *i_down_Ptr->told_ptr*(1-f)*CXM
-             + *i_up_Ptr->told_ptr*(1-f)*CXP
-             - *j_down_Ptr->told_ptr*(1-f)*CZM
-             + *j_up_Ptr->told_ptr*(1-f)*CZP
-             - *k_down_Ptr->told_ptr*(1-f)*CYM
-             + *k_up_Ptr->told_ptr*(1-f)*CYP
+             - *(told_ptr - stepsize[0])*(1-f)*CXM
+             + *(told_ptr + stepsize[0])*(1-f)*CXP
+             - *(told_ptr - stepsize[1])*(1-f)*CZM
+             + *(told_ptr + stepsize[1])*(1-f)*CZP
+             - *(told_ptr - stepsize[2])*(1-f)*CYM
+             + *(told_ptr + stepsize[2])*(1-f)*CYP
              + Q;
     }
     else if (foundation.numberOfDimensions == 2)
@@ -476,10 +465,10 @@ void Cell::calcCellMatrix(Foundation::NumericalScheme scheme, double timestep, c
       Akp = f*(-CZP);
 
       bVal = *told_ptr*(1.0 + (1-f)*(CXMC + CXM + CZM - CXPC - CXP - CZP))
-             - *i_down_Ptr->told_ptr*(1-f)*(CXMC + CXM)
-             + *i_up_Ptr->told_ptr*(1-f)*(CXPC + CXP)
-             - *k_down_Ptr->told_ptr*(1-f)*CZM
-             + *k_up_Ptr->told_ptr*(1-f)*CZP
+             - *(told_ptr - stepsize[0])*(1-f)*(CXMC + CXM)
+             + *(told_ptr + stepsize[0])*(1-f)*(CXPC + CXP)
+             - *(told_ptr - stepsize[2])*(1-f)*CZM
+             + *(told_ptr + stepsize[2])*(1-f)*CZP
              + Q;
     }
     else
@@ -489,8 +478,8 @@ void Cell::calcCellMatrix(Foundation::NumericalScheme scheme, double timestep, c
       Akp = f*(-CZP);
 
       bVal = *told_ptr*(1.0 + (1-f)*(CZM - CZP))
-             - *k_down_Ptr->told_ptr*(1-f)*CZM
-             + *k_up_Ptr->told_ptr*(1-f)*CZP
+             - *(told_ptr - stepsize[2])*(1-f)*CZM
+             + *(told_ptr + stepsize[2])*(1-f)*CZP
              + Q;
     }
   }
@@ -651,8 +640,9 @@ void Cell::calcCellADI(int dim, const Foundation &foundation, double timestep,
 }
 
 
-std::vector<double> Cell::calculateHeatFlux(int ndims, std::vector<double> &TNew,
-                                            std::size_t nX, std::size_t nY, std::size_t nZ)
+std::vector<double> Cell::calculateHeatFlux(int ndims, double &TNew,
+                                            std::size_t nX, std::size_t nY, std::size_t nZ,
+                                            const std::vector< std::shared_ptr<Cell> > &/*cell_v*/)
 {
   std::vector<double> Qflux;
   double Qx = 0;
@@ -687,22 +677,22 @@ std::vector<double> Cell::calculateHeatFlux(int ndims, std::vector<double> &TNew
   double DTZM = 0;
 
   if (i != nX - 1)
-    DTXP = TNew[i_up_Ptr->index]-TNew[index];
+    DTXP = *(&TNew + stepsize[0])-TNew;
 
   if (i != 0)
-    DTXM = TNew[index]-TNew[i_down_Ptr->index];
+    DTXM = TNew-*(&TNew - stepsize[0]);
 
   if (j != nY - 1)
-    DTYP = TNew[j_up_Ptr->index]-TNew[index];
+    DTYP = *(&TNew + stepsize[1])-TNew;
 
   if (j != 0)
-    DTYM = TNew[index]-TNew[j_down_Ptr->index];
+    DTYM = TNew-*(&TNew - stepsize[1]);
 
   if (k != nZ - 1)
-    DTZP = TNew[k_up_Ptr->index]-TNew[index];
+    DTZP = *(&TNew + stepsize[2])-TNew;
 
   if (k != 0)
-    DTZM = TNew[index]-TNew[k_down_Ptr->index];
+    DTZM = TNew-*(&TNew - stepsize[2]);
 
   Qx = CXP*DTXP + CXM*DTXM;
   Qy = CYP*DTYP + CYM*DTYM;
@@ -738,15 +728,15 @@ ExteriorAirCell::ExteriorAirCell(const std::size_t &index, const CellType cellTy
 {}
 
 void ExteriorAirCell::calcCellADEUp(double /*timestep*/, const Foundation &/*foundation*/, const BoundaryConditions &bcs,
-                         std::vector<double> &U)
+                                    double &U)
 {
-  U[index] = bcs.outdoorTemp;
+  U = bcs.outdoorTemp;
 }
 
 void ExteriorAirCell::calcCellADEDown(double /*timestep*/, const Foundation &/*foundation*/, const BoundaryConditions &bcs,
-                                     std::vector<double> &V)
+                                     double &V)
 {
-  V[index] = bcs.outdoorTemp;
+  V = bcs.outdoorTemp;
 }
 
 double ExteriorAirCell::calcCellExplicit(double /*timestep*/, const Foundation &/*foundation*/,
@@ -772,8 +762,9 @@ void ExteriorAirCell::calcCellMatrix(Foundation::NumericalScheme /*scheme*/, dou
 }
 
 
-std::vector<double> ExteriorAirCell::calculateHeatFlux(int /*ndims*/, std::vector<double> &/*TNew*/,
-                                            std::size_t /*nX*/, std::size_t /*nY*/, std::size_t /*nZ*/)
+std::vector<double> ExteriorAirCell::calculateHeatFlux(int /*ndims*/, double &/*TNew*/,
+                                            std::size_t /*nX*/, std::size_t /*nY*/, std::size_t /*nZ*/,
+                                                       const std::vector< std::shared_ptr<Cell> > &/*cell_v*/)
 {
   std::vector<double> Qflux;
   Qflux.push_back(0);
@@ -793,15 +784,15 @@ InteriorAirCell::InteriorAirCell(const std::size_t &index, const CellType cellTy
 {}
 
 void InteriorAirCell::calcCellADEUp(double /*timestep*/, const Foundation &/*foundation*/, const BoundaryConditions &bcs,
-                                    std::vector<double> &U)
+                                    double &U)
 {
-  U[index] = bcs.indoorTemp;
+  U = bcs.indoorTemp;
 }
 
 void InteriorAirCell::calcCellADEDown(double /*timestep*/, const Foundation &/*foundation*/, const BoundaryConditions &bcs,
-                                      std::vector<double> &V)
+                                      double &V)
 {
-  V[index] = bcs.indoorTemp;
+  V = bcs.indoorTemp;
 }
 
 double InteriorAirCell::calcCellExplicit(double /*timestep*/, const Foundation &/*foundation*/,
@@ -825,8 +816,9 @@ void InteriorAirCell::calcCellADI(int /*dim*/, const Foundation &/*foundation*/,
   doIndoorTemp(bcs, A, bVal);
 };
 
-std::vector<double> InteriorAirCell::calculateHeatFlux(int /*ndims*/, std::vector<double> &/*TNew*/,
-                                                       std::size_t /*nX*/, std::size_t /*nY*/, std::size_t /*nZ*/)
+std::vector<double> InteriorAirCell::calculateHeatFlux(int /*ndims*/, double &/*TNew*/,
+                                                       std::size_t /*nX*/, std::size_t /*nY*/, std::size_t /*nZ*/,
+                                                       const std::vector< std::shared_ptr<Cell> > &/*cell_v*/)
 {
   std::vector<double> Qflux;
   Qflux.push_back(0);
@@ -906,7 +898,7 @@ BoundaryCell::BoundaryCell(const std::size_t &index, const CellType cellType,
 }
 
 void BoundaryCell::calcCellADEUp(double /*timestep*/, const Foundation &foundation, const BoundaryConditions &bcs,
-                                    std::vector<double> &U)
+                                    double &U)
 {
   switch (surfacePtr->boundaryConditionType)
   {
@@ -915,22 +907,22 @@ void BoundaryCell::calcCellADEUp(double /*timestep*/, const Foundation &foundati
       switch (surfacePtr->orientation)
       {
         case Surface::X_NEG:
-          U[index] = *i_up_Ptr->told_ptr;
+          U = *(told_ptr + stepsize[0]);
           break;
         case Surface::X_POS:
-          U[index] = U[i_down_Ptr->index];
+          U = *(&U - stepsize[0]);
           break;
         case Surface::Y_NEG:
-          U[index] = *j_up_Ptr->told_ptr;
+          U = *(told_ptr + stepsize[1]);
           break;
         case Surface::Y_POS:
-          U[index] = U[j_down_Ptr->index];
+          U = *(&U - stepsize[1]);
           break;
         case Surface::Z_NEG:
-          U[index] = *k_up_Ptr->told_ptr;
+          U = *(told_ptr + stepsize[2]);
           break;
         case Surface::Z_POS:
-          U[index] = U[k_down_Ptr->index];
+          U = *(&U - stepsize[2]);
           break;
       }
     }
@@ -938,17 +930,17 @@ void BoundaryCell::calcCellADEUp(double /*timestep*/, const Foundation &foundati
 
     case Surface::CONSTANT_TEMPERATURE:
 
-      U[index] = surfacePtr->temperature;
+      U = surfacePtr->temperature;
       break;
 
     case Surface::INTERIOR_TEMPERATURE:
 
-      U[index] = bcs.indoorTemp;
+      U = bcs.indoorTemp;
       break;
 
     case Surface::EXTERIOR_TEMPERATURE:
 
-      U[index] = bcs.outdoorTemp;
+      U = bcs.outdoorTemp;
       break;
 
     case Surface::INTERIOR_FLUX:
@@ -964,27 +956,27 @@ void BoundaryCell::calcCellADEUp(double /*timestep*/, const Foundation &foundati
       switch (surfacePtr->orientation)
       {
         case Surface::X_NEG:
-          U[index] = (kxp * *i_up_Ptr->told_ptr / dxp +
+          U = (kxp * *(told_ptr + stepsize[0]) / dxp +
                       (hc + hr)*Tair + q)/(kxp/dxp + (hc + hr));
           break;
         case Surface::X_POS:
-          U[index] = (kxm*U[i_down_Ptr->index]/dxm +
+          U = (kxm * *(&U - stepsize[0])/dxm +
                       (hc + hr)*Tair + q)/(kxm/dxm + (hc + hr));
           break;
         case Surface::Y_NEG:
-          U[index] = (kyp * *j_up_Ptr->told_ptr / dyp +
+          U = (kyp * *(told_ptr + stepsize[1]) / dyp +
                       (hc + hr)*Tair + q)/(kyp/dyp + (hc + hr));
           break;
         case Surface::Y_POS:
-          U[index] = (kym*U[j_down_Ptr->index]/dym +
+          U = (kym * *(&U - stepsize[1])/dym +
                       (hc + hr)*Tair + q)/(kym/dym + (hc + hr));
           break;
         case Surface::Z_NEG:
-          U[index] = (kzp * *k_up_Ptr->told_ptr / dzp +
+          U = (kzp * *(told_ptr + stepsize[2]) / dzp +
                       (hc + hr)*Tair + q)/(kzp/dzp + (hc + hr));
           break;
         case Surface::Z_POS:
-          U[index] = (kzm*U[k_down_Ptr->index]/dzm +
+          U = (kzm * *(&U - stepsize[2])/dzm +
                       (hc + hr)*Tair + q)/(kzm/dzm + (hc + hr));
           break;
       }
@@ -1005,27 +997,27 @@ void BoundaryCell::calcCellADEUp(double /*timestep*/, const Foundation &foundati
       switch (surfacePtr->orientation)
       {
         case Surface::X_NEG:
-          U[index] = (kxp * *i_up_Ptr->told_ptr / dxp +
+          U = (kxp * *(told_ptr + stepsize[0]) / dxp +
                       (hc + hr*pow(F,0.25))*Tair + q)/(kxp/dxp + (hc + hr));
           break;
         case Surface::X_POS:
-          U[index] = (kxm*U[i_down_Ptr->index]/dxm +
+          U = (kxm * *(&U - stepsize[0])/dxm +
                       (hc + hr*pow(F,0.25))*Tair + q)/(kxm/dxm + (hc + hr));
           break;
         case Surface::Y_NEG:
-          U[index] = (kyp * *j_up_Ptr->told_ptr / dyp +
+          U = (kyp * *(told_ptr + stepsize[1]) / dyp +
                       (hc + hr*pow(F,0.25))*Tair + q)/(kyp/dyp + (hc + hr));
           break;
         case Surface::Y_POS:
-          U[index] = (kym*U[j_down_Ptr->index]/dym +
+          U = (kym * *(&U - stepsize[1])/dym +
                       (hc + hr*pow(F,0.25))*Tair + q)/(kym/dym + (hc + hr));
           break;
         case Surface::Z_NEG:
-          U[index] = (kzp * *k_up_Ptr->told_ptr / dzp +
+          U = (kzp * *(told_ptr + stepsize[2]) / dzp +
                       (hc + hr*pow(F,0.25))*Tair + q)/(kzp/dzp + (hc + hr));
           break;
         case Surface::Z_POS:
-          U[index] = (kzm*U[k_down_Ptr->index]/dzm +
+          U = (kzm * *(&U - stepsize[2])/dzm +
                       (hc + hr*pow(F,0.25))*Tair + q)/(kzm/dzm + (hc + hr));
           break;
       }
@@ -1036,7 +1028,7 @@ void BoundaryCell::calcCellADEUp(double /*timestep*/, const Foundation &foundati
 }
 
 void BoundaryCell::calcCellADEDown(double /*timestep*/, const Foundation &foundation, const BoundaryConditions &bcs,
-                                 std::vector<double> &V)
+                                 double &V)
 {
   switch (surfacePtr->boundaryConditionType)
   {
@@ -1045,22 +1037,22 @@ void BoundaryCell::calcCellADEDown(double /*timestep*/, const Foundation &founda
       switch (surfacePtr->orientation)
       {
         case Surface::X_NEG:
-          V[index] = V[i_up_Ptr->index];
+          V = *(&V + stepsize[0]);
           break;
         case Surface::X_POS:
-          V[index] = *i_down_Ptr->told_ptr;
+          V = *(told_ptr - stepsize[0]);
           break;
         case Surface::Y_NEG:
-          V[index] = V[j_up_Ptr->index];
+          V = *(&V + stepsize[1]);
           break;
         case Surface::Y_POS:
-          V[index] = *j_down_Ptr->told_ptr;
+          V = *(told_ptr - stepsize[1]);
           break;
         case Surface::Z_NEG:
-          V[index] = V[k_up_Ptr->index];
+          V = *(&V + stepsize[2]);
           break;
         case Surface::Z_POS:
-          V[index] = *k_down_Ptr->told_ptr;
+          V = *(told_ptr - stepsize[2]);
           break;
       }
     }
@@ -1068,17 +1060,17 @@ void BoundaryCell::calcCellADEDown(double /*timestep*/, const Foundation &founda
 
     case Surface::CONSTANT_TEMPERATURE:
 
-      V[index] = surfacePtr->temperature;
+      V = surfacePtr->temperature;
       break;
 
     case Surface::INTERIOR_TEMPERATURE:
 
-      V[index] = bcs.indoorTemp;
+      V = bcs.indoorTemp;
       break;
 
     case Surface::EXTERIOR_TEMPERATURE:
 
-      V[index] = bcs.outdoorTemp;
+      V = bcs.outdoorTemp;
       break;
 
     case Surface::INTERIOR_FLUX:
@@ -1094,27 +1086,27 @@ void BoundaryCell::calcCellADEDown(double /*timestep*/, const Foundation &founda
       switch (surfacePtr->orientation)
       {
         case Surface::X_NEG:
-          V[index] = (kxp*V[i_up_Ptr->index]/dxp +
+          V = (kxp * *(&V + stepsize[0])/dxp +
                       (hc + hr)*Tair + q)/(kxp/dxp + (hc + hr));
           break;
         case Surface::X_POS:
-          V[index] = (kxm * *i_down_Ptr->told_ptr / dxm +
+          V = (kxm * *(told_ptr - stepsize[0]) / dxm +
                       (hc + hr)*Tair + q)/(kxm/dxm + (hc + hr));
           break;
         case Surface::Y_NEG:
-          V[index] = (kyp*V[j_up_Ptr->index]/dyp +
+          V = (kyp * *(&V + stepsize[1])/dyp +
                       (hc + hr)*Tair + q)/(kyp/dyp + (hc + hr));
           break;
         case Surface::Y_POS:
-          V[index] = (kym * *j_down_Ptr->told_ptr / dym +
+          V = (kym * *(told_ptr - stepsize[1]) / dym +
                       (hc + hr)*Tair + q)/(kym/dym + (hc + hr));
           break;
         case Surface::Z_NEG:
-          V[index] = (kzp*V[k_up_Ptr->index]/dzp +
+          V = (kzp * *(&V + stepsize[2])/dzp +
                       (hc + hr)*Tair + q)/(kzp/dzp + (hc + hr));
           break;
         case Surface::Z_POS:
-          V[index] = (kzm * *k_down_Ptr->told_ptr / dzm +
+          V = (kzm * *(told_ptr - stepsize[2]) / dzm +
                       (hc + hr)*Tair + q)/(kzm/dzm + (hc + hr));
           break;
       }
@@ -1135,27 +1127,27 @@ void BoundaryCell::calcCellADEDown(double /*timestep*/, const Foundation &founda
       switch (surfacePtr->orientation)
       {
         case Surface::X_NEG:
-          V[index] = (kxp*V[i_up_Ptr->index]/dxp +
+          V = (kxp * *(&V + stepsize[0])/dxp +
                       (hc + hr*pow(F,0.25))*Tair + q)/(kxp/dxp + (hc + hr));
           break;
         case Surface::X_POS:
-          V[index] = (kxm * *i_down_Ptr->told_ptr / dxm +
+          V = (kxm * *(told_ptr - stepsize[0]) / dxm +
                       (hc + hr*pow(F,0.25))*Tair + q)/(kxm/dxm + (hc + hr));
           break;
         case Surface::Y_NEG:
-          V[index] = (kyp*V[j_up_Ptr->index]/dyp +
+          V = (kyp * *(&V + stepsize[1])/dyp +
                       (hc + hr*pow(F,0.25))*Tair + q)/(kyp/dyp + (hc + hr));
           break;
         case Surface::Y_POS:
-          V[index] = (kym * *j_down_Ptr->told_ptr / dym +
+          V = (kym * *(told_ptr - stepsize[1]) / dym +
                       (hc + hr*pow(F,0.25))*Tair + q)/(kym/dym + (hc + hr));
           break;
         case Surface::Z_NEG:
-          V[index] = (kzp * V[k_up_Ptr->index]/dzp +
+          V = (kzp * *(&V + stepsize[2])/dzp +
                       (hc + hr*pow(F,0.25))*Tair + q)/(kzp/dzp + (hc + hr));
           break;
         case Surface::Z_POS:
-          V[index] = (kzm * *k_down_Ptr->told_ptr / dzm +
+          V = (kzm * *(told_ptr - stepsize[2]) / dzm +
                       (hc + hr*pow(F,0.25))*Tair + q)/(kzm/dzm + (hc + hr));
           break;
       }
@@ -1174,17 +1166,17 @@ double BoundaryCell::calcCellExplicit(double /*timestep*/, const Foundation &fou
       switch (surfacePtr->orientation)
       {
         case Surface::X_NEG:
-          return *i_up_Ptr->told_ptr;
+          return *(told_ptr + stepsize[0]);
         case Surface::X_POS:
-          return *i_down_Ptr->told_ptr;
+          return *(told_ptr - stepsize[0]);
         case Surface::Y_NEG:
-          return *j_up_Ptr->told_ptr;
+          return *(told_ptr + stepsize[1]);
         case Surface::Y_POS:
-          return *j_down_Ptr->told_ptr;
+          return *(told_ptr - stepsize[1]);
         case Surface::Z_NEG:
-          return *k_up_Ptr->told_ptr;
+          return *(told_ptr + stepsize[2]);
         case Surface::Z_POS:
-          return *k_down_Ptr->told_ptr;
+          return *(told_ptr - stepsize[2]);
       }
     }
     break;
@@ -1211,22 +1203,22 @@ double BoundaryCell::calcCellExplicit(double /*timestep*/, const Foundation &fou
       switch (surfacePtr->orientation)
       {
         case Surface::X_NEG:
-          return (kxp * *i_up_Ptr->told_ptr/dxp +
+          return (kxp * *(told_ptr + stepsize[0])/dxp +
                          (hc + hr)*Tair + q)/(kxp/dxp + (hc + hr));
         case Surface::X_POS:
-          return (kxm * *i_down_Ptr->told_ptr/dxm +
+          return (kxm * *(told_ptr - stepsize[0])/dxm +
                          (hc + hr)*Tair + q)/(kxm/dxm + (hc + hr));
         case Surface::Y_NEG:
-          return (kyp * *j_up_Ptr->told_ptr/dyp +
+          return (kyp * *(told_ptr + stepsize[1])/dyp +
                          (hc + hr)*Tair + q)/(kyp/dyp + (hc + hr));
         case Surface::Y_POS:
-          return (kym * *j_down_Ptr->told_ptr/dym +
+          return (kym * *(told_ptr - stepsize[1])/dym +
                          (hc + hr)*Tair + q)/(kym/dym + (hc + hr));
         case Surface::Z_NEG:
-          return (kzp * *k_up_Ptr->told_ptr/dzp +
+          return (kzp * *(told_ptr + stepsize[2])/dzp +
                          (hc + hr)*Tair + q)/(kzp/dzp + (hc + hr));
         case Surface::Z_POS:
-          return (kzm * *k_down_Ptr->told_ptr/dzm +
+          return (kzm * *(told_ptr - stepsize[2])/dzm +
                          (hc + hr)*Tair + q)/(kzm/dzm + (hc + hr));
       }
     }
@@ -1246,22 +1238,22 @@ double BoundaryCell::calcCellExplicit(double /*timestep*/, const Foundation &fou
       switch (surfacePtr->orientation)
       {
         case Surface::X_NEG:
-          return (kxp * *i_up_Ptr->told_ptr/dxp +
+          return (kxp * *(told_ptr + stepsize[0])/dxp +
                          (hc + hr*pow(F,0.25))*Tair + q)/(kxp/dxp + (hc + hr));
         case Surface::X_POS:
-          return (kxm * *i_down_Ptr->told_ptr/dxm +
+          return (kxm * *(told_ptr - stepsize[0])/dxm +
                          (hc + hr*pow(F,0.25))*Tair + q)/(kxm/dxm + (hc + hr));
         case Surface::Y_NEG:
-          return (kyp * *j_up_Ptr->told_ptr/dyp +
+          return (kyp * *(told_ptr + stepsize[1])/dyp +
                          (hc + hr*pow(F,0.25))*Tair + q)/(kyp/dyp + (hc + hr));
         case Surface::Y_POS:
-          return (kym * *j_down_Ptr->told_ptr/dym +
+          return (kym * *(told_ptr - stepsize[1])/dym +
                          (hc + hr*pow(F,0.25))*Tair + q)/(kym/dym + (hc + hr));
         case Surface::Z_NEG:
-          return (kzp * *k_up_Ptr->told_ptr/dzp +
+          return (kzp * *(told_ptr + stepsize[2])/dzp +
                          (hc + hr*pow(F,0.25))*Tair + q)/(kzp/dzp + (hc + hr));
         case Surface::Z_POS:
-          return (kzm * *k_down_Ptr->told_ptr/dzm +
+          return (kzm * *(told_ptr - stepsize[2])/dzm +
                          (hc + hr*pow(F,0.25))*Tair + q)/(kzm/dzm + (hc + hr));
       }
     }
@@ -1733,8 +1725,9 @@ void BoundaryCell::calcCellMatrix(Kiva::Foundation::NumericalScheme /*scheme*/, 
   }
 }
 
-std::vector<double> BoundaryCell::calculateHeatFlux(int ndims, std::vector<double> &TNew,
-                                            std::size_t nX, std::size_t nY, std::size_t nZ)
+std::vector<double> BoundaryCell::calculateHeatFlux(int ndims, double &TNew,
+                                                    std::size_t nX, std::size_t nY, std::size_t nZ,
+                                                    const std::vector< std::shared_ptr<Cell> > &/*cell_v*/)
 {
   std::vector<double> Qflux;
   double Qx = 0;
@@ -1769,22 +1762,22 @@ std::vector<double> BoundaryCell::calculateHeatFlux(int ndims, std::vector<doubl
   double DTZM = 0;
 
   if (i != nX - 1)
-    DTXP = TNew[i_up_Ptr->index]-TNew[index];
+    DTXP = *(&TNew + stepsize[0])-TNew;
 
   if (i != 0)
-    DTXM = TNew[index]-TNew[i_down_Ptr->index];
+    DTXM = TNew-*(&TNew - stepsize[0]);
 
   if (j != nY - 1)
-    DTYP = TNew[j_up_Ptr->index]-TNew[index];
+    DTYP = *(&TNew + stepsize[1])-TNew;
 
   if (j != 0)
-    DTYM = TNew[index]-TNew[j_down_Ptr->index];
+    DTYM = TNew-*(&TNew - stepsize[1]);
 
   if (k != nZ - 1)
-    DTZP = TNew[k_up_Ptr->index]-TNew[index];
+    DTZP = *(&TNew + stepsize[2])-TNew;
 
   if (k != 0)
-    DTZM = TNew[index]-TNew[k_down_Ptr->index];
+    DTZM = TNew-*(&TNew - stepsize[2]);
 
   switch (surfacePtr->orientation)
   {
@@ -1845,8 +1838,9 @@ ZeroThicknessCell::ZeroThicknessCell(const std::size_t &index, const CellType ce
         Cell(index, cellType, i, j, k, stepsize, foundation, surfacePtr, blockPtr, meshXptr, meshYptr, meshZptr)
 {}
 
-std::vector<double> ZeroThicknessCell::calculateHeatFlux(int ndims, std::vector<double> &TNew,
-                                            std::size_t nX, std::size_t nY, std::size_t nZ)
+std::vector<double> ZeroThicknessCell::calculateHeatFlux(int ndims, double &TNew,
+                                                         std::size_t nX, std::size_t nY, std::size_t nZ,
+                                                         const std::vector< std::shared_ptr<Cell> > &cell_v)
 {
   std::vector<double> Qflux;
   double Qx = 0;
@@ -1858,18 +1852,18 @@ std::vector<double> ZeroThicknessCell::calculateHeatFlux(int ndims, std::vector<
 
   if (isEqual(meshXptr->deltas[i], 0.0))
   {
-    Qm = i_down_Ptr->calculateHeatFlux(ndims, TNew, nX, nY, nZ);
-    Qp = i_up_Ptr->calculateHeatFlux(ndims, TNew, nX, nY, nZ);
+    Qm = cell_v[index - stepsize[0]]->calculateHeatFlux(ndims, *(&TNew - stepsize[0]), nX, nY, nZ, cell_v);
+    Qp = cell_v[index + stepsize[0]]->calculateHeatFlux(ndims, *(&TNew + stepsize[0]), nX, nY, nZ, cell_v);
   }
   if (isEqual(meshYptr->deltas[j], 0.0))
   {
-    Qm = j_down_Ptr->calculateHeatFlux(ndims, TNew, nX, nY, nZ);
-    Qp = j_up_Ptr->calculateHeatFlux(ndims, TNew, nX, nY, nZ);
+    Qm = cell_v[index - stepsize[1]]->calculateHeatFlux(ndims, *(&TNew - stepsize[1]), nX, nY, nZ, cell_v);
+    Qp = cell_v[index + stepsize[1]]->calculateHeatFlux(ndims, *(&TNew + stepsize[1]), nX, nY, nZ, cell_v);
   }
   if (isEqual(meshZptr->deltas[k], 0.0))
   {
-    Qm = k_down_Ptr->calculateHeatFlux(ndims, TNew, nX, nY, nZ);
-    Qp = k_up_Ptr->calculateHeatFlux(ndims, TNew, nX, nY, nZ);
+    Qm = cell_v[index - stepsize[2]]->calculateHeatFlux(ndims, *(&TNew - stepsize[2]), nX, nY, nZ, cell_v);
+    Qp = cell_v[index + stepsize[2]]->calculateHeatFlux(ndims, *(&TNew + stepsize[2]), nX, nY, nZ, cell_v);
   }
 
   Qx = (Qm[0] + Qp[0])*0.5;

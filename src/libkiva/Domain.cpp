@@ -225,13 +225,11 @@ void Domain::setDomain(Foundation &foundation)
   // Calculate matrix coefficients
   for (auto this_cell: cell)
   {
-    this_cell->setNeighbors(cell, nX, nY, nZ);
-
     // PDE Coefficients
     this_cell->setDistances(dxp_vector[this_cell->i], dxm_vector[this_cell->i],
                            dyp_vector[this_cell->j], dym_vector[this_cell->j],
                            dzp_vector[this_cell->k], dzm_vector[this_cell->k]);
-    this_cell->setConductivities();
+    this_cell->setConductivities(cell);
     this_cell->setPDEcoefficients(foundation.numberOfDimensions,
                                   foundation.coordinateSystem == Foundation::CS_CYLINDRICAL);
   }

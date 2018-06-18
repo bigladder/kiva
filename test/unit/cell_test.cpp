@@ -41,25 +41,6 @@ TEST_F( CellFixture, cell_basics)
 //  EXPECT_EQ(cell_vector[120]->surfacePtr, NULL);
 }
 
-TEST_F( CellFixture, neighbors)
-{
-  EXPECT_EQ(cell_vector[0]->i_up_Ptr->i, cell_vector[0]->i+1);
-  EXPECT_EQ(cell_vector[0]->i_up_Ptr->k, cell_vector[0]->k);
-  EXPECT_EQ(cell_vector[0]->i_down_Ptr, nullptr);
-  EXPECT_EQ(cell_vector[0]->k_up_Ptr->i, cell_vector[0]->i);
-  EXPECT_EQ(cell_vector[0]->k_up_Ptr->k, cell_vector[0]->k+1);
-  EXPECT_EQ(cell_vector[0]->k_down_Ptr, nullptr);
-
-  EXPECT_EQ(cell_vector[120]->i_up_Ptr->i, cell_vector[120]->i+1);
-  EXPECT_EQ(cell_vector[120]->i_up_Ptr->k, cell_vector[120]->k);
-  EXPECT_EQ(cell_vector[120]->i_down_Ptr->i, cell_vector[120]->i-1);
-  EXPECT_EQ(cell_vector[120]->i_down_Ptr->k, cell_vector[120]->k);
-  EXPECT_EQ(cell_vector[120]->k_up_Ptr->i, cell_vector[120]->i);
-  EXPECT_EQ(cell_vector[120]->k_up_Ptr->k, cell_vector[120]->k+1);
-  EXPECT_EQ(cell_vector[120]->k_down_Ptr->i, cell_vector[120]->i);
-  EXPECT_EQ(cell_vector[120]->k_down_Ptr->k, cell_vector[120]->k-1);
-}
-
 TEST_F( GC10aADIFixture, calcCellADI)
 {
   double A{0.0}, Ap{0.0}, Am{0.0}, bVal{0.0};
@@ -80,8 +61,8 @@ TEST_F( GC10aADIFixture, calcCellADI)
   EXPECT_DOUBLE_EQ(Ap, (2 - f)*(-this_cell->cxp*theta));
   EXPECT_DOUBLE_EQ(Am, (2 - f)*(this_cell->cxm*theta));
   EXPECT_DOUBLE_EQ(bVal, *this_cell->told_ptr*(1.0 + f*(this_cell->czm - this_cell->czp)*theta)
-                       - *this_cell->k_down_Ptr->told_ptr*f*this_cell->czm*theta
-                       + *this_cell->k_up_Ptr->told_ptr*f*this_cell->czp*theta
+                       - *(this_cell->told_ptr - ground->domain.stepsize[2])*f*this_cell->czm*theta
+                       + *(this_cell->told_ptr + ground->domain.stepsize[2])*f*this_cell->czp*theta
                        + this_cell->heatGain*theta);
 }
 
