@@ -45,14 +45,14 @@ void Cell::Assemble(const Foundation &foundation) {
   }
 }
 
-void Cell::setDistances(double &dxp_in, double &dxm_in, double &dyp_in, double &dym_in,
-                        double &dzp_in, double &dzm_in) {
-  dxp = dxp_in;
-  dxm = dxm_in;
-  dyp = dyp_in;
-  dym = dym_in;
-  dzp = dzp_in;
-  dzm = dzm_in;
+void Cell::setDistances(const double &dxp_in, const double &dxm_in, const double &dyp_in, const double &dym_in,
+                        const double &dzp_in, const double &dzm_in) {
+  dist[0][1] = dxp_in;
+  dist[0][0] = dxm_in;
+  dist[1][1] = dyp_in;
+  dist[1][0] = dym_in;
+  dist[2][1] = dzp_in;
+  dist[2][0] = dzm_in;
 }
 
 void Cell::setConductivities(const std::vector< std::shared_ptr<Cell> > &cell_v) {
@@ -74,8 +74,8 @@ void Cell::getKXP(const std::vector< std::shared_ptr<Cell> > &cell_v)
   }
   else
   {
-    kxp = 1/(meshPtr[0].deltas[coords[0]]/(2*dxp*conductivity) +
-             meshPtr[0].deltas[coords[0] + 1]/(2*dxp*cell_v[index + stepsize[0]]->conductivity));
+    kxp = 1/(meshPtr[0].deltas[coords[0]]/(2*dist[0][1]*conductivity) +
+             meshPtr[0].deltas[coords[0] + 1]/(2*dist[0][1]*cell_v[index + stepsize[0]]->conductivity));
   }
 }
 
@@ -89,8 +89,8 @@ void Cell::getKXM(const std::vector< std::shared_ptr<Cell> > &cell_v)
   }
   else
   {
-    kxm = 1/(meshPtr[0].deltas[coords[0]]/(2*dxm*conductivity) +
-             meshPtr[0].deltas[coords[0] - 1]/(2*dxm*cell_v[index - stepsize[0]]->conductivity));
+    kxm = 1/(meshPtr[0].deltas[coords[0]]/(2*dist[0][0]*conductivity) +
+             meshPtr[0].deltas[coords[0] - 1]/(2*dist[0][0]*cell_v[index - stepsize[0]]->conductivity));
   }
 }
 
@@ -104,8 +104,8 @@ void Cell::getKYP(const std::vector< std::shared_ptr<Cell> > &cell_v)
   }
   else
   {
-    kyp = 1/(meshPtr[1].deltas[coords[1]]/(2*dyp*conductivity) +
-             meshPtr[1].deltas[coords[1] + 1]/(2*dyp*cell_v[index + stepsize[1]]->conductivity));
+    kyp = 1/(meshPtr[1].deltas[coords[1]]/(2*dist[1][1]*conductivity) +
+             meshPtr[1].deltas[coords[1] + 1]/(2*dist[1][1]*cell_v[index + stepsize[1]]->conductivity));
   }
 }
 
@@ -119,8 +119,8 @@ void Cell::getKYM(const std::vector< std::shared_ptr<Cell> > &cell_v)
   }
   else
   {
-    kym = 1/(meshPtr[1].deltas[coords[1]]/(2*dym*conductivity) +
-             meshPtr[1].deltas[coords[1] - 1]/(2*dym*cell_v[index - stepsize[1]]->conductivity));
+    kym = 1/(meshPtr[1].deltas[coords[1]]/(2*dist[1][0]*conductivity) +
+             meshPtr[1].deltas[coords[1] - 1]/(2*dist[1][0]*cell_v[index - stepsize[1]]->conductivity));
   }
 }
 
@@ -134,8 +134,8 @@ void Cell::getKZP(const std::vector< std::shared_ptr<Cell> > &cell_v)
   }
   else
   {
-    kzp = 1/(meshPtr[2].deltas[coords[2]]/(2*dzp*conductivity) +
-             meshPtr[2].deltas[coords[2] + 1]/(2*dzp*cell_v[index + stepsize[2]]->conductivity));
+    kzp = 1/(meshPtr[2].deltas[coords[2]]/(2*dist[2][1]*conductivity) +
+             meshPtr[2].deltas[coords[2] + 1]/(2*dist[2][1]*cell_v[index + stepsize[2]]->conductivity));
   }
 }
 
@@ -149,8 +149,8 @@ void Cell::getKZM(const std::vector< std::shared_ptr<Cell> > &cell_v)
   }
   else
   {
-    kzm = 1/(meshPtr[2].deltas[coords[2]]/(2*dzm*conductivity) +
-             meshPtr[2].deltas[coords[2] - 1]/(2*dzm*cell_v[index - stepsize[2]]->conductivity));
+    kzm = 1/(meshPtr[2].deltas[coords[2]]/(2*dist[2][0]*conductivity) +
+             meshPtr[2].deltas[coords[2] - 1]/(2*dist[2][0]*cell_v[index - stepsize[2]]->conductivity));
   }
 }
 
@@ -159,8 +159,8 @@ void Cell::setPDEcoefficients(int ndims, bool cylindrical) {
     // Radial X terms
     if (cylindrical)
     {
-      cxp_c = (dxm*kxp) / ((dxm + dxp)*dxp);
-      cxm_c = (dxp*kxm) / ((dxm + dxp)*dxm);
+      cxp_c = (dist[0][0]*kxp) / ((dist[0][0] + dist[0][1])*dist[0][1]);
+      cxm_c = (dist[0][1]*kxm) / ((dist[0][0] + dist[0][1])*dist[0][0]);
     }
     else
     {
@@ -169,19 +169,19 @@ void Cell::setPDEcoefficients(int ndims, bool cylindrical) {
     }
 
     // Cartesian X terms
-    cxp = (2*kxp) /  ((dxm + dxp)*dxp);
-    cxm = -1*(2*kxm) / ((dxm + dxp)*dxm);
+    cxp = (2*kxp) /  ((dist[0][0] + dist[0][1])*dist[0][1]);
+    cxm = -1*(2*kxm) / ((dist[0][0] + dist[0][1])*dist[0][0]);
   }
 
   // Cartesian Z terms
-  czp = (2*kzp) / ((dzm + dzp)*dzp);
-  czm = -1*(2*kzm) / ((dzm + dzp)*dzm);
+  czp = (2*kzp) / ((dist[2][0] + dist[2][1])*dist[2][1]);
+  czm = -1*(2*kzm) / ((dist[2][0] + dist[2][1])*dist[2][0]);
 
   // Cartesian Y terms
   if (ndims == 3)
   {
-    cyp = (2*kyp) / ((dym + dyp)*dyp);
-    cym = -1*(2*kym) / ((dym + dyp)*dym);
+    cyp = (2*kyp) / ((dist[1][0] + dist[1][1])*dist[1][1]);
+    cym = -1*(2*kym) / ((dist[1][0] + dist[1][1])*dist[1][0]);
   }
   else
   {
@@ -651,20 +651,20 @@ std::vector<double> Cell::calculateHeatFlux(int ndims, double &TNew,
   double CXM = 0;
   double CYP = 0;
   double CYM = 0;
-  double CZP = -kzp*dzm/(dzp+dzm)/dzp;
-  double CZM = -kzm*dzp/(dzp+dzm)/dzm;
+  double CZP = -kzp*dist[2][0]/(dist[2][1]+dist[2][0])/dist[2][1];
+  double CZM = -kzm*dist[2][1]/(dist[2][1]+dist[2][0])/dist[2][0];
 
   if (ndims > 1)
   {
-    CXP = -kxp*dxm/(dxp+dxm)/dxp;
-    CXM = -kxm*dxp/(dxp+dxm)/dxm;
+    CXP = -kxp*dist[0][0]/(dist[0][1]+dist[0][0])/dist[0][1];
+    CXM = -kxm*dist[0][1]/(dist[0][1]+dist[0][0])/dist[0][0];
   }
 
 
   if (ndims == 3)
   {
-    CYP = -kyp*dym/(dyp+dym)/dyp;
-    CYM = -kym*dyp/(dyp+dym)/dym;
+    CYP = -kyp*dist[1][0]/(dist[1][1]+dist[1][0])/dist[1][1];
+    CYM = -kym*dist[1][1]/(dist[1][1]+dist[1][0])/dist[1][0];
   }
 
   double DTXP = 0;
@@ -954,28 +954,28 @@ void BoundaryCell::calcCellADEUp(double /*timestep*/, const Foundation &foundati
       switch (surfacePtr->orientation)
       {
         case Surface::X_NEG:
-          U = (kxp * *(told_ptr + stepsize[0]) / dxp +
-                      (hc + hr)*Tair + q)/(kxp/dxp + (hc + hr));
+          U = (kxp * *(told_ptr + stepsize[0]) / dist[0][1] +
+                      (hc + hr)*Tair + q)/(kxp/dist[0][1] + (hc + hr));
           break;
         case Surface::X_POS:
-          U = (kxm * *(&U - stepsize[0])/dxm +
-                      (hc + hr)*Tair + q)/(kxm/dxm + (hc + hr));
+          U = (kxm * *(&U - stepsize[0])/dist[0][0] +
+                      (hc + hr)*Tair + q)/(kxm/dist[0][0] + (hc + hr));
           break;
         case Surface::Y_NEG:
-          U = (kyp * *(told_ptr + stepsize[1]) / dyp +
-                      (hc + hr)*Tair + q)/(kyp/dyp + (hc + hr));
+          U = (kyp * *(told_ptr + stepsize[1]) / dist[1][1] +
+                      (hc + hr)*Tair + q)/(kyp/dist[1][1] + (hc + hr));
           break;
         case Surface::Y_POS:
-          U = (kym * *(&U - stepsize[1])/dym +
-                      (hc + hr)*Tair + q)/(kym/dym + (hc + hr));
+          U = (kym * *(&U - stepsize[1])/dist[1][0] +
+                      (hc + hr)*Tair + q)/(kym/dist[1][0] + (hc + hr));
           break;
         case Surface::Z_NEG:
-          U = (kzp * *(told_ptr + stepsize[2]) / dzp +
-                      (hc + hr)*Tair + q)/(kzp/dzp + (hc + hr));
+          U = (kzp * *(told_ptr + stepsize[2]) / dist[2][1] +
+                      (hc + hr)*Tair + q)/(kzp/dist[2][1] + (hc + hr));
           break;
         case Surface::Z_POS:
-          U = (kzm * *(&U - stepsize[2])/dzm +
-                      (hc + hr)*Tair + q)/(kzm/dzm + (hc + hr));
+          U = (kzm * *(&U - stepsize[2])/dist[2][0] +
+                      (hc + hr)*Tair + q)/(kzm/dist[2][0] + (hc + hr));
           break;
       }
     }
@@ -995,28 +995,28 @@ void BoundaryCell::calcCellADEUp(double /*timestep*/, const Foundation &foundati
       switch (surfacePtr->orientation)
       {
         case Surface::X_NEG:
-          U = (kxp * *(told_ptr + stepsize[0]) / dxp +
-                      (hc + hr*pow(F,0.25))*Tair + q)/(kxp/dxp + (hc + hr));
+          U = (kxp * *(told_ptr + stepsize[0]) / dist[0][1] +
+                      (hc + hr*pow(F,0.25))*Tair + q)/(kxp/dist[0][1] + (hc + hr));
           break;
         case Surface::X_POS:
-          U = (kxm * *(&U - stepsize[0])/dxm +
-                      (hc + hr*pow(F,0.25))*Tair + q)/(kxm/dxm + (hc + hr));
+          U = (kxm * *(&U - stepsize[0])/dist[0][0] +
+                      (hc + hr*pow(F,0.25))*Tair + q)/(kxm/dist[0][0] + (hc + hr));
           break;
         case Surface::Y_NEG:
-          U = (kyp * *(told_ptr + stepsize[1]) / dyp +
-                      (hc + hr*pow(F,0.25))*Tair + q)/(kyp/dyp + (hc + hr));
+          U = (kyp * *(told_ptr + stepsize[1]) / dist[1][1] +
+                      (hc + hr*pow(F,0.25))*Tair + q)/(kyp/dist[1][1] + (hc + hr));
           break;
         case Surface::Y_POS:
-          U = (kym * *(&U - stepsize[1])/dym +
-                      (hc + hr*pow(F,0.25))*Tair + q)/(kym/dym + (hc + hr));
+          U = (kym * *(&U - stepsize[1])/dist[1][0] +
+                      (hc + hr*pow(F,0.25))*Tair + q)/(kym/dist[1][0] + (hc + hr));
           break;
         case Surface::Z_NEG:
-          U = (kzp * *(told_ptr + stepsize[2]) / dzp +
-                      (hc + hr*pow(F,0.25))*Tair + q)/(kzp/dzp + (hc + hr));
+          U = (kzp * *(told_ptr + stepsize[2]) / dist[2][1] +
+                      (hc + hr*pow(F,0.25))*Tair + q)/(kzp/dist[2][1] + (hc + hr));
           break;
         case Surface::Z_POS:
-          U = (kzm * *(&U - stepsize[2])/dzm +
-                      (hc + hr*pow(F,0.25))*Tair + q)/(kzm/dzm + (hc + hr));
+          U = (kzm * *(&U - stepsize[2])/dist[2][0] +
+                      (hc + hr*pow(F,0.25))*Tair + q)/(kzm/dist[2][0] + (hc + hr));
           break;
       }
     }
@@ -1084,28 +1084,28 @@ void BoundaryCell::calcCellADEDown(double /*timestep*/, const Foundation &founda
       switch (surfacePtr->orientation)
       {
         case Surface::X_NEG:
-          V = (kxp * *(&V + stepsize[0])/dxp +
-                      (hc + hr)*Tair + q)/(kxp/dxp + (hc + hr));
+          V = (kxp * *(&V + stepsize[0])/dist[0][1] +
+                      (hc + hr)*Tair + q)/(kxp/dist[0][1] + (hc + hr));
           break;
         case Surface::X_POS:
-          V = (kxm * *(told_ptr - stepsize[0]) / dxm +
-                      (hc + hr)*Tair + q)/(kxm/dxm + (hc + hr));
+          V = (kxm * *(told_ptr - stepsize[0]) / dist[0][0] +
+                      (hc + hr)*Tair + q)/(kxm/dist[0][0] + (hc + hr));
           break;
         case Surface::Y_NEG:
-          V = (kyp * *(&V + stepsize[1])/dyp +
-                      (hc + hr)*Tair + q)/(kyp/dyp + (hc + hr));
+          V = (kyp * *(&V + stepsize[1])/dist[1][1] +
+                      (hc + hr)*Tair + q)/(kyp/dist[1][1] + (hc + hr));
           break;
         case Surface::Y_POS:
-          V = (kym * *(told_ptr - stepsize[1]) / dym +
-                      (hc + hr)*Tair + q)/(kym/dym + (hc + hr));
+          V = (kym * *(told_ptr - stepsize[1]) / dist[1][0] +
+                      (hc + hr)*Tair + q)/(kym/dist[1][0] + (hc + hr));
           break;
         case Surface::Z_NEG:
-          V = (kzp * *(&V + stepsize[2])/dzp +
-                      (hc + hr)*Tair + q)/(kzp/dzp + (hc + hr));
+          V = (kzp * *(&V + stepsize[2])/dist[2][1] +
+                      (hc + hr)*Tair + q)/(kzp/dist[2][1] + (hc + hr));
           break;
         case Surface::Z_POS:
-          V = (kzm * *(told_ptr - stepsize[2]) / dzm +
-                      (hc + hr)*Tair + q)/(kzm/dzm + (hc + hr));
+          V = (kzm * *(told_ptr - stepsize[2]) / dist[2][0] +
+                      (hc + hr)*Tair + q)/(kzm/dist[2][0] + (hc + hr));
           break;
       }
     }
@@ -1125,28 +1125,28 @@ void BoundaryCell::calcCellADEDown(double /*timestep*/, const Foundation &founda
       switch (surfacePtr->orientation)
       {
         case Surface::X_NEG:
-          V = (kxp * *(&V + stepsize[0])/dxp +
-                      (hc + hr*pow(F,0.25))*Tair + q)/(kxp/dxp + (hc + hr));
+          V = (kxp * *(&V + stepsize[0])/dist[0][1] +
+                      (hc + hr*pow(F,0.25))*Tair + q)/(kxp/dist[0][1] + (hc + hr));
           break;
         case Surface::X_POS:
-          V = (kxm * *(told_ptr - stepsize[0]) / dxm +
-                      (hc + hr*pow(F,0.25))*Tair + q)/(kxm/dxm + (hc + hr));
+          V = (kxm * *(told_ptr - stepsize[0]) / dist[0][0] +
+                      (hc + hr*pow(F,0.25))*Tair + q)/(kxm/dist[0][0] + (hc + hr));
           break;
         case Surface::Y_NEG:
-          V = (kyp * *(&V + stepsize[1])/dyp +
-                      (hc + hr*pow(F,0.25))*Tair + q)/(kyp/dyp + (hc + hr));
+          V = (kyp * *(&V + stepsize[1])/dist[1][1] +
+                      (hc + hr*pow(F,0.25))*Tair + q)/(kyp/dist[1][1] + (hc + hr));
           break;
         case Surface::Y_POS:
-          V = (kym * *(told_ptr - stepsize[1]) / dym +
-                      (hc + hr*pow(F,0.25))*Tair + q)/(kym/dym + (hc + hr));
+          V = (kym * *(told_ptr - stepsize[1]) / dist[1][0] +
+                      (hc + hr*pow(F,0.25))*Tair + q)/(kym/dist[1][0] + (hc + hr));
           break;
         case Surface::Z_NEG:
-          V = (kzp * *(&V + stepsize[2])/dzp +
-                      (hc + hr*pow(F,0.25))*Tair + q)/(kzp/dzp + (hc + hr));
+          V = (kzp * *(&V + stepsize[2])/dist[2][1] +
+                      (hc + hr*pow(F,0.25))*Tair + q)/(kzp/dist[2][1] + (hc + hr));
           break;
         case Surface::Z_POS:
-          V = (kzm * *(told_ptr - stepsize[2]) / dzm +
-                      (hc + hr*pow(F,0.25))*Tair + q)/(kzm/dzm + (hc + hr));
+          V = (kzm * *(told_ptr - stepsize[2]) / dist[2][0] +
+                      (hc + hr*pow(F,0.25))*Tair + q)/(kzm/dist[2][0] + (hc + hr));
           break;
       }
     }
@@ -1201,23 +1201,23 @@ double BoundaryCell::calcCellExplicit(double /*timestep*/, const Foundation &fou
       switch (surfacePtr->orientation)
       {
         case Surface::X_NEG:
-          return (kxp * *(told_ptr + stepsize[0])/dxp +
-                         (hc + hr)*Tair + q)/(kxp/dxp + (hc + hr));
+          return (kxp * *(told_ptr + stepsize[0])/dist[0][1] +
+                         (hc + hr)*Tair + q)/(kxp/dist[0][1] + (hc + hr));
         case Surface::X_POS:
-          return (kxm * *(told_ptr - stepsize[0])/dxm +
-                         (hc + hr)*Tair + q)/(kxm/dxm + (hc + hr));
+          return (kxm * *(told_ptr - stepsize[0])/dist[0][0] +
+                         (hc + hr)*Tair + q)/(kxm/dist[0][0] + (hc + hr));
         case Surface::Y_NEG:
-          return (kyp * *(told_ptr + stepsize[1])/dyp +
-                         (hc + hr)*Tair + q)/(kyp/dyp + (hc + hr));
+          return (kyp * *(told_ptr + stepsize[1])/dist[1][1] +
+                         (hc + hr)*Tair + q)/(kyp/dist[1][1] + (hc + hr));
         case Surface::Y_POS:
-          return (kym * *(told_ptr - stepsize[1])/dym +
-                         (hc + hr)*Tair + q)/(kym/dym + (hc + hr));
+          return (kym * *(told_ptr - stepsize[1])/dist[1][0] +
+                         (hc + hr)*Tair + q)/(kym/dist[1][0] + (hc + hr));
         case Surface::Z_NEG:
-          return (kzp * *(told_ptr + stepsize[2])/dzp +
-                         (hc + hr)*Tair + q)/(kzp/dzp + (hc + hr));
+          return (kzp * *(told_ptr + stepsize[2])/dist[2][1] +
+                         (hc + hr)*Tair + q)/(kzp/dist[2][1] + (hc + hr));
         case Surface::Z_POS:
-          return (kzm * *(told_ptr - stepsize[2])/dzm +
-                         (hc + hr)*Tair + q)/(kzm/dzm + (hc + hr));
+          return (kzm * *(told_ptr - stepsize[2])/dist[2][0] +
+                         (hc + hr)*Tair + q)/(kzm/dist[2][0] + (hc + hr));
       }
     }
     break;
@@ -1236,23 +1236,23 @@ double BoundaryCell::calcCellExplicit(double /*timestep*/, const Foundation &fou
       switch (surfacePtr->orientation)
       {
         case Surface::X_NEG:
-          return (kxp * *(told_ptr + stepsize[0])/dxp +
-                         (hc + hr*pow(F,0.25))*Tair + q)/(kxp/dxp + (hc + hr));
+          return (kxp * *(told_ptr + stepsize[0])/dist[0][1] +
+                         (hc + hr*pow(F,0.25))*Tair + q)/(kxp/dist[0][1] + (hc + hr));
         case Surface::X_POS:
-          return (kxm * *(told_ptr - stepsize[0])/dxm +
-                         (hc + hr*pow(F,0.25))*Tair + q)/(kxm/dxm + (hc + hr));
+          return (kxm * *(told_ptr - stepsize[0])/dist[0][0] +
+                         (hc + hr*pow(F,0.25))*Tair + q)/(kxm/dist[0][0] + (hc + hr));
         case Surface::Y_NEG:
-          return (kyp * *(told_ptr + stepsize[1])/dyp +
-                         (hc + hr*pow(F,0.25))*Tair + q)/(kyp/dyp + (hc + hr));
+          return (kyp * *(told_ptr + stepsize[1])/dist[1][1] +
+                         (hc + hr*pow(F,0.25))*Tair + q)/(kyp/dist[1][1] + (hc + hr));
         case Surface::Y_POS:
-          return (kym * *(told_ptr - stepsize[1])/dym +
-                         (hc + hr*pow(F,0.25))*Tair + q)/(kym/dym + (hc + hr));
+          return (kym * *(told_ptr - stepsize[1])/dist[1][0] +
+                         (hc + hr*pow(F,0.25))*Tair + q)/(kym/dist[1][0] + (hc + hr));
         case Surface::Z_NEG:
-          return (kzp * *(told_ptr + stepsize[2])/dzp +
-                         (hc + hr*pow(F,0.25))*Tair + q)/(kzp/dzp + (hc + hr));
+          return (kzp * *(told_ptr + stepsize[2])/dist[2][1] +
+                         (hc + hr*pow(F,0.25))*Tair + q)/(kzp/dist[2][1] + (hc + hr));
         case Surface::Z_POS:
-          return (kzm * *(told_ptr - stepsize[2])/dzm +
-                         (hc + hr*pow(F,0.25))*Tair + q)/(kzm/dzm + (hc + hr));
+          return (kzm * *(told_ptr - stepsize[2])/dist[2][0] +
+                         (hc + hr*pow(F,0.25))*Tair + q)/(kzm/dist[2][0] + (hc + hr));
       }
     }
     break;
@@ -1374,81 +1374,81 @@ void BoundaryCell::calcCellADI(int dim, const Foundation &foundation, double /*t
       switch (surfacePtr->orientation)
       {
         case Surface::X_NEG:
-          A = kxp/dxp + (hc + hr);
+          A = kxp/dist[0][1] + (hc + hr);
           if (dim == 1)
           {
-            Ap = -kxp/dxp;
+            Ap = -kxp/dist[0][1];
             bVal = (hc + hr)*Tair + q;
           }
           else
           {
             Ap = 0.0;
-            bVal = *(told_ptr+stepsize[0])*kxp/dxp + (hc + hr)*Tair + q;
+            bVal = *(told_ptr+stepsize[0])*kxp/dist[0][1] + (hc + hr)*Tair + q;
           }
           break;
         case Surface::X_POS:
-          A = kxm/dxm + (hc + hr);
+          A = kxm/dist[0][0] + (hc + hr);
           if (dim == 1)
           {
-            Am = -kxm/dxm;
+            Am = -kxm/dist[0][0];
             bVal = (hc + hr)*Tair + q;
           }
           else
           {
             Am = 0.0;
-            bVal = *(told_ptr-stepsize[0])*kxm/dxm + (hc + hr)*Tair + q;
+            bVal = *(told_ptr-stepsize[0])*kxm/dist[0][0] + (hc + hr)*Tair + q;
           }
           break;
         case Surface::Y_NEG:
-          A = kyp/dyp + (hc + hr);
+          A = kyp/dist[1][1] + (hc + hr);
           if (dim == 2)
           {
-            Ap = -kyp/dyp;
+            Ap = -kyp/dist[1][1];
             bVal = (hc + hr)*Tair + q;
           }
           else
           {
             Ap = 0.0;
-            bVal = *(told_ptr+stepsize[1])*kyp/dyp + (hc + hr)*Tair + q;
+            bVal = *(told_ptr+stepsize[1])*kyp/dist[1][1] + (hc + hr)*Tair + q;
           }
           break;
         case Surface::Y_POS:
-          A = kym/dym + (hc + hr);
+          A = kym/dist[1][0] + (hc + hr);
           if (dim == 2)
           {
-            Am = -kym/dym;
+            Am = -kym/dist[1][0];
             bVal = (hc + hr)*Tair + q;
           }
           else
           {
             Am = 0.0;
-            bVal = *(told_ptr-stepsize[1])*kym/dym + (hc + hr)*Tair + q;
+            bVal = *(told_ptr-stepsize[1])*kym/dist[1][0] + (hc + hr)*Tair + q;
           }
           break;
         case Surface::Z_NEG:
-          A = kzp/dzp + (hc + hr);
+          A = kzp/dist[2][1] + (hc + hr);
           if (dim == 3)
           {
-            Ap = -kzp/dzp;
+            Ap = -kzp/dist[2][1];
             bVal = (hc + hr)*Tair + q;
           }
           else
           {
             Ap = 0.0;
-            bVal = *(told_ptr+stepsize[2])*kzp/dzp + (hc + hr)*Tair + q;
+            bVal = *(told_ptr+stepsize[2])*kzp/dist[2][1] + (hc + hr)*Tair + q;
           }
           break;
         case Surface::Z_POS:
-          A = kzm/dzm + (hc + hr);
+          A = kzm/dist[2][0] + (hc + hr);
           if (dim == 3)
           {
-            Am = -kzm/dzm;
+            Am = -kzm/dist[2][0];
             bVal = (hc + hr)*Tair + q;
           }
           else
           {
             Am = 0.0;
-            bVal = *(told_ptr-stepsize[2])*kzm/dzm + (hc + hr)*Tair + q;
+            bVal = *(told_ptr-stepsize[2])*kzm/dist[2][0] + (hc + hr)*Tair + q;
           }
           break;
       }
@@ -1469,81 +1469,81 @@ void BoundaryCell::calcCellADI(int dim, const Foundation &foundation, double /*t
       switch (surfacePtr->orientation)
       {
         case Surface::X_NEG:
-          A = kxp/dxp + (hc + hr);
+          A = kxp/dist[0][1] + (hc + hr);
           if (dim == 1)
           {
-            Ap = -kxp/dxp;
+            Ap = -kxp/dist[0][1];
             bVal = (hc + hr*pow(F,0.25))*Tair + q;
           }
           else
           {
             Ap = 0.0;
-            bVal = *(told_ptr+stepsize[0])*kxp/dxp + (hc + hr*pow(F,0.25))*Tair + q;
+            bVal = *(told_ptr+stepsize[0])*kxp/dist[0][1] + (hc + hr*pow(F,0.25))*Tair + q;
           }
           break;
         case Surface::X_POS:
-          A = kxm/dxm + (hc + hr);
+          A = kxm/dist[0][0] + (hc + hr);
           if (dim == 1)
           {
-            Am = -kxm/dxm;
+            Am = -kxm/dist[0][0];
             bVal = (hc + hr*pow(F,0.25))*Tair + q;
           }
           else
           {
             Am = 0.0;
-            bVal = *(told_ptr-stepsize[0])*kxm/dxm + (hc + hr*pow(F,0.25))*Tair + q;
+            bVal = *(told_ptr-stepsize[0])*kxm/dist[0][0] + (hc + hr*pow(F,0.25))*Tair + q;
           }
           break;
         case Surface::Y_NEG:
-          A = kyp/dyp + (hc + hr);
+          A = kyp/dist[1][1] + (hc + hr);
           if (dim == 2)
           {
-            Ap = -kyp/dyp;
+            Ap = -kyp/dist[1][1];
             bVal = (hc + hr*pow(F,0.25))*Tair + q;
           }
           else
           {
             Ap = 0.0;
-            bVal = *(told_ptr+stepsize[1])*kyp/dyp + (hc + hr*pow(F,0.25))*Tair + q;
+            bVal = *(told_ptr+stepsize[1])*kyp/dist[1][1] + (hc + hr*pow(F,0.25))*Tair + q;
           }
           break;
         case Surface::Y_POS:
-          A = kym/dym + (hc + hr);
+          A = kym/dist[1][0] + (hc + hr);
           if (dim == 2)
           {
-            Am = -kym/dym;
+            Am = -kym/dist[1][0];
             bVal = (hc + hr*pow(F,0.25))*Tair + q;
           }
           else
           {
             Am = 0.0;
-            bVal = *(told_ptr-stepsize[1])*kym/dym + (hc + hr*pow(F,0.25))*Tair + q;
+            bVal = *(told_ptr-stepsize[1])*kym/dist[1][0] + (hc + hr*pow(F,0.25))*Tair + q;
           }
           break;
         case Surface::Z_NEG:
-          A = kzp/dzp + (hc + hr);
+          A = kzp/dist[2][1] + (hc + hr);
           if (dim == 3)
           {
-            Ap = -kzp/dzp;
+            Ap = -kzp/dist[2][1];
             bVal = (hc + hr*pow(F,0.25))*Tair + q;
           }
           else
           {
             Ap = 0.0;
-            bVal = *(told_ptr+stepsize[2])*kzp/dzp + (hc + hr*pow(F,0.25))*Tair + q;
+            bVal = *(told_ptr+stepsize[2])*kzp/dist[2][1] + (hc + hr*pow(F,0.25))*Tair + q;
           }
           break;
         case Surface::Z_POS:
-          A = kzm/dzm + (hc + hr);
+          A = kzm/dist[2][0] + (hc + hr);
           if (dim == 3)
           {
-            Am = -kzm/dzm;
+            Am = -kzm/dist[2][0];
             bVal = (hc + hr*pow(F,0.25))*Tair + q;
           }
           else
           {
             Am = 0.0;
-            bVal = *(told_ptr-stepsize[2])*kzm/dzm + (hc + hr*pow(F,0.25))*Tair + q;
+            bVal = *(told_ptr-stepsize[2])*kzm/dist[2][0] + (hc + hr*pow(F,0.25))*Tair + q;
           }
           break;
       }
@@ -1629,38 +1629,38 @@ void BoundaryCell::calcCellMatrix(Kiva::Foundation::NumericalScheme /*scheme*/, 
       switch (surfacePtr->orientation)
       {
         case Surface::X_NEG: {
-          A = kxp / dxp + (hc + hr);
-          Aip = -kxp / dxp;
+          A = kxp / dist[0][1] + (hc + hr);
+          Aip = -kxp / dist[0][1];
           bVal = (hc + hr) * Tair + q;
           break;
         }
         case Surface::X_POS: {
-          A = kxm / dxm + (hc + hr);
-          Aim = -kxm / dxm;
+          A = kxm / dist[0][0] + (hc + hr);
+          Aim = -kxm / dist[0][0];
           bVal = (hc + hr) * Tair + q;
           break;
         }
         case Surface::Y_NEG: {
-          A = kyp / dyp + (hc + hr);
-          Ajp = -kyp / dyp;
+          A = kyp / dist[1][1] + (hc + hr);
+          Ajp = -kyp / dist[1][1];
           bVal = (hc + hr) * Tair + q;
           break;
         }
         case Surface::Y_POS: {
-          A = kym / dym + (hc + hr);
-          Ajm = -kym / dym;
+          A = kym / dist[1][0] + (hc + hr);
+          Ajm = -kym / dist[1][0];
           bVal = (hc + hr) * Tair + q;
           break;
         }
         case Surface::Z_NEG: {
-          A = kzp / dzp + (hc + hr);
-          Akp = -kzp / dzp;
+          A = kzp / dist[2][1] + (hc + hr);
+          Akp = -kzp / dist[2][1];
           bVal = (hc + hr) * Tair + q;
           break;
         }
         case Surface::Z_POS: {
-          A = kzm / dzm + (hc + hr);
-          Akm = -kzm / dzm;
+          A = kzm / dist[2][0] + (hc + hr);
+          Akm = -kzm / dist[2][0];
           bVal = (hc + hr) * Tair + q;
           break;
         }
@@ -1682,38 +1682,38 @@ void BoundaryCell::calcCellMatrix(Kiva::Foundation::NumericalScheme /*scheme*/, 
       switch (surfacePtr->orientation)
       {
         case Surface::X_NEG: {
-          A = kxp / dxp + (hc + hr);
-          Aip = -kxp / dxp;
+          A = kxp / dist[0][1] + (hc + hr);
+          Aip = -kxp / dist[0][1];
           bVal = (hc + hr * pow(F, 0.25)) * Tair + q;
           break;
         }
         case Surface::X_POS: {
-          A = kxm / dxm + (hc + hr);
-          Aim = -kxm / dxm;
+          A = kxm / dist[0][0] + (hc + hr);
+          Aim = -kxm / dist[0][0];
           bVal = (hc + hr * pow(F, 0.25)) * Tair + q;
           break;
         }
         case Surface::Y_NEG: {
-          A = kyp / dyp + (hc + hr);
-          Ajp = -kyp / dyp;
+          A = kyp / dist[1][1] + (hc + hr);
+          Ajp = -kyp / dist[1][1];
           bVal = (hc + hr * pow(F, 0.25)) * Tair + q;
           break;
         }
         case Surface::Y_POS: {
-          A = kym / dym + (hc + hr);
-          Ajm = -kym / dym;
+          A = kym / dist[1][0] + (hc + hr);
+          Ajm = -kym / dist[1][0];
           bVal = (hc + hr * pow(F, 0.25)) * Tair + q;
           break;
         }
         case Surface::Z_NEG: {
-          A = kzp / dzp + (hc + hr);
-          Akp = -kzp / dzp;
+          A = kzp / dist[2][1] + (hc + hr);
+          Akp = -kzp / dist[2][1];
           bVal = (hc + hr * pow(F, 0.25)) * Tair + q;
           break;
         }
         case Surface::Z_POS: {
-          A = kzm / dzm + (hc + hr);
-          Akm = -kzm / dzm;
+          A = kzm / dist[2][0] + (hc + hr);
+          Akm = -kzm / dist[2][0];
           bVal = (hc + hr * pow(F, 0.25)) * Tair + q;
           break;
         }
@@ -1736,20 +1736,20 @@ std::vector<double> BoundaryCell::calculateHeatFlux(int ndims, double &TNew,
   double CXM = 0;
   double CYP = 0;
   double CYM = 0;
-  double CZP = -kzp*dzm/(dzp+dzm)/dzp;
-  double CZM = -kzm*dzp/(dzp+dzm)/dzm;
+  double CZP = -kzp*dist[2][0]/(dist[2][1]+dist[2][0])/dist[2][1];
+  double CZM = -kzm*dist[2][1]/(dist[2][1]+dist[2][0])/dist[2][0];
 
   if (ndims > 1)
   {
-    CXP = -kxp*dxm/(dxp+dxm)/dxp;
-    CXM = -kxm*dxp/(dxp+dxm)/dxm;
+    CXP = -kxp*dist[0][0]/(dist[0][1]+dist[0][0])/dist[0][1];
+    CXM = -kxm*dist[0][1]/(dist[0][1]+dist[0][0])/dist[0][0];
   }
 
 
   if (ndims == 3)
   {
-    CYP = -kyp*dym/(dyp+dym)/dyp;
-    CYM = -kym*dyp/(dyp+dym)/dym;
+    CYP = -kyp*dist[1][0]/(dist[1][1]+dist[1][0])/dist[1][1];
+    CYM = -kym*dist[1][1]/(dist[1][1]+dist[1][0])/dist[1][0];
   }
 
   double DTXP = 0;
@@ -1781,38 +1781,38 @@ std::vector<double> BoundaryCell::calculateHeatFlux(int ndims, double &TNew,
   {
     case Surface::X_NEG:
     {
-      CXP = -kxp/dxp;
+      CXP = -kxp/dist[0][1];
       CXM = 0;
     }
       break;
     case Surface::X_POS:
     {
       CXP = 0;
-      CXM = -kxm/dxm;
+      CXM = -kxm/dist[0][0];
     }
       break;
     case Surface::Y_NEG:
     {
-      CYP = -kyp/dyp;
+      CYP = -kyp/dist[1][1];
       CYM = 0;
     }
       break;
     case Surface::Y_POS:
     {
       CYP = 0;
-      CYM = -kym/dym;
+      CYM = -kym/dist[1][0];
     }
       break;
     case Surface::Z_NEG:
     {
-      CZP = -kzp/dzp;
+      CZP = -kzp/dist[2][1];
       CZM = 0;
     }
       break;
     case Surface::Z_POS:
     {
       CZP = 0;
-      CZM = -kzm/dzm;
+      CZM = -kzm/dist[2][0];
     }
       break;
   }

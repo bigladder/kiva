@@ -34,12 +34,7 @@ public:
     Domain(Foundation &foundation);
     void setDomain(Foundation &foundation);
     int getNumZeroDims(std::size_t i, std::size_t j, std::size_t k);
-    double getDXP(std::size_t i);
-    double getDXM(std::size_t i);
-    double getDYP(std::size_t j);
-    double getDYM(std::size_t j);
-    double getDZP(std::size_t k);
-    double getDZM(std::size_t k);
+    double getDistances(std::size_t i, std::size_t dim, std::size_t dir);
     void set2DZeroThicknessCellProperties(std::size_t index);
     void set3DZeroThicknessCellProperties(std::size_t index);
     void printCellTypes();

@@ -50,10 +50,10 @@ namespace Kiva {
     double heatGain;
 
     // derived properties
+    double dist[3][2];
     double cxp_c;
     double cxm_c;
     double cxp, cxm, cyp, cym, czp, czm;
-    double dxp, dxm, dyp, dym, dzp, dzm;
     double kxp, kxm, kyp, kym, kzp, kzm;
     double *told_ptr;
     // organizational properties
@@ -65,8 +65,8 @@ namespace Kiva {
     Surface *surfacePtr;
     Mesher *meshPtr;
 
-    void setDistances(double &dxp_in, double &dxm_in, double &dyp_in, double &dym_in,
-                      double &dzp_in, double &dzm_in);
+    void setDistances(const double &dxp_in, const double &dxm_in, const double &dyp_in, const double &dym_in,
+                      const double &dzp_in, const double &dzm_in);
 
     void setConductivities(const std::vector< std::shared_ptr<Cell> > &cell_v);
 

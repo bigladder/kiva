@@ -36,16 +36,16 @@ void Domain::setDomain(Foundation &foundation)
 
   std::vector<double> dxp_vector, dxm_vector, dyp_vector, dym_vector, dzp_vector, dzm_vector;
   for (std::size_t i=0; i<dim_lengths[0]; i++) {
-      dxp_vector.emplace_back(getDXP(i));
-      dxm_vector.emplace_back(getDXM(i));
+      dxp_vector.emplace_back(getDistances(i, 0, 1));
+      dxm_vector.emplace_back(getDistances(i, 0, 0));
   }
   for (std::size_t j=0; j<dim_lengths[1]; j++) {
-      dyp_vector.emplace_back(getDYP(j));
-      dym_vector.emplace_back(getDYM(j));
+      dyp_vector.emplace_back(getDistances(j, 1, 1));
+      dym_vector.emplace_back(getDistances(j, 1, 0));
   }
   for (std::size_t k=0; k<dim_lengths[2]; k++) {
-      dzp_vector.emplace_back(getDZP(k));
-      dzm_vector.emplace_back(getDZM(k));
+      dzp_vector.emplace_back(getDistances(k, 2, 1));
+      dzm_vector.emplace_back(getDistances(k, 2, 0));
   }
 
   stepsize[0] = 1;
@@ -241,87 +241,22 @@ void Domain::setDomain(Foundation &foundation)
   }
 }
 
-double Domain::getDXP(std::size_t i)
+double Domain::getDistances(std::size_t i, std::size_t dim, std::size_t dir)
 {
-  if (i == dim_lengths[0] - 1)
-  {
-    // For boundary cells assume that the cell on the other side of the
-    // boundary is the same as the previous cell
-    return (mesh[0].deltas[i] + mesh[0].deltas[i - 1])/2.0;
-  }
-  else
-  {
-    return (mesh[0].deltas[i] + mesh[0].deltas[i + 1])/2.0;
-  }
-}
-
-double Domain::getDXM(std::size_t i)
-{
-  if (i == 0)
-  {
-    // For boundary cells assume that the cell on the other side of the
-    // boundary is the same as the previous cell
-    return (mesh[0].deltas[i] + mesh[0].deltas[i + 1])/2.0;
-  }
-  else
-  {
-    return (mesh[0].deltas[i] + mesh[0].deltas[i - 1])/2.0;
-  }
-}
-
-double Domain::getDYP(std::size_t j)
-{
-  if (j == dim_lengths[1] - 1)
-  {
-    // For boundary cells assume that the cell on the other side of the
-    // boundary is the same as the previous cell
-    return (mesh[1].deltas[j] + mesh[1].deltas[j - 1])/2.0;
-  }
-  else
-  {
-    return (mesh[1].deltas[j] + mesh[1].deltas[j + 1])/2.0;
-  }
-}
-
-double Domain::getDYM(std::size_t j)
-{
-  if (j == 0)
-  {
-    // For boundary cells assume that the cell on the other side of the
-    // boundary is the same as the previous cell
-    return (mesh[1].deltas[j] + mesh[1].deltas[j + 1])/2.0;
-  }
-  else
-  {
-    return (mesh[1].deltas[j] + mesh[1].deltas[j - 1])/2.0;
-  }
-}
-
-double Domain::getDZP(std::size_t k)
-{
-  if (k == dim_lengths[2] - 1)
-  {
-    // For boundary cells assume that the cell on the other side of the
-    // boundary is the same as the previous cell
-    return (mesh[2].deltas[k] + mesh[2].deltas[k - 1])/2.0;
-  }
-  else
-  {
-    return (mesh[2].deltas[k] + mesh[2].deltas[k + 1])/2.0;
-  }
-}
-
-double Domain::getDZM(std::size_t k)
-{
-  if (k == 0)
-  {
-    // For boundary cells assume that the cell on the other side of the
-    // boundary is the same as the previous cell
-    return (mesh[2].deltas[k] + mesh[2].deltas[k + 1])/2.0;
-  }
-  else
-  {
-    return (mesh[2].deltas[k] + mesh[2].deltas[k - 1])/2.0;
+  if (dir == 0) {
+    if (i == 0) {
+      // For boundary cells assume that the cell on the other side of the
+      // boundary is the same as the previous cell
+      return (mesh[dim].deltas[i] + mesh[dim].deltas[i + 1]) / 2.0;
+    } else {
+      return (mesh[dim].deltas[i] + mesh[dim].deltas[i - 1]) / 2.0;
+    }
+  } else /* if (dir == 1) */ {
+    if (i == dim_lengths[dim] - 1) {
+      return (mesh[dim].deltas[i] + mesh[dim].deltas[i - 1]) / 2.0;
+    } else {
+      return (mesh[dim].deltas[i] + mesh[dim].deltas[i + 1]) / 2.0;
+    }
   }
 }
 
