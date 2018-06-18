@@ -25,16 +25,16 @@ protected:
 
 TEST_F( CellFixture, cell_basics)
 {
-  EXPECT_EQ(cell_vector[0]->i, 0);
-  EXPECT_EQ(cell_vector[0]->j, 0);
-  EXPECT_EQ(cell_vector[0]->k, 0);
+  EXPECT_EQ(cell_vector[0]->coords[0], 0);
+  EXPECT_EQ(cell_vector[0]->coords[1], 0);
+  EXPECT_EQ(cell_vector[0]->coords[2], 0);
   EXPECT_EQ(cell_vector[0]->index, 0);
   EXPECT_EQ(cell_vector[0]->cellType, CellType::BOUNDARY);
   EXPECT_EQ(cell_vector[0]->surfacePtr->type, Surface::SurfaceType::ST_DEEP_GROUND);
 
-  EXPECT_EQ(cell_vector[120]->i, 38);
-  EXPECT_EQ(cell_vector[120]->j, 0);
-  EXPECT_EQ(cell_vector[120]->k, 2);
+  EXPECT_EQ(cell_vector[120]->coords[0], 38);
+  EXPECT_EQ(cell_vector[120]->coords[1], 0);
+  EXPECT_EQ(cell_vector[120]->coords[2], 2);
   EXPECT_EQ(cell_vector[120]->index, 120);
   EXPECT_EQ(cell_vector[120]->cellType, CellType::NORMAL);
 //  TODO: replace surfacePtr and blockPtr NULL with nullptr. This EXPECT_EQ errors.

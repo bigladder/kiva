@@ -37,7 +37,7 @@ namespace Kiva {
          const Foundation &foundation, Surface *surfacePtr, Block *blockPtr,
          Mesher *mesh);
 
-    std::size_t i, j, k, index;
+    std::size_t coords[3], index;
     std::size_t *stepsize;
 
     // inherent properties

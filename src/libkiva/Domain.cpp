@@ -222,9 +222,9 @@ void Domain::setDomain(Foundation &foundation)
   for (auto this_cell: cell)
   {
     // PDE Coefficients
-    this_cell->setDistances(dxp_vector[this_cell->i], dxm_vector[this_cell->i],
-                           dyp_vector[this_cell->j], dym_vector[this_cell->j],
-                           dzp_vector[this_cell->k], dzm_vector[this_cell->k]);
+    this_cell->setDistances(dxp_vector[this_cell->coords[0]], dxm_vector[this_cell->coords[0]],
+                            dyp_vector[this_cell->coords[1]], dym_vector[this_cell->coords[1]],
+                            dzp_vector[this_cell->coords[2]], dzm_vector[this_cell->coords[2]]);
     this_cell->setConductivities(cell);
     this_cell->setPDEcoefficients(foundation.numberOfDimensions,
                                   foundation.coordinateSystem == Foundation::CS_CYLINDRICAL);
@@ -327,8 +327,8 @@ double Domain::getDZM(std::size_t k)
 
 void Domain::set2DZeroThicknessCellProperties(std::size_t index)
 {
-  if (isEqual(mesh[0].deltas[cell[index]->i], 0.0) &&
-    isEqual(mesh[2].deltas[cell[index]->k], 0.0))
+  if (isEqual(mesh[0].deltas[cell[index]->coords[0]], 0.0) &&
+    isEqual(mesh[2].deltas[cell[index]->coords[2]], 0.0))
   {
     std::vector< std::shared_ptr<Cell> > pointSet =
             {cell[index - stepsize[0] + stepsize[2]],
@@ -337,14 +337,14 @@ void Domain::set2DZeroThicknessCellProperties(std::size_t index)
              cell[index + stepsize[0] - stepsize[2]]};
     cell[index]->setZeroThicknessCellProperties(pointSet);
   }
-  else if (isEqual(mesh[0].deltas[cell[index]->i], 0.0))
+  else if (isEqual(mesh[0].deltas[cell[index]->coords[0]], 0.0))
   {
     std::vector< std::shared_ptr<Cell> > pointSet =
             {cell[index - stepsize[0]],
              cell[index + stepsize[0]]};
     cell[index]->setZeroThicknessCellProperties(pointSet);
   }
-  else if (isEqual(mesh[2].deltas[cell[index]->k], 0.0))
+  else if (isEqual(mesh[2].deltas[cell[index]->coords[2]], 0.0))
   {
     std::vector< std::shared_ptr<Cell> > pointSet =
             {cell[index - stepsize[2]],
@@ -356,9 +356,9 @@ void Domain::set2DZeroThicknessCellProperties(std::size_t index)
 
 void Domain::set3DZeroThicknessCellProperties(std::size_t index)
 {
-  if (isEqual(mesh[0].deltas[cell[index]->i], 0.0) &&
-    isEqual(mesh[1].deltas[cell[index]->j], 0.0) &&
-    isEqual(mesh[2].deltas[cell[index]->k], 0.0))
+  if (isEqual(mesh[0].deltas[cell[index]->coords[0]], 0.0) &&
+      isEqual(mesh[1].deltas[cell[index]->coords[1]], 0.0) &&
+      isEqual(mesh[2].deltas[cell[index]->coords[2]], 0.0))
   {
     // Use all 8 full volume cells
     std::vector< std::shared_ptr<Cell> > pointSet =
@@ -373,8 +373,8 @@ void Domain::set3DZeroThicknessCellProperties(std::size_t index)
 
     cell[index]->setZeroThicknessCellProperties(pointSet);
   }
-  else if (isEqual(mesh[0].deltas[cell[index]->i], 0.0) &&
-    isEqual(mesh[1].deltas[cell[index]->j], 0.0))
+  else if (isEqual(mesh[0].deltas[cell[index]->coords[0]], 0.0) &&
+           isEqual(mesh[1].deltas[cell[index]->coords[1]], 0.0))
   {
     std::vector< std::shared_ptr<Cell> > pointSet =
             {cell[index - stepsize[0] - stepsize[1]],
@@ -384,8 +384,8 @@ void Domain::set3DZeroThicknessCellProperties(std::size_t index)
 
     cell[index]->setZeroThicknessCellProperties(pointSet);
   }
-  else if (isEqual(mesh[0].deltas[cell[index]->i], 0.0) &&
-    isEqual(mesh[2].deltas[cell[index]->k], 0.0))
+  else if (isEqual(mesh[0].deltas[cell[index]->coords[0]], 0.0) &&
+           isEqual(mesh[2].deltas[cell[index]->coords[2]], 0.0))
   {
     std::vector< std::shared_ptr<Cell> > pointSet =
             {cell[index - stepsize[0] + stepsize[2]],
@@ -395,8 +395,8 @@ void Domain::set3DZeroThicknessCellProperties(std::size_t index)
 
     cell[index]->setZeroThicknessCellProperties(pointSet);
   }
-  else if (isEqual(mesh[1].deltas[cell[index]->j], 0.0) &&
-    isEqual(mesh[2].deltas[cell[index]->k], 0.0))
+  else if (isEqual(mesh[1].deltas[cell[index]->coords[1]], 0.0) &&
+           isEqual(mesh[2].deltas[cell[index]->coords[2]], 0.0))
   {
     std::vector< std::shared_ptr<Cell> > pointSet =
             {cell[index - stepsize[1] + stepsize[2]],
@@ -406,7 +406,7 @@ void Domain::set3DZeroThicknessCellProperties(std::size_t index)
 
     cell[index]->setZeroThicknessCellProperties(pointSet);
   }
-  else if (isEqual(mesh[0].deltas[cell[index]->i], 0.0))
+  else if (isEqual(mesh[0].deltas[cell[index]->coords[0]], 0.0))
   {
     std::vector< std::shared_ptr<Cell> > pointSet =
             {cell[index + stepsize[0]],
@@ -414,7 +414,7 @@ void Domain::set3DZeroThicknessCellProperties(std::size_t index)
 
     cell[index]->setZeroThicknessCellProperties(pointSet);
   }
-  else if (isEqual(mesh[1].deltas[cell[index]->j], 0.0))
+  else if (isEqual(mesh[1].deltas[cell[index]->coords[1]], 0.0))
   {
     std::vector< std::shared_ptr<Cell> > pointSet =
             {cell[index + stepsize[1]],
@@ -422,7 +422,7 @@ void Domain::set3DZeroThicknessCellProperties(std::size_t index)
 
     cell[index]->setZeroThicknessCellProperties(pointSet);
   }
-  else if (isEqual(mesh[2].deltas[cell[index]->k], 0.0))
+  else if (isEqual(mesh[2].deltas[cell[index]->coords[2]], 0.0))
   {
     std::vector< std::shared_ptr<Cell> > pointSet =
             {cell[index + stepsize[2]],
