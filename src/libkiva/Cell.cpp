@@ -1202,83 +1202,22 @@ void BoundaryCell::calcCellADI(int dim, const Foundation &foundation, double /*t
       switch (surfacePtr->orientation)
       {
         case Surface::X_NEG:
-          A = 1.0;
-
-          if (dim == 1)
-          {
-            Ap = -1.0;
-            bVal = 0;
-          }
-          else
-          {
-            Ap = 0.0;
-            bVal = *(told_ptr+stepsize[0]);
-          }
+          zfCellADI(dim, 0, 1, A, Ap, bVal);
           break;
         case Surface::X_POS:
-          A = 1.0;
-          if (dim == 1)
-          {
-            Am = -1.0;
-            bVal = 0;
-          }
-          else
-          {
-            Am = 0.0;
-            bVal = *(told_ptr-stepsize[0]);
-          }
+          zfCellADI(dim, 0, -1, A, Am, bVal);
           break;
         case Surface::Y_NEG:
-          A = 1.0;
-          if (dim == 2)
-          {
-            Ap = -1.0;
-            bVal = 0;
-          }
-          else
-          {
-            Ap = 0.0;
-            bVal = *(told_ptr+stepsize[1]);
-          }
+          zfCellADI(dim, 1, 1, A, Ap, bVal);
           break;
         case Surface::Y_POS:
-          A = 1.0;
-          if (dim == 2)
-          {
-            Am = -1.0;
-            bVal = 0;
-          }
-          else
-          {
-            Am = 0.0;
-            bVal = *(told_ptr-stepsize[1]);
-          }
+          zfCellADI(dim, 1, -1, A, Am, bVal);
           break;
         case Surface::Z_NEG:
-          A = 1.0;
-          if (dim == 3)
-          {
-            Ap = -1.0;
-            bVal = 0;
-          }
-          else
-          {
-            Ap = 0.0;
-            bVal = *(told_ptr+stepsize[2]);
-          }
+          zfCellADI(dim, 2, 1, A, Ap, bVal);
           break;
         case Surface::Z_POS:
-          A = 1.0;
-          if (dim == 3)
-          {
-            Am = -1.0;
-            bVal = 0;
-          }
-          else
-          {
-            Am = 0.0;
-            bVal = *(told_ptr-stepsize[2]);
-          }
+          zfCellADI(dim, 2, -1, A, Am, bVal);
           break;
       }
     }
@@ -1295,188 +1234,51 @@ void BoundaryCell::calcCellADI(int dim, const Foundation &foundation, double /*t
       break;
     case Surface::INTERIOR_FLUX:
     {
-      double Tair = bcs.indoorTemp;
-      double q = heatGain;
-
-      double hc = foundation.getConvectionCoeff(*told_ptr,
-                                     Tair,0.0,0.00208,false,surfacePtr->tilt);
-      double hr = getSimpleInteriorIRCoeff(surfacePtr->emissivity,
-                                           *told_ptr,Tair);
-
       switch (surfacePtr->orientation)
       {
         case Surface::X_NEG:
-          A = kcoeff[0][1]/dist[0][1] + (hc + hr);
-          if (dim == 1)
-          {
-            Ap = -kcoeff[0][1]/dist[0][1];
-            bVal = (hc + hr)*Tair + q;
-          }
-          else
-          {
-            Ap = 0.0;
-            bVal = *(told_ptr+stepsize[0])*kcoeff[0][1]/dist[0][1] + (hc + hr)*Tair + q;
-          }
+          ifCellADI(dim, 0, 1, foundation, bcs, A, Ap, bVal);
           break;
         case Surface::X_POS:
-          A = kcoeff[0][0]/dist[0][0] + (hc + hr);
-          if (dim == 1)
-          {
-            Am = -kcoeff[0][0]/dist[0][0];
-            bVal = (hc + hr)*Tair + q;
-          }
-          else
-          {
-            Am = 0.0;
-            bVal = *(told_ptr-stepsize[0])*kcoeff[0][0]/dist[0][0] + (hc + hr)*Tair + q;
-          }
+          ifCellADI(dim, 0, 0, foundation, bcs, A, Am, bVal);
           break;
         case Surface::Y_NEG:
-          A = kcoeff[1][1]/dist[1][1] + (hc + hr);
-          if (dim == 2)
-          {
-            Ap = -kcoeff[1][1]/dist[1][1];
-            bVal = (hc + hr)*Tair + q;
-          }
-          else
-          {
-            Ap = 0.0;
-            bVal = *(told_ptr+stepsize[1])*kcoeff[1][1]/dist[1][1] + (hc + hr)*Tair + q;
-          }
+          ifCellADI(dim, 1, 1, foundation, bcs, A, Ap, bVal);
           break;
         case Surface::Y_POS:
-          A = kcoeff[1][0]/dist[1][0] + (hc + hr);
-          if (dim == 2)
-          {
-            Am = -kcoeff[1][0]/dist[1][0];
-            bVal = (hc + hr)*Tair + q;
-          }
-          else
-          {
-            Am = 0.0;
-            bVal = *(told_ptr-stepsize[1])*kcoeff[1][0]/dist[1][0] + (hc + hr)*Tair + q;
-          }
+          ifCellADI(dim, 1, 0, foundation, bcs, A, Am, bVal);
           break;
         case Surface::Z_NEG:
-          A = kcoeff[2][1]/dist[2][1] + (hc + hr);
-          if (dim == 3)
-          {
-            Ap = -kcoeff[2][1]/dist[2][1];
-            bVal = (hc + hr)*Tair + q;
-          }
-          else
-          {
-            Ap = 0.0;
-            bVal = *(told_ptr+stepsize[2])*kcoeff[2][1]/dist[2][1] + (hc + hr)*Tair + q;
-          }
+          ifCellADI(dim, 2, 1, foundation, bcs, A, Ap, bVal);
           break;
         case Surface::Z_POS:
-          A = kcoeff[2][0]/dist[2][0] + (hc + hr);
-          if (dim == 3)
-          {
-            Am = -kcoeff[2][0]/dist[2][0];
-            bVal = (hc + hr)*Tair + q;
-          }
-          else
-          {
-            Am = 0.0;
-            bVal = *(told_ptr-stepsize[2])*kcoeff[2][0]/dist[2][0] + (hc + hr)*Tair + q;
-          }
+          ifCellADI(dim, 2, 0, foundation, bcs, A, Am, bVal);
           break;
       }
     }
-      break;
+    break;
 
     case Surface::EXTERIOR_FLUX:
     {
-      double Tair = bcs.outdoorTemp;
-      double v = bcs.localWindSpeed;
-      double eSky = bcs.skyEmissivity;
-      double tilt = surfacePtr->tilt;
-      double F = getEffectiveExteriorViewFactor(eSky,tilt);
-      double hc = foundation.getConvectionCoeff(*told_ptr,Tair,v,foundation.surfaceRoughness,true,tilt);
-      double hr = getExteriorIRCoeff(surfacePtr->emissivity,*told_ptr,Tair,eSky,tilt);
-      double q = heatGain;
-
       switch (surfacePtr->orientation)
       {
         case Surface::X_NEG:
-          A = kcoeff[0][1]/dist[0][1] + (hc + hr);
-          if (dim == 1)
-          {
-            Ap = -kcoeff[0][1]/dist[0][1];
-            bVal = (hc + hr*pow(F,0.25))*Tair + q;
-          }
-          else
-          {
-            Ap = 0.0;
-            bVal = *(told_ptr+stepsize[0])*kcoeff[0][1]/dist[0][1] + (hc + hr*pow(F,0.25))*Tair + q;
-          }
+          efCellADI(dim, 0, 1, foundation, bcs, A, Ap, bVal);
           break;
         case Surface::X_POS:
-          A = kcoeff[0][0]/dist[0][0] + (hc + hr);
-          if (dim == 1)
-          {
-            Am = -kcoeff[0][0]/dist[0][0];
-            bVal = (hc + hr*pow(F,0.25))*Tair + q;
-          }
-          else
-          {
-            Am = 0.0;
-            bVal = *(told_ptr-stepsize[0])*kcoeff[0][0]/dist[0][0] + (hc + hr*pow(F,0.25))*Tair + q;
-          }
+          efCellADI(dim, 0, 0, foundation, bcs, A, Am, bVal);
           break;
         case Surface::Y_NEG:
-          A = kcoeff[1][1]/dist[1][1] + (hc + hr);
-          if (dim == 2)
-          {
-            Ap = -kcoeff[1][1]/dist[1][1];
-            bVal = (hc + hr*pow(F,0.25))*Tair + q;
-          }
-          else
-          {
-            Ap = 0.0;
-            bVal = *(told_ptr+stepsize[1])*kcoeff[1][1]/dist[1][1] + (hc + hr*pow(F,0.25))*Tair + q;
-          }
+          efCellADI(dim, 1, 1, foundation, bcs, A, Ap, bVal);
           break;
         case Surface::Y_POS:
-          A = kcoeff[1][0]/dist[1][0] + (hc + hr);
-          if (dim == 2)
-          {
-            Am = -kcoeff[1][0]/dist[1][0];
-            bVal = (hc + hr*pow(F,0.25))*Tair + q;
-          }
-          else
-          {
-            Am = 0.0;
-            bVal = *(told_ptr-stepsize[1])*kcoeff[1][0]/dist[1][0] + (hc + hr*pow(F,0.25))*Tair + q;
-          }
+          efCellADI(dim, 1, 0, foundation, bcs, A, Am, bVal);
           break;
         case Surface::Z_NEG:
-          A = kcoeff[2][1]/dist[2][1] + (hc + hr);
-          if (dim == 3)
-          {
-            Ap = -kcoeff[2][1]/dist[2][1];
-            bVal = (hc + hr*pow(F,0.25))*Tair + q;
-          }
-          else
-          {
-            Ap = 0.0;
-            bVal = *(told_ptr+stepsize[2])*kcoeff[2][1]/dist[2][1] + (hc + hr*pow(F,0.25))*Tair + q;
-          }
+          efCellADI(dim, 2, 1, foundation, bcs, A, Ap, bVal);
           break;
         case Surface::Z_POS:
-          A = kcoeff[2][0]/dist[2][0] + (hc + hr);
-          if (dim == 3)
-          {
-            Am = -kcoeff[2][0]/dist[2][0];
-            bVal = (hc + hr*pow(F,0.25))*Tair + q;
-          }
-          else
-          {
-            Am = 0.0;
-            bVal = *(told_ptr-stepsize[2])*kcoeff[2][0]/dist[2][0] + (hc + hr*pow(F,0.25))*Tair + q;
-          }
+          efCellADI(dim, 2, 0, foundation, bcs, A, Am, bVal);
           break;
       }
     }
@@ -1497,39 +1299,27 @@ void BoundaryCell::calcCellMatrix(Kiva::Foundation::NumericalScheme /*scheme*/, 
       switch (surfacePtr->orientation)
       {
         case Surface::X_NEG: {
-          A = 1.0;
-          Aip = -1.0;
-          bVal = 0.0;
+          zfCellMatrix(A, Aip, bVal);
           break;
         }
         case Surface::X_POS: {
-          A = 1.0;
-          Aim = -1.0;
-          bVal = 0.0;
+          zfCellMatrix(A, Aim, bVal);
           break;
         }
         case Surface::Y_NEG: {
-          A = 1.0;
-          Ajp = -1.0;
-          bVal = 0.0;
+          zfCellMatrix(A, Ajp, bVal);
           break;
         }
         case Surface::Y_POS: {
-          A = 1.0;
-          Ajm = -1.0;
-          bVal = 0.0;
+          zfCellMatrix(A, Ajm, bVal);
           break;
         }
         case Surface::Z_NEG: {
-          A = 1.0;
-          Akp = -1.0;
-          bVal = 0.0;
+          zfCellMatrix(A, Akp, bVal);
           break;
         }
         case Surface::Z_POS: {
-          A = 1.0;
-          Akm = -1.0;
-          bVal = 0.0;
+          zfCellMatrix(A, Akm, bVal);
           break;
         }
       }
@@ -1550,50 +1340,30 @@ void BoundaryCell::calcCellMatrix(Kiva::Foundation::NumericalScheme /*scheme*/, 
     }
     case Surface::INTERIOR_FLUX:
     {
-      double Tair = bcs.indoorTemp;
-      double q = heatGain;
-
-      double hc = foundation.getConvectionCoeff(*told_ptr,
-                                     Tair,0.0,0.00208,false,surfacePtr->tilt);
-      double hr = getSimpleInteriorIRCoeff(surfacePtr->emissivity,
-                                           *told_ptr,Tair);
-
       switch (surfacePtr->orientation)
       {
         case Surface::X_NEG: {
-          A = kcoeff[0][1] / dist[0][1] + (hc + hr);
-          Aip = -kcoeff[0][1] / dist[0][1];
-          bVal = (hc + hr) * Tair + q;
+          ifCellMatrix(0, 1, foundation, bcs, A, Aip, bVal);
           break;
         }
         case Surface::X_POS: {
-          A = kcoeff[0][0] / dist[0][0] + (hc + hr);
-          Aim = -kcoeff[0][0] / dist[0][0];
-          bVal = (hc + hr) * Tair + q;
+          ifCellMatrix(0, 0, foundation, bcs, A, Aim, bVal);
           break;
         }
         case Surface::Y_NEG: {
-          A = kcoeff[1][1] / dist[1][1] + (hc + hr);
-          Ajp = -kcoeff[1][1] / dist[1][1];
-          bVal = (hc + hr) * Tair + q;
+          ifCellMatrix(1, 1, foundation, bcs, A, Ajp, bVal);
           break;
         }
         case Surface::Y_POS: {
-          A = kcoeff[1][0] / dist[1][0] + (hc + hr);
-          Ajm = -kcoeff[1][0] / dist[1][0];
-          bVal = (hc + hr) * Tair + q;
+          ifCellMatrix(1, 0, foundation, bcs, A, Ajm, bVal);
           break;
         }
         case Surface::Z_NEG: {
-          A = kcoeff[2][1] / dist[2][1] + (hc + hr);
-          Akp = -kcoeff[2][1] / dist[2][1];
-          bVal = (hc + hr) * Tair + q;
+          ifCellMatrix(2, 1, foundation, bcs, A, Akp, bVal);
           break;
         }
         case Surface::Z_POS: {
-          A = kcoeff[2][0] / dist[2][0] + (hc + hr);
-          Akm = -kcoeff[2][0] / dist[2][0];
-          bVal = (hc + hr) * Tair + q;
+          ifCellMatrix(2, 0, foundation, bcs, A, Akm, bVal);
           break;
         }
       }
@@ -1602,51 +1372,30 @@ void BoundaryCell::calcCellMatrix(Kiva::Foundation::NumericalScheme /*scheme*/, 
 
     case Surface::EXTERIOR_FLUX:
     {
-      double Tair = bcs.outdoorTemp;
-      double v = bcs.localWindSpeed;
-      double eSky = bcs.skyEmissivity;
-      double tilt = surfacePtr->tilt;
-      double F = getEffectiveExteriorViewFactor(eSky,tilt);
-      double hc = foundation.getConvectionCoeff(*told_ptr,Tair,v,foundation.surfaceRoughness,true,tilt);
-      double hr = getExteriorIRCoeff(surfacePtr->emissivity,*told_ptr,Tair,eSky,tilt);
-      double q = heatGain;
-
       switch (surfacePtr->orientation)
       {
         case Surface::X_NEG: {
-          A = kcoeff[0][1] / dist[0][1] + (hc + hr);
-          Aip = -kcoeff[0][1] / dist[0][1];
-          bVal = (hc + hr * pow(F, 0.25)) * Tair + q;
+          efCellMatrix(0, 1, foundation, bcs, A, Aip, bVal);
           break;
         }
         case Surface::X_POS: {
-          A = kcoeff[0][0] / dist[0][0] + (hc + hr);
-          Aim = -kcoeff[0][0] / dist[0][0];
-          bVal = (hc + hr * pow(F, 0.25)) * Tair + q;
+          efCellMatrix(0, 0, foundation, bcs, A, Aim, bVal);
           break;
         }
         case Surface::Y_NEG: {
-          A = kcoeff[1][1] / dist[1][1] + (hc + hr);
-          Ajp = -kcoeff[1][1] / dist[1][1];
-          bVal = (hc + hr * pow(F, 0.25)) * Tair + q;
+          efCellMatrix(1, 1, foundation, bcs, A, Ajp, bVal);
           break;
         }
         case Surface::Y_POS: {
-          A = kcoeff[1][0] / dist[1][0] + (hc + hr);
-          Ajm = -kcoeff[1][0] / dist[1][0];
-          bVal = (hc + hr * pow(F, 0.25)) * Tair + q;
+          efCellMatrix(1, 0, foundation, bcs, A, Ajm, bVal);
           break;
         }
         case Surface::Z_NEG: {
-          A = kcoeff[2][1] / dist[2][1] + (hc + hr);
-          Akp = -kcoeff[2][1] / dist[2][1];
-          bVal = (hc + hr * pow(F, 0.25)) * Tair + q;
+          efCellMatrix(2, 1, foundation, bcs, A, Akp, bVal);
           break;
         }
         case Surface::Z_POS: {
-          A = kcoeff[2][0] / dist[2][0] + (hc + hr);
-          Akm = -kcoeff[2][0] / dist[2][0];
-          bVal = (hc + hr * pow(F, 0.25)) * Tair + q;
+          efCellMatrix(2, 0, foundation, bcs, A, Akm, bVal);
           break;
         }
       }
@@ -1759,6 +1508,101 @@ std::vector<double> BoundaryCell::calculateHeatFlux(int ndims, double &TNew,
   return Qflux;
 }
 
+void BoundaryCell::zfCellADI(const int &dim, const int &sdim, const int &sign,
+                             double &A, double &Alt, double &bVal)
+{
+  A = 1.0;
+  if (dim-1 == sdim) {
+    Alt = -1.0;
+    bVal = 0;
+  } else {
+    Alt = 0.0;
+    bVal = *(told_ptr + sign*stepsize[sdim]);
+  }
+}
+
+void BoundaryCell::ifCellADI(const int &dim, const int &sdim, const int &dir,
+                             const Foundation &foundation, const BoundaryConditions &bcs,
+                             double &A, double &Alt, double &bVal)
+{
+  double Tair = bcs.indoorTemp;
+  double hc = foundation.getConvectionCoeff(*told_ptr,
+                                            Tair,0.0,0.00208,false,surfacePtr->tilt);
+  double hr = getSimpleInteriorIRCoeff(surfacePtr->emissivity,
+                                       *told_ptr,Tair);
+  int sign = (dir==0)? -1 : 1;
+
+  A = kcoeff[sdim][dir]/dist[sdim][dir] + (hc + hr);
+  if (dim-1 == sdim) {
+    Alt = -kcoeff[sdim][dir]/dist[sdim][dir];
+    bVal = (hc + hr)*Tair + heatGain;
+  } else {
+    Alt = 0.0;
+    bVal = *(told_ptr + sign*stepsize[sdim])*kcoeff[sdim][1]/dist[sdim][1] + (hc + hr)*Tair + heatGain;
+  }
+}
+
+void BoundaryCell::efCellADI(const int &dim, const int &sdim, const int &dir,
+                             const Foundation &foundation, const BoundaryConditions &bcs,
+                             double &A, double &Alt, double &bVal)
+{
+  double Tair = bcs.outdoorTemp;
+  double v = bcs.localWindSpeed;
+  double eSky = bcs.skyEmissivity;
+  double tilt = surfacePtr->tilt;
+  double F = getEffectiveExteriorViewFactor(eSky,tilt);
+  double hc = foundation.getConvectionCoeff(*told_ptr,Tair,v,foundation.surfaceRoughness,true,tilt);
+  double hr = getExteriorIRCoeff(surfacePtr->emissivity,*told_ptr,Tair,eSky,tilt);
+  int sign = (dir==0)? -1 : 1;
+
+  A = kcoeff[sdim][dir]/dist[sdim][dir] + (hc + hr);
+  if (dim-1 == sdim) {
+    Alt = -kcoeff[sdim][dir]/dist[sdim][dir];
+    bVal = (hc + hr*pow(F,0.25))*Tair + heatGain;
+  } else {
+    Alt = 0.0;
+    bVal = *(told_ptr + sign*stepsize[sdim])*kcoeff[sdim][dir]/dist[sdim][dir] + (hc + hr*pow(F,0.25))*Tair + heatGain;
+  }
+}
+
+void BoundaryCell::zfCellMatrix(double &A, double &Alt, double &bVal)
+{
+  A = 1.0;
+  Alt = -1.0;
+  bVal = 0.0;
+}
+
+void BoundaryCell::ifCellMatrix(const int &dim, const int &dir,
+                                const Foundation &foundation, const BoundaryConditions &bcs,
+                                double &A, double &Alt, double &bVal)
+{
+  double Tair = bcs.indoorTemp;
+  double hc = foundation.getConvectionCoeff(*told_ptr,
+                                            Tair,0.0,0.00208,false,surfacePtr->tilt);
+  double hr = getSimpleInteriorIRCoeff(surfacePtr->emissivity,
+                                       *told_ptr,Tair);
+
+  A = kcoeff[dim][dir] / dist[dim][dir] + (hc + hr);
+  Alt = -kcoeff[dim][dir] / dist[dim][dir];
+  bVal = (hc + hr) * Tair + heatGain;
+}
+
+void BoundaryCell::efCellMatrix(const int &dim, const int &dir,
+                                const Foundation &foundation, const BoundaryConditions &bcs,
+                                double &A, double &Alt, double &bVal)
+{
+  double Tair = bcs.outdoorTemp;
+  double v = bcs.localWindSpeed;
+  double eSky = bcs.skyEmissivity;
+  double tilt = surfacePtr->tilt;
+  double F = getEffectiveExteriorViewFactor(eSky,tilt);
+  double hc = foundation.getConvectionCoeff(*told_ptr,Tair,v,foundation.surfaceRoughness,true,tilt);
+  double hr = getExteriorIRCoeff(surfacePtr->emissivity,*told_ptr,Tair,eSky,tilt);
+
+  A = kcoeff[dim][dir] / dist[dim][dir] + (hc + hr);
+  Alt = -kcoeff[dim][dir] / dist[dim][dir];
+  bVal = (hc + hr * pow(F, 0.25)) * Tair + heatGain;
+}
 
 ZeroThicknessCell::ZeroThicknessCell(const std::size_t &index, const CellType cellType,
                                  const std::size_t &i, const std::size_t &j, const std::size_t &k,

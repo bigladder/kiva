@@ -186,6 +186,21 @@ namespace Kiva {
                                           std::size_t nX, std::size_t nY, std::size_t nZ,
                                           const std::vector< std::shared_ptr<Cell> > &cell_v) override;
 
+  private:
+    inline void zfCellADI(const int &dim, const int &sdim, const int &sign, double &A, double &Alt, double &bVal);
+    inline void ifCellADI(const int &dim, const int &sdim, const int &dir,
+                          const Foundation &foundation, const BoundaryConditions &bcs,
+                          double &A, double &Alt, double &bVal);
+    inline void efCellADI(const int &dim, const int &sdim, const int &sign,
+                          const Foundation &foundation, const BoundaryConditions &bcs,
+                          double &A, double &Alt, double &bVal);
+    inline void zfCellMatrix(double &A, double &Alt, double &bVal);
+    inline void ifCellMatrix(const int &dim, const int &dir,
+                             const Foundation &foundation, const BoundaryConditions &bcs,
+                             double &A, double &Alt, double &bVal);
+    inline void efCellMatrix(const int &dim, const int &dir,
+                             const Foundation &foundation, const BoundaryConditions &bcs,
+                             double &A, double &Alt, double &bVal);
   };
 
 
