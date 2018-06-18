@@ -35,7 +35,7 @@ namespace Kiva {
          const std::size_t &i, const std::size_t &j, const std::size_t &k,
          std::size_t *stepsize,
          const Foundation &foundation, Surface *surfacePtr, Block *blockPtr,
-         Mesher *meshX, Mesher *meshY, Mesher *meshZ);
+         Mesher *mesh);
 
     std::size_t i, j, k, index;
     std::size_t *stepsize;
@@ -63,7 +63,7 @@ namespace Kiva {
     Block *blockPtr;
 
     Surface *surfacePtr;
-    Mesher *meshXptr, *meshYptr, *meshZptr;
+    Mesher *meshPtr;
 
     void setDistances(double &dxp_in, double &dxm_in, double &dyp_in, double &dym_in,
                       double &dzp_in, double &dzm_in);
@@ -120,7 +120,7 @@ namespace Kiva {
                     const std::size_t &i, const std::size_t &j, const std::size_t &k,
                     std::size_t *stepsize,
                     const Foundation &foundation, Surface *surfacePtr, Block *blockPtr,
-                    Mesher *meshX, Mesher *meshY, Mesher *meshZ);
+                    Mesher *meshptr);
 
     void calcCellADEUp(double timestep, const Foundation &foundation, const BoundaryConditions &bcs,
                        double &U) override;
@@ -148,7 +148,7 @@ namespace Kiva {
                     const std::size_t &i, const std::size_t &j, const std::size_t &k,
                     std::size_t *stepsize,
                     const Foundation &foundation, Surface *surfacePtr, Block *blockPtr,
-                    Mesher *meshX, Mesher *meshY, Mesher *meshZ);
+                    Mesher *meshptr);
 
     void calcCellADEUp(double timestep, const Foundation &foundation, const BoundaryConditions &bcs,
                        double &U) override;
@@ -175,7 +175,7 @@ namespace Kiva {
                     const std::size_t &i, const std::size_t &j, const std::size_t &k,
                  std::size_t *stepsize,
                  const Foundation &foundation, Surface *surfacePtr, Block *blockPtr,
-                    Mesher *meshX, Mesher *meshY, Mesher *meshZ);
+                    Mesher *meshptr);
 
     void calcCellADEUp(double timestep, const Foundation &foundation, const BoundaryConditions &bcs,
                        double &U) override;
@@ -204,7 +204,7 @@ namespace Kiva {
                       const std::size_t &i, const std::size_t &j, const std::size_t &k,
                       std::size_t *stepsize,
                       const Foundation &foundation, Surface *surfacePtr, Block *blockPtr,
-                      Mesher *meshX, Mesher *meshY, Mesher *meshZ);
+                      Mesher *meshptr);
 
     std::vector<double> calculateHeatFlux(int ndims, double &TNew,
                                           std::size_t nX, std::size_t nY, std::size_t nZ,

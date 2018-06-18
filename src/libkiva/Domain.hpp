@@ -21,10 +21,8 @@ class LIBKIVA_EXPORT Domain
 public:
 
     // mesh
-    Mesher meshX;
-    Mesher meshY;
-    Mesher meshZ;
-    std::size_t nX, nY, nZ;
+    Mesher mesh[3];
+    std::size_t dim_lengths[3];
     std::size_t stepsize[3];
 
     std::vector< std::shared_ptr<Cell> > cell;

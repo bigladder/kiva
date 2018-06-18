@@ -15,16 +15,14 @@ Cell::Cell(const std::size_t &index, const CellType cellType,
            const std::size_t &i, const std::size_t &j, const std::size_t &k,
            std::size_t *stepsize,
            const Foundation &foundation, Surface *surfacePtr, Block *blockPtr,
-           Mesher *meshXptr, Mesher *meshYptr, Mesher *meshZptr):
+           Mesher *meshPtr):
         i(i), j(j), k(k),
         index(index),
         stepsize(stepsize),
         cellType(cellType),
         blockPtr(blockPtr),
         surfacePtr(surfacePtr),
-        meshXptr(meshXptr),
-        meshYptr(meshYptr),
-        meshZptr(meshZptr)
+        meshPtr(meshPtr)
 {
   Assemble(foundation);
 }
@@ -40,10 +38,10 @@ void Cell::Assemble(const Foundation &foundation) {
     conductivity = foundation.soil.conductivity;
   }
   heatGain = 0.0;
-  volume = meshXptr->deltas[i] * meshYptr->deltas[j] * meshZptr->deltas[k];
+  volume = meshPtr[0].deltas[i] * meshPtr[1].deltas[j] * meshPtr[2].deltas[k];
 
   if (foundation.numberOfDimensions == 2) {
-      r = meshXptr->centers[i];
+      r = meshPtr[0].centers[i];
   }
 }
 
@@ -68,7 +66,7 @@ void Cell::setConductivities(const std::vector< std::shared_ptr<Cell> > &cell_v)
 
 void Cell::getKXP(const std::vector< std::shared_ptr<Cell> > &cell_v)
 {
-  if (i == meshXptr->centers.size() - 1)
+  if (i == meshPtr[0].centers.size() - 1)
   {
     // For boundary cells assume that the cell on the other side of the
     // boundary is the same as the current cell
@@ -76,8 +74,8 @@ void Cell::getKXP(const std::vector< std::shared_ptr<Cell> > &cell_v)
   }
   else
   {
-    kxp = 1/(meshXptr->deltas[i]/(2*dxp*conductivity) +
-             meshXptr->deltas[i + 1]/(2*dxp*cell_v[index + stepsize[0]]->conductivity));
+    kxp = 1/(meshPtr[0].deltas[i]/(2*dxp*conductivity) +
+             meshPtr[0].deltas[i + 1]/(2*dxp*cell_v[index + stepsize[0]]->conductivity));
   }
 }
 
@@ -91,14 +89,14 @@ void Cell::getKXM(const std::vector< std::shared_ptr<Cell> > &cell_v)
   }
   else
   {
-    kxm = 1/(meshXptr->deltas[i]/(2*dxm*conductivity) +
-             meshXptr->deltas[i - 1]/(2*dxm*cell_v[index - stepsize[0]]->conductivity));
+    kxm = 1/(meshPtr[0].deltas[i]/(2*dxm*conductivity) +
+             meshPtr[0].deltas[i - 1]/(2*dxm*cell_v[index - stepsize[0]]->conductivity));
   }
 }
 
 void Cell::getKYP(const std::vector< std::shared_ptr<Cell> > &cell_v)
 {
-  if (j == meshYptr->centers.size() - 1)
+  if (j == meshPtr[1].centers.size() - 1)
   {
     // For boundary cells assume that the cell on the other side of the
     // boundary is the same as the current cell
@@ -106,8 +104,8 @@ void Cell::getKYP(const std::vector< std::shared_ptr<Cell> > &cell_v)
   }
   else
   {
-    kyp = 1/(meshYptr->deltas[j]/(2*dyp*conductivity) +
-             meshYptr->deltas[j + 1]/(2*dyp*cell_v[index + stepsize[1]]->conductivity));
+    kyp = 1/(meshPtr[1].deltas[j]/(2*dyp*conductivity) +
+             meshPtr[1].deltas[j + 1]/(2*dyp*cell_v[index + stepsize[1]]->conductivity));
   }
 }
 
@@ -121,14 +119,14 @@ void Cell::getKYM(const std::vector< std::shared_ptr<Cell> > &cell_v)
   }
   else
   {
-    kym = 1/(meshYptr->deltas[j]/(2*dym*conductivity) +
-             meshYptr->deltas[j - 1]/(2*dym*cell_v[index - stepsize[1]]->conductivity));
+    kym = 1/(meshPtr[1].deltas[j]/(2*dym*conductivity) +
+             meshPtr[1].deltas[j - 1]/(2*dym*cell_v[index - stepsize[1]]->conductivity));
   }
 }
 
 void Cell::getKZP(const std::vector< std::shared_ptr<Cell> > &cell_v)
 {
-  if (k == meshZptr->centers.size() - 1)
+  if (k == meshPtr[2].centers.size() - 1)
   {
     // For boundary cells assume that the cell on the other side of the
     // boundary is the same as the current cell
@@ -136,8 +134,8 @@ void Cell::getKZP(const std::vector< std::shared_ptr<Cell> > &cell_v)
   }
   else
   {
-    kzp = 1/(meshZptr->deltas[k]/(2*dzp*conductivity) +
-             meshZptr->deltas[k + 1]/(2*dzp*cell_v[index + stepsize[2]]->conductivity));
+    kzp = 1/(meshPtr[2].deltas[k]/(2*dzp*conductivity) +
+             meshPtr[2].deltas[k + 1]/(2*dzp*cell_v[index + stepsize[2]]->conductivity));
   }
 }
 
@@ -151,8 +149,8 @@ void Cell::getKZM(const std::vector< std::shared_ptr<Cell> > &cell_v)
   }
   else
   {
-    kzm = 1/(meshZptr->deltas[k]/(2*dzm*conductivity) +
-             meshZptr->deltas[k - 1]/(2*dzm*cell_v[index - stepsize[2]]->conductivity));
+    kzm = 1/(meshPtr[2].deltas[k]/(2*dzm*conductivity) +
+             meshPtr[2].deltas[k - 1]/(2*dzm*cell_v[index - stepsize[2]]->conductivity));
   }
 }
 
@@ -723,8 +721,8 @@ ExteriorAirCell::ExteriorAirCell(const std::size_t &index, const CellType cellTy
                                  const std::size_t &i, const std::size_t &j, const std::size_t &k,
                                  std::size_t *stepsize,
                                  const Foundation &foundation, Surface *surfacePtr, Block *blockPtr,
-                                 Mesher *meshXptr, Mesher *meshYptr, Mesher *meshZptr):
-        Cell(index, cellType, i, j, k, stepsize, foundation, surfacePtr, blockPtr, meshXptr, meshYptr, meshZptr)
+                                 Mesher *meshPtr):
+        Cell(index, cellType, i, j, k, stepsize, foundation, surfacePtr, blockPtr, meshPtr)
 {}
 
 void ExteriorAirCell::calcCellADEUp(double /*timestep*/, const Foundation &/*foundation*/, const BoundaryConditions &bcs,
@@ -779,8 +777,8 @@ InteriorAirCell::InteriorAirCell(const std::size_t &index, const CellType cellTy
                                  const std::size_t &i, const std::size_t &j, const std::size_t &k,
                                  std::size_t *stepsize,
                                  const Foundation &foundation, Surface *surfacePtr, Block *blockPtr,
-                                 Mesher *meshXptr, Mesher *meshYptr, Mesher *meshZptr):
-        Cell(index, cellType, i, j, k, stepsize, foundation, surfacePtr, blockPtr, meshXptr, meshYptr, meshZptr)
+                                 Mesher *meshPtr):
+        Cell(index, cellType, i, j, k, stepsize, foundation, surfacePtr, blockPtr, meshPtr)
 {}
 
 void InteriorAirCell::calcCellADEUp(double /*timestep*/, const Foundation &/*foundation*/, const BoundaryConditions &bcs,
@@ -832,8 +830,8 @@ BoundaryCell::BoundaryCell(const std::size_t &index, const CellType cellType,
                            const std::size_t &i, const std::size_t &j, const std::size_t &k,
                            std::size_t *stepsize,
                            const Foundation &foundation, Surface *surfacePtr, Block *blockPtr,
-                           Mesher *meshXptr, Mesher *meshYptr, Mesher *meshZptr):
-        Cell(index, cellType, i, j, k, stepsize, foundation, surfacePtr, blockPtr, meshXptr, meshYptr, meshZptr)
+                           Mesher *meshPtr):
+        Cell(index, cellType, i, j, k, stepsize, foundation, surfacePtr, blockPtr, meshPtr)
 {
     if (foundation.numberOfDimensions == 2 &&
         foundation.coordinateSystem == Foundation::CS_CYLINDRICAL)
@@ -841,13 +839,13 @@ BoundaryCell::BoundaryCell(const std::size_t &index, const CellType cellType,
       if (surfacePtr->orientation == Surface::X_POS ||
           surfacePtr->orientation == Surface::X_NEG)
       {
-        area = 2.0 * PI * meshXptr->centers[i] * meshZptr->deltas[k];
+        area = 2.0 * PI * meshPtr[0].centers[i] * meshPtr[2].deltas[k];
       }
       else // if (surface.orientation == Surface::Z_POS ||
         // surface.orientation == Surface::Z_NEG)
       {
-        area = PI * (meshXptr->dividers[i + 1] * meshXptr->dividers[i + 1] -
-                     meshXptr->dividers[i]*meshXptr->dividers[i] );
+        area = PI * (meshPtr[0].dividers[i + 1] * meshPtr[0].dividers[i + 1] -
+                     meshPtr[0].dividers[i]*meshPtr[0].dividers[i] );
       }
     }
     else if (foundation.numberOfDimensions == 2 &&
@@ -856,12 +854,12 @@ BoundaryCell::BoundaryCell(const std::size_t &index, const CellType cellType,
       if (surfacePtr->orientation == Surface::X_POS ||
           surfacePtr->orientation == Surface::X_NEG)
       {
-        area = 2.0 * meshZptr->deltas[k] * foundation.linearAreaMultiplier;
+        area = 2.0 * meshPtr[2].deltas[k] * foundation.linearAreaMultiplier;
       }
       else // if (surface.orientation == Surface::Z_POS ||
         // surface.orientation == Surface::Z_NEG)
       {
-        area = 2.0 * meshXptr->deltas[i] * foundation.linearAreaMultiplier;
+        area = 2.0 * meshPtr[0].deltas[i] * foundation.linearAreaMultiplier;
       }
     }
     else if (foundation.numberOfDimensions == 3)
@@ -869,17 +867,17 @@ BoundaryCell::BoundaryCell(const std::size_t &index, const CellType cellType,
       if (surfacePtr->orientation == Surface::X_POS ||
           surfacePtr->orientation == Surface::X_NEG)
       {
-        area = meshYptr->deltas[j] * meshZptr->deltas[k];
+        area = meshPtr[1].deltas[j] * meshPtr[2].deltas[k];
       }
       else if (surfacePtr->orientation == Surface::Y_POS ||
                surfacePtr->orientation == Surface::Y_NEG)
       {
-        area = meshXptr->deltas[i] * meshZptr->deltas[k];
+        area = meshPtr[0].deltas[i] * meshPtr[2].deltas[k];
       }
       else // if (surface.orientation == Surface::Z_POS ||
         // surface.orientation == Surface::Z_NEG)
       {
-        area = meshXptr->deltas[i] * meshYptr->deltas[j];
+        area = meshPtr[0].deltas[i] * meshPtr[1].deltas[j];
       }
 
       if (foundation.useSymmetry)
@@ -1834,8 +1832,8 @@ ZeroThicknessCell::ZeroThicknessCell(const std::size_t &index, const CellType ce
                                  const std::size_t &i, const std::size_t &j, const std::size_t &k,
                                  std::size_t *stepsize,
                                  const Foundation &foundation, Surface *surfacePtr, Block *blockPtr,
-                                 Mesher *meshXptr, Mesher *meshYptr, Mesher *meshZptr):
-        Cell(index, cellType, i, j, k, stepsize, foundation, surfacePtr, blockPtr, meshXptr, meshYptr, meshZptr)
+                                 Mesher *meshPtr):
+        Cell(index, cellType, i, j, k, stepsize, foundation, surfacePtr, blockPtr, meshPtr)
 {}
 
 std::vector<double> ZeroThicknessCell::calculateHeatFlux(int ndims, double &TNew,
@@ -1850,17 +1848,17 @@ std::vector<double> ZeroThicknessCell::calculateHeatFlux(int ndims, double &TNew
   std::vector<double> Qm;
   std::vector<double> Qp;
 
-  if (isEqual(meshXptr->deltas[i], 0.0))
+  if (isEqual(meshPtr[0].deltas[i], 0.0))
   {
     Qm = cell_v[index - stepsize[0]]->calculateHeatFlux(ndims, *(&TNew - stepsize[0]), nX, nY, nZ, cell_v);
     Qp = cell_v[index + stepsize[0]]->calculateHeatFlux(ndims, *(&TNew + stepsize[0]), nX, nY, nZ, cell_v);
   }
-  if (isEqual(meshYptr->deltas[j], 0.0))
+  if (isEqual(meshPtr[1].deltas[j], 0.0))
   {
     Qm = cell_v[index - stepsize[1]]->calculateHeatFlux(ndims, *(&TNew - stepsize[1]), nX, nY, nZ, cell_v);
     Qp = cell_v[index + stepsize[1]]->calculateHeatFlux(ndims, *(&TNew + stepsize[1]), nX, nY, nZ, cell_v);
   }
-  if (isEqual(meshZptr->deltas[k], 0.0))
+  if (isEqual(meshPtr[2].deltas[k], 0.0))
   {
     Qm = cell_v[index - stepsize[2]]->calculateHeatFlux(ndims, *(&TNew - stepsize[2]), nX, nY, nZ, cell_v);
     Qp = cell_v[index + stepsize[2]]->calculateHeatFlux(ndims, *(&TNew + stepsize[2]), nX, nY, nZ, cell_v);

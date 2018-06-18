@@ -39,9 +39,9 @@ void Ground::buildDomain()
   // Build matrices for PDE term coefficients
   domain.setDomain(foundation);
 
-  nX = domain.meshX.centers.size();
-  nY = domain.meshY.centers.size();
-  nZ = domain.meshZ.centers.size();
+  nX = domain.mesh[0].centers.size();
+  nY = domain.mesh[1].centers.size();
+  nZ = domain.mesh[2].centers.size();
   num_cells = nX*nY*nZ;
 
   // Initialize matices
@@ -426,11 +426,11 @@ void Ground::calculateSurfaceAverages(){
 
             #ifdef PRNTSURF
               output <<
-                domain.meshX.centers[i] << ", " <<
+                domain.mesh[0].centers[i] << ", " <<
                 TNew[index] << ", " <<
                 h << ", " <<
                 h*(Tair - TNew[index]) << ", " <<
-                domain.meshX.deltas[i] << "\n";
+                domain.mesh[0].deltas[i] << "\n";
             #endif
 
           }
@@ -497,10 +497,10 @@ void Ground::calculateBoundaryLayer()
 
   bool firstIndex = true;
 
-  size_t i_min = pre.domain.meshX.getNearestIndex(boost::geometry::area(foundation.polygon)/
+  size_t i_min = pre.domain.mesh[0].getNearestIndex(boost::geometry::area(foundation.polygon)/
       boost::geometry::perimeter(foundation.polygon));
 
-  size_t k = pre.domain.meshZ.getNearestIndex(0.0);
+  size_t k = pre.domain.mesh[2].getNearestIndex(0.0);
 
   size_t j = pre.nY/2;
 
@@ -509,8 +509,8 @@ void Ground::calculateBoundaryLayer()
     std::size_t index = i + pre.nX*j + pre.nX*pre.nY*k;
     double Qz = pre.domain.cell[index]->calculateHeatFlux(pre.foundation.numberOfDimensions,
             pre.TNew[index], pre.nX, pre.nY, pre.nZ, pre.domain.cell)[2];
-    double x1 = pre.domain.meshX.dividers[i];
-    double x2 = pre.domain.meshX.dividers[i+1];
+    double x1 = pre.domain.mesh[0].dividers[i];
+    double x2 = pre.domain.mesh[0].dividers[i+1];
 
     if (Qz > 0.0)
     {
