@@ -57,12 +57,12 @@ TEST_F( GC10aADIFixture, calcCellADI)
   double theta = 3600.0 / (fnd.numberOfDimensions
                              *this_cell->density*this_cell->specificHeat);
   double f = fnd.fADI;
-  EXPECT_DOUBLE_EQ(A, 1.0 + (2 - f)*(this_cell->cxp - this_cell->cxm)*theta);
-  EXPECT_DOUBLE_EQ(Ap, (2 - f)*(-this_cell->cxp*theta));
-  EXPECT_DOUBLE_EQ(Am, (2 - f)*(this_cell->cxm*theta));
-  EXPECT_DOUBLE_EQ(bVal, *this_cell->told_ptr*(1.0 + f*(this_cell->czm - this_cell->czp)*theta)
-                       - *(this_cell->told_ptr - ground->domain.stepsize[2])*f*this_cell->czm*theta
-                       + *(this_cell->told_ptr + ground->domain.stepsize[2])*f*this_cell->czp*theta
+  EXPECT_DOUBLE_EQ(A, 1.0 + (2 - f)*(this_cell->pde[0][1] - this_cell->pde[0][0])*theta);
+  EXPECT_DOUBLE_EQ(Ap, (2 - f)*(-this_cell->pde[0][1]*theta));
+  EXPECT_DOUBLE_EQ(Am, (2 - f)*(this_cell->pde[0][0]*theta));
+  EXPECT_DOUBLE_EQ(bVal, *this_cell->told_ptr*(1.0 + f*(this_cell->pde[2][0] - this_cell->pde[2][1])*theta)
+                       - *(this_cell->told_ptr - ground->domain.stepsize[2])*f*this_cell->pde[2][0]*theta
+                       + *(this_cell->told_ptr + ground->domain.stepsize[2])*f*this_cell->pde[2][1]*theta
                        + this_cell->heatGain*theta);
 }
 
@@ -81,10 +81,10 @@ TEST_F( GC10aImplicitFixture, calcCellMatrix)
   this_cell->calcCellMatrix(fnd.numericalScheme, 3600.0, fnd, bcs, A, Aip, Aim, Ajp, Ajm, Akp, Akm, bVal);
 //  TODO: upgrade from regression tests to physical-ish unittests.
   double theta = 3600.0 / (this_cell->density*this_cell->specificHeat);
-  EXPECT_DOUBLE_EQ(A, (1.0 + (this_cell->cxp + this_cell->czp -
-                              this_cell->cxm - this_cell->czm)*theta));
-  EXPECT_DOUBLE_EQ(Aip, -this_cell->cxp*theta);
-  EXPECT_DOUBLE_EQ(Aim, this_cell->cxm*theta);
+  EXPECT_DOUBLE_EQ(A, (1.0 + (this_cell->pde[0][1] + this_cell->pde[2][1] -
+                              this_cell->pde[0][0] - this_cell->pde[2][0])*theta));
+  EXPECT_DOUBLE_EQ(Aip, -this_cell->pde[0][1]*theta);
+  EXPECT_DOUBLE_EQ(Aim, this_cell->pde[0][0]*theta);
   EXPECT_DOUBLE_EQ(bVal, *this_cell->told_ptr + this_cell->heatGain*theta);
 }
 
@@ -100,8 +100,8 @@ TEST_F( GC10aSteadyStateFixture, calcCellMatrixSS)
 
   this_cell = ground->domain.cell[120];
   this_cell->calcCellMatrix(fnd.numericalScheme, 3600.0, fnd, bcs, A, Aip, Aim, Ajp, Ajm, Akp, Akm, bVal);
-  EXPECT_DOUBLE_EQ(A, this_cell->cxm + this_cell->czm - this_cell->cxp - this_cell->czp);
-  EXPECT_DOUBLE_EQ(Aip, this_cell->cxp);
-  EXPECT_DOUBLE_EQ(Aim, -this_cell->cxm);
+  EXPECT_DOUBLE_EQ(A, this_cell->pde[0][0] + this_cell->pde[2][0] - this_cell->pde[0][1] - this_cell->pde[2][1]);
+  EXPECT_DOUBLE_EQ(Aip, this_cell->pde[0][1]);
+  EXPECT_DOUBLE_EQ(Aim, -this_cell->pde[0][0]);
   EXPECT_DOUBLE_EQ(bVal, 0);
 }

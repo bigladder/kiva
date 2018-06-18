@@ -50,11 +50,9 @@ namespace Kiva {
     double heatGain;
 
     // derived properties
+    double pde[3][2], pde_c[2];
     double dist[3][2];
-    double cxp_c;
-    double cxm_c;
-    double cxp, cxm, cyp, cym, czp, czm;
-    double kxp, kxm, kyp, kym, kzp, kzm;
+    double kcoeff[3][2];
     double *told_ptr;
     // organizational properties
 
@@ -70,14 +68,8 @@ namespace Kiva {
 
     void setConductivities(const std::vector< std::shared_ptr<Cell> > &cell_v);
 
-    void getKXP(const std::vector< std::shared_ptr<Cell> > &cell_v);
-    void getKXM(const std::vector< std::shared_ptr<Cell> > &cell_v);
-    void getKYP(const std::vector< std::shared_ptr<Cell> > &cell_v);
-    void getKYM(const std::vector< std::shared_ptr<Cell> > &cell_v);
-    void getKZP(const std::vector< std::shared_ptr<Cell> > &cell_v);
-    void getKZM(const std::vector< std::shared_ptr<Cell> > &cell_v);
-
     void setPDEcoefficients(int ndims, bool cylindrical);
+    double onePDEcoefficient(std::size_t dim, std::size_t dir);
 
     void setZeroThicknessCellProperties(std::vector< std::shared_ptr<Cell> > pointSet);
 
