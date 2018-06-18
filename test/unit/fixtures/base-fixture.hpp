@@ -30,10 +30,11 @@ protected:
   double calculate() {
     init();
     for (std::size_t i=0; i<200; i++) {
-        bcs.outdoorTemp = 273 + dbt[i % 24];
-        ground->calculate(bcs, 3600.0);
+      bcs.outdoorTemp = 273 + dbt[i % 24];
+      ground->calculate(bcs, 3600.0);
+      ground->calculateSurfaceAverages();
+      ground->getSurfaceAverageValue({Surface::ST_SLAB_CORE,GroundOutput::OT_RATE});
     }
-    ground->calculateSurfaceAverages();
     return ground->getSurfaceAverageValue({Surface::ST_SLAB_CORE,GroundOutput::OT_RATE});
   }
 
