@@ -12,10 +12,12 @@ option( KIVA_TESTING "Build tests" ON )
 
 set(CMAKE_MODULE_PATH "${kiva_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 
-if (KIVA_COVERAGE AND KIVA_TESTING)
+if (KIVA_TESTING)
   enable_testing()
-  set(ENABLE_COVERAGE ON CACHE BOOL "" FORCE)
-  find_package(codecov)
+  if (KIVA_COVERAGE)
+    set(ENABLE_COVERAGE ON CACHE BOOL "" FORCE)
+    find_package(codecov)
+  endif()
 endif()
 
 set( CMAKE_LIBRARY_OUTPUT_DIRECTORY "${kiva_BINARY_DIR}" )
