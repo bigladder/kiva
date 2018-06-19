@@ -32,7 +32,9 @@ before_install:
       gem install git;
     fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
+      rvm use 2.3;
       brew install gcc;
+      rvm use 2.0;
     elif [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
       sudo apt-get -y -qq update;
       sudo apt-get -y install cmake;
