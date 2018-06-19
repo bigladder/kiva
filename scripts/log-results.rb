@@ -8,12 +8,11 @@ CI_PATH = File.expand_path('..', THIS_DIR)
 TEST_DIR = File.expand_path(ENV['RT_DIR'], CI_PATH)
 # regression testing repository URL
 # PATOKEN = personal access token
-RT_URL = "https://#{ENV['PATOKEN']}:x-oauth-basic@#{ENV['RT_URL']}"
 RT_DIR = File.expand_path(ENV['RT_DIR'], CI_PATH)
 ARCH = File.read(File.expand_path('build/arch.txt',CI_PATH))
 
 ############################################################
-def main(ci_path, rt_url, rt_dir, arch, test_dir)
+def main(ci_path, rt_dir, arch, test_dir)
   puts("Starting main")
   puts("Opening git on CI_PATH")
   g_ci = Git.open(ci_path)
@@ -62,7 +61,7 @@ def main(ci_path, rt_url, rt_dir, arch, test_dir)
     end
     puts("Tag added")
     puts("Attempting to push/pull")
-    robust_push_pull(g_rt, the_branch, the_commit, tag_name, rt_url)
+    robust_push_pull(g_rt, the_branch, the_commit, tag_name)
     puts("push/pull succeeded")
   end
 end
@@ -70,7 +69,7 @@ end
 puts("scripts/log-results.rb Start!")
 
 if not is_travis_pull_request?
-  main(CI_PATH, RT_URL, RT_DIR, ARCH, TEST_DIR)
+  main(CI_PATH, RT_DIR, ARCH, TEST_DIR)
 else
   puts("Skipping log-results.rb due to being a pull request")
 end
