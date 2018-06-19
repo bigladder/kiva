@@ -125,11 +125,11 @@ def run_case(in_root, out_root, arch, a, c)
 end
 
 # robust pull/push
-def robust_push_pull(g, branch, the_commit, the_tag)
+def robust_push_pull(g, branch, the_commit, the_tag, rt_url)
   puts("Starting robust_pull_push!")
   begin
     puts("Attempting to pull")
-    g.pull('origin', branch) if g.is_remote_branch?(branch)
+    g.pull(rt_url, branch) if g.is_remote_branch?(branch)
     puts("Pull attempt succeeded")
   rescue => e
     puts("Trying to fix suspected auto-merge conflict")
@@ -157,7 +157,7 @@ def robust_push_pull(g, branch, the_commit, the_tag)
   end
   puts("Pushing to origin!")
   begin
-    g.push('origin', branch, {:tags=>true})
+    g.push(rt_url, branch, {:tags=>true})
   rescue => e
     # Possible that we have an error related to remote tagging
     # Let's check if the word "tag" is in the error message
@@ -169,7 +169,7 @@ def robust_push_pull(g, branch, the_commit, the_tag)
       puts("attempt a retag next...")
       puts("-------")
       retag(g.dir, the_tag)
-      g.push('origin', branch, {:tags=>true})
+      g.push(rt_url, branch, {:tags=>true})
     else
       # We don't know what happened. Report error and bail.
       puts("Don't know how to handle this error... exiting...")

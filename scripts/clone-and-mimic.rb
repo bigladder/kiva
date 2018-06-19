@@ -8,7 +8,7 @@ CI_PATH = File.expand_path('..', THIS_DIR)
 TEST_DIR = File.expand_path(ENV['RT_DIR'], CI_PATH)
 # regression testing repository URL
 # PATOKEN = personal access token
-RT_URL = "https://#{ENV['PATOKEN']}@#{ENV['RT_URL']}"
+RT_URL = "https://#{ENV['PATOKEN']}:x-oauth-basic@#{ENV['RT_URL']}"
 RT_DIR = File.expand_path(ENV['RT_DIR'], CI_PATH)
 ARCH = File.read(File.expand_path('build/arch.txt',CI_PATH))
 
