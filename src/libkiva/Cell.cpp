@@ -10,6 +10,14 @@ namespace Kiva {
 
 static const double PI = 4.0*atan(1.0);
 
+static std::map<Surface::Orientation, std::pair<int, int> > orientation_map{
+        {Surface::X_POS, {0, 0}},
+        {Surface::X_NEG, {0, 1}},
+        {Surface::Y_POS, {1, 0}},
+        {Surface::Y_NEG, {1, 1}},
+        {Surface::Z_POS, {2, 0}},
+        {Surface::Z_NEG, {2, 1}}
+};
 
 Cell::Cell(const std::size_t &index, const CellType cellType,
            const std::size_t &i, const std::size_t &j, const std::size_t &k,
@@ -333,17 +341,12 @@ double Cell::calcCellExplicit(double timestep, const Foundation &foundation,
 
 void Cell::calcCellMatrix(Foundation::NumericalScheme scheme, double timestep, const Foundation &foundation,
                           const BoundaryConditions &/*bcs*/,
-                          double &A, double &Aip, double &Aim, double &Ajp, double &Ajm,
-                          double &Akp, double &Akm, double &bVal)
-{
-  if (scheme == Foundation::NS_STEADY_STATE)
-  {
-    calcCellSteadyState(foundation, A, Aip, Aim, Ajp, Ajm, Akp, Akm, bVal);
-  }
-  else
-  {
-    double theta = timestep/
-                   (density*specificHeat);
+                          double &A, double (&Alt)[3][2], double &bVal) {
+  if (scheme == Foundation::NS_STEADY_STATE) {
+    calcCellSteadyState(foundation, A, Alt, bVal);
+  } else {
+    double theta = timestep /
+                   (density * specificHeat);
 
     double f;
     if (scheme == Foundation::NS_IMPLICIT)
@@ -351,121 +354,80 @@ void Cell::calcCellMatrix(Foundation::NumericalScheme scheme, double timestep, c
     else
       f = 0.5;
 
-    double CXP = pde[0][1]*theta;
-    double CXM = pde[0][0]*theta;
-    double CZP = pde[2][1]*theta;
-    double CZM = pde[2][0]*theta;
-    double CYP = pde[1][1]*theta;
-    double CYM = pde[1][0]*theta;
-    double Q = heatGain*theta;
-
-    if (foundation.numberOfDimensions == 3)
-    {
-      A = (1.0 + f*(CXP + CZP + CYP - CXM - CZM - CYM));
-      Aim = f*CXM;
-      Aip = f*(-CXP);
-      Akm = f*CZM;
-      Akp = f*(-CZP);
-      Ajm = f*CYM;
-      Ajp = f*(-CYP);
-
-      bVal = *told_ptr*(1.0 + (1-f)*(CXM + CZM + CYM - CXP - CZP - CYP))
-             - *(told_ptr - stepsize[0])*(1-f)*CXM
-             + *(told_ptr + stepsize[0])*(1-f)*CXP
-             - *(told_ptr - stepsize[1])*(1-f)*CZM
-             + *(told_ptr + stepsize[1])*(1-f)*CZP
-             - *(told_ptr - stepsize[2])*(1-f)*CYM
-             + *(told_ptr + stepsize[2])*(1-f)*CYP
-             + Q;
+    std::size_t dims[3]{0, 1, 2};
+    if (foundation.numberOfDimensions == 2) {
+      dims[1] = 5;
+    } else if (foundation.numberOfDimensions == 1) {
+      dims[0] = 5;
+      dims[1] = 5;
     }
-    else if (foundation.numberOfDimensions == 2)
-    {
-      double CXPC = 0;
-      double CXMC = 0;
 
-      if (coords[0] != 0)
-      {
-        CXPC = pde_c[1]*theta/r;
-        CXMC = pde_c[0]*theta/r;
+    double C[2];
+    double Abit{0}, bbit{0};
+
+    for (auto dim : dims) {
+      if (dim < 5) {
+        C[1] = pde[dim][1] * theta;
+        C[0] = -pde[dim][0] * theta;
+        Abit += C[1] + C[0];
+        Alt[dim][1] = -f * C[1];
+        Alt[dim][0] = -f * C[0];
+        bbit += *(told_ptr + stepsize[dim]) * (1 - f) * C[1] +
+                *(told_ptr - stepsize[dim]) * (1 - f) * C[0];
       }
-      A = (1.0 + f*(CXPC + CXP + CZP - CXMC - CXM - CZM));
-      Aim = f*(CXMC + CXM);
-      Aip = f*(-CXPC - CXP);
-      Akm = f*CZM;
-      Akp = f*(-CZP);
-
-      bVal = *told_ptr*(1.0 + (1-f)*(CXMC + CXM + CZM - CXPC - CXP - CZP))
-             - *(told_ptr - stepsize[0])*(1-f)*(CXMC + CXM)
-             + *(told_ptr + stepsize[0])*(1-f)*(CXPC + CXP)
-             - *(told_ptr - stepsize[2])*(1-f)*CZM
-             + *(told_ptr + stepsize[2])*(1-f)*CZP
-             + Q;
     }
-    else
-    {
-      A = (1.0 + f*(CZP - CZM));
-      Akm = f*CZM;
-      Akp = f*(-CZP);
 
-      bVal = *told_ptr*(1.0 + (1-f)*(CZM - CZP))
-             - *(told_ptr - stepsize[2])*(1-f)*CZM
-             + *(told_ptr + stepsize[2])*(1-f)*CZP
-             + Q;
+    if (foundation.numberOfDimensions == 2
+        && foundation.coordinateSystem == Foundation::CS_CYLINDRICAL) {
+      if (coords[0] != 0) {
+        double CXC[2];
+        CXC[1] = pde_c[1] * theta / r;
+        CXC[0] = -pde_c[0] * theta / r;
+        Abit += CXC[1] + CXC[0];
+        Alt[0][1] += -f * (CXC[1]);
+        Alt[0][0] += -f * (CXC[0]);
+        bbit += *(told_ptr + stepsize[0]) * (1 - f) * (CXC[1]) +
+                *(told_ptr - stepsize[0]) * (1 - f) * (CXC[0]);
+      }
     }
+
+    A = (1.0 + f * (Abit));
+    bVal = *told_ptr * (1.0 + (f - 1) * (Abit))
+           + bbit
+           + heatGain * theta;
   }
-
 }
 
 void Cell::calcCellSteadyState(const Foundation &foundation,
-                               double &A, double &Aip, double &Aim, double &Ajp, double &Ajm,
-                               double &Akp, double &Akm, double &bVal)
+                               double &A, double (&Alt)[3][2], double &bVal)
 {
-  double CXP = pde[0][1];
-  double CXM = pde[0][0];
-  double CZP = pde[2][1];
-  double CZM = pde[2][0];
-  double CYP = pde[1][1];
-  double CYM = pde[1][0];
-  double Q = heatGain;
-
-  if (foundation.numberOfDimensions == 3)
-  {
-    A = (CXM + CZM + CYM - CXP - CZP - CYP);
-    Aim = -CXM;
-    Aip = CXP;
-    Akm = -CZM;
-    Akp = CZP;
-    Ajm = -CYM;
-    Ajp = CYP;
-
-    bVal = -Q;
+  std::size_t dims[3]{0, 1, 2};
+  if (foundation.numberOfDimensions == 2) {
+    dims[1] = 5;
+  } else if (foundation.numberOfDimensions == 1) {
+    dims[0] = 5;
+    dims[1] = 5;
   }
-  else if (foundation.numberOfDimensions == 2)
-  {
-    double CXPC = 0;
-    double CXMC = 0;
 
+  A = 0;
+  for (auto dim : dims) {
+    if (dim < 5) {
+      Alt[dim][1] = pde[dim][1];
+      Alt[dim][0] = -pde[dim][0];
+      A += Alt[dim][1] + Alt[dim][0];
+    }
+  }
+  if (foundation.numberOfDimensions == 2
+      && foundation.coordinateSystem == Foundation::CS_CYLINDRICAL) {
     if (coords[0] != 0)
     {
-      CXPC = pde_c[1]/r;
-      CXMC = pde_c[0]/r;
+      Alt[0][1] += pde_c[1]/r;
+      Alt[0][0] += -pde_c[0]/r;
+      A += pde_c[1]/r - pde_c[0]/r;
     }
-    A = (CXMC + CXM + CZM - CXPC - CXP - CZP);
-    Aim = (-CXMC - CXM);
-    Aip = (CXPC + CXP);
-    Akm = -CZM;
-    Akp = CZP;
-
-    bVal = -Q;
   }
-  else
-  {
-    A = (CZM - CZP);
-    Akm = -CZM;
-    Akp = CZP;
-
-    bVal = -Q;
-  }
+  A *= -1;
+  bVal = -heatGain;
 }
 
 void Cell::calcCellADI(int dim, const Foundation &foundation, double timestep,
@@ -685,8 +647,7 @@ void ExteriorAirCell::calcCellADI(int /*dim*/, const Foundation &/*foundation*/,
 
 void ExteriorAirCell::calcCellMatrix(Foundation::NumericalScheme /*scheme*/, double /*timestep*/, const Foundation &/*foundation*/,
                                      const BoundaryConditions &bcs,
-                                     double &A, double &/*Aip*/, double &/*Aim*/, double &/*Ajp*/, double &/*Ajm*/,
-                                     double &/*Akp*/, double &/*Akm*/, double &bVal)
+                                     double &A, double (&Alt)[3][2], double &bVal)
 {
   doOutdoorTemp(bcs, A, bVal);
 }
@@ -733,8 +694,7 @@ double InteriorAirCell::calcCellExplicit(double /*timestep*/, const Foundation &
 
 void InteriorAirCell::calcCellMatrix(Foundation::NumericalScheme /*scheme*/, double /*timestep*/, const Foundation &/*foundation*/,
                                      const BoundaryConditions &bcs,
-                                     double &A, double &/*Aip*/, double &/*Aim*/, double &/*Ajp*/, double &/*Ajm*/,
-                                     double &/*Akp*/, double &/*Akm*/, double &bVal)
+                                     double &A, double (&Alt)[3][2], double &bVal)
 {
   doIndoorTemp(bcs, A, bVal);
 }
@@ -1289,42 +1249,16 @@ void BoundaryCell::calcCellADI(int dim, const Foundation &foundation, double /*t
 
 void BoundaryCell::calcCellMatrix(Kiva::Foundation::NumericalScheme /*scheme*/, double /*timestep*/,
                                   const Kiva::Foundation &foundation, const Kiva::BoundaryConditions &bcs,
-                                  double &A, double &Aip, double &Aim, double &Ajp, double &Ajm,
-                                  double &Akp, double &Akm, double &bVal)
+                                  double &A, double (&Alt)[3][2], double &bVal)
 {
+  int dim, dir;
+  std::tie(dim, dir) = orientation_map[surfacePtr->orientation];
   switch (surfacePtr->boundaryConditionType)
   {
-    case Surface::ZERO_FLUX:
-    {
-      switch (surfacePtr->orientation)
-      {
-        case Surface::X_NEG: {
-          zfCellMatrix(A, Aip, bVal);
-          break;
-        }
-        case Surface::X_POS: {
-          zfCellMatrix(A, Aim, bVal);
-          break;
-        }
-        case Surface::Y_NEG: {
-          zfCellMatrix(A, Ajp, bVal);
-          break;
-        }
-        case Surface::Y_POS: {
-          zfCellMatrix(A, Ajm, bVal);
-          break;
-        }
-        case Surface::Z_NEG: {
-          zfCellMatrix(A, Akp, bVal);
-          break;
-        }
-        case Surface::Z_POS: {
-          zfCellMatrix(A, Akm, bVal);
-          break;
-        }
-      }
-    }
+    case Surface::ZERO_FLUX: {
+      zfCellMatrix(A, Alt[dim][dir], bVal);
       break;
+    }
     case Surface::CONSTANT_TEMPERATURE: {
       A = 1.0;
       bVal = surfacePtr->temperature;
@@ -1338,69 +1272,14 @@ void BoundaryCell::calcCellMatrix(Kiva::Foundation::NumericalScheme /*scheme*/, 
       doOutdoorTemp(bcs, A, bVal);
       break;
     }
-    case Surface::INTERIOR_FLUX:
-    {
-      switch (surfacePtr->orientation)
-      {
-        case Surface::X_NEG: {
-          ifCellMatrix(0, 1, foundation, bcs, A, Aip, bVal);
-          break;
-        }
-        case Surface::X_POS: {
-          ifCellMatrix(0, 0, foundation, bcs, A, Aim, bVal);
-          break;
-        }
-        case Surface::Y_NEG: {
-          ifCellMatrix(1, 1, foundation, bcs, A, Ajp, bVal);
-          break;
-        }
-        case Surface::Y_POS: {
-          ifCellMatrix(1, 0, foundation, bcs, A, Ajm, bVal);
-          break;
-        }
-        case Surface::Z_NEG: {
-          ifCellMatrix(2, 1, foundation, bcs, A, Akp, bVal);
-          break;
-        }
-        case Surface::Z_POS: {
-          ifCellMatrix(2, 0, foundation, bcs, A, Akm, bVal);
-          break;
-        }
-      }
-    }
-    break;
-
-    case Surface::EXTERIOR_FLUX:
-    {
-      switch (surfacePtr->orientation)
-      {
-        case Surface::X_NEG: {
-          efCellMatrix(0, 1, foundation, bcs, A, Aip, bVal);
-          break;
-        }
-        case Surface::X_POS: {
-          efCellMatrix(0, 0, foundation, bcs, A, Aim, bVal);
-          break;
-        }
-        case Surface::Y_NEG: {
-          efCellMatrix(1, 1, foundation, bcs, A, Ajp, bVal);
-          break;
-        }
-        case Surface::Y_POS: {
-          efCellMatrix(1, 0, foundation, bcs, A, Ajm, bVal);
-          break;
-        }
-        case Surface::Z_NEG: {
-          efCellMatrix(2, 1, foundation, bcs, A, Akp, bVal);
-          break;
-        }
-        case Surface::Z_POS: {
-          efCellMatrix(2, 0, foundation, bcs, A, Akm, bVal);
-          break;
-        }
-      }
-    }
+    case Surface::INTERIOR_FLUX: {
+      ifCellMatrix(dim, dir, foundation, bcs, A, Alt[dim][dir], bVal);
       break;
+    }
+    case Surface::EXTERIOR_FLUX: {
+      efCellMatrix(dim, dir, foundation, bcs, A, Alt[dim][dir], bVal);
+      break;
+    }
   }
 }
 

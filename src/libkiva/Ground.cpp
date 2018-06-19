@@ -129,15 +129,14 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
   for (int index = 0; index < num_cells; index++)
   {
     auto this_cell = domain.cell[index];
-    double A, Aip{0}, Aim{0}, Ajp{0}, Ajm{0}, Akp{0}, Akm{0}, bVal;
-    this_cell->calcCellMatrix(scheme, timestep, foundation, bcs, A, Aip, Aim, Ajp, Ajm, Akp, Akm, bVal);
+    double A, bVal;
+    double Alt[3][2] = {0};
+    this_cell->calcCellMatrix(scheme, timestep, foundation, bcs, A, Alt, bVal);
     setAmatValue(index, index, A);
-    if (Aip != 0) { setAmatValue(index, this_cell->index + domain.stepsize[0], Aip); }
-    if (Aim != 0) { setAmatValue(index, this_cell->index - domain.stepsize[0], Aim); }
-    if (Ajp != 0) { setAmatValue(index, this_cell->index + domain.stepsize[1], Ajp); }
-    if (Ajm != 0) { setAmatValue(index, this_cell->index - domain.stepsize[1], Ajm); }
-    if (Akp != 0) { setAmatValue(index, this_cell->index + domain.stepsize[2], Akp); }
-    if (Akm != 0) { setAmatValue(index, this_cell->index - domain.stepsize[2], Akm); }
+    for (std::size_t dim=0; dim<3; dim++) {
+      if (Alt[dim][0] != 0) { setAmatValue(index, this_cell->index - domain.stepsize[dim], Alt[dim][0]); }
+      if (Alt[dim][1] != 0) { setAmatValue(index, this_cell->index + domain.stepsize[dim], Alt[dim][1]); }
+    }
     setbValue(index, bVal);
   }
 

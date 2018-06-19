@@ -68,40 +68,40 @@ TEST_F( GC10aADIFixture, calcCellADI)
 
 TEST_F( GC10aImplicitFixture, calcCellMatrix)
 {
-  double A{0}, Aip{0}, Aim{0}, Ajp{0}, Ajm{0}, Akp{0}, Akm{0}, bVal{0};
-
+  double A{0}, bVal{0};
+  double Alt[3][2] = {0};
   auto this_cell = ground->domain.cell[0];
-  this_cell->calcCellMatrix(fnd.numericalScheme, 3600.0, fnd, bcs, A, Aip, Aim, Ajp, Ajm, Akp, Akm, bVal);
+  this_cell->calcCellMatrix(fnd.numericalScheme, 3600.0, fnd, bcs, A, Alt, bVal);
   EXPECT_DOUBLE_EQ(A, 1);
-  EXPECT_DOUBLE_EQ(Aip, 0);
-  EXPECT_DOUBLE_EQ(Aim, 0);
+  EXPECT_DOUBLE_EQ(Alt[0][1], 0);
+  EXPECT_DOUBLE_EQ(Alt[0][0], 0);
   EXPECT_DOUBLE_EQ(bVal, this_cell->surfacePtr->temperature);
 
   this_cell = ground->domain.cell[120];
-  this_cell->calcCellMatrix(fnd.numericalScheme, 3600.0, fnd, bcs, A, Aip, Aim, Ajp, Ajm, Akp, Akm, bVal);
-//  TODO: upgrade from regression tests to physical-ish unittests.
+  this_cell->calcCellMatrix(fnd.numericalScheme, 3600.0, fnd, bcs, A, Alt, bVal);
   double theta = 3600.0 / (this_cell->density*this_cell->specificHeat);
   EXPECT_DOUBLE_EQ(A, (1.0 + (this_cell->pde[0][1] + this_cell->pde[2][1] -
                               this_cell->pde[0][0] - this_cell->pde[2][0])*theta));
-  EXPECT_DOUBLE_EQ(Aip, -this_cell->pde[0][1]*theta);
-  EXPECT_DOUBLE_EQ(Aim, this_cell->pde[0][0]*theta);
+  EXPECT_DOUBLE_EQ(Alt[0][1], -this_cell->pde[0][1]*theta);
+  EXPECT_DOUBLE_EQ(Alt[0][0], this_cell->pde[0][0]*theta);
   EXPECT_DOUBLE_EQ(bVal, *this_cell->told_ptr + this_cell->heatGain*theta);
 }
 
 TEST_F( GC10aSteadyStateFixture, calcCellMatrixSS)
 {
-  double A{0}, Aip{0}, Aim{0}, Ajp{0}, Ajm{0}, Akp{0}, Akm{0}, bVal{0};
+  double A{0}, bVal{0};
+  double Alt[3][2] = {0};
   auto this_cell = ground->domain.cell[0];
-  this_cell->calcCellMatrix(fnd.numericalScheme, 3600.0, fnd, bcs, A, Aip, Aim, Ajp, Ajm, Akp, Akm, bVal);
+  this_cell->calcCellMatrix(fnd.numericalScheme, 3600.0, fnd, bcs, A, Alt, bVal);
   EXPECT_DOUBLE_EQ(A, 1);
-  EXPECT_DOUBLE_EQ(Aip, 0);
-  EXPECT_DOUBLE_EQ(Aim, 0);
+  EXPECT_DOUBLE_EQ(Alt[0][1], 0);
+  EXPECT_DOUBLE_EQ(Alt[0][1], 0);
   EXPECT_DOUBLE_EQ(bVal, this_cell->surfacePtr->temperature);
 
   this_cell = ground->domain.cell[120];
-  this_cell->calcCellMatrix(fnd.numericalScheme, 3600.0, fnd, bcs, A, Aip, Aim, Ajp, Ajm, Akp, Akm, bVal);
+  this_cell->calcCellMatrix(fnd.numericalScheme, 3600.0, fnd, bcs, A, Alt, bVal);
   EXPECT_DOUBLE_EQ(A, this_cell->pde[0][0] + this_cell->pde[2][0] - this_cell->pde[0][1] - this_cell->pde[2][1]);
-  EXPECT_DOUBLE_EQ(Aip, this_cell->pde[0][1]);
-  EXPECT_DOUBLE_EQ(Aim, -this_cell->pde[0][0]);
+  EXPECT_DOUBLE_EQ(Alt[0][1], this_cell->pde[0][1]);
+  EXPECT_DOUBLE_EQ(Alt[0][0], -this_cell->pde[0][0]);
   EXPECT_DOUBLE_EQ(bVal, 0);
 }

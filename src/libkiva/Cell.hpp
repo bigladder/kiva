@@ -83,12 +83,10 @@ namespace Kiva {
 
     virtual void calcCellMatrix(Foundation::NumericalScheme scheme, double timestep, const Foundation &foundation,
                                 const BoundaryConditions &bcs,
-                                double &A, double &Aip, double &Aim, double &Ajp, double &Ajm,
-                                double &Akp, double &Akm, double &bVal);
+                                double &A, double (&Alt)[3][2], double &bVal);
 
     void calcCellSteadyState(const Foundation &foundation,
-                             double &A, double &Aip, double &Aim, double &Ajp, double &Ajm,
-                             double &Akp, double &Akm, double &bVal);
+                             double &A, double (&Alt)[3][2], double &bVal);
 
     virtual void calcCellADI(int dim, const Foundation &foundation, double timestep,
                              const BoundaryConditions &bcs,
@@ -100,8 +98,8 @@ namespace Kiva {
 
     void Assemble(const Foundation &foundation);
 
-    void doOutdoorTemp(const BoundaryConditions &bcs, double &A, double &bVal);
-    void doIndoorTemp(const BoundaryConditions &bcs, double &A, double &bVal);
+    inline void doOutdoorTemp(const BoundaryConditions &bcs, double &A, double &bVal);
+    inline void doIndoorTemp(const BoundaryConditions &bcs, double &A, double &bVal);
   };
 
 
@@ -122,8 +120,7 @@ namespace Kiva {
                                     const BoundaryConditions &bcs) override;
     void calcCellMatrix(Foundation::NumericalScheme scheme, double timestep, const Foundation &foundation,
                         const BoundaryConditions &bcs,
-                        double &A, double &Aip, double &Aim, double &Ajp, double &Ajm,
-                        double &Akp, double &Akm, double &bVal) override;
+                        double &A, double (&Alt)[3][2], double &bVal) override;
     void calcCellADI(int dim, const Foundation &foundation, double timestep,
                    const BoundaryConditions &bcs,
                    double &Am, double &A, double &Ap, double &bVal) override;
@@ -150,8 +147,7 @@ namespace Kiva {
                             const BoundaryConditions &bcs) override;
     void calcCellMatrix(Foundation::NumericalScheme scheme, double timestep, const Foundation &foundation,
                         const BoundaryConditions &bcs,
-                        double &A, double &Aip, double &Aim, double &Ajp, double &Ajm,
-                        double &Akp, double &Akm, double &bVal) override;
+                        double &A, double (&Alt)[3][2], double &bVal) override;
     void calcCellADI(int dim, const Foundation &foundation, double timestep,
                      const BoundaryConditions &bcs,
                      double &Am, double &A, double &Ap, double &bVal) override;
@@ -177,8 +173,7 @@ namespace Kiva {
                             const BoundaryConditions &bcs) override;
     void calcCellMatrix(Foundation::NumericalScheme scheme, double timestep, const Foundation &foundation,
                         const BoundaryConditions &bcs,
-                        double &A, double &Aip, double &Aim, double &Ajp, double &Ajm,
-                        double &Akp, double &Akm, double &bVal) override;
+                        double &A, double (&Alt)[3][2], double &bVal) override;
     void calcCellADI(int dim, const Foundation &foundation, double timestep,
                      const BoundaryConditions &bcs,
                      double &Am, double &A, double &Ap, double &bVal) override;
