@@ -17,7 +17,7 @@ environment:
       RT_URL: github.com/bigladder/kiva-test-results.git
       RT_DIR: build/test/results
       PATOKEN:
-        secure: 7a7QLpEXUNLRIivs7Ty9ni5bjIJsrC1rKFNf64DTaZsyT9NT5MVSUwhyHmAd5X11
+        secure: Rr3wuk4IF8KwFMV2jTlf+QGmoThz5UXBiccxG0m/XXJZoJVllMmSCsWu4WBT3R/w
       RUBY_VERSION: "200"
 
   matrix:
