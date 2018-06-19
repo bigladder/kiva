@@ -2,20 +2,14 @@ require('git')
 require('fileutils')
 require('open3')
 
-def is_pull_request?
+def is_travis_pull_request?
   travis_pr = ENV['TRAVIS_PULL_REQUEST']
   puts("TRAVIS_PULL_REQUEST=#{travis_pr}")
   if travis_pr == "false"
     false
   elsif travis_pr.nil? or travis_pr.empty?
     # OK, we're not on Travis...
-    av_pr = ENV['APPVEYOR_PULL_REQUEST_NUMBER']
-    puts("APPVEYOR_PULL_REQUEST_NUMBER=#{av_pr}")
-    if av_pr.nil? or av_pr.empty?
-      false
-    else
-      true
-    end
+    false
   else
     # TRAVIS_PULL_REQUEST exists and is not false so we *are* on a pull request
     # on Travis; return true
