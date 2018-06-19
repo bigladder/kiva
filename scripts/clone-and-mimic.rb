@@ -43,7 +43,7 @@ end
 
 puts("scripts/clone-and-mimic.rb Start!")
 
-if not is_pull_request?
+if not is_travis_pull_request?
   main(CI_PATH, RT_URL, RT_DIR, ARCH, TEST_DIR)
 else
   puts("Skipping clone and mimic due to being a pull request")
