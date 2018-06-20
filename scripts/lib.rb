@@ -131,11 +131,11 @@ def run_case(in_root, out_root, arch, a, c)
 end
 
 # robust pull/push
-def robust_push_pull(g, branch, the_commit, the_tag)
+def robust_push_pull(g, branch, the_commit, the_tag, rt_url)
   puts("Starting robust_pull_push!")
   begin
     puts("Attempting to pull")
-    g.pull('origin', branch) if g.is_remote_branch?(branch)
+    g.pull(rt_url, branch) if g.is_remote_branch?(branch)
     puts("Pull attempt succeeded")
   rescue => e
     puts("Trying to fix suspected auto-merge conflict")
@@ -163,7 +163,7 @@ def robust_push_pull(g, branch, the_commit, the_tag)
   end
   puts("Pushing to origin!")
   begin
-    g.push('origin', branch, {:tags=>true})
+    g.push(rt_url, "HEAD:#{branch}", {:tags=>true})
   rescue => e
     # Possible that we have an error related to remote tagging
     # Let's check if the word "tag" is in the error message
@@ -174,8 +174,8 @@ def robust_push_pull(g, branch, the_commit, the_tag)
       puts("apparently, tag already exists on remote!")
       puts("attempt a retag next...")
       puts("-------")
-      retag(g.dir, the_tag)
-      g.push('origin', branch, {:tags=>true})
+      retag(g.dir, the_tag, rt_url)
+      g.push(rt_url, "HEAD:#{branch}", {:tags=>true})
     else
       # We don't know what happened. Report error and bail.
       puts("Don't know how to handle this error... exiting...")
@@ -186,10 +186,10 @@ def robust_push_pull(g, branch, the_commit, the_tag)
   puts("Done robust_pull_push!")
 end
 
-def retag(git_dir, tag_name)
+def retag(git_dir, tag_name, rt_url)
   puts("Tag, #{tag_name}, exists")
   # delete tag on remote
-  `cd #{git_dir} && git push --quiet origin :refs/tags/#{tag_name}`
+  `cd #{git_dir} && git push --quiet "#{rt_url}" :refs/tags/#{tag_name}`
   # force annotate the tag again
   `cd #{git_dir} && git tag -fa #{tag_name} -m "Add source sha"`
 end

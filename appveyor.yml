@@ -5,7 +5,6 @@ init:
   - cmd: ctest --version
   - ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
 
-skip_branch_with_pr: true
 clone_depth: 100
 
 cache:
@@ -17,7 +16,7 @@ environment:
       RT_URL: github.com/bigladder/kiva-test-results.git
       RT_DIR: build/test/results
       PATOKEN:
-        secure: 7a7QLpEXUNLRIivs7Ty9ni5bjIJsrC1rKFNf64DTaZsyT9NT5MVSUwhyHmAd5X11
+        secure: 2yWRGGytWw4GjxqH57yssvmTRY6yUxZkJ+ld3BEtQXceyGrwbaNh44G/CnNMFfcR
       RUBY_VERSION: "200"
 
   matrix:
