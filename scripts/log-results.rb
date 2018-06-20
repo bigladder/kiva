@@ -69,7 +69,7 @@ end
 
 puts("scripts/log-results.rb Start!")
 
-if not is_travis_pull_request?
+if not is_pull_request?
   main(CI_PATH, RT_DIR, ARCH, TEST_DIR, RT_URL)
 else
   puts("Skipping log-results.rb due to being a pull request")
