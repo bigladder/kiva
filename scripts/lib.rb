@@ -157,7 +157,7 @@ def robust_push_pull(g, branch, the_commit, the_tag, rt_url)
   end
   puts("Pushing to origin!")
   begin
-    g.push(rt_url, branch, {:tags=>true})
+    g.push(rt_url, "HEAD:#{branch}", {:tags=>true})
   rescue => e
     # Possible that we have an error related to remote tagging
     # Let's check if the word "tag" is in the error message
@@ -169,7 +169,7 @@ def robust_push_pull(g, branch, the_commit, the_tag, rt_url)
       puts("attempt a retag next...")
       puts("-------")
       retag(g.dir, the_tag, rt_url)
-      g.push(rt_url, branch, {:tags=>true})
+      g.push(rt_url, "HEAD:#{branch}", {:tags=>true})
     else
       # We don't know what happened. Report error and bail.
       puts("Don't know how to handle this error... exiting...")
