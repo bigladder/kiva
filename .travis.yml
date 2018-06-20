@@ -64,11 +64,11 @@ script:
       bash <(curl -s https://codecov.io/bash) -X gcov -cF unit;
     else
       ctest --output-on-failure
+      ruby ../scripts/log-results.rb;
     fi
 
 after_success:
   - if [[ "$COVERAGE" == false ]]; then
-      ruby ../scripts/log-results.rb;
       cpack -B "$TRAVIS_BUILD_DIR";
       cd "$TRAVIS_BUILD_DIR";
     fi

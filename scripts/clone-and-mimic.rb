@@ -34,8 +34,8 @@ def main(ci_path, rt_url, rt_dir, arch, test_dir)
   puts("Setting Git username and email")
   g_rt.config('user.name', "CI: #{arch}")
   g_rt.config('user.email', "ci@ci.org")
-  `cd #{g_rt.dir} && git config --global credential.helper store`
-  File.write("#{ENV['HOME']}/.git-credentials", "https://$($env:PATOKEN):x-oauth-basic@github.com\n", mode: 'wb')
+  `cd #{g_rt.dir}` # && git config --global credential.helper store`
+  #File.write("#{ENV['HOME']}/.git-credentials", "https://$($env:PATOKEN):x-oauth-basic@github.com\n", mode: 'wb')
   puts("Git username and email set")
   puts("Attempting to mimic source")
   mimic_source(g_rt, the_branch, the_ci_sha)
