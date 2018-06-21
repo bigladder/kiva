@@ -25,7 +25,7 @@ def main(ci_path, rt_dir, arch, test_dir, rt_url)
   the_ci_sha = g_ci.object("HEAD").sha
   puts("Sha of HEAD obtained: #{the_ci_sha}")
   puts("Getting Message of HEAD")
-  the_ci_msg = g_ci.object("HEAD").message
+  the_ci_msg = g_ci.log[0].message # used to be "commit('HEAD')", but it creates bad message after GitHub merge
   puts("Message of HEAD obtained:\n#{the_ci_msg}")
   puts("Attempting to OPEN the RegressTest repo")
   g_rt = Git.open(rt_dir)
