@@ -130,8 +130,9 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
   {
     auto this_cell = domain.cell[index];
     double A, bVal;
-    double Alt[3][2] = {0};
-    this_cell->calcCellMatrix(scheme, timestep, foundation, bcs, A, Alt, bVal);
+    double Alt[3][2] = {{0}};
+    this_cell->calcCellMatrix(scheme, timestep, foundation, bcs,
+                              A, Alt, bVal);
     setAmatValue(index, index, A);
     for (std::size_t dim=0; dim<3; dim++) {
       if (Alt[dim][0] != 0) { setAmatValue(index, this_cell->index - domain.stepsize[dim], Alt[dim][0]); }
@@ -150,24 +151,24 @@ void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
 }
 
 void Ground::calculateADI(int dim) {
-  double A, Ap, Am, bVal;
+  double A, Alt[2], bVal;
 
-  auto dest_index = domain.dest_index_vector[dim-1].begin();
+  auto dest_index = domain.dest_index_vector[dim].begin();
   auto cell_iter = domain.cell.begin();
-  for ( ; dest_index<domain.dest_index_vector[dim-1].end(); ++cell_iter, ++dest_index) {
+  for ( ; dest_index<domain.dest_index_vector[dim].end(); ++cell_iter, ++dest_index) {
     A = 0.0;
-    Ap = 0.0;
-    Am = 0.0;
+    Alt[0] = 0.0;
+    Alt[1] = 0.0;
     bVal = 0.0;
-    (*cell_iter)->calcCellADI(dim, foundation, timestep, bcs, Am, A, Ap, bVal);
-    setValuesADI(*dest_index, Am, A, Ap, bVal);
+    (*cell_iter)->calcCellADI(dim, timestep, foundation, bcs, A, Alt, bVal);
+    setValuesADI(*dest_index, A, Alt, bVal);
   }
 
   solveLinearSystem();
 
   std::size_t index{0};
-  dest_index = domain.dest_index_vector[dim-1].begin();
-  for ( ; dest_index<domain.dest_index_vector[dim-1].end(); ++index, ++dest_index) {
+  dest_index = domain.dest_index_vector[dim].begin();
+  for ( ; dest_index<domain.dest_index_vector[dim].end(); ++index, ++dest_index) {
       TNew[index] = x_[*dest_index];
   }
 
@@ -197,10 +198,10 @@ void Ground::calculate(BoundaryConditions& boundaryConditions, double ts)
   case Foundation::NS_ADI:
     {
     if (foundation.numberOfDimensions > 1)
-      calculateADI(1);
+      calculateADI(0);
     if (foundation.numberOfDimensions == 3)
-      calculateADI(2);
-    calculateADI(3);
+      calculateADI(1);
+    calculateADI(2);
     }
     break;
   case Foundation::NS_IMPLICIT:
@@ -247,11 +248,11 @@ void Ground::setbValue(const int i,const double val)
   }
 }
 
-void Ground::setValuesADI(const std::size_t & index, const double & Am, const double & A,
-                          const double & Ap, const double & bVal) {
-    a1[index] = Am;
+void Ground::setValuesADI(const std::size_t & index, const double &A,
+                          const double (&Alt)[2], const double & bVal) {
+    a1[index] = Alt[0];
     a2[index] = A;
-    a3[index] = Ap;
+    a3[index] = Alt[1];
     b_[index] = bVal;
 };
 

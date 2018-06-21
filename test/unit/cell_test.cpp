@@ -41,35 +41,39 @@ TEST_F( CellFixture, cell_basics)
 //  EXPECT_EQ(cell_vector[120]->surfacePtr, NULL);
 }
 
-TEST_F( GC10aADIFixture, calcCellADI)
+TEST_F( GC10aFixture, calcCellADI)
 {
-  double A{0.0}, Ap{0.0}, Am{0.0}, bVal{0.0};
+  fnd.numericalScheme = Foundation::NS_ADI;
+  calculate();
+  double A{0.0}, Alt[]{0.0, 0.0}, bVal{0.0};
 
   auto this_cell = ground->domain.cell[0];
-  this_cell->calcCellADI(1, fnd, 3600.0, bcs, Am, A, Ap, bVal);
+  this_cell->calcCellADI(0, 3600.0, fnd, bcs, A, Alt, bVal);
   EXPECT_DOUBLE_EQ(A, 1);
-  EXPECT_DOUBLE_EQ(Ap, 0);
-  EXPECT_DOUBLE_EQ(Am, 0);
+  EXPECT_DOUBLE_EQ(Alt[1], 0);
+  EXPECT_DOUBLE_EQ(Alt[0], 0);
   EXPECT_DOUBLE_EQ(bVal, this_cell->surfacePtr->temperature);
 
   this_cell = ground->domain.cell[120];
-  this_cell->calcCellADI(1, fnd, 3600.0, bcs, Am, A, Ap, bVal);
+  this_cell->calcCellADI(0, 3600.0, fnd, bcs, A, Alt, bVal);
   double theta = 3600.0 / (fnd.numberOfDimensions
                              *this_cell->density*this_cell->specificHeat);
   double f = fnd.fADI;
   EXPECT_DOUBLE_EQ(A, 1.0 + (2 - f)*(this_cell->pde[0][1] - this_cell->pde[0][0])*theta);
-  EXPECT_DOUBLE_EQ(Ap, (2 - f)*(-this_cell->pde[0][1]*theta));
-  EXPECT_DOUBLE_EQ(Am, (2 - f)*(this_cell->pde[0][0]*theta));
+  EXPECT_DOUBLE_EQ(Alt[1], (2 - f)*(-this_cell->pde[0][1]*theta));
+  EXPECT_DOUBLE_EQ(Alt[0], (2 - f)*(this_cell->pde[0][0]*theta));
   EXPECT_DOUBLE_EQ(bVal, *this_cell->told_ptr*(1.0 + f*(this_cell->pde[2][0] - this_cell->pde[2][1])*theta)
                        - *(this_cell->told_ptr - ground->domain.stepsize[2])*f*this_cell->pde[2][0]*theta
                        + *(this_cell->told_ptr + ground->domain.stepsize[2])*f*this_cell->pde[2][1]*theta
                        + this_cell->heatGain*theta);
 }
 
-TEST_F( GC10aImplicitFixture, calcCellMatrix)
+TEST_F( GC10aFixture, calcCellMatrix)
 {
+  fnd.numericalScheme = Foundation::NS_IMPLICIT;
+  calculate();
   double A{0}, bVal{0};
-  double Alt[3][2] = {0};
+  double Alt[3][2] = {{0}};
   auto this_cell = ground->domain.cell[0];
   this_cell->calcCellMatrix(fnd.numericalScheme, 3600.0, fnd, bcs, A, Alt, bVal);
   EXPECT_DOUBLE_EQ(A, 1);
@@ -87,10 +91,12 @@ TEST_F( GC10aImplicitFixture, calcCellMatrix)
   EXPECT_DOUBLE_EQ(bVal, *this_cell->told_ptr + this_cell->heatGain*theta);
 }
 
-TEST_F( GC10aSteadyStateFixture, calcCellMatrixSS)
+TEST_F( GC10aFixture, calcCellMatrixSS)
 {
+  fnd.numericalScheme = Foundation::NS_STEADY_STATE;
+  calculate();
   double A{0}, bVal{0};
-  double Alt[3][2] = {0};
+  double Alt[3][2] = {{0}};
   auto this_cell = ground->domain.cell[0];
   this_cell->calcCellMatrix(fnd.numericalScheme, 3600.0, fnd, bcs, A, Alt, bVal);
   EXPECT_DOUBLE_EQ(A, 1);

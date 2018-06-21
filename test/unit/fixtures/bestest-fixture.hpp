@@ -80,45 +80,4 @@ protected:
   }
 };
 
-
-class GC10aADIFixture : public GC10aFixture {
-protected:
-//  TODO: SetUpTestCase() should make it possible to run this only once.
-//  TODO: need to figure out how to do SetUpTestCase() in child fixture.
-  void SetUp() {
-      specifySystem();
-      specifyGC10a();
-      fnd.numericalScheme = Foundation::NS_ADI;
-      surface_avg = calculate();
-  };
-
-  double surface_avg;
-};
-
-class GC10aImplicitFixture : public GC10aFixture {
-protected:
-  void SetUp() {
-    specifySystem();
-    specifyGC10a();
-    fnd.numericalScheme = Foundation::NS_IMPLICIT;
-
-    surface_avg = calculate();
-  };
-
-  double surface_avg;
-};
-
-class GC10aSteadyStateFixture : public GC10aFixture {
-protected:
-  void SetUp() {
-    specifySystem();
-    specifyGC10a();
-    fnd.numericalScheme = Foundation::NS_STEADY_STATE;
-
-    surface_avg = calculate();
-  };
-
-  double surface_avg;
-};
-
 #endif /* BESTEST_FIXTURE_HPP_ */

@@ -230,6 +230,15 @@ void Domain::setDomain(Foundation &foundation)
                                   foundation.coordinateSystem == Foundation::CS_CYLINDRICAL);
   }
 
+  static std::map<Surface::Orientation, std::pair<int, int> > orientation_map{
+          {Surface::X_POS, {0, 0}},
+          {Surface::X_NEG, {0, 1}},
+          {Surface::Y_POS, {1, 0}},
+          {Surface::Y_NEG, {1, 1}},
+          {Surface::Z_POS, {2, 0}},
+          {Surface::Z_NEG, {2, 1}}
+  };
+
   for (auto &surface: foundation.surfaces)
   {
     surface.calcTilt();
@@ -238,6 +247,7 @@ void Domain::setDomain(Foundation &foundation)
     {
       surface.area += cell[index]->area;
     }
+    std::tie(surface.orientation_dim, surface.orientation_dir) = orientation_map[surface.orientation];
   }
 }
 

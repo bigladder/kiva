@@ -148,14 +148,27 @@ TEST_F( TypicalFixture, Slab)
   EXPECT_NEAR(1.0, 1.0, 1.0);
 }*/
 
-TEST_F( GC10aADIFixture, calculateADI)
+TEST_F( GC10aFixture, calculateADI)
 {
+  fnd.numericalScheme = Foundation::NS_ADI;
+  bool fullyear = false;
+//  fullyear = true;
+  if (fullyear) {
+    double surface_avg = calculate(8760);
+    Kiva::showMessage(MSG_INFO, dbl_to_string(surface_avg));
+    EXPECT_NEAR(surface_avg, 2888.473, 0.01);
+  } else {
+    double surface_avg = calculate();
     Kiva::showMessage(MSG_INFO, dbl_to_string(surface_avg));
     EXPECT_NEAR(surface_avg, 2607.32, 0.01);
+  }
 }
 
-TEST_F( GC10aImplicitFixture, calculateImplicit)
+TEST_F( GC10aFixture, calculateImplicit)
 {
+  fnd.numericalScheme = Foundation::NS_IMPLICIT;
+
+  double surface_avg = calculate();
   Kiva::showMessage(MSG_INFO, dbl_to_string(surface_avg));
   EXPECT_NEAR(surface_avg, 2601.25, 0.01);
 }
@@ -178,8 +191,11 @@ TEST_F( GC10aFixture, calculateADE)
   EXPECT_NEAR(surface_avg, 2615.19, 0.01);
 }
 
-TEST_F( GC10aSteadyStateFixture, GC10a_calculateSteadyState)
+TEST_F( GC10aFixture, GC10a_calculateSteadyState)
 {
+  fnd.numericalScheme = Foundation::NS_STEADY_STATE;
+
+  double surface_avg = calculate();
   Kiva::showMessage(MSG_INFO, dbl_to_string(surface_avg));
   EXPECT_NEAR(surface_avg, 3107.57, 0.01);
 }

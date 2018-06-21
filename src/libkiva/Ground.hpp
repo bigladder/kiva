@@ -63,9 +63,7 @@ private:
 
   // ADE
   std::vector<double> U; // ADE upper sweep, n+1
-  std::vector<double> UOld; // ADE upper sweep, n
   std::vector<double> V; // ADE lower sweep, n+1
-  std::vector<double> VOld; // ADE lower sweep, n
 
   // ADI
   std::vector<double> a1; // lower diagonal
@@ -99,8 +97,8 @@ private:
   // Misc. Functions
   void setAmatValue(const int i, const int j, const double val);
   void setbValue(const int i, const double val);
-  void setValuesADI(const std::size_t & index, const double & Am, const double & A,
-                              const double & Ap, const double & bVal);
+  void setValuesADI(const std::size_t & index, const double & A,
+                              const double (&Alt)[2], const double & bVal);
   void solveLinearSystem();
   void clearAmat();
   double getxValue(const int i);

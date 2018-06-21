@@ -149,6 +149,7 @@ public:
     Z_NEG
   };
   Orientation orientation;
+  std::size_t orientation_dim, orientation_dir;
 
   std::vector<std::size_t> indices;
 
