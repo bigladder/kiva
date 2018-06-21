@@ -85,7 +85,7 @@ def determine_branch
 end
 
 def mimic_source(g, branch, src_commit)
-  puts("Mimicing source repository")
+  puts("Mimicking source repository")
   puts("- branch: #{branch}")
   puts("- src_commit: #{src_commit}")
   #ref_commit = find_commit_from_substr(g, src_commit)
