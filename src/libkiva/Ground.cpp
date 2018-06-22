@@ -508,7 +508,7 @@ void Ground::calculateBoundaryLayer()
   {
     std::size_t index = i + pre.nX*j + pre.nX*pre.nY*k;
     double Qz = pre.domain.cell[index]->calculateHeatFlux(pre.foundation.numberOfDimensions,
-            pre.TNew[index], pre.nX, pre.nY, pre.nZ, pre.domain.cell)[2];
+            pre.TNew[index], pre.domain.dim_lengths, pre.domain.cell)[2];
     double x1 = pre.domain.mesh[0].dividers[i];
     double x2 = pre.domain.mesh[0].dividers[i+1];
 
