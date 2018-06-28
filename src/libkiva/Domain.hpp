@@ -38,8 +38,8 @@ public:
     void set2DZeroThicknessCellProperties(std::size_t index);
     void set3DZeroThicknessCellProperties(std::size_t index);
     void printCellTypes();
-    std::tuple<std::size_t, std::size_t, std::size_t> get_coordinates(std::size_t index);
-    std::vector<std::size_t> get_dest_index(std::size_t i, std::size_t j, std::size_t k);
+    std::tuple<std::size_t, std::size_t, std::size_t> getCoordinates(std::size_t index);
+    std::vector<std::size_t> getDestIndex(std::size_t i, std::size_t j, std::size_t k);
 };
 
 }

@@ -39,6 +39,17 @@ TEST_F( CellFixture, cell_basics)
   EXPECT_EQ(cell_vector[120]->cellType, CellType::NORMAL);
 //  TODO: replace surfacePtr and blockPtr NULL with nullptr. This EXPECT_EQ errors.
 //  EXPECT_EQ(cell_vector[120]->surfacePtr, NULL);
+
+  EXPECT_EQ(cell_vector[47]->dims[0], 0);
+  EXPECT_EQ(cell_vector[47]->dims[1], 5);
+  EXPECT_EQ(cell_vector[47]->dims[2], 2);
+}
+
+void resetValues(double &A, double (&Alt)[2], double &bVal) {
+  A = 0.0;
+  Alt[0] = 0.0;
+  Alt[1] =  0.0;
+  bVal = 0.0;
 }
 
 TEST_F( GC10aFixture, calcCellADI)
@@ -47,6 +58,7 @@ TEST_F( GC10aFixture, calcCellADI)
   calculate();
   double A{0.0}, Alt[]{0.0, 0.0}, bVal{0.0};
 
+  // constant temperature boundary cell
   auto this_cell = ground->domain.cell[0];
   this_cell->calcCellADI(0, 3600.0, fnd, bcs, A, Alt, bVal);
   EXPECT_DOUBLE_EQ(A, 1);
@@ -54,7 +66,9 @@ TEST_F( GC10aFixture, calcCellADI)
   EXPECT_DOUBLE_EQ(Alt[0], 0);
   EXPECT_DOUBLE_EQ(bVal, this_cell->surfacePtr->temperature);
 
+  // normal cell
   this_cell = ground->domain.cell[120];
+  resetValues(A, Alt, bVal);
   this_cell->calcCellADI(0, 3600.0, fnd, bcs, A, Alt, bVal);
   double theta = 3600.0 / (fnd.numberOfDimensions
                              *this_cell->density*this_cell->specificHeat);
@@ -66,6 +80,32 @@ TEST_F( GC10aFixture, calcCellADI)
                        - *(this_cell->told_ptr - ground->domain.stepsize[2])*f*this_cell->pde[2][0]*theta
                        + *(this_cell->told_ptr + ground->domain.stepsize[2])*f*this_cell->pde[2][1]*theta
                        + this_cell->heatGain*theta);
+
+  resetValues(A, Alt, bVal);
+  this_cell->calcCellADI(2, 3600.0, fnd, bcs, A, Alt, bVal);
+  EXPECT_DOUBLE_EQ(A, 1.0 + (2 - f)*(this_cell->pde[2][1] - this_cell->pde[2][0])*theta);
+  EXPECT_DOUBLE_EQ(Alt[1], (2 - f)*(-this_cell->pde[2][1]*theta));
+  EXPECT_DOUBLE_EQ(Alt[0], (2 - f)*(this_cell->pde[2][0]*theta));
+  EXPECT_DOUBLE_EQ(bVal, *this_cell->told_ptr*(1.0 + f*(this_cell->pde[0][0] - this_cell->pde[0][1])*theta)
+                         - *(this_cell->told_ptr - ground->domain.stepsize[0])*f*this_cell->pde[0][0]*theta
+                         + *(this_cell->told_ptr + ground->domain.stepsize[0])*f*this_cell->pde[0][1]*theta
+                         + this_cell->heatGain*theta);
+
+  // zero_flux, x_neg boundary cell
+  this_cell = ground->domain.cell[123];
+  resetValues(A, Alt, bVal);
+  this_cell->calcCellADI(0, 3600.0, fnd, bcs, A, Alt, bVal);
+  EXPECT_DOUBLE_EQ(A, 1);
+  EXPECT_DOUBLE_EQ(Alt[1], -1.0);
+  EXPECT_DOUBLE_EQ(Alt[0], 0);
+  EXPECT_DOUBLE_EQ(bVal, 0);
+
+  resetValues(A, Alt, bVal);
+  this_cell->calcCellADI(2, 3600.0, fnd, bcs, A, Alt, bVal);
+  EXPECT_DOUBLE_EQ(A, 1);
+  EXPECT_DOUBLE_EQ(Alt[1], 0);
+  EXPECT_DOUBLE_EQ(Alt[0], 0);
+  EXPECT_DOUBLE_EQ(bVal, *(this_cell->told_ptr + ground->domain.stepsize[0]));
 }
 
 TEST_F( GC10aFixture, calcCellMatrix)

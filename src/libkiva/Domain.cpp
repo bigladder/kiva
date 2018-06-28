@@ -60,8 +60,8 @@ void Domain::setDomain(Foundation &foundation)
 
   for (std::size_t index = 0; index < num_cells; index++)
   {
-    std::tie(i, j, k) = get_coordinates(index);
-    temp_di = get_dest_index(i, j, k);
+    std::tie(i, j, k) = getCoordinates(index);
+    temp_di = getDestIndex(i, j, k);
     for (std::size_t d=0; d<3; d++) {
       dest_index_vector[d][index] = temp_di[d];
     }
@@ -181,7 +181,7 @@ void Domain::setDomain(Foundation &foundation)
   for (auto this_cell: cell)
   {
     std::size_t index = this_cell->index;
-    std::tie(i, j, k) = get_coordinates(index);
+    std::tie(i, j, k) = getCoordinates(index);
 
     int numZeroDims = getNumZeroDims(i, j, k);
 
@@ -218,10 +218,18 @@ void Domain::setDomain(Foundation &foundation)
     }
   }
 
+  std::size_t dims[3]{0, 1, 2};
+  if (foundation.numberOfDimensions < 3) {
+    dims[1] = 5;
+  }
+  if (foundation.numberOfDimensions == 1) {
+    dims[0] = 5;
+  }
+
   // Calculate matrix coefficients
-  for (auto this_cell: cell)
-  {
+  for (auto this_cell: cell) {
     // PDE Coefficients
+    this_cell->setComputeDims(dims);
     this_cell->setDistances(dxp_vector[this_cell->coords[0]], dxm_vector[this_cell->coords[0]],
                             dyp_vector[this_cell->coords[1]], dym_vector[this_cell->coords[1]],
                             dzp_vector[this_cell->coords[2]], dzm_vector[this_cell->coords[2]]);
@@ -424,7 +432,7 @@ void Domain::printCellTypes()
 
 }
 
-std::tuple<std::size_t, std::size_t, std::size_t> Domain::get_coordinates(std::size_t index){
+std::tuple<std::size_t, std::size_t, std::size_t> Domain::getCoordinates(std::size_t index){
     size_t i, j, k;
     i = index % dim_lengths[0];
     j = ((index - i) % dim_lengths[1]) / dim_lengths[0];
@@ -432,7 +440,7 @@ std::tuple<std::size_t, std::size_t, std::size_t> Domain::get_coordinates(std::s
     return std::make_tuple(i, j, k);
 }
 
-std::vector<std::size_t> Domain::get_dest_index(std::size_t i, std::size_t j, std::size_t k)
+std::vector<std::size_t> Domain::getDestIndex(std::size_t i, std::size_t j, std::size_t k)
 {
   std::vector<std::size_t> dest_index;
   dest_index.emplace_back(i + dim_lengths[0]*j + dim_lengths[0]*dim_lengths[1]*k);
