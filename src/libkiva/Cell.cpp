@@ -481,7 +481,8 @@ BoundaryCell::BoundaryCell(const std::size_t &index, const CellType cellType,
     if (foundation.numberOfDimensions == 2 &&
         foundation.coordinateSystem == Foundation::CS_CYLINDRICAL)
     {
-      if (surfacePtr->orientation_dim == 0)
+      if (surfacePtr->orientation == Surface::X_POS ||
+          surfacePtr->orientation == Surface::X_NEG)
       {
         area = 2.0 * PI * meshPtr[0].centers[coords[0]] * meshPtr[2].deltas[coords[2]];
       }
@@ -495,7 +496,8 @@ BoundaryCell::BoundaryCell(const std::size_t &index, const CellType cellType,
     else if (foundation.numberOfDimensions == 2 &&
              foundation.coordinateSystem == Foundation::CS_CARTESIAN)
     {
-      if (surfacePtr->orientation_dim == 0)
+      if (surfacePtr->orientation == Surface::X_POS ||
+          surfacePtr->orientation == Surface::X_NEG)
       {
         area = 2.0 * meshPtr[2].deltas[coords[2]] * foundation.linearAreaMultiplier;
       }
@@ -507,15 +509,18 @@ BoundaryCell::BoundaryCell(const std::size_t &index, const CellType cellType,
     }
     else if (foundation.numberOfDimensions == 3)
     {
-      if (surfacePtr->orientation_dim == 0)
+      if (surfacePtr->orientation == Surface::X_POS ||
+          surfacePtr->orientation == Surface::X_NEG)
       {
         area = meshPtr[1].deltas[coords[1]] * meshPtr[2].deltas[coords[2]];
       }
-      else if (surfacePtr->orientation_dim == 1)
+      else if (surfacePtr->orientation == Surface::Y_POS ||
+               surfacePtr->orientation == Surface::Y_NEG)
       {
         area = meshPtr[0].deltas[coords[0]] * meshPtr[2].deltas[coords[2]];
       }
-      else // if (surface.orientation_dim == 2)
+      else // if (surface.orientation == Surface::Z_POS ||
+        // surface.orientation == Surface::Z_NEG)
       {
         area = meshPtr[0].deltas[coords[0]] * meshPtr[1].deltas[coords[1]];
       }

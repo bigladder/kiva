@@ -261,7 +261,9 @@ void Domain::setDomain(Foundation &foundation)
 
 double Domain::getDistances(std::size_t i, std::size_t dim, std::size_t dir)
 {
-  if (dir == 0) {
+  if (dim_lengths[dim] == 1) {
+    return 0;
+  } else if (dir == 0) {
     if (i == 0) {
       // For boundary cells assume that the cell on the other side of the
       // boundary is the same as the previous cell
