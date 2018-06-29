@@ -3042,4 +3042,18 @@ void Foundation::createMeshData()
 
 }
 
+double Foundation::getConvectionCoeff(double Tsurf, double Tamb, double Vair,
+                                  double roughness, bool isExterior, double tilt) const
+{
+  if (convectionCalculationMethod == Foundation::CCM_AUTO)
+    return getDOE2ConvectionCoeff(tilt,0.0,0.0,Tsurf,Tamb,Vair,roughness);
+  else //if (foundation.convectionCalculationMethod == Foundation::CCM_CONSTANT_COEFFICIENT)
+  {
+    if (isExterior)
+      return exteriorConvectiveCoefficient;
+    else
+      return interiorConvectiveCoefficient;
+  }
+}
+
 }

@@ -101,7 +101,7 @@ void Simulator::initializeConditions()
           {
             index = i + ground.nX*j + ground.nX*ground.nY*k;
             ground.TOld[index]= getInitialTemperature(tInit,
-                ground.domain.meshZ.centers[k]);
+                ground.domain.mesh[2].centers[k]);
           }
         }
       }
@@ -162,14 +162,14 @@ void Simulator::initializePlots()
     {
       if (!input.output.outputSnapshots[p].xRangeSet)
       {
-        input.output.outputSnapshots[p].snapshotSettings.xRange.first = ground.domain.meshX.dividers[0];
-        input.output.outputSnapshots[p].snapshotSettings.xRange.second = ground.domain.meshX.dividers[ground.nX];
+        input.output.outputSnapshots[p].snapshotSettings.xRange.first = ground.domain.mesh[0].dividers[0];
+        input.output.outputSnapshots[p].snapshotSettings.xRange.second = ground.domain.mesh[0].dividers[ground.nX];
       }
 
       if (!input.output.outputSnapshots[p].yRangeSet)
       {
-        input.output.outputSnapshots[p].snapshotSettings.yRange.first = ground.domain.meshY.dividers[0];
-        input.output.outputSnapshots[p].snapshotSettings.yRange.second = ground.domain.meshY.dividers[ground.nY];
+        input.output.outputSnapshots[p].snapshotSettings.yRange.first = ground.domain.mesh[1].dividers[0];
+        input.output.outputSnapshots[p].snapshotSettings.yRange.second = ground.domain.mesh[1].dividers[ground.nY];
       }
 
       if (!input.output.outputSnapshots[p].zRangeSet)
@@ -182,8 +182,8 @@ void Simulator::initializePlots()
         }
         else
         {
-          input.output.outputSnapshots[p].snapshotSettings.zRange.first = ground.domain.meshZ.dividers[0];
-          input.output.outputSnapshots[p].snapshotSettings.zRange.second = ground.domain.meshZ.dividers[ground.nZ];
+          input.output.outputSnapshots[p].snapshotSettings.zRange.first = ground.domain.mesh[2].dividers[0];
+          input.output.outputSnapshots[p].snapshotSettings.zRange.second = ground.domain.mesh[2].dividers[ground.nZ];
         }
       }
 
@@ -193,8 +193,8 @@ void Simulator::initializePlots()
     {
       if (!input.output.outputSnapshots[p].xRangeSet)
       {
-        input.output.outputSnapshots[p].snapshotSettings.xRange.first = ground.domain.meshX.dividers[0];
-        input.output.outputSnapshots[p].snapshotSettings.xRange.second = ground.domain.meshX.dividers[ground.nX];
+        input.output.outputSnapshots[p].snapshotSettings.xRange.first = ground.domain.mesh[0].dividers[0];
+        input.output.outputSnapshots[p].snapshotSettings.xRange.second = ground.domain.mesh[0].dividers[ground.nX];
       }
 
       if (!input.output.outputSnapshots[p].yRangeSet)
@@ -205,8 +205,8 @@ void Simulator::initializePlots()
 
       if (!input.output.outputSnapshots[p].zRangeSet)
       {
-        input.output.outputSnapshots[p].snapshotSettings.zRange.first = ground.domain.meshZ.dividers[0];
-        input.output.outputSnapshots[p].snapshotSettings.zRange.second = ground.domain.meshZ.dividers[ground.nZ];
+        input.output.outputSnapshots[p].snapshotSettings.zRange.first = ground.domain.mesh[2].dividers[0];
+        input.output.outputSnapshots[p].snapshotSettings.zRange.second = ground.domain.mesh[2].dividers[ground.nZ];
       }
     }
     else
@@ -225,8 +225,8 @@ void Simulator::initializePlots()
 
       if (!input.output.outputSnapshots[p].zRangeSet)
       {
-        input.output.outputSnapshots[p].snapshotSettings.zRange.first = ground.domain.meshZ.dividers[0];
-        input.output.outputSnapshots[p].snapshotSettings.zRange.second = ground.domain.meshZ.dividers[ground.nZ];
+        input.output.outputSnapshots[p].snapshotSettings.zRange.first = ground.domain.mesh[2].dividers[0];
+        input.output.outputSnapshots[p].snapshotSettings.zRange.second = ground.domain.mesh[2].dividers[ground.nZ];
       }
     }
 
@@ -304,7 +304,8 @@ void Simulator::plot(boost::posix_time::ptime t)
             else
             {
               double du = plots[p].distanceUnitConversion;
-              std::vector<double> Qflux = ground.calculateHeatFlux(&ground.domain.cell[index]);
+              std::vector<double> Qflux = ground.domain.cell[index]->calculateHeatFlux(
+                      ground.foundation.numberOfDimensions, ground.TNew[index], ground.nX, ground.nY, ground.nZ, ground.domain.cell);
               double Qx = Qflux[0];
               double Qy = Qflux[1];
               double Qz = Qflux[2];

@@ -1,6 +1,6 @@
 set(kiva_test_src
   foundation.unit.cpp
-)
+        domain_test.cpp cell_test.cpp)
 
 include_directories(${CMAKE_BINARY_DIR}/src/libkiva/)
 

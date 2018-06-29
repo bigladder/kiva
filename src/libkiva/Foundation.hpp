@@ -7,6 +7,7 @@
 #include "Mesher.hpp"
 #include "Functions.hpp"
 #include "Geometry.hpp"
+#include "Algorithms.hpp"
 
 namespace Kiva {
 
@@ -148,6 +149,7 @@ public:
     Z_NEG
   };
   Orientation orientation;
+  std::size_t orientation_dim, orientation_dir;
 
   std::vector<std::size_t> indices;
 
@@ -315,6 +317,8 @@ public:
   double netPerimeter;
 
   void createMeshData();
+  double getConvectionCoeff(double Tsurf, double Tamb, double Vair,
+                            double roughness, bool isExterior, double tilt) const;
 };
 
 }

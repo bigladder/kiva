@@ -50,52 +50,52 @@ GroundPlot::GroundPlot(SnapshotSettings &snapshotSettings, Domain &domain, Found
 
   if (isEqual(snapshotSettings.xRange.first,snapshotSettings.xRange.second))
   {
-    iMin = domain.meshX.getNearestIndex(snapshotSettings.xRange.first);
-    iMax = domain.meshX.getNearestIndex(snapshotSettings.xRange.second);
+    iMin = domain.mesh[0].getNearestIndex(snapshotSettings.xRange.first);
+    iMax = domain.mesh[0].getNearestIndex(snapshotSettings.xRange.second);
   }
   else
   {
-    iMin = domain.meshX.getPreviousIndex(snapshotSettings.xRange.first);
-    iMax = domain.meshX.getNextIndex(snapshotSettings.xRange.second);
+    iMin = domain.mesh[0].getPreviousIndex(snapshotSettings.xRange.first);
+    iMax = domain.mesh[0].getNextIndex(snapshotSettings.xRange.second);
 
     // Check for exact match
-    if (isEqual(domain.meshX.centers[iMin + 1],snapshotSettings.xRange.first))
+    if (isEqual(domain.mesh[0].centers[iMin + 1],snapshotSettings.xRange.first))
       iMin += 1;
-    if (isEqual(domain.meshX.centers[iMax - 1],snapshotSettings.xRange.second))
+    if (isEqual(domain.mesh[0].centers[iMax - 1],snapshotSettings.xRange.second))
       iMax -= 1;
   }
 
   if (isEqual(snapshotSettings.yRange.first,snapshotSettings.yRange.second))
   {
-    jMin = domain.meshY.getNearestIndex(snapshotSettings.yRange.first);
-    jMax = domain.meshY.getNearestIndex(snapshotSettings.yRange.second);
+    jMin = domain.mesh[1].getNearestIndex(snapshotSettings.yRange.first);
+    jMax = domain.mesh[1].getNearestIndex(snapshotSettings.yRange.second);
   }
   else
   {
-    jMin = domain.meshY.getPreviousIndex(snapshotSettings.yRange.first);
-    jMax = domain.meshY.getNextIndex(snapshotSettings.yRange.second);
+    jMin = domain.mesh[1].getPreviousIndex(snapshotSettings.yRange.first);
+    jMax = domain.mesh[1].getNextIndex(snapshotSettings.yRange.second);
 
     // Check for exact match
-    if (isEqual(domain.meshY.centers[jMin + 1],snapshotSettings.yRange.first))
+    if (isEqual(domain.mesh[1].centers[jMin + 1],snapshotSettings.yRange.first))
       jMin += 1;
-    if (isEqual(domain.meshY.centers[jMax - 1],snapshotSettings.yRange.second))
+    if (isEqual(domain.mesh[1].centers[jMax - 1],snapshotSettings.yRange.second))
       jMax -= 1;
   }
 
   if (isEqual(snapshotSettings.zRange.first,snapshotSettings.zRange.second))
   {
-    kMin = domain.meshZ.getNearestIndex(snapshotSettings.zRange.first);
-    kMax = domain.meshZ.getNearestIndex(snapshotSettings.zRange.second);
+    kMin = domain.mesh[2].getNearestIndex(snapshotSettings.zRange.first);
+    kMax = domain.mesh[2].getNearestIndex(snapshotSettings.zRange.second);
   }
   else
   {
-    kMin = domain.meshZ.getPreviousIndex(snapshotSettings.zRange.first);
-    kMax = domain.meshZ.getNextIndex(snapshotSettings.zRange.second);
+    kMin = domain.mesh[2].getPreviousIndex(snapshotSettings.zRange.first);
+    kMax = domain.mesh[2].getNextIndex(snapshotSettings.zRange.second);
 
     // Check for exact match
-    if (isEqual(domain.meshZ.centers[kMin + 1],snapshotSettings.zRange.first))
+    if (isEqual(domain.mesh[2].centers[kMin + 1],snapshotSettings.zRange.first))
       kMin += 1;
-    if (isEqual(domain.meshZ.centers[kMax - 1],snapshotSettings.zRange.second))
+    if (isEqual(domain.mesh[2].centers[kMax - 1],snapshotSettings.zRange.second))
       kMax -= 1;
   }
 
@@ -103,11 +103,11 @@ GroundPlot::GroundPlot(SnapshotSettings &snapshotSettings, Domain &domain, Found
   std::size_t nJ = jMax - jMin + 1;
   std::size_t nK = kMax - kMin + 1;
 
-  xMin = domain.meshX.dividers[0];
-  xMax = domain.meshX.dividers[domain.nX];
+  xMin = domain.mesh[0].dividers[0];
+  xMax = domain.mesh[0].dividers[domain.dim_lengths[0]];
 
-  yMin = domain.meshY.dividers[0];
-  yMax = domain.meshY.dividers[domain.nY];
+  yMin = domain.mesh[1].dividers[0];
+  yMax = domain.mesh[1].dividers[domain.dim_lengths[1]];
 
   if (nI == 1 && nJ == 1)
   {
@@ -116,12 +116,12 @@ GroundPlot::GroundPlot(SnapshotSettings &snapshotSettings, Domain &domain, Found
     hAxis.nN = nI;
     hAxis.nMin = iMin;
     hAxis.nMax = iMax;
-    hAxis.mesh = domain.meshX;
+    hAxis.mesh = domain.mesh[0];
 
     vAxis.nN = nK;
     vAxis.nMin = kMin;
     vAxis.nMax = kMax;
-    vAxis.mesh = domain.meshZ;
+    vAxis.mesh = domain.mesh[2];
   }
   else if (nI == 1)
   {
@@ -130,18 +130,18 @@ GroundPlot::GroundPlot(SnapshotSettings &snapshotSettings, Domain &domain, Found
     hAxis.nN = nJ;
     hAxis.nMin = jMin;
     hAxis.nMax = jMax;
-    hAxis.mesh = domain.meshY;
+    hAxis.mesh = domain.mesh[1];
 
     vAxis.nN = nK;
     vAxis.nMin = kMin;
     vAxis.nMax = kMax;
-    vAxis.mesh = domain.meshZ;
+    vAxis.mesh = domain.mesh[2];
 
-    slice = domain.meshX.centers[iMin];
+    slice = domain.mesh[0].centers[iMin];
   }
   else if (nJ == 1)
   {
-    if (domain.meshY.centers.size() == 1)
+    if (domain.mesh[1].centers.size() == 1)
       sliceType = XZ_2D;
     else
       sliceType = XZ;
@@ -149,14 +149,14 @@ GroundPlot::GroundPlot(SnapshotSettings &snapshotSettings, Domain &domain, Found
     hAxis.nN = nI;
     hAxis.nMin = iMin;
     hAxis.nMax = iMax;
-    hAxis.mesh = domain.meshX;
+    hAxis.mesh = domain.mesh[0];
 
     vAxis.nN = nK;
     vAxis.nMin = kMin;
     vAxis.nMax = kMax;
-    vAxis.mesh = domain.meshZ;
+    vAxis.mesh = domain.mesh[2];
 
-    slice = domain.meshY.centers[jMin];
+    slice = domain.mesh[1].centers[jMin];
   }
   else if (nK == 1)
   {
@@ -165,14 +165,14 @@ GroundPlot::GroundPlot(SnapshotSettings &snapshotSettings, Domain &domain, Found
     hAxis.nN = nI;
     hAxis.nMin = iMin;
     hAxis.nMax = iMax;
-    hAxis.mesh = domain.meshX;
+    hAxis.mesh = domain.mesh[0];
 
     vAxis.nN = nJ;
     vAxis.nMin = jMin;
     vAxis.nMax = jMax;
-    vAxis.mesh = domain.meshY;
+    vAxis.mesh = domain.mesh[1];
 
-    slice = domain.meshZ.centers[kMin];
+    slice = domain.mesh[2].centers[kMin];
   }
 
   if (sliceType == Z_1D) {
