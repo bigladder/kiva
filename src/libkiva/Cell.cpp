@@ -690,26 +690,64 @@ std::vector<double> BoundaryCell::calculateHeatFlux(double &TNew, std::size_t (&
                                                     const std::vector< std::shared_ptr<Cell> > &/*cell_v*/)
 {
   std::vector<double> Qflux = {0, 0, 0};
-
   double C[3][2]{{0}}, DT[3][2]{{0}};
-  std::size_t sdim = surfacePtr->orientation_dim;
-  std::size_t sdir = surfacePtr->orientation_dir;
 
-  for (auto dim : dims) {
+  for (auto dim: dims) {
     if (dim < 5) {
-      if (dim == sdim) {
-        C[dim][sdir] = -kcoeff[dim][sdir] / dist[dim][sdir];
-      } else {
-        C[dim][1] = -kcoeff[dim][1] * dist[dim][0] / (dist[dim][1] + dist[dim][0]) / dist[dim][1];
-        C[dim][0] = -kcoeff[dim][0] * dist[dim][1] / (dist[dim][1] + dist[dim][0]) / dist[dim][0];
-      }
+      C[dim][1] = -kcoeff[dim][1] * dist[dim][0] / (dist[dim][1] + dist[dim][0]) / dist[dim][1];
+      C[dim][0] = -kcoeff[dim][0] * dist[dim][1] / (dist[dim][1] + dist[dim][0]) / dist[dim][0];
       if (coords[dim] != dim_lengths[dim] - 1) {
         DT[dim][0] = *(&TNew + stepsize[dim]) - TNew;
       }
       if (coords[dim] != 0) {
         DT[dim][1] = TNew - *(&TNew - stepsize[dim]);
       }
-      Qflux[dim] = C[dim][1]*DT[dim][1] + C[dim][0]*DT[dim][0];
+    }
+  }
+
+  switch (surfacePtr->orientation)
+  {
+    case Surface::X_NEG:
+    {
+      C[0][1] = -kcoeff[0][1]/dist[0][1];
+      C[0][0] = 0;
+    }
+      break;
+    case Surface::X_POS:
+    {
+      C[0][1] = 0;
+      C[0][0] = -kcoeff[0][0]/dist[0][0];
+    }
+      break;
+    case Surface::Y_NEG:
+    {
+      C[1][1] = -kcoeff[1][1]/dist[1][1];
+      C[1][0] = 0;
+    }
+      break;
+    case Surface::Y_POS:
+    {
+      C[1][1] = 0;
+      C[1][0] = -kcoeff[1][0]/dist[1][0];
+    }
+      break;
+    case Surface::Z_NEG:
+    {
+      C[2][1] = -kcoeff[2][1]/dist[2][1];
+      C[2][0] = 0;
+    }
+      break;
+    case Surface::Z_POS:
+    {
+      C[2][1] = 0;
+      C[2][0] = -kcoeff[2][0]/dist[2][0];
+    }
+      break;
+  }
+
+  for (auto dim : dims) {
+    if (dim < 5) {
+      Qflux[dim] = C[dim][1] * DT[dim][1] + C[dim][0] * DT[dim][0];
     }
   }
   return Qflux;
