@@ -96,8 +96,9 @@ namespace Kiva {
                              double &A, double (&Alt)[2], double &bVal);
     void gatherCCoeffs(const double &theta, bool cylindrical, double (&C)[3][2]);
 
-    virtual std::vector<double> calculateHeatFlux(double &TNew, std::size_t (&dim_lengths)[3],
-                                          const std::vector< std::shared_ptr<Cell> > &cell_v);
+    virtual std::vector<double> calculateHeatFlux(int ndims, double &TNew,
+                                                  std::size_t nX, std::size_t nY, std::size_t nZ,
+                                                  const std::vector< std::shared_ptr<Cell> > &cell_v);
 
     void Assemble(const Foundation &foundation);
 
@@ -130,7 +131,8 @@ namespace Kiva {
     void calcCellADI(int dim, const double &timestep,
                      const Foundation &foundation, const BoundaryConditions &bcs,
                      double &A, double (&Alt)[2], double &bVal) override;
-    std::vector<double> calculateHeatFlux(double &TNew, std::size_t (&dim_lengths)[3],
+    std::vector<double> calculateHeatFlux(int ndims, double &TNew,
+                                          std::size_t nX, std::size_t nY, std::size_t nZ,
                                           const std::vector< std::shared_ptr<Cell> > &cell_v) override;
   };
 
@@ -156,7 +158,8 @@ namespace Kiva {
     void calcCellADI(int dim, const double &timestep,
                      const Foundation &foundation, const BoundaryConditions &bcs,
                      double &A, double (&Alt)[2], double &bVal) override;
-    std::vector<double> calculateHeatFlux(double &TNew, std::size_t (&dim_lengths)[3],
+    std::vector<double> calculateHeatFlux(int ndims, double &TNew,
+                                          std::size_t nX, std::size_t nY, std::size_t nZ,
                                           const std::vector< std::shared_ptr<Cell> > &cell_v) override;
   };
 
@@ -181,7 +184,8 @@ namespace Kiva {
     void calcCellADI(int dim, const double &timestep,
                      const Foundation &foundation, const BoundaryConditions &bcs,
                      double &A, double (&Alt)[2], double &bVal) override;
-    std::vector<double> calculateHeatFlux(double &TNew, std::size_t (&dim_lengths)[3],
+    std::vector<double> calculateHeatFlux(int ndims, double &TNew,
+                                          std::size_t nX, std::size_t nY, std::size_t nZ,
                                           const std::vector< std::shared_ptr<Cell> > &cell_v) override;
 
   private:
@@ -231,7 +235,8 @@ namespace Kiva {
                       const Foundation &foundation, Surface *surfacePtr, Block *blockPtr,
                       Mesher *meshptr);
 
-    std::vector<double> calculateHeatFlux(double &TNew, std::size_t (&dim_lengths)[3],
+    std::vector<double> calculateHeatFlux(int ndims, double &TNew,
+                                          std::size_t nX, std::size_t nY, std::size_t nZ,
                                           const std::vector< std::shared_ptr<Cell> > &cell_v) override;
   };
 

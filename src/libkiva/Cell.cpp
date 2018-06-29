@@ -336,25 +336,68 @@ void Cell::gatherCCoeffs(const double &theta,
   }
 }
 
-std::vector<double> Cell::calculateHeatFlux(double &TNew, std::size_t (&dim_lengths)[3],
+std::vector<double> Cell::calculateHeatFlux(int ndims, double &TNew,
+                                            std::size_t nX, std::size_t nY, std::size_t nZ,
                                             const std::vector< std::shared_ptr<Cell> > &/*cell_v*/)
 {
-  std::vector<double> Qflux = {0, 0, 0};
+  std::vector<double> Qflux;
+  double Qx = 0;
+  double Qy = 0;
+  double Qz = 0;
 
-  double C[3][2]{{0}}, DT[3][2]{{0}};
-  for (auto dim : dims) {
-    if (dim < 5) {
-      C[dim][1] = -kcoeff[dim][1] * dist[dim][0] / (dist[dim][1] + dist[dim][0]) / dist[dim][1];
-      C[dim][0] = -kcoeff[dim][0] * dist[dim][1] / (dist[dim][1] + dist[dim][0]) / dist[dim][0];
-      if (coords[dim] != dim_lengths[dim] - 1) {
-        DT[dim][0] = *(&TNew + stepsize[dim]) - TNew;
-      }
-      if (coords[dim] != 0) {
-        DT[dim][1] = TNew - *(&TNew - stepsize[dim]);
-      }
-      Qflux[dim] = C[dim][1]*DT[dim][1] + C[dim][0]*DT[dim][0];
-    }
+  double CXP = 0;
+  double CXM = 0;
+  double CYP = 0;
+  double CYM = 0;
+  double CZP = -kcoeff[2][1]*dist[2][0]/(dist[2][1]+dist[2][0])/dist[2][1];
+  double CZM = -kcoeff[2][0]*dist[2][1]/(dist[2][1]+dist[2][0])/dist[2][0];
+
+  if (ndims > 1)
+  {
+    CXP = -kcoeff[0][1]*dist[0][0]/(dist[0][1]+dist[0][0])/dist[0][1];
+    CXM = -kcoeff[0][0]*dist[0][1]/(dist[0][1]+dist[0][0])/dist[0][0];
   }
+
+
+  if (ndims == 3)
+  {
+    CYP = -kcoeff[1][1]*dist[1][0]/(dist[1][1]+dist[1][0])/dist[1][1];
+    CYM = -kcoeff[1][0]*dist[1][1]/(dist[1][1]+dist[1][0])/dist[1][0];
+  }
+
+  double DTXP = 0;
+  double DTXM = 0;
+  double DTYP = 0;
+  double DTYM = 0;
+  double DTZP = 0;
+  double DTZM = 0;
+
+  if (coords[0] != nX - 1)
+    DTXP = *(&TNew + stepsize[0])-TNew;
+
+  if (coords[0] != 0)
+    DTXM = TNew-*(&TNew - stepsize[0]);
+
+  if (coords[1] != nY - 1)
+    DTYP = *(&TNew + stepsize[1])-TNew;
+
+  if (coords[1] != 0)
+    DTYM = TNew-*(&TNew - stepsize[1]);
+
+  if (coords[2] != nZ - 1)
+    DTZP = *(&TNew + stepsize[2])-TNew;
+
+  if (coords[2] != 0)
+    DTZM = TNew-*(&TNew - stepsize[2]);
+
+  Qx = CXP*DTXP + CXM*DTXM;
+  Qy = CYP*DTYP + CYM*DTYM;
+  Qz = CZP*DTZP + CZM*DTZM;
+
+  Qflux.push_back(Qx);
+  Qflux.push_back(Qy);
+  Qflux.push_back(Qz);
+
   return Qflux;
 }
 
@@ -414,10 +457,14 @@ void ExteriorAirCell::calcCellMatrix(Foundation::NumericalScheme, const double &
 }
 
 
-std::vector<double> ExteriorAirCell::calculateHeatFlux(double &/*TNew*/, std::size_t (&)[3],
+std::vector<double> ExteriorAirCell::calculateHeatFlux(int /*ndims*/, double &/*TNew*/,
+                                            std::size_t /*nX*/, std::size_t /*nY*/, std::size_t /*nZ*/,
                                                        const std::vector< std::shared_ptr<Cell> > &/*cell_v*/)
 {
-  std::vector<double> Qflux = {0, 0, 0};
+  std::vector<double> Qflux;
+  Qflux.push_back(0);
+  Qflux.push_back(0);
+  Qflux.push_back(0);
   return Qflux;
 }
 
@@ -463,10 +510,14 @@ void InteriorAirCell::calcCellADI(int /*dim*/, const double &/*timestep*/,
   doIndoorTemp(bcs, A, bVal);
 };
 
-std::vector<double> InteriorAirCell::calculateHeatFlux(double &/*TNew*/, std::size_t (&)[3],
+std::vector<double> InteriorAirCell::calculateHeatFlux(int /*ndims*/, double &/*TNew*/,
+                                                       std::size_t /*nX*/, std::size_t /*nY*/, std::size_t /*nZ*/,
                                                        const std::vector< std::shared_ptr<Cell> > &/*cell_v*/)
 {
-  std::vector<double> Qflux = {0, 0, 0};
+  std::vector<double> Qflux;
+  Qflux.push_back(0);
+  Qflux.push_back(0);
+  Qflux.push_back(0);
   return Qflux;
 }
 
@@ -686,70 +737,107 @@ void BoundaryCell::calcCellMatrix(Foundation::NumericalScheme, const double &/*t
   }
 }
 
-std::vector<double> BoundaryCell::calculateHeatFlux(double &TNew, std::size_t (&dim_lengths)[3],
+std::vector<double> BoundaryCell::calculateHeatFlux(int ndims, double &TNew,
+                                                    std::size_t nX, std::size_t nY, std::size_t nZ,
                                                     const std::vector< std::shared_ptr<Cell> > &/*cell_v*/)
 {
-  std::vector<double> Qflux = {0, 0, 0};
-  double C[3][2]{{0}}, DT[3][2]{{0}};
+  std::vector<double> Qflux;
+  double Qx = 0;
+  double Qy = 0;
+  double Qz = 0;
 
-  for (auto dim: dims) {
-    if (dim < 5) {
-      C[dim][1] = -kcoeff[dim][1] * dist[dim][0] / (dist[dim][1] + dist[dim][0]) / dist[dim][1];
-      C[dim][0] = -kcoeff[dim][0] * dist[dim][1] / (dist[dim][1] + dist[dim][0]) / dist[dim][0];
-      if (coords[dim] != dim_lengths[dim] - 1) {
-        DT[dim][0] = *(&TNew + stepsize[dim]) - TNew;
-      }
-      if (coords[dim] != 0) {
-        DT[dim][1] = TNew - *(&TNew - stepsize[dim]);
-      }
-    }
+  double CXP = 0;
+  double CXM = 0;
+  double CYP = 0;
+  double CYM = 0;
+  double CZP = -kcoeff[2][1]*dist[2][0]/(dist[2][1]+dist[2][0])/dist[2][1];
+  double CZM = -kcoeff[2][0]*dist[2][1]/(dist[2][1]+dist[2][0])/dist[2][0];
+
+  if (ndims > 1)
+  {
+    CXP = -kcoeff[0][1]*dist[0][0]/(dist[0][1]+dist[0][0])/dist[0][1];
+    CXM = -kcoeff[0][0]*dist[0][1]/(dist[0][1]+dist[0][0])/dist[0][0];
   }
+
+
+  if (ndims == 3)
+  {
+    CYP = -kcoeff[1][1]*dist[1][0]/(dist[1][1]+dist[1][0])/dist[1][1];
+    CYM = -kcoeff[1][0]*dist[1][1]/(dist[1][1]+dist[1][0])/dist[1][0];
+  }
+
+  double DTXP = 0;
+  double DTXM = 0;
+  double DTYP = 0;
+  double DTYM = 0;
+  double DTZP = 0;
+  double DTZM = 0;
+
+  if (coords[0] != nX - 1)
+    DTXP = *(&TNew + stepsize[0])-TNew;
+
+  if (coords[0] != 0)
+    DTXM = TNew-*(&TNew - stepsize[0]);
+
+  if (coords[1] != nY - 1)
+    DTYP = *(&TNew + stepsize[1])-TNew;
+
+  if (coords[1] != 0)
+    DTYM = TNew-*(&TNew - stepsize[1]);
+
+  if (coords[2] != nZ - 1)
+    DTZP = *(&TNew + stepsize[2])-TNew;
+
+  if (coords[2] != 0)
+    DTZM = TNew-*(&TNew - stepsize[2]);
 
   switch (surfacePtr->orientation)
   {
     case Surface::X_NEG:
     {
-      C[0][1] = -kcoeff[0][1]/dist[0][1];
-      C[0][0] = 0;
+      CXP = -kcoeff[0][1]/dist[0][1];
+      CXM = 0;
     }
       break;
     case Surface::X_POS:
     {
-      C[0][1] = 0;
-      C[0][0] = -kcoeff[0][0]/dist[0][0];
+      CXP = 0;
+      CXM = -kcoeff[0][0]/dist[0][0];
     }
       break;
     case Surface::Y_NEG:
     {
-      C[1][1] = -kcoeff[1][1]/dist[1][1];
-      C[1][0] = 0;
+      CYP = -kcoeff[1][1]/dist[1][1];
+      CYM = 0;
     }
       break;
     case Surface::Y_POS:
     {
-      C[1][1] = 0;
-      C[1][0] = -kcoeff[1][0]/dist[1][0];
+      CYP = 0;
+      CYM = -kcoeff[1][0]/dist[1][0];
     }
       break;
     case Surface::Z_NEG:
     {
-      C[2][1] = -kcoeff[2][1]/dist[2][1];
-      C[2][0] = 0;
+      CZP = -kcoeff[2][1]/dist[2][1];
+      CZM = 0;
     }
       break;
     case Surface::Z_POS:
     {
-      C[2][1] = 0;
-      C[2][0] = -kcoeff[2][0]/dist[2][0];
+      CZP = 0;
+      CZM = -kcoeff[2][0]/dist[2][0];
     }
       break;
   }
+  Qx = CXP*DTXP + CXM*DTXM;
+  Qy = CYP*DTYP + CYM*DTYM;
+  Qz = CZP*DTZP + CZM*DTZM;
 
-  for (auto dim : dims) {
-    if (dim < 5) {
-      Qflux[dim] = C[dim][1] * DT[dim][1] + C[dim][0] * DT[dim][0];
-    }
-  }
+  Qflux.push_back(Qx);
+  Qflux.push_back(Qy);
+  Qflux.push_back(Qz);
+
   return Qflux;
 }
 
@@ -990,7 +1078,8 @@ double BoundaryCell::efCellExplicit(const std::size_t &dim, const std::size_t &d
         Cell(index, cellType, i, j, k, stepsize, foundation, surfacePtr, blockPtr, meshPtr)
 {}
 
-std::vector<double> ZeroThicknessCell::calculateHeatFlux(double &TNew, std::size_t (&dim_lengths)[3],
+std::vector<double> ZeroThicknessCell::calculateHeatFlux(int ndims, double &TNew,
+                                                         std::size_t nX, std::size_t nY, std::size_t nZ,
                                                          const std::vector< std::shared_ptr<Cell> > &cell_v)
 {
   std::vector<double> Qflux;
@@ -1003,18 +1092,18 @@ std::vector<double> ZeroThicknessCell::calculateHeatFlux(double &TNew, std::size
 
   if (isEqual(meshPtr[0].deltas[coords[0]], 0.0))
   {
-    Qm = cell_v[index - stepsize[0]]->calculateHeatFlux(*(&TNew - stepsize[0]), dim_lengths, cell_v);
-    Qp = cell_v[index + stepsize[0]]->calculateHeatFlux(*(&TNew + stepsize[0]), dim_lengths, cell_v);
+    Qm = cell_v[index - stepsize[0]]->calculateHeatFlux(ndims, *(&TNew - stepsize[0]), nX, nY, nZ, cell_v);
+    Qp = cell_v[index + stepsize[0]]->calculateHeatFlux(ndims, *(&TNew + stepsize[0]), nX, nY, nZ, cell_v);
   }
   if (isEqual(meshPtr[1].deltas[coords[1]], 0.0))
   {
-    Qm = cell_v[index - stepsize[1]]->calculateHeatFlux(*(&TNew - stepsize[1]), dim_lengths, cell_v);
-    Qp = cell_v[index + stepsize[1]]->calculateHeatFlux(*(&TNew + stepsize[1]), dim_lengths, cell_v);
+    Qm = cell_v[index - stepsize[1]]->calculateHeatFlux(ndims, *(&TNew - stepsize[1]), nX, nY, nZ, cell_v);
+    Qp = cell_v[index + stepsize[1]]->calculateHeatFlux(ndims, *(&TNew + stepsize[1]), nX, nY, nZ, cell_v);
   }
   if (isEqual(meshPtr[2].deltas[coords[2]], 0.0))
   {
-    Qm = cell_v[index - stepsize[2]]->calculateHeatFlux(*(&TNew - stepsize[2]), dim_lengths, cell_v);
-    Qp = cell_v[index + stepsize[2]]->calculateHeatFlux(*(&TNew + stepsize[2]), dim_lengths, cell_v);
+    Qm = cell_v[index - stepsize[2]]->calculateHeatFlux(ndims, *(&TNew - stepsize[2]), nX, nY, nZ, cell_v);
+    Qp = cell_v[index + stepsize[2]]->calculateHeatFlux(ndims, *(&TNew + stepsize[2]), nX, nY, nZ, cell_v);
   }
 
   Qx = (Qm[0] + Qp[0])*0.5;
