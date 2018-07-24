@@ -390,7 +390,7 @@ void Ground::calculateSurfaceAverages(){
     }
 
     double totalHeatTransferRate = 0.0;
-    //double TA = 0;
+    double TA = 0;
     double HA = 0.0;
     double totalArea = 0.0;
 
@@ -421,7 +421,7 @@ void Ground::calculateSurfaceAverages(){
 
             totalArea += A;
             totalHeatTransferRate += h*A*(Tair - TNew[index]);
-            //TA += TNew[index]*A;
+            TA += TNew[index]*A;
             HA += h*A;
 
             #ifdef PRNTSURF
@@ -448,6 +448,7 @@ void Ground::calculateSurfaceAverages(){
       double hAvg = HA/totalArea;
 
       groundOutput.outputValues[{surface,GroundOutput::OT_TEMP}] = Tavg;
+      groundOutput.outputValues[{surface,GroundOutput::OT_AVG_TEMP}] = TA/totalArea;
       groundOutput.outputValues[{surface,GroundOutput::OT_FLUX}] = totalHeatTransferRate/totalArea;
       groundOutput.outputValues[{surface,GroundOutput::OT_RATE}] = totalHeatTransferRate/totalArea*surfaceArea;
       groundOutput.outputValues[{surface,GroundOutput::OT_CONV}] = hAvg;
@@ -456,6 +457,7 @@ void Ground::calculateSurfaceAverages(){
     }
     else {
       groundOutput.outputValues[{surface,GroundOutput::OT_TEMP}] = Tair;
+      groundOutput.outputValues[{surface,GroundOutput::OT_AVG_TEMP}] = Tair;
       groundOutput.outputValues[{surface,GroundOutput::OT_FLUX}] = 0.0;
       groundOutput.outputValues[{surface,GroundOutput::OT_RATE}] = 0.0;
       groundOutput.outputValues[{surface,GroundOutput::OT_CONV}] = 0.0;
