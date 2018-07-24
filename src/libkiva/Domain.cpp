@@ -125,11 +125,13 @@ void Domain::setDomain(Foundation &foundation)
       cell.emplace_back(std::move(sp));
     }
 
+    bool cellInBlock = false;
     if (cellType == CellType::NORMAL) {
-      for (auto block: foundation.blocks) {
+      for (auto &block: foundation.blocks) {
         if (boost::geometry::within(Point(mesh[0].centers[i], mesh[1].centers[j]), block.polygon) &&
             isGreaterThan(mesh[2].centers[k], block.zMin) &&
             isLessThan(mesh[2].centers[k], block.zMax)) {
+          cellInBlock = true;
           if (block.blockType == Block::INTERIOR_AIR) {
             cellType = CellType::INTERIOR_AIR;
             std::shared_ptr<InteriorAirCell> sp = std::make_shared<InteriorAirCell>(index, cellType, i, j, k, stepsize, foundation, nullptr, &block,
@@ -140,12 +142,16 @@ void Domain::setDomain(Foundation &foundation)
             std::shared_ptr<ExteriorAirCell> sp = std::make_shared<ExteriorAirCell>(index, cellType, i, j, k, stepsize, foundation, nullptr, &block,
                                                               mesh);
             cell.emplace_back(std::move(sp));
+          } else {
+            std::shared_ptr<Cell> sp = std::make_shared<Cell>(index, cellType, i, j, k, stepsize, foundation, nullptr, &block,
+                                                                                    mesh);
+            cell.emplace_back(std::move(sp));
           }
         }
       }
     }
 
-    if (cellType == CellType::NORMAL) {
+    if (cellType == CellType::NORMAL && !cellInBlock) {
       // If not surface or block, find interior zero-width cells
       if (foundation.numberOfDimensions == 3) {
         if (isEqual(mesh[0].deltas[i], 0.0) ||
@@ -424,7 +430,18 @@ void Domain::printCellTypes()
     for (std::size_t i = 0; i < dim_lengths[0]; i++)
     {
 
-      output << ", " << cell[i + (dim_lengths[1]/2)*stepsize[1] + k*stepsize[2]]->cellType;
+      output << ", ";
+
+      output << cell[i + (dim_lengths[1]/2)*stepsize[1] + k*stepsize[2]]->cellType;
+
+//      output << cell[i + (dim_lengths[1]/2)*stepsize[1] + k*stepsize[2]]->pde[2][0];
+
+
+//      if (cell[i + (dim_lengths[1]/2)*stepsize[1] + k*stepsize[2]]->surfacePtr) {
+//        output << cell[i + (dim_lengths[1]/2)*stepsize[1] + k*stepsize[2]]->surfacePtr->type;
+//      } else {
+//        output << "";
+//      }
 
     }
 

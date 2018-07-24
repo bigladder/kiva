@@ -871,7 +871,7 @@ void BoundaryCell::ifCellADI(const int &dim, const int &sdim, const int &dir,
     bVal = (hc + hr)*Tair + heatGain;
   } else {
     Alt = 0.0;
-    bVal = *(told_ptr + sign*stepsize[sdim])*kcoeff[sdim][1]/dist[sdim][1] + (hc + hr)*Tair + heatGain;
+    bVal = *(told_ptr + sign*stepsize[sdim])*kcoeff[sdim][dir]/dist[sdim][dir] + (hc + hr)*Tair + heatGain;
   }
 }
 
