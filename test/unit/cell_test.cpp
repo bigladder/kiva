@@ -25,24 +25,24 @@ protected:
 
 TEST_F( CellFixture, cell_basics)
 {
-  EXPECT_EQ(cell_vector[0]->coords[0], 0);
-  EXPECT_EQ(cell_vector[0]->coords[1], 0);
-  EXPECT_EQ(cell_vector[0]->coords[2], 0);
-  EXPECT_EQ(cell_vector[0]->index, 0);
+  EXPECT_EQ(cell_vector[0]->coords[0], 0u);
+  EXPECT_EQ(cell_vector[0]->coords[1], 0u);
+  EXPECT_EQ(cell_vector[0]->coords[2], 0u);
+  EXPECT_EQ(cell_vector[0]->index, 0u);
   EXPECT_EQ(cell_vector[0]->cellType, CellType::BOUNDARY);
   EXPECT_EQ(cell_vector[0]->surfacePtr->type, Surface::SurfaceType::ST_DEEP_GROUND);
 
-  EXPECT_EQ(cell_vector[120]->coords[0], 38);
-  EXPECT_EQ(cell_vector[120]->coords[1], 0);
-  EXPECT_EQ(cell_vector[120]->coords[2], 2);
-  EXPECT_EQ(cell_vector[120]->index, 120);
+  EXPECT_EQ(cell_vector[120]->coords[0], 38u);
+  EXPECT_EQ(cell_vector[120]->coords[1], 0u);
+  EXPECT_EQ(cell_vector[120]->coords[2], 2u);
+  EXPECT_EQ(cell_vector[120]->index, 120u);
   EXPECT_EQ(cell_vector[120]->cellType, CellType::NORMAL);
 //  TODO: replace surfacePtr and blockPtr NULL with nullptr. This EXPECT_EQ errors.
 //  EXPECT_EQ(cell_vector[120]->surfacePtr, NULL);
 
-  EXPECT_EQ(cell_vector[47]->dims[0], 0);
-  EXPECT_EQ(cell_vector[47]->dims[1], 5);
-  EXPECT_EQ(cell_vector[47]->dims[2], 2);
+  EXPECT_EQ(cell_vector[47]->dims[0], 0u);
+  EXPECT_EQ(cell_vector[47]->dims[1], 5u);
+  EXPECT_EQ(cell_vector[47]->dims[2], 2u);
 }
 
 void resetValues(double &A, double (&Alt)[2], double &bVal) {

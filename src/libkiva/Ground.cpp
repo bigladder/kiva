@@ -126,7 +126,7 @@ void Ground::calculateExplicit()
 
 void Ground::calculateMatrix(Foundation::NumericalScheme scheme)
 {
-  for (int index = 0; index < num_cells; index++)
+  for (std::size_t index = 0; index < num_cells; index++)
   {
     auto this_cell = domain.cell[index];
     double A, bVal;

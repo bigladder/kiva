@@ -26,14 +26,14 @@ protected:
 
 TEST_F( DomainFixture, domain_basics)
 {
-  EXPECT_EQ(domain->dim_lengths[0], 41);
-  EXPECT_EQ(domain->dim_lengths[1], 1);
-  EXPECT_EQ(domain->dim_lengths[2], 19);
-  EXPECT_EQ(domain->stepsize[0], 1);
-  EXPECT_EQ(domain->stepsize[1], 41);
-  EXPECT_EQ(domain->stepsize[2], 41);
+  EXPECT_EQ(domain->dim_lengths[0], 41u);
+  EXPECT_EQ(domain->dim_lengths[1], 1u);
+  EXPECT_EQ(domain->dim_lengths[2], 19u);
+  EXPECT_EQ(domain->stepsize[0], 1u);
+  EXPECT_EQ(domain->stepsize[1], 41u);
+  EXPECT_EQ(domain->stepsize[2], 41u);
 
-  EXPECT_EQ(domain->dest_index_vector.size(), 3);
+  EXPECT_EQ(domain->dest_index_vector.size(), 3u);
   EXPECT_EQ(domain->dest_index_vector[2].size(), domain->dim_lengths[0]
                                                  *domain->dim_lengths[1]*domain->dim_lengths[2]);
 }
@@ -42,7 +42,7 @@ TEST_F( DomainFixture, surface_indices)
 {
   EXPECT_EQ(ground->foundation.surfaces[0].indices.size(), domain->dim_lengths[2]);
   EXPECT_EQ(ground->foundation.surfaces[4].indices.size(), domain->dim_lengths[0]);
-  EXPECT_EQ(ground->foundation.surfaces[5].indices.size(), 11);
+  EXPECT_EQ(ground->foundation.surfaces[5].indices.size(), 11u);
 }
 
 TEST_F( DomainFixture, surface_tilt)

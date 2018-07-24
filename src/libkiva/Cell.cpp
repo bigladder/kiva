@@ -278,7 +278,7 @@ void Cell::calcCellSteadyState(const Foundation &foundation,
   bVal = -heatGain;
 }
 
-void Cell::calcCellADI(int dim, const double &timestep,
+void Cell::calcCellADI(std::size_t dim, const double &timestep,
                        const Foundation &foundation, const BoundaryConditions &/*bcs*/,
                        double &A, double (&Alt)[2], double &bVal) {
   double theta = timestep / (foundation.numberOfDimensions
@@ -302,7 +302,7 @@ void Cell::calcCellADI(int dim, const double &timestep,
   ADImath(dim, Q, f, multiplier, C, A, Alt, bVal);
 }
 
-void Cell::ADImath(int dim, const double Q, const double f, const double multiplier, const double (&C)[3][2],
+void Cell::ADImath(std::size_t dim, const double Q, const double f, const double multiplier, const double (&C)[3][2],
                    double &A, double (&Alt)[2], double &bVal) {
   bVal = Q;
   double bit{0};
@@ -441,7 +441,7 @@ double ExteriorAirCell::calcCellExplicit(double /*timestep*/, const Foundation &
   return bcs.outdoorTemp;
 }
 
-void ExteriorAirCell::calcCellADI(int /*dim*/, const double &/*timestep*/,
+void ExteriorAirCell::calcCellADI(std::size_t /*dim*/, const double &/*timestep*/,
                                   const Foundation &, const BoundaryConditions &bcs,
                                   double &A, double (&)[2], double &bVal)
 {
@@ -503,7 +503,7 @@ void InteriorAirCell::calcCellMatrix(Foundation::NumericalScheme, const double &
   doIndoorTemp(bcs, A, bVal);
 }
 
-void InteriorAirCell::calcCellADI(int /*dim*/, const double &/*timestep*/,
+void InteriorAirCell::calcCellADI(std::size_t /*dim*/, const double &/*timestep*/,
                                   const Foundation &, const BoundaryConditions &bcs,
                                   double &A, double (&)[2], double &bVal)
 {
@@ -670,7 +670,7 @@ double BoundaryCell::calcCellExplicit(double /*timestep*/, const Foundation &fou
   }
 }
 
-void BoundaryCell::calcCellADI(int dim, const double &/*timestep*/,
+void BoundaryCell::calcCellADI(std::size_t dim, const double &/*timestep*/,
                                const Foundation &foundation, const BoundaryConditions &bcs,
                                double &A, double (&Alt)[2], double &bVal)
 {
