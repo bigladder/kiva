@@ -123,61 +123,60 @@ void Domain::setDomain(Foundation &foundation)
       std::shared_ptr<BoundaryCell> sp = std::make_shared<BoundaryCell>(index, cellType, i, j, k, stepsize, foundation, surfacePtr, nullptr,
                                                         mesh);
       cell.emplace_back(std::move(sp));
-    }
-
-    bool cellInBlock = false;
-    if (cellType == CellType::NORMAL) {
+    } else { // if (cellType == CellType::NORMAL)
+      Block *blockPtr = nullptr;
+      // Loop through blocks. Use the last block that contains the point.
       for (auto &block: foundation.blocks) {
         if (boost::geometry::within(Point(mesh[0].centers[i], mesh[1].centers[j]), block.polygon) &&
             isGreaterThan(mesh[2].centers[k], block.zMin) &&
             isLessThan(mesh[2].centers[k], block.zMax)) {
-          cellInBlock = true;
-          if (block.blockType == Block::INTERIOR_AIR) {
-            cellType = CellType::INTERIOR_AIR;
-            std::shared_ptr<InteriorAirCell> sp = std::make_shared<InteriorAirCell>(index, cellType, i, j, k, stepsize, foundation, nullptr, &block,
-                                                              mesh);
-            cell.emplace_back(std::move(sp));
-          } else if (block.blockType == Block::EXTERIOR_AIR) {
-            cellType = CellType::EXTERIOR_AIR;
-            std::shared_ptr<ExteriorAirCell> sp = std::make_shared<ExteriorAirCell>(index, cellType, i, j, k, stepsize, foundation, nullptr, &block,
-                                                              mesh);
-            cell.emplace_back(std::move(sp));
+          blockPtr = &block;
+        }
+      }
+      if (blockPtr) {
+          if (blockPtr->blockType == Block::INTERIOR_AIR) {
+              cellType = CellType::INTERIOR_AIR;
+              std::shared_ptr<InteriorAirCell> sp = std::make_shared<InteriorAirCell>(index, cellType, i, j, k, stepsize, foundation, nullptr, blockPtr,
+                                                                                      mesh);
+              cell.emplace_back(std::move(sp));
+          } else if (blockPtr->blockType == Block::EXTERIOR_AIR) {
+              cellType = CellType::EXTERIOR_AIR;
+              std::shared_ptr<ExteriorAirCell> sp = std::make_shared<ExteriorAirCell>(index, cellType, i, j, k, stepsize, foundation, nullptr, blockPtr,
+                                                                                      mesh);
+              cell.emplace_back(std::move(sp));
           } else {
-            std::shared_ptr<Cell> sp = std::make_shared<Cell>(index, cellType, i, j, k, stepsize, foundation, nullptr, &block,
-                                                                                    mesh);
-            cell.emplace_back(std::move(sp));
+              std::shared_ptr<Cell> sp = std::make_shared<Cell>(index, cellType, i, j, k, stepsize, foundation, nullptr, blockPtr,
+                                                                mesh);
+              cell.emplace_back(std::move(sp));
           }
-        }
-      }
-    }
-
-    if (cellType == CellType::NORMAL && !cellInBlock) {
-      // If not surface or block, find interior zero-width cells
-      if (foundation.numberOfDimensions == 3) {
-        if (isEqual(mesh[0].deltas[i], 0.0) ||
-            isEqual(mesh[2].deltas[k], 0.0) ||
-            isEqual(mesh[1].deltas[j], 0.0)) {
-          cellType = CellType::ZERO_THICKNESS;
-        }
-      } else if (foundation.numberOfDimensions == 2) {
-        if (isEqual(mesh[0].deltas[i], 0.0) ||
-            isEqual(mesh[2].deltas[k], 0.0)) {
-          cellType = CellType::ZERO_THICKNESS;
-        }
       } else {
-        if (isEqual(mesh[2].deltas[k], 0.0)) {
-          cellType = CellType::ZERO_THICKNESS;
-        }
-      }
+          // If not surface or block, find interior zero-width cells
+          if (foundation.numberOfDimensions == 3) {
+              if (isEqual(mesh[0].deltas[i], 0.0) ||
+                  isEqual(mesh[2].deltas[k], 0.0) ||
+                  isEqual(mesh[1].deltas[j], 0.0)) {
+                  cellType = CellType::ZERO_THICKNESS;
+              }
+          } else if (foundation.numberOfDimensions == 2) {
+              if (isEqual(mesh[0].deltas[i], 0.0) ||
+                  isEqual(mesh[2].deltas[k], 0.0)) {
+                  cellType = CellType::ZERO_THICKNESS;
+              }
+          } else {
+              if (isEqual(mesh[2].deltas[k], 0.0)) {
+                  cellType = CellType::ZERO_THICKNESS;
+              }
+          }
 
-      if (cellType == CellType::ZERO_THICKNESS) {
-        std::shared_ptr<ZeroThicknessCell> sp = std::make_shared<ZeroThicknessCell>(index, cellType, i, j, k, stepsize,
-                foundation, nullptr, nullptr, mesh);
-        cell.emplace_back(std::move(sp));
-      } else {
-        std::shared_ptr<Cell> sp = std::make_shared<Cell>(index, cellType, i, j, k, stepsize,
-                foundation, nullptr, nullptr, mesh);
-        cell.emplace_back(std::move(sp));
+          if (cellType == CellType::ZERO_THICKNESS) {
+              std::shared_ptr<ZeroThicknessCell> sp = std::make_shared<ZeroThicknessCell>(index, cellType, i, j, k, stepsize,
+                                                                                          foundation, nullptr, nullptr, mesh);
+              cell.emplace_back(std::move(sp));
+          } else {
+              std::shared_ptr<Cell> sp = std::make_shared<Cell>(index, cellType, i, j, k, stepsize,
+                                                                foundation, nullptr, nullptr, mesh);
+              cell.emplace_back(std::move(sp));
+          }
       }
     }
   }
