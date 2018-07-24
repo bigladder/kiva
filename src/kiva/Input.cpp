@@ -9,8 +9,6 @@
 
 using namespace Kiva;
 
-static const double PI = 4.0*atan(1.0);
-
 void SimulationControl::setStartTime()
 {
   boost::posix_time::ptime st(startDate,boost::posix_time::hours(0));

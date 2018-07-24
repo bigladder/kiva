@@ -31,6 +31,10 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated-register -Wno-deprecated-declarations")
 endif()
 
+if( MSVC AND NOT ( "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel" ) )
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4251")
+endif()
+
 add_definitions("-DBOOST_ALL_NO_LIB")
 
 include_directories( ${CMAKE_SOURCE_DIR}/src/libkiva/)
