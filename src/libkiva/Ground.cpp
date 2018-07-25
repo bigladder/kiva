@@ -254,7 +254,7 @@ void Ground::setValuesADI(const std::size_t & index, const double &A,
     a2[index] = A;
     a3[index] = Alt[1];
     b_[index] = bVal;
-};
+}
 
 void Ground::solveLinearSystem()
 {
