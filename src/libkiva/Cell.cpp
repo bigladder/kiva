@@ -843,8 +843,9 @@ std::vector<double> BoundaryCell::calculateHeatFlux(int ndims, double &TNew,
 
 #define INTFLUX_PREFACE \
 double Tair = bcs.indoorTemp; \
+double Trad = bcs.indoorRadiantTemp; \
 double hc = foundation.getConvectionCoeff(*told_ptr, Tair,0.0,0.00208,false,surfacePtr->tilt); \
-double hr = getSimpleInteriorIRCoeff(surfacePtr->emissivity, *told_ptr,Tair);
+double hr = getSimpleInteriorIRCoeff(surfacePtr->emissivity, *told_ptr,Trad);
 
 #define EXTFLUX_PREFACE \
 double Tair = bcs.outdoorTemp; \

@@ -423,6 +423,7 @@ void Simulator::updateBoundaryConditions(boost::posix_time::ptime t)
   else // Boundaries::ITM_CONSTANT_TEMPERATURE)
     bcs.indoorTemp = input.boundaries.indoorAirTemperature;
 
+  bcs.indoorRadiantTemp = bcs.indoorTemp;
   if (input.boundaries.outdoorTemperatureMethod == Boundaries::OTM_WEATHER_FILE)
     bcs.outdoorTemp = weatherData.dryBulbTemp.getValue(t);
   else // Boundaries::OTM_CONSTANT_TEMPERATURE)
