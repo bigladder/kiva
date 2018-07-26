@@ -372,9 +372,7 @@ double Ground::getSurfaceArea(Surface::SurfaceType surfaceType)
 }
 
 void Ground::calculateSurfaceAverages(){
-  for (auto output : groundOutput.outputMap) {
-    Surface::SurfaceType surface = output.first;
-    std::vector<GroundOutput::OutputType> outTypes = output.second;
+  for (auto surface : groundOutput.outputMap) {
 
     double constructionRValue = 0.0;
     double surfaceArea = foundation.surfaceAreas[surface];

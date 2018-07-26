@@ -87,7 +87,7 @@ class OutputReport: public std::vector<OutputVariable>
 {
 public:
   void setOutputMap();
-  std::map<Surface::SurfaceType, std::vector<GroundOutput::OutputType>> outputMap;
+  std::vector<Surface::SurfaceType> outputMap;
   boost::posix_time::time_duration minFrequency;
 };
 

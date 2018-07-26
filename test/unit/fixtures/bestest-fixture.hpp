@@ -59,9 +59,7 @@ protected:
       bcs.indoorRadiantTemp = 303.15;
 
 
-      outputMap[Surface::ST_SLAB_CORE] = {
-              GroundOutput::OT_RATE
-      };
+      outputMap = {Surface::ST_SLAB_CORE};
   };
 
 };

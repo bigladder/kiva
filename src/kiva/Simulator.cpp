@@ -481,12 +481,8 @@ std::string Simulator::printOutputLine()
 
     if (totalArea > 0.0)
     {
-      if (out.outType == GroundOutput::OT_RATE) {
-        outputLine += ", " + boost::lexical_cast<std::string>(totalValue);
-      }
-      else {
-        outputLine += ", " + boost::lexical_cast<std::string>(totalVA/totalArea);
-      }
+      double value = out.outType == GroundOutput::OT_RATE ? totalValue : totalVA/totalArea;
+      outputLine += ", " + boost::lexical_cast<std::string>(value);
     }
     else {
       outputLine += ", NAN";

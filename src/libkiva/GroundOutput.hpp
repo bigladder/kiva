@@ -23,7 +23,7 @@ public:
     OT_RAD
   };
 
-  typedef std::map<Surface::SurfaceType, std::vector<OutputType>> OutputMap;
+  typedef std::vector<Surface::SurfaceType> OutputMap;
 
   GroundOutput(OutputMap oM) : outputMap(oM)
   {};
