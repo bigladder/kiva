@@ -435,7 +435,7 @@ void Simulator::updateBoundaryConditions(boost::posix_time::ptime t)
   const double deltaLocal = input.boundaries.deltaLocal;  // [m]
   const double alphaLocal = input.boundaries.alphaLocal;
   const double zWS = 10;  // [m]
-  const double zLocal = input.foundation.surfaceRoughness;  // [m]
+  const double zLocal = input.foundation.grade.roughness;  // [m]
   const double vMult = pow(deltaWS/zWS,alphaWS)*pow(zLocal/deltaLocal,alphaLocal);
 
   bcs.localWindSpeed = vWS*vMult;

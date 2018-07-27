@@ -122,9 +122,7 @@ Foundation::Foundation() :
   deepGroundBoundary(DGB_ZERO_FLUX),
   wallTopBoundary(WTB_ZERO_FLUX),
   soil(Material(1.73,1842,419)),
-  soilAbsorptivity(0.9),
-  soilEmissivity(0.9),
-  surfaceRoughness(0.03),
+  grade(SurfaceProperties(0.9,0.9,0.03)),
   coordinateSystem(CS_CARTESIAN),
   numberOfDimensions(2),
   useSymmetry(true),
@@ -339,15 +337,14 @@ void Foundation::createMeshData()
         }
         if (getDirectionIn(diff[0],v) == geom::X_POS ) {
           surf.type = Surface::ST_WALL_INT;
-          surf.emissivity = wall.interiorEmissivity;
+          surf.propPtr = &wall.interior;
         } else {
           if (isLessThan(diff[0].outer()[v].get<0>(), xyPerimeterSurface)) {
             surf.type = Surface::ST_SLAB_CORE;
-            surf.emissivity = slab.emissivity;
           } else {
             surf.type = Surface::ST_SLAB_PERIM;
-            surf.emissivity = slab.emissivity;
           }
+          surf.propPtr = &slab.interior;
         }
       }
 
@@ -382,7 +379,7 @@ void Foundation::createMeshData()
           surf2.xMin = xyPerimeterSurface;
           surf2.xMax = diff[0].outer()[v].get<0>();
           surf2.type = Surface::ST_SLAB_PERIM;
-          surf2.emissivity = slab.emissivity;
+          surf2.propPtr = &slab.interior;
 
           surf2D.push_back(surf2);
 
@@ -392,7 +389,7 @@ void Foundation::createMeshData()
           }
         }
 
-        surf.emissivity = slab.emissivity;
+        surf.propPtr = &slab.interior;
         surf.zMin = diff[0].outer()[vNext].get<1>();
         surf.zMax = diff[0].outer()[v].get<1>();
       }
@@ -412,7 +409,7 @@ void Foundation::createMeshData()
         } else {
           surf.type = Surface::ST_SLAB_PERIM;
         }
-        surf.emissivity = slab.emissivity;
+        surf.propPtr = &slab.interior;
       }
 
       // right
@@ -426,7 +423,7 @@ void Foundation::createMeshData()
 
         surf.zMin = diff[0].outer()[vNext].get<1>();
         surf.zMax = diff[0].outer()[v].get<1>();
-        surf.emissivity = wall.interiorEmissivity;
+        surf.propPtr = &wall.interior;
       }
 
       surf2D.push_back(surf);
@@ -447,7 +444,7 @@ void Foundation::createMeshData()
       surf.xMin = xyPerimeterSurface;
       surf.xMax = xyWallTopInterior;
       surf.type = Surface::ST_SLAB_PERIM;
-      surf.emissivity = slab.emissivity;
+      surf.propPtr = &slab.interior;
 
       surf2D.push_back(surf);
 
@@ -509,8 +506,7 @@ void Foundation::createMeshData()
         surf.xMin = diff[0].outer()[vNext].get<0>();
         surf.xMax = diff[0].outer()[v].get<0>();
         surf.type = Surface::ST_GRADE;
-        surf.emissivity = soilEmissivity;
-        surf.absorptivity = soilAbsorptivity;
+        surf.propPtr = &grade;
       }
 
       // left
@@ -521,8 +517,7 @@ void Foundation::createMeshData()
         surf.xMin = diff[0].outer()[vNext].get<0>();
         surf.xMax = diff[0].outer()[v].get<0>();
         surf.type = Surface::ST_GRADE;  // TODO Could be wall (bump out)
-        surf.emissivity = soilEmissivity;
-        surf.absorptivity = soilAbsorptivity;
+        surf.propPtr = &grade;
 
         surf.zMin = diff[0].outer()[vNext].get<1>();
         surf.zMax = diff[0].outer()[v].get<1>();
@@ -543,12 +538,10 @@ void Foundation::createMeshData()
         }
         if (getDirectionOut(diff[0],vNext) == geom::X_POS) {
           surf.type = Surface::ST_WALL_EXT;
-          surf.emissivity = wall.exteriorEmissivity;
-          surf.absorptivity = wall.exteriorAbsorptivity;
+          surf.propPtr = &wall.exterior;
         } else {
           surf.type = Surface::ST_GRADE;
-          surf.emissivity = soilEmissivity;
-          surf.absorptivity = soilAbsorptivity;
+          surf.propPtr = &grade;
         }
       }
 
@@ -560,8 +553,7 @@ void Foundation::createMeshData()
         surf.xMin = diff[0].outer()[v].get<0>();
         surf.xMax = diff[0].outer()[vNext].get<0>();
         surf.type = Surface::ST_WALL_EXT;
-        surf.emissivity = wall.exteriorEmissivity;
-        surf.absorptivity = wall.exteriorAbsorptivity;
+        surf.propPtr = &wall.exterior;
 
         surf.zMin = diff[0].outer()[vNext].get<1>();
         surf.zMax = diff[0].outer()[v].get<1>();
@@ -812,7 +804,7 @@ void Foundation::createMeshData()
       surface.zMax = zSlab;
       surface.boundaryConditionType = Surface::INTERIOR_FLUX;
       surface.orientation = Surface::Z_POS;
-      surface.emissivity = slab.emissivity;
+      surface.propPtr = &slab.interior;
       surfaces.push_back(surface);
     }
 
@@ -1029,7 +1021,7 @@ void Foundation::createMeshData()
       surface.zMax = zSlab;
       surface.boundaryConditionType = Surface::INTERIOR_FLUX;
       surface.orientation = Surface::Z_POS;
-      surface.emissivity = slab.emissivity;
+      surface.propPtr = &slab.interior;
       surfaces.push_back(surface);
     }
 
@@ -1046,8 +1038,7 @@ void Foundation::createMeshData()
       surface.zMax = zGrade;
       surface.boundaryConditionType = Surface::EXTERIOR_FLUX;
       surface.orientation = Surface::Z_POS;
-      surface.emissivity = soilEmissivity;
-      surface.absorptivity = soilAbsorptivity;
+      surface.propPtr = &grade;
       surfaces.push_back(surface);
     }
     if (twoParameters)
@@ -1063,8 +1054,7 @@ void Foundation::createMeshData()
       surface.zMax = zGrade;
       surface.boundaryConditionType = Surface::EXTERIOR_FLUX;
       surface.orientation = Surface::Z_POS;
-      surface.emissivity = soilEmissivity;
-      surface.absorptivity = soilAbsorptivity;
+      surface.propPtr = &grade;
       surfaces.push_back(surface);
     }
 
@@ -1246,8 +1236,7 @@ void Foundation::createMeshData()
         surface.zMax = s.zMax;
         surface.boundaryConditionType = s.boundaryConditionType;
         surface.orientation = s.orientation;
-        surface.emissivity = s.emissivity;
-        surface.absorptivity = s.absorptivity;
+        surface.propPtr = s.propPtr;
 
         surfaces.push_back(surface);
       }
@@ -1269,8 +1258,7 @@ void Foundation::createMeshData()
         else if (s.orientation == Surface::X_NEG) {
           surface.orientation = Surface::X_POS;
         }
-        surface.emissivity = s.emissivity;
-        surface.absorptivity = s.absorptivity;
+        surface.propPtr = s.propPtr;
 
         surfaces.push_back(surface);
       }
@@ -1685,7 +1673,7 @@ void Foundation::createMeshData()
       surface.zMax = zSlab;
       surface.boundaryConditionType = Surface::INTERIOR_FLUX;
       surface.orientation = Surface::Z_POS;
-      surface.emissivity = slab.emissivity;
+      surface.propPtr = &slab.interior;
       surfaces.push_back(surface);
     }
 
@@ -1710,8 +1698,7 @@ void Foundation::createMeshData()
       surface.zMax = zGrade;
       surface.boundaryConditionType = Surface::EXTERIOR_FLUX;
       surface.orientation = Surface::Z_POS;
-      surface.emissivity = soilEmissivity;
-      surface.absorptivity = soilAbsorptivity;
+      surface.propPtr = &grade;
       surfaces.push_back(surface);
     }
 
@@ -1860,8 +1847,7 @@ void Foundation::createMeshData()
             surface.orientation = Surface::Y_POS;
             break;
           }
-          surface.emissivity = s.emissivity;
-          surface.absorptivity = s.absorptivity;
+          surface.propPtr = s.propPtr;
           surfaces.push_back(surface);
         }
 
@@ -1885,8 +1871,7 @@ void Foundation::createMeshData()
         surface.zMax = s.zMax;
         surface.boundaryConditionType = s.boundaryConditionType;
         surface.orientation = s.orientation;
-        surface.emissivity = s.emissivity;
-        surface.absorptivity = s.absorptivity;
+        surface.propPtr = s.propPtr;
         surfaces.push_back(surface);
 
       }
@@ -2298,7 +2283,7 @@ void Foundation::createMeshData()
       surface.zMax = zSlab;
       surface.boundaryConditionType = Surface::INTERIOR_FLUX;
       surface.orientation = Surface::Z_POS;
-      surface.emissivity = slab.emissivity;
+      surface.propPtr = &slab.interior;
       surfaces.push_back(surface);
     }
 
@@ -2317,8 +2302,7 @@ void Foundation::createMeshData()
       surface.zMax = zGrade;
       surface.boundaryConditionType = Surface::EXTERIOR_FLUX;
       surface.orientation = Surface::Z_POS;
-      surface.emissivity = soilEmissivity;
-      surface.absorptivity = soilAbsorptivity;
+      surface.propPtr = &grade;
       surfaces.push_back(surface);
     }
 
@@ -2473,8 +2457,7 @@ void Foundation::createMeshData()
               surface.orientation = Surface::Y_POS;
               break;
             }
-            surface.emissivity = s.emissivity;
-            surface.absorptivity = s.absorptivity;
+            surface.propPtr = s.propPtr;
             surfaces.push_back(surface);
           }
         }
@@ -2504,8 +2487,7 @@ void Foundation::createMeshData()
         surface.zMax = s.zMax;
         surface.boundaryConditionType = s.boundaryConditionType;
         surface.orientation = s.orientation;
-        surface.emissivity = s.emissivity;
-        surface.absorptivity = s.absorptivity;
+        surface.propPtr = s.propPtr;
         surfaces.push_back(surface);
 
       }
