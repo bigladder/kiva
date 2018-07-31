@@ -245,12 +245,12 @@ void Domain::setDomain(Foundation &foundation)
   }
 
   static std::map<Surface::Orientation, std::tuple<int, int, double> > orientation_map{
-          {Surface::X_POS, {0, 0, PI/2 + foundation.orientation}},
-          {Surface::X_NEG, {0, 1, 3*PI/2 + foundation.orientation}},
-          {Surface::Y_POS, {1, 0, foundation.orientation}},
-          {Surface::Y_NEG, {1, 1, PI + foundation.orientation}},
-          {Surface::Z_POS, {2, 0, 0.0}},
-          {Surface::Z_NEG, {2, 1, 0.0}}
+          {Surface::X_POS, std::make_tuple(0, 0, PI/2 + foundation.orientation)},
+          {Surface::X_NEG, std::make_tuple(0, 1, 3*PI/2 + foundation.orientation)},
+          {Surface::Y_POS, std::make_tuple(1, 0, foundation.orientation)},
+          {Surface::Y_NEG, std::make_tuple(1, 1, PI + foundation.orientation)},
+          {Surface::Z_POS, std::make_tuple(2, 0, 0.0)},
+          {Surface::Z_NEG, std::make_tuple(2, 1, 0.0)}
   };
 
   for (auto &surface: foundation.surfaces)
