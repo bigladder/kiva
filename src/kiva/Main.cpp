@@ -1,29 +1,24 @@
 /* Copyright (c) 2012-2018 Big Ladder Software LLC. All rights reserved.
-* See the LICENSE file for additional terms and conditions. */
+ * See the LICENSE file for additional terms and conditions. */
 
-#include <iostream>
-#include <fstream>
 #include <cmath>
+#include <fstream>
+#include <iostream>
 
-#include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/date_time/gregorian/gregorian.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/program_options.hpp>
 
 #include "Errors.hpp"
-#include "Version.hpp"
 #include "InputParser.hpp"
-#include "WeatherData.hpp"
 #include "Simulator.hpp"
+#include "Version.hpp"
+#include "WeatherData.hpp"
 #include "libkiva_export.h"
 
 namespace po = boost::program_options;
 
-void errorCallback(
-  const int messageType,
-  const std::string message,
-  void*
-)
-{
+void errorCallback(const int messageType, const std::string message, void *) {
   if (messageType == Kiva::MSG_INFO) {
     std::cout << message << std::endl;
   } else if (messageType == Kiva::MSG_WARN) {
@@ -34,8 +29,7 @@ void errorCallback(
   }
 }
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
   Kiva::setMessageCallback(errorCallback, NULL);
 
   std::string versionInfo = "kiva ";
@@ -49,57 +43,40 @@ int main(int argc, char *argv[])
                           "   Weather format: epw\n"
                           "   Output format: csv";
 
-  try
-  {
+  try {
 
     po::options_description generic("Options");
-    generic.add_options()
-        ("help,h", "Produce this message")
-        ("version,v", "Display version information");
+    generic.add_options()("help,h", "Produce this message")("version,v",
+                                                            "Display version information");
 
-        po::options_description hidden("Hidden options");
-        hidden.add_options()
-            ("input-file", po::value<std::string>(), "input file")
-            ("weather-file", po::value<std::string>(), "weather file")
-            ("output-file", po::value<std::string>(), "output file");
+    po::options_description hidden("Hidden options");
+    hidden.add_options()("input-file", po::value<std::string>(),
+                         "input file")("weather-file", po::value<std::string>(), "weather file")(
+        "output-file", po::value<std::string>(), "output file");
 
-        po::options_description cmdLine;
-        cmdLine.add(generic).add(hidden);
+    po::options_description cmdLine;
+    cmdLine.add(generic).add(hidden);
 
     po::positional_options_description p;
     p.add("input-file", 1).add("weather-file", 1).add("output-file", 1);
 
     po::variables_map vm;
-    po::store(po::command_line_parser(argc, argv).
-        options(cmdLine).positional(p).run(), vm);
+    po::store(po::command_line_parser(argc, argv).options(cmdLine).positional(p).run(), vm);
     po::notify(vm);
 
-    if (vm.empty())
-    {
+    if (vm.empty()) {
       std::stringstream ss;
-      ss << versionInfo << "\n" <<
-      copyrightInfo << "\n\n" <<
-      usageInfo << "\n" <<
-      generic;
+      ss << versionInfo << "\n" << copyrightInfo << "\n\n" << usageInfo << "\n" << generic;
 
       Kiva::showMessage(MSG_INFO, ss.str());
-    }
-    else if (vm.count("help"))
-    {
+    } else if (vm.count("help")) {
       std::stringstream ss;
-      ss << versionInfo << "\n" <<
-      copyrightInfo << "\n\n" <<
-      usageInfo << "\n" <<
-      generic;
+      ss << versionInfo << "\n" << copyrightInfo << "\n\n" << usageInfo << "\n" << generic;
 
       Kiva::showMessage(MSG_INFO, ss.str());
-    }
-    else if (vm.count("version"))
-    {
+    } else if (vm.count("version")) {
       Kiva::showMessage(MSG_INFO, versionInfo + "\n" + copyrightInfo);
-    }
-    else if (vm.count("input-file") && vm.count("weather-file") && vm.count("output-file"))
-    {
+    } else if (vm.count("input-file") && vm.count("weather-file") && vm.count("output-file")) {
       Kiva::showMessage(MSG_INFO, versionInfo + "\n" + copyrightInfo);
 
       boost::posix_time::ptime beginCalc = boost::posix_time::microsec_clock::local_time();
@@ -114,7 +91,7 @@ int main(int argc, char *argv[])
       input.simulationControl.setStartTime();
 
       // initialize
-      Simulator simulator(weather,input,vm["output-file"].as<std::string>());
+      Simulator simulator(weather, input, vm["output-file"].as<std::string>());
 
       simulator.simulate();
 
@@ -124,23 +101,16 @@ int main(int argc, char *argv[])
       boost::posix_time::time_duration totalCalc = finishCalc - beginCalc;
       Kiva::showMessage(MSG_INFO, "Elapsed Time: " + to_simple_string(totalCalc));
 
-    }
-    else if (!vm.empty())
-    {
+    } else if (!vm.empty()) {
       std::stringstream ss;
-      ss << "Incorrect number of arguments\n\n" <<
-      usageInfo + "\n" <<
-      generic;
+      ss << "Incorrect number of arguments\n\n" << usageInfo + "\n" << generic;
 
       Kiva::showMessage(MSG_ERR, ss.str());
     }
 
     return 0;
 
-  }
-  catch(std::exception& e)
-  {
+  } catch (std::exception &e) {
     Kiva::showMessage(MSG_ERR, e.what());
   }
-
 }

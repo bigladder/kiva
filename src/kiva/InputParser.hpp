@@ -1,5 +1,5 @@
 /* Copyright (c) 2012-2018 Big Ladder Software LLC. All rights reserved.
-* See the LICENSE file for additional terms and conditions. */
+ * See the LICENSE file for additional terms and conditions. */
 
 #ifndef INPUTPARSER_HPP_
 #define INPUTPARSER_HPP_

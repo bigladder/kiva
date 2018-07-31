@@ -1,32 +1,25 @@
 /* Copyright (c) 2012-2018 Big Ladder Software LLC. All rights reserved.
-* See the LICENSE file for additional terms and conditions. */
+ * See the LICENSE file for additional terms and conditions. */
 
 #ifndef WEATHERDATA_H_
 #define WEATHERDATA_H_
 
-#include <fstream>
 #include <cmath>
-#include <numeric>
+#include <fstream>
 #include <iostream>
+#include <numeric>
 
-#include <boost/tokenizer.hpp>
 #include <boost/algorithm/string.hpp>
-#include <boost/lexical_cast.hpp>
-#include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/date_time/gregorian/gregorian.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/lexical_cast.hpp>
+#include <boost/tokenizer.hpp>
 
-std::istream& safeGetline(std::istream& is, std::string& t);
+std::istream &safeGetline(std::istream &is, std::string &t);
 
-
-class HourlyData: public std::vector<double>
-{
+class HourlyData : public std::vector<double> {
 public:
-
-  enum DataType
-  {
-    DT_SOLAR,
-    DT_METEOROLOGICAL
-  };
+  enum DataType { DT_SOLAR, DT_METEOROLOGICAL };
 
   DataType dataType;
 
@@ -37,13 +30,10 @@ public:
 
   HourlyData();
   HourlyData(DataType dT);
-
 };
 
-class WeatherData
-{
+class WeatherData {
 public:
-
   std::string city;
   std::string state;
   std::string country;
@@ -59,16 +49,16 @@ public:
   double maximumAverageMontlyTemperature;
 
   HourlyData dryBulbTemp;
-  //HourlyData wetBulbTemp;
+  // HourlyData wetBulbTemp;
   HourlyData dewPointTemp;
   HourlyData atmosphericPressure;
-  //HourlyData density;
+  // HourlyData density;
   HourlyData relativeHumidity;
-  //HourlyData humidityRatio;
-  //HourlyData enthalpy;
+  // HourlyData humidityRatio;
+  // HourlyData enthalpy;
 
-  //HourlyData solarAngle;
-  //HourlyData globalHorizontalSolar;
+  // HourlyData solarAngle;
+  // HourlyData globalHorizontalSolar;
   HourlyData directNormalSolar;
   HourlyData diffuseHorizontalSolar;
 
@@ -79,9 +69,9 @@ public:
   HourlyData opaqueSkyCover;
   HourlyData skyEmissivity;
   HourlyData skyTemp;
-  //HourlyData cloudType;
-  //HourlyData snowFlag;
-  //HourlyData rainFlag;
+  // HourlyData cloudType;
+  // HourlyData snowFlag;
+  // HourlyData rainFlag;
   HourlyData altitude;
   HourlyData azimuth;
 
@@ -90,7 +80,6 @@ public:
 
 private:
   void importEPW(std::string epwFile);
-
 };
 
 #endif /* WEATHERDATA_H_ */
