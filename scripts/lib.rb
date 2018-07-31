@@ -132,7 +132,7 @@ end
 
 # robust pull/push
 def robust_push_pull(g, branch, the_commit, the_tag, rt_url)
-  puts("Starting robust_pull_push!")
+  puts("Starting robust_push_pull")
   begin
     puts("Attempting to pull")
     g.pull(rt_url, branch) if g.is_remote_branch?(branch)
@@ -172,10 +172,12 @@ def robust_push_pull(g, branch, the_commit, the_tag, rt_url)
     if e.message.include?("tag")
       # if tag already exists on remote, we need to delete, force annotate, and push again.
       puts("apparently, tag already exists on remote!")
-      puts("attempt a retag next...")
-      puts("-------")
+      puts("attempt a retag...")
       retag(g.dir, the_tag, rt_url)
+      puts("back from retag...")
+      puts("Trying to push again")
       g.push(rt_url, "HEAD:#{branch}", {:tags=>true})
+      puts("Push succeeded...")
     else
       # We don't know what happened. Report error and bail.
       puts("Don't know how to handle this error... exiting...")
@@ -186,10 +188,24 @@ def robust_push_pull(g, branch, the_commit, the_tag, rt_url)
   puts("Done robust_pull_push!")
 end
 
+SLEEP_TIME = 1 # seconds
+
 def retag(git_dir, tag_name, rt_url)
   puts("Tag, #{tag_name}, exists")
-  # delete tag on remote
-  `cd #{git_dir} && git push --quiet "#{rt_url}" :refs/tags/#{tag_name}`
+  tag_still_exists = true
+  while tag_still_exists do
+    sleep(SLEEP_TIME)
+    # delete tag on remote
+    # See https://stackoverflow.com/a/19300065
+    puts('Deleting tag on remote...')
+    `cd #{git_dir} && git push --quiet "#{rt_url}" :refs/tags/#{tag_name}`
+    puts("Remote deletion attempted. Return code: #{$?}")
+    tag_output = `cd #{git_dir} && git ls-remote "#{rt_url}" refs/tags/#{tag_name}`
+    puts("Tag query attempted. Return value: #{tag_output}")
+    tag_still_exists = !(tag_output.strip.empty?)
+  end
   # force annotate the tag again
+  puts("Force annotating the local tag again")
   `cd #{git_dir} && git tag -fa #{tag_name} -m "Add source sha"`
+  puts("Force annotation return code: #{$?}")
 end
