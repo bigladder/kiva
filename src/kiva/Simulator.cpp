@@ -21,8 +21,8 @@ Simulator::Simulator(WeatherData &weatherData, Input &input, std::string outputF
 
   showMessage(MSG_INFO, "Creating Domain...");
 
-  if (input.foundation.deepGroundBoundary == Foundation::DGB_AUTO)
-    input.foundation.deepGroundTemperature = annualAverageDryBulbTemperature;
+  if (input.boundaries.deepGroundBoundaryType == Boundaries::DGBT_AUTO)
+    input.boundaries.deepGroundTemperature = annualAverageDryBulbTemperature;
 
   if (!input.foundation.useDetailedExposedPerimeter || !isConvex(input.foundation.polygon))
   {
@@ -440,7 +440,7 @@ void Simulator::updateBoundaryConditions(boost::posix_time::ptime t)
   bcs.diffuseHorizontalFlux = weatherData.diffuseHorizontalSolar.getValue(t);
   bcs.skyEmissivity = weatherData.skyEmissivity.getValue(t);
 
-  bcs.deepGroundTemperature = input.foundation.deepGroundTemperature;
+  bcs.deepGroundTemperature = input.boundaries.deepGroundTemperature;
 
 }
 

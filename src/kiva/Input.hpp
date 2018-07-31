@@ -136,6 +136,19 @@ public:
   };
 
   OutdoorTemperatureMethod outdoorTemperatureMethod;
+
+  // Deep Ground options
+  double deepGroundTemperature;
+  enum DeepGroundBoundaryType
+  {
+    DGBT_AUTO,
+    DGBT_CONSTANT_TEMPERATURE,
+    DGBT_ZERO_FLUX
+  };
+
+  DeepGroundBoundaryType deepGroundBoundaryType;
+
+
 };
 
 class Input

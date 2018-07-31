@@ -223,12 +223,9 @@ public:
   double foundationDepth; // [m] below top of wall
   double orientation;  // [radians] from north
 
-  double deepGroundTemperature;  // [K]
-
   enum DeepGroundBoundary
   {
-    DGB_AUTO,
-    DGB_CONSTANT_TEMPERATURE,
+    DGB_FIXED_TEMPERATURE,
     DGB_ZERO_FLUX
   };
 

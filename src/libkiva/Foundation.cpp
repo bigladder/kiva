@@ -801,10 +801,8 @@ void Foundation::createMeshData()
       surface.setSquarePolygon();
       surface.zMin = zMin;
       surface.zMax = zMin;
-      if (deepGroundBoundary == DGB_CONSTANT_TEMPERATURE ||
-        deepGroundBoundary == DGB_AUTO) {
+      if (deepGroundBoundary == DGB_FIXED_TEMPERATURE) {
           surface.boundaryConditionType = Surface::CONSTANT_TEMPERATURE;
-          surface.temperature = deepGroundTemperature;
       } else {
         surface.boundaryConditionType = Surface::ZERO_FLUX;
       }
@@ -1011,10 +1009,8 @@ void Foundation::createMeshData()
       surface.setSquarePolygon();
       surface.zMin = zMin;
       surface.zMax = zMin;
-      if (deepGroundBoundary == DGB_CONSTANT_TEMPERATURE ||
-        deepGroundBoundary == DGB_AUTO) {
+      if (deepGroundBoundary == DGB_FIXED_TEMPERATURE) {
           surface.boundaryConditionType = Surface::CONSTANT_TEMPERATURE;
-          surface.temperature = deepGroundTemperature;
       } else {
         surface.boundaryConditionType = Surface::ZERO_FLUX;
       }
@@ -1670,11 +1666,9 @@ void Foundation::createMeshData()
       surface.setSquarePolygon();
       surface.zMin = zMin;
       surface.zMax = zMin;
-      if (deepGroundBoundary == DGB_CONSTANT_TEMPERATURE ||
-        deepGroundBoundary == DGB_AUTO)
+      if (deepGroundBoundary == DGB_FIXED_TEMPERATURE)
       {
         surface.boundaryConditionType = Surface::CONSTANT_TEMPERATURE;
-        surface.temperature = deepGroundTemperature;
       } else {
         surface.boundaryConditionType = Surface::ZERO_FLUX;
       }
@@ -2278,11 +2272,9 @@ void Foundation::createMeshData()
       surface.setSquarePolygon();
       surface.zMin = zMin;
       surface.zMax = zMin;
-      if (deepGroundBoundary == DGB_CONSTANT_TEMPERATURE ||
-        deepGroundBoundary == DGB_AUTO)
+      if (deepGroundBoundary == DGB_FIXED_TEMPERATURE)
       {
           surface.boundaryConditionType = Surface::CONSTANT_TEMPERATURE;
-          surface.temperature = deepGroundTemperature;
       } else {
         surface.boundaryConditionType = Surface::ZERO_FLUX;
       }

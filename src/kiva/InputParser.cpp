@@ -524,20 +524,24 @@ Input inputParser(std::string inputFile)
   if (yamlInput["Boundaries"]["Deep-Ground Boundary Condition"].IsDefined()) {
     if (yamlInput["Boundaries"]["Deep-Ground Boundary Condition"].as<std::string>() == "AUTO")
     {
-      foundation.deepGroundBoundary = Foundation::DGB_AUTO;
+      foundation.deepGroundBoundary = Foundation::DGB_FIXED_TEMPERATURE;
+      boundaries.deepGroundBoundaryType = Boundaries::DGBT_AUTO;
     }
     else if (yamlInput["Boundaries"]["Deep-Ground Boundary Condition"].as<std::string>() == "CONSTANT-TEMP")
     {
-      foundation.deepGroundBoundary = Foundation::DGB_CONSTANT_TEMPERATURE;
-      foundation.deepGroundTemperature = yamlInput["Boundaries"]["Deep-Ground Temperature"].as<double>();
+      foundation.deepGroundBoundary = Foundation::DGB_FIXED_TEMPERATURE;
+      boundaries.deepGroundBoundaryType = Boundaries::DGBT_CONSTANT_TEMPERATURE;
+      boundaries.deepGroundTemperature = yamlInput["Boundaries"]["Deep-Ground Temperature"].as<double>();
     }
     else if (yamlInput["Boundaries"]["Deep-Ground Boundary Condition"].as<std::string>() == "ZERO-FLUX")
     {
       foundation.deepGroundBoundary = Foundation::DGB_ZERO_FLUX;
+      boundaries.deepGroundBoundaryType = Boundaries::DGBT_ZERO_FLUX;
     }
   }
   else {
     foundation.deepGroundBoundary = Foundation::DGB_ZERO_FLUX;
+    boundaries.deepGroundBoundaryType = Boundaries::DGBT_ZERO_FLUX;
   }
 
   if  (yamlInput["Boundaries"]["Indoor Air Temperature Method"].IsDefined())
