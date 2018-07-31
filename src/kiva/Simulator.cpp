@@ -408,14 +408,6 @@ double Simulator::getInitialTemperature(boost::posix_time::ptime t, double z)
     return input.initialization.initialTemperature;
 }
 
-double Simulator::getDeepGroundTemperature()
-{
-  if (input.foundation.deepGroundBoundary == Foundation::DGB_AUTO)
-    return annualAverageDryBulbTemperature;
-  else //if (foundation.deepGroundBoundary == Foundation::DGB_CONSTANT_TEMPERATURE)
-    return input.foundation.deepGroundTemperature;
-}
-
 void Simulator::updateBoundaryConditions(boost::posix_time::ptime t)
 {
   if (input.boundaries.indoorTemperatureMethod == Boundaries::ITM_FILE)
@@ -423,7 +415,8 @@ void Simulator::updateBoundaryConditions(boost::posix_time::ptime t)
   else // Boundaries::ITM_CONSTANT_TEMPERATURE)
     bcs.indoorTemp = input.boundaries.indoorAirTemperature;
 
-  bcs.indoorRadiantTemp = bcs.indoorTemp;
+  bcs.slabRadiantTemp = bcs.indoorTemp;
+  bcs.wallRadiantTemp = bcs.indoorTemp;
   if (input.boundaries.outdoorTemperatureMethod == Boundaries::OTM_WEATHER_FILE)
     bcs.outdoorTemp = weatherData.dryBulbTemp.getValue(t);
   else // Boundaries::OTM_CONSTANT_TEMPERATURE)
@@ -439,12 +432,15 @@ void Simulator::updateBoundaryConditions(boost::posix_time::ptime t)
   const double vMult = pow(deltaWS/zWS,alphaWS)*pow(zLocal/deltaLocal,alphaLocal);
 
   bcs.localWindSpeed = vWS*vMult;
+  bcs.windDirection = weatherData.windDirection.getValue(t);
 
   bcs.solarAzimuth = weatherData.azimuth.getValue(t);
   bcs.solarAltitude = weatherData.altitude.getValue(t);
   bcs.directNormalFlux = weatherData.directNormalSolar.getValue(t);
   bcs.diffuseHorizontalFlux = weatherData.diffuseHorizontalSolar.getValue(t);
   bcs.skyEmissivity = weatherData.skyEmissivity.getValue(t);
+
+  bcs.deepGroundTemperature = input.foundation.deepGroundTemperature;
 
 }
 

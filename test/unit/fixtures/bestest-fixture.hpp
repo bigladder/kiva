@@ -57,8 +57,8 @@ protected:
       bcs.localWindSpeed = 0;
       bcs.outdoorTemp = 283.15;
       bcs.indoorTemp = 303.15;
-      bcs.indoorRadiantTemp = 303.15;
-
+      bcs.slabRadiantTemp = 303.15;
+      bcs.wallRadiantTemp = 303.15;
 
       outputMap = {Surface::ST_SLAB_CORE};
   };
