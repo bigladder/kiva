@@ -28,7 +28,7 @@ source_suffix = ['.rst', '.md']
 master_doc = 'index'
 
 project = u'Kiva'
-copyright = str(datetime.now().year) + u', Big Ladder Software'
+copyright = u'2012-' + str(datetime.now().year) + u', Big Ladder Software'
 author = u'Neal Kruis'
 
 version = get_version()
