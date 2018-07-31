@@ -14,5 +14,7 @@ if (KIVA_EXE_BUILD OR KIVA_GROUND_PLOT)
 endif()
 
 if (KIVA_TESTING)
-  add_subdirectory(gtest)
+  if (NOT TARGET gtest)
+    add_subdirectory(gtest)
+  endif()
 endif()
