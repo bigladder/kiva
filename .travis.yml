@@ -26,6 +26,8 @@ matrix:
       sudo: required
       dist: trusty
       env: COMPILER=gcc COVERAGE=true
+
+# Note: travis_terminate comes from http://steven.casagrande.io/articles/travis-ci-and-if-statements/
 before_install:
   - if [[ "$COVERAGE" == false ]]; then
       rvm install 2.0.0;
@@ -46,30 +48,30 @@ script:
   - mkdir build
   - cd build
   - if [[ "$COVERAGE" == false ]]; then
-      ruby -e "puts(RUBY_PLATFORM)";
-      export SRC_BRANCH=$TRAVIS_BRANCH;
-      cmake -DKIVA_STATIC_LIB=OFF ..;
-      ruby ../scripts/clone-and-mimic.rb;
+      ruby -e "puts(RUBY_PLATFORM)" || travis_terminate 1;
+      export SRC_BRANCH=$TRAVIS_BRANCH || travis_terminate 1;
+      cmake -DKIVA_STATIC_LIB=OFF .. || travis_terminate 1;
+      ruby ../scripts/clone-and-mimic.rb || travis_terminate 1;
     else
-      cmake -DKIVA_COVERAGE=ON -DKIVA_STATIC_LIB=OFF -DCMAKE_BUILD_TYPE=Debug ..;
+      cmake -DKIVA_COVERAGE=ON -DKIVA_STATIC_LIB=OFF -DCMAKE_BUILD_TYPE=Debug .. || travis_terminate 1;
     fi
   - make -j
   - >
     if [[ "$COVERAGE" == true ]]; then
-      ctest -R integration\.
-      make gcov;
-      bash <(curl -s https://codecov.io/bash) -X gcov -cF integration;
-      ctest -R unit\.
-      make gcov;
-      bash <(curl -s https://codecov.io/bash) -X gcov -cF unit;
+      ctest -R integration\. || travis_terminate 1;
+      make gcov || travis_terminate 1;
+      bash <(curl -s https://codecov.io/bash) -X gcov -cF integration || travis_terminate 1;
+      ctest -R unit\. || travis_terminate 1;
+      make gcov || travis_terminate 1;
+      bash <(curl -s https://codecov.io/bash) -X gcov -cF unit || travis_terminate 1;
     else
-      ctest --output-on-failure
-      ruby ../scripts/log-results.rb;
+      ctest --output-on-failure || travis_terminate 1;
+      ruby ../scripts/log-results.rb || travis_terminate 1;
     fi
 
 after_success:
   - if [[ "$COVERAGE" == false ]]; then
-      cpack -B "$TRAVIS_BUILD_DIR";
+      cpack -B "$TRAVIS_BUILD_DIR" || travis_terminate 1;
       cd "$TRAVIS_BUILD_DIR";
     fi
 

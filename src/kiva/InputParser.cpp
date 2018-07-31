@@ -46,24 +46,24 @@ Input inputParser(std::string inputFile)
 
   // Grade
   if (yamlInput["Foundation"]["Soil Absorptivity"].IsDefined()) {
-    foundation.soilAbsorptivity = yamlInput["Foundation"]["Soil Absorptivity"].as<double>();
+    foundation.grade.absorptivity = yamlInput["Foundation"]["Soil Absorptivity"].as<double>();
   }
   else {
-    foundation.soilAbsorptivity = 0.8;
+    foundation.grade.absorptivity = 0.8;
   }
 
   if (yamlInput["Foundation"]["Soil Emissivity"].IsDefined()) {
-    foundation.soilEmissivity = yamlInput["Foundation"]["Soil Emissivity"].as<double>();
+    foundation.grade.emissivity = yamlInput["Foundation"]["Soil Emissivity"].as<double>();
   }
   else {
-    foundation.soilEmissivity = 0.8;
+    foundation.grade.emissivity = 0.8;
   }
 
   if (yamlInput["Foundation"]["Surface Roughness"].IsDefined()) {
-    foundation.surfaceRoughness = yamlInput["Foundation"]["Surface Roughness"].as<double>();
+    foundation.grade.roughness = yamlInput["Foundation"]["Surface Roughness"].as<double>();
   }
   else {
-    foundation.surfaceRoughness = 0.03;
+    foundation.grade.roughness = 0.03;
   }
 
 
@@ -87,10 +87,10 @@ Input inputParser(std::string inputFile)
     }
 
     if (yamlInput["Foundation"]["Slab"]["Emissivity"].IsDefined()) {
-      foundation.slab.emissivity = yamlInput["Foundation"]["Slab"]["Emissivity"].as<double>();
+      foundation.slab.interior.emissivity = yamlInput["Foundation"]["Slab"]["Emissivity"].as<double>();
     }
     else {
-      foundation.slab.emissivity = 0.8;
+      foundation.slab.interior.emissivity = 0.8;
     }
   }
   else
@@ -127,24 +127,24 @@ Input inputParser(std::string inputFile)
     }
 
     if (yamlInput["Foundation"]["Wall"]["Interior Emissivity"].IsDefined()) {
-      foundation.wall.interiorEmissivity = yamlInput["Foundation"]["Wall"]["Interior Emissivity"].as<double>();
+      foundation.wall.interior.emissivity = yamlInput["Foundation"]["Wall"]["Interior Emissivity"].as<double>();
     }
     else {
-      foundation.wall.interiorEmissivity = 0.8;
+      foundation.wall.interior.emissivity = 0.8;
     }
 
     if (yamlInput["Foundation"]["Wall"]["Exterior Emissivity"].IsDefined()) {
-      foundation.wall.exteriorEmissivity = yamlInput["Foundation"]["Wall"]["Exterior Emissivity"].as<double>();
+      foundation.wall.exterior.emissivity = yamlInput["Foundation"]["Wall"]["Exterior Emissivity"].as<double>();
     }
     else {
-      foundation.wall.exteriorEmissivity = 0.8;
+      foundation.wall.exterior.emissivity = 0.8;
     }
 
     if (yamlInput["Foundation"]["Wall"]["Exterior Absorptivity"].IsDefined()) {
-      foundation.wall.exteriorAbsorptivity = yamlInput["Foundation"]["Wall"]["Exterior Absorptivity"].as<double>();
+      foundation.wall.exterior.absorptivity = yamlInput["Foundation"]["Wall"]["Exterior Absorptivity"].as<double>();
     }
     else {
-      foundation.wall.exteriorAbsorptivity = 0.8;
+      foundation.wall.exterior.absorptivity = 0.8;
     }
 
   }
@@ -524,20 +524,24 @@ Input inputParser(std::string inputFile)
   if (yamlInput["Boundaries"]["Deep-Ground Boundary Condition"].IsDefined()) {
     if (yamlInput["Boundaries"]["Deep-Ground Boundary Condition"].as<std::string>() == "AUTO")
     {
-      foundation.deepGroundBoundary = Foundation::DGB_AUTO;
+      foundation.deepGroundBoundary = Foundation::DGB_FIXED_TEMPERATURE;
+      boundaries.deepGroundBoundaryType = Boundaries::DGBT_AUTO;
     }
     else if (yamlInput["Boundaries"]["Deep-Ground Boundary Condition"].as<std::string>() == "CONSTANT-TEMP")
     {
-      foundation.deepGroundBoundary = Foundation::DGB_CONSTANT_TEMPERATURE;
-      foundation.deepGroundTemperature = yamlInput["Boundaries"]["Deep-Ground Temperature"].as<double>();
+      foundation.deepGroundBoundary = Foundation::DGB_FIXED_TEMPERATURE;
+      boundaries.deepGroundBoundaryType = Boundaries::DGBT_CONSTANT_TEMPERATURE;
+      boundaries.deepGroundTemperature = yamlInput["Boundaries"]["Deep-Ground Temperature"].as<double>();
     }
     else if (yamlInput["Boundaries"]["Deep-Ground Boundary Condition"].as<std::string>() == "ZERO-FLUX")
     {
       foundation.deepGroundBoundary = Foundation::DGB_ZERO_FLUX;
+      boundaries.deepGroundBoundaryType = Boundaries::DGBT_ZERO_FLUX;
     }
   }
   else {
     foundation.deepGroundBoundary = Foundation::DGB_ZERO_FLUX;
+    boundaries.deepGroundBoundaryType = Boundaries::DGBT_ZERO_FLUX;
   }
 
   if  (yamlInput["Boundaries"]["Indoor Air Temperature Method"].IsDefined())

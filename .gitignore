@@ -8,3 +8,4 @@ sandbox.*
 sandbox/
 *.pptx
 LICENSE-EnergyPlus
+.idea/

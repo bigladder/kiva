@@ -21,8 +21,8 @@ Simulator::Simulator(WeatherData &weatherData, Input &input, std::string outputF
 
   showMessage(MSG_INFO, "Creating Domain...");
 
-  if (input.foundation.deepGroundBoundary == Foundation::DGB_AUTO)
-    input.foundation.deepGroundTemperature = annualAverageDryBulbTemperature;
+  if (input.boundaries.deepGroundBoundaryType == Boundaries::DGBT_AUTO)
+    input.boundaries.deepGroundTemperature = annualAverageDryBulbTemperature;
 
   if (!input.foundation.useDetailedExposedPerimeter || !isConvex(input.foundation.polygon))
   {
@@ -92,14 +92,16 @@ void Simulator::initializeConditions()
     }
     else
     {
+      std::size_t index;
       for (size_t i = 0; i < ground.nX; ++i)
       {
         for (size_t j = 0; j < ground.nY; ++j)
         {
           for (size_t k = 0; k < ground.nZ; ++k)
           {
-            ground.TOld[i][j][k]= getInitialTemperature(tInit,
-                ground.domain.meshZ.centers[k]);
+            index = i + ground.nX*j + ground.nX*ground.nY*k;
+            ground.TOld[index]= getInitialTemperature(tInit,
+                ground.domain.mesh[2].centers[k]);
           }
         }
       }
@@ -160,14 +162,14 @@ void Simulator::initializePlots()
     {
       if (!input.output.outputSnapshots[p].xRangeSet)
       {
-        input.output.outputSnapshots[p].snapshotSettings.xRange.first = ground.domain.meshX.dividers[0];
-        input.output.outputSnapshots[p].snapshotSettings.xRange.second = ground.domain.meshX.dividers[ground.nX];
+        input.output.outputSnapshots[p].snapshotSettings.xRange.first = ground.domain.mesh[0].dividers[0];
+        input.output.outputSnapshots[p].snapshotSettings.xRange.second = ground.domain.mesh[0].dividers[ground.nX];
       }
 
       if (!input.output.outputSnapshots[p].yRangeSet)
       {
-        input.output.outputSnapshots[p].snapshotSettings.yRange.first = ground.domain.meshY.dividers[0];
-        input.output.outputSnapshots[p].snapshotSettings.yRange.second = ground.domain.meshY.dividers[ground.nY];
+        input.output.outputSnapshots[p].snapshotSettings.yRange.first = ground.domain.mesh[1].dividers[0];
+        input.output.outputSnapshots[p].snapshotSettings.yRange.second = ground.domain.mesh[1].dividers[ground.nY];
       }
 
       if (!input.output.outputSnapshots[p].zRangeSet)
@@ -180,8 +182,8 @@ void Simulator::initializePlots()
         }
         else
         {
-          input.output.outputSnapshots[p].snapshotSettings.zRange.first = ground.domain.meshZ.dividers[0];
-          input.output.outputSnapshots[p].snapshotSettings.zRange.second = ground.domain.meshZ.dividers[ground.nZ];
+          input.output.outputSnapshots[p].snapshotSettings.zRange.first = ground.domain.mesh[2].dividers[0];
+          input.output.outputSnapshots[p].snapshotSettings.zRange.second = ground.domain.mesh[2].dividers[ground.nZ];
         }
       }
 
@@ -191,8 +193,8 @@ void Simulator::initializePlots()
     {
       if (!input.output.outputSnapshots[p].xRangeSet)
       {
-        input.output.outputSnapshots[p].snapshotSettings.xRange.first = ground.domain.meshX.dividers[0];
-        input.output.outputSnapshots[p].snapshotSettings.xRange.second = ground.domain.meshX.dividers[ground.nX];
+        input.output.outputSnapshots[p].snapshotSettings.xRange.first = ground.domain.mesh[0].dividers[0];
+        input.output.outputSnapshots[p].snapshotSettings.xRange.second = ground.domain.mesh[0].dividers[ground.nX];
       }
 
       if (!input.output.outputSnapshots[p].yRangeSet)
@@ -203,8 +205,8 @@ void Simulator::initializePlots()
 
       if (!input.output.outputSnapshots[p].zRangeSet)
       {
-        input.output.outputSnapshots[p].snapshotSettings.zRange.first = ground.domain.meshZ.dividers[0];
-        input.output.outputSnapshots[p].snapshotSettings.zRange.second = ground.domain.meshZ.dividers[ground.nZ];
+        input.output.outputSnapshots[p].snapshotSettings.zRange.first = ground.domain.mesh[2].dividers[0];
+        input.output.outputSnapshots[p].snapshotSettings.zRange.second = ground.domain.mesh[2].dividers[ground.nZ];
       }
     }
     else
@@ -223,8 +225,8 @@ void Simulator::initializePlots()
 
       if (!input.output.outputSnapshots[p].zRangeSet)
       {
-        input.output.outputSnapshots[p].snapshotSettings.zRange.first = ground.domain.meshZ.dividers[0];
-        input.output.outputSnapshots[p].snapshotSettings.zRange.second = ground.domain.meshZ.dividers[ground.nZ];
+        input.output.outputSnapshots[p].snapshotSettings.zRange.first = ground.domain.mesh[2].dividers[0];
+        input.output.outputSnapshots[p].snapshotSettings.zRange.second = ground.domain.mesh[2].dividers[ground.nZ];
       }
     }
 
@@ -295,14 +297,15 @@ void Simulator::plot(boost::posix_time::ptime t)
             if (input.output.outputSnapshots[p].snapshotSettings.plotType == SnapshotSettings::P_TEMP)
             {
               if (input.output.outputSnapshots[p].snapshotSettings.outputUnits == SnapshotSettings::IP)
-                plots[p].TDat.a[index] = (ground.TNew[i][j][k] - 273.15)*9/5 + 32.0;
+                plots[p].TDat.a[index] = (ground.TNew[index] - 273.15)*9/5 + 32.0;
               else
-                plots[p].TDat.a[index] = ground.TNew[i][j][k] - 273.15;
+                plots[p].TDat.a[index] = ground.TNew[index] - 273.15;
             }
             else
             {
               double du = plots[p].distanceUnitConversion;
-              std::vector<double> Qflux = ground.calculateHeatFlux(i,j,k);
+              std::vector<double> Qflux = ground.domain.cell[index]->calculateHeatFlux(
+                      ground.foundation.numberOfDimensions, ground.TNew[index], ground.nX, ground.nY, ground.nZ, ground.domain.cell);
               double Qx = Qflux[0];
               double Qy = Qflux[1];
               double Qz = Qflux[2];
@@ -405,14 +408,6 @@ double Simulator::getInitialTemperature(boost::posix_time::ptime t, double z)
     return input.initialization.initialTemperature;
 }
 
-double Simulator::getDeepGroundTemperature()
-{
-  if (input.foundation.deepGroundBoundary == Foundation::DGB_AUTO)
-    return annualAverageDryBulbTemperature;
-  else //if (foundation.deepGroundBoundary == Foundation::DGB_CONSTANT_TEMPERATURE)
-    return input.foundation.deepGroundTemperature;
-}
-
 void Simulator::updateBoundaryConditions(boost::posix_time::ptime t)
 {
   if (input.boundaries.indoorTemperatureMethod == Boundaries::ITM_FILE)
@@ -420,6 +415,8 @@ void Simulator::updateBoundaryConditions(boost::posix_time::ptime t)
   else // Boundaries::ITM_CONSTANT_TEMPERATURE)
     bcs.indoorTemp = input.boundaries.indoorAirTemperature;
 
+  bcs.slabRadiantTemp = bcs.indoorTemp;
+  bcs.wallRadiantTemp = bcs.indoorTemp;
   if (input.boundaries.outdoorTemperatureMethod == Boundaries::OTM_WEATHER_FILE)
     bcs.outdoorTemp = weatherData.dryBulbTemp.getValue(t);
   else // Boundaries::OTM_CONSTANT_TEMPERATURE)
@@ -431,16 +428,19 @@ void Simulator::updateBoundaryConditions(boost::posix_time::ptime t)
   const double deltaLocal = input.boundaries.deltaLocal;  // [m]
   const double alphaLocal = input.boundaries.alphaLocal;
   const double zWS = 10;  // [m]
-  const double zLocal = input.foundation.surfaceRoughness;  // [m]
+  const double zLocal = input.foundation.grade.roughness;  // [m]
   const double vMult = pow(deltaWS/zWS,alphaWS)*pow(zLocal/deltaLocal,alphaLocal);
 
   bcs.localWindSpeed = vWS*vMult;
+  bcs.windDirection = weatherData.windDirection.getValue(t);
 
   bcs.solarAzimuth = weatherData.azimuth.getValue(t);
   bcs.solarAltitude = weatherData.altitude.getValue(t);
   bcs.directNormalFlux = weatherData.directNormalSolar.getValue(t);
   bcs.diffuseHorizontalFlux = weatherData.diffuseHorizontalSolar.getValue(t);
   bcs.skyEmissivity = weatherData.skyEmissivity.getValue(t);
+
+  bcs.deepGroundTemperature = input.boundaries.deepGroundTemperature;
 
 }
 
@@ -477,12 +477,8 @@ std::string Simulator::printOutputLine()
 
     if (totalArea > 0.0)
     {
-      if (out.outType == GroundOutput::OT_RATE) {
-        outputLine += ", " + boost::lexical_cast<std::string>(totalValue);
-      }
-      else {
-        outputLine += ", " + boost::lexical_cast<std::string>(totalVA/totalArea);
-      }
+      double value = out.outType == GroundOutput::OT_RATE ? totalValue : totalVA/totalArea;
+      outputLine += ", " + boost::lexical_cast<std::string>(value);
     }
     else {
       outputLine += ", NAN";

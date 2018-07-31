@@ -84,6 +84,22 @@ void Surface::setSquarePolygon()
   polygon.outer().push_back(Point(xMax,yMin));
 }
 
+void Surface::calcTilt()
+{
+  if (orientation == Surface::Z_POS) {
+    tilt = 0;
+    cosTilt = 1.0;
+  }
+  else if (orientation == Surface::Z_NEG) {
+    tilt = PI;
+    cosTilt = -1.0;
+  }
+  else {
+    tilt = PI/2.0;
+    cosTilt = 0.0;
+  }
+}
+
 inline bool compareRanges(RangeType first,  RangeType second)
 {
   return (first.range.first < second.range.first);
@@ -112,9 +128,7 @@ Foundation::Foundation() :
   deepGroundBoundary(DGB_ZERO_FLUX),
   wallTopBoundary(WTB_ZERO_FLUX),
   soil(Material(1.73,1842,419)),
-  soilAbsorptivity(0.9),
-  soilEmissivity(0.9),
-  surfaceRoughness(0.03),
+  grade(SurfaceProperties(0.9,0.9,0.03)),
   coordinateSystem(CS_CARTESIAN),
   numberOfDimensions(2),
   useSymmetry(true),
@@ -301,11 +315,19 @@ void Foundation::createMeshData()
         vNext = v+1;
       }
 
-      if (getDirectionOut(diff[0],v) == geom::Y_POS && isEqual(diff[0].outer()[v].get<0>(), xyNearMin - 1.0)) {
+      double x1 = diff[0].outer()[v].get<0>();
+      double x2 = diff[0].outer()[vNext].get<0>();
+      double z1 = diff[0].outer()[v].get<1>();
+      double z2 = diff[0].outer()[vNext].get<1>();
+
+      geom::Direction dOut = getDirectionOut(diff[0],v);
+      geom::Direction dIn = getDirectionIn(diff[0],v);
+
+      if (dOut == geom::Y_POS && isEqual(x1, xyNearMin - 1.0)) {
         // left boundary
         continue;
       }
-      if (getDirectionOut(diff[0],v) == geom::X_POS && isEqual(diff[0].outer()[v].get<1>(), zMax)) {
+      if (dOut == geom::X_POS && isEqual(z1, zMax)) {
         // top boundary
         numTops++;
         continue;
@@ -315,108 +337,107 @@ void Foundation::createMeshData()
       surf.boundaryConditionType = Surface::INTERIOR_FLUX;
 
       // down
-      if (getDirectionOut(diff[0],v) == geom::Y_NEG ) {
+      if (dOut == geom::Y_NEG ) {
 
         surf.orientation = Surface::X_NEG;
 
-        surf.zMin = diff[0].outer()[vNext].get<1>();
-        surf.zMax = diff[0].outer()[v].get<1>();
-        surf.xMin = diff[0].outer()[vNext].get<0>();
-        surf.xMax = diff[0].outer()[v].get<0>();
+        surf.zMin = z2;
+        surf.zMax = z1;
+        surf.xMin = x2;
+        surf.xMax = x1;
 
-        if (isEqual(diff[0].outer()[v].get<1>(), zMax)) {
-          xyWallTopInterior = diff[0].outer()[v].get<0>();
+        if (isEqual(z1, zMax)) {
+          xyWallTopInterior = x1;
         }
-        if (getDirectionIn(diff[0],v) == geom::X_POS ) {
+        if (dIn == geom::X_POS ) {
           surf.type = Surface::ST_WALL_INT;
-          surf.emissivity = wall.interiorEmissivity;
+          surf.propPtr = &wall.interior;
         } else {
-          if (isLessThan(diff[0].outer()[v].get<0>(), xyPerimeterSurface)) {
+          if (isLessOrEqual(x1, xyPerimeterSurface)) {
             surf.type = Surface::ST_SLAB_CORE;
-            surf.emissivity = slab.emissivity;
           } else {
             surf.type = Surface::ST_SLAB_PERIM;
-            surf.emissivity = slab.emissivity;
           }
+          surf.propPtr = &slab.interior;
         }
       }
 
       // left
-      if (getDirectionOut(diff[0],v) == geom::X_NEG ) {
+      if (dOut == geom::X_NEG ) {
 
         surf.orientation = Surface::Z_POS;
 
         // TODO Could be wall (bump out) Surface::ST_WALL_INT
-        if (isLessThan(diff[0].outer()[v].get<0>(), xyPerimeterSurface)) {
-          if (isEqual(diff[0].outer()[vNext].get<0>(), xyNearMin - 1.0)) {
-            xySlabNear = diff[0].outer()[v].get<0>();
+        if (isLessOrEqual(x1, xyPerimeterSurface)) {
+          if (isEqual(x2, xyNearMin - 1.0)) {
+            xySlabNear = x1;
             continue;
           }
-          surf.xMin = diff[0].outer()[vNext].get<0>();
-          surf.xMax = diff[0].outer()[v].get<0>();
+          surf.xMin = x2;
+          surf.xMax = x1;
           surf.type = Surface::ST_SLAB_CORE;
-        } else if (isGreaterThan(diff[0].outer()[vNext].get<0>(), xyPerimeterSurface)) {
-          surf.xMin = diff[0].outer()[vNext].get<0>();
-          surf.xMax = diff[0].outer()[v].get<0>();
+        } else if (isGreaterThan(x2, xyPerimeterSurface)) {
+          surf.xMin = x2;
+          surf.xMax = x1;
           surf.type = Surface::ST_SLAB_PERIM;
         } else {
           surf.type = Surface::ST_SLAB_CORE;
-          surf.xMin = diff[0].outer()[vNext].get<0>();
+          surf.xMin = x2;
           surf.xMax = xyPerimeterSurface;
 
           Surface surf2;
           surf2.boundaryConditionType = Surface::INTERIOR_FLUX;
           surf2.orientation = Surface::Z_POS;
-          surf2.zMin = diff[0].outer()[vNext].get<1>();
-          surf2.zMax = diff[0].outer()[vNext].get<1>();
+          surf2.zMin = z2;
+          surf2.zMax = z2;
           surf2.xMin = xyPerimeterSurface;
-          surf2.xMax = diff[0].outer()[v].get<0>();
+          surf2.xMax = x1;
           surf2.type = Surface::ST_SLAB_PERIM;
-          surf2.emissivity = slab.emissivity;
+          surf2.propPtr = &slab.interior;
 
           surf2D.push_back(surf2);
 
-          if (isEqual(diff[0].outer()[vNext].get<0>(), xyNearMin - 1.0)) {
+          if (isEqual(x2, xyNearMin - 1.0)) {
             xySlabNear = xyPerimeterSurface;
             continue;
           }
         }
 
-        surf.emissivity = slab.emissivity;
-        surf.zMin = diff[0].outer()[vNext].get<1>();
-        surf.zMax = diff[0].outer()[v].get<1>();
+        surf.propPtr = &slab.interior;
+        surf.zMin = z2;
+        surf.zMax = z1;
       }
 
       // up
-      if (getDirectionOut(diff[0],v) == geom::Y_POS ) {
+      if (dOut == geom::Y_POS ) {
 
         surf.orientation = Surface::X_POS;
 
-        surf.zMin = diff[0].outer()[v].get<1>();
-        surf.zMax = diff[0].outer()[vNext].get<1>();
-        surf.xMin = diff[0].outer()[vNext].get<0>();
-        surf.xMax = diff[0].outer()[v].get<0>();
+        surf.zMin = z1;
+        surf.zMax = z2;
+        surf.xMin = x2;
+        surf.xMax = x1;
 
-        if (isLessThan(diff[0].outer()[v].get<0>(), xyPerimeterSurface)) {
+        if (isLessOrEqual(x1, xyPerimeterSurface)) {
           surf.type = Surface::ST_SLAB_CORE;
         } else {
           surf.type = Surface::ST_SLAB_PERIM;
         }
-        surf.emissivity = slab.emissivity;
+        surf.propPtr = &slab.interior;
       }
 
       // right
-      if (getDirectionOut(diff[0],v) == geom::X_POS ) {
+      if (dOut == geom::X_POS ) {
 
         surf.orientation = Surface::Z_NEG;
 
-        surf.xMin = diff[0].outer()[v].get<0>();
-        surf.xMax = diff[0].outer()[vNext].get<0>();
+        surf.xMin = x1;
+        surf.xMax = x2;
         surf.type = Surface::ST_WALL_INT;
 
-        surf.zMin = diff[0].outer()[vNext].get<1>();
-        surf.zMax = diff[0].outer()[v].get<1>();
-        surf.emissivity = wall.interiorEmissivity;
+        surf.zMin = z2;
+        surf.zMax = z1;
+        surf.propPtr = &wall.interior;
       }
 
       surf2D.push_back(surf);
@@ -437,7 +458,7 @@ void Foundation::createMeshData()
       surf.xMin = xyPerimeterSurface;
       surf.xMax = xyWallTopInterior;
       surf.type = Surface::ST_SLAB_PERIM;
-      surf.emissivity = slab.emissivity;
+      surf.propPtr = &slab.interior;
 
       surf2D.push_back(surf);
 
@@ -471,18 +492,25 @@ void Foundation::createMeshData()
         vNext = v+1;
       }
 
-      if (getDirectionOut(diff[0],v) == geom::Y_NEG && isEqual(diff[0].outer()[v].get<0>(), xyNearMax + 1.0)) {
+      double x1 = diff[0].outer()[v].get<0>();
+      double x2 = diff[0].outer()[vNext].get<0>();
+      double z1 = diff[0].outer()[v].get<1>();
+      double z2 = diff[0].outer()[vNext].get<1>();
+
+      geom::Direction dOut = getDirectionOut(diff[0],v);
+
+      if (dOut == geom::Y_NEG && isEqual(x1, xyNearMax + 1.0)) {
         // right boundary
         continue;
       }
-      if (getDirectionOut(diff[0],v) == geom::X_POS && isEqual(diff[0].outer()[v].get<1>(), zMax)) {
+      if (dOut == geom::X_POS && isEqual(z1, zMax)) {
         // top boundary
         numTops++;
         continue;
       }
-      if (getDirectionOut(diff[0],v) == geom::X_NEG && isEqual(diff[0].outer()[v].get<0>(), xyNearMax + 1.0)) {
+      if (dOut == geom::X_NEG && isEqual(x1, xyNearMax + 1.0)) {
         // grade near
-        xyGradeNear = diff[0].outer()[vNext].get<0>();
+        xyGradeNear = x2;
         continue;
       }
 
@@ -490,71 +518,66 @@ void Foundation::createMeshData()
       surf.boundaryConditionType = Surface::EXTERIOR_FLUX;
 
       // down
-      if (getDirectionOut(diff[0],v) == geom::Y_NEG ) {
+      if (dOut == geom::Y_NEG ) {
 
         surf.orientation = Surface::X_NEG;
 
-        surf.zMin = diff[0].outer()[vNext].get<1>();
-        surf.zMax = diff[0].outer()[v].get<1>();
-        surf.xMin = diff[0].outer()[vNext].get<0>();
-        surf.xMax = diff[0].outer()[v].get<0>();
+        surf.zMin = z2;
+        surf.zMax = z1;
+        surf.xMin = x2;
+        surf.xMax = x1;
         surf.type = Surface::ST_GRADE;
-        surf.emissivity = soilEmissivity;
-        surf.absorptivity = soilAbsorptivity;
+        surf.propPtr = &grade;
       }
 
       // left
-      if (getDirectionOut(diff[0],v) == geom::X_NEG ) {
+      if (dOut == geom::X_NEG ) {
 
         surf.orientation = Surface::Z_POS;
 
-        surf.xMin = diff[0].outer()[vNext].get<0>();
-        surf.xMax = diff[0].outer()[v].get<0>();
+        surf.xMin = x2;
+        surf.xMax = x1;
         surf.type = Surface::ST_GRADE;  // TODO Could be wall (bump out)
-        surf.emissivity = soilEmissivity;
-        surf.absorptivity = soilAbsorptivity;
+        surf.propPtr = &grade;
 
-        surf.zMin = diff[0].outer()[vNext].get<1>();
-        surf.zMax = diff[0].outer()[v].get<1>();
+        surf.zMin = z2;
+        surf.zMax = z1;
       }
 
       // up
-      if (getDirectionOut(diff[0],v) == geom::Y_POS ) {
+      if (dOut == geom::Y_POS ) {
 
         surf.orientation = Surface::X_POS;
 
-        surf.zMin = diff[0].outer()[v].get<1>();
-        surf.zMax = diff[0].outer()[vNext].get<1>();
-        surf.xMin = diff[0].outer()[vNext].get<0>();
-        surf.xMax = diff[0].outer()[v].get<0>();
+        surf.zMin = z1;
+        surf.zMax = z2;
+        surf.xMin = x2;
+        surf.xMax = x1;
 
-        if (isEqual(diff[0].outer()[vNext].get<1>(), zMax)) {
-          xyWallTopExterior = diff[0].outer()[v].get<0>();
+        if (isEqual(z2, zMax)) {
+          xyWallTopExterior = x1;
         }
         if (getDirectionOut(diff[0],vNext) == geom::X_POS) {
           surf.type = Surface::ST_WALL_EXT;
-          surf.emissivity = wall.exteriorEmissivity;
-          surf.absorptivity = wall.exteriorAbsorptivity;
+          surf.propPtr = &wall.exterior;
         } else {
           surf.type = Surface::ST_GRADE;
-          surf.emissivity = soilEmissivity;
-          surf.absorptivity = soilAbsorptivity;
+          surf.propPtr = &grade;
         }
       }
 
       // right
-      if (getDirectionOut(diff[0],v) == geom::X_POS ) {
+      if (dOut == geom::X_POS ) {
 
         surf.orientation = Surface::Z_NEG;
 
-        surf.xMin = diff[0].outer()[v].get<0>();
-        surf.xMax = diff[0].outer()[vNext].get<0>();
+        surf.xMin = x1;
+        surf.xMax = x2;
         surf.type = Surface::ST_WALL_EXT;
-        surf.emissivity = wall.exteriorEmissivity;
-        surf.absorptivity = wall.exteriorAbsorptivity;
+        surf.propPtr = &wall.exterior;
 
-        surf.zMin = diff[0].outer()[vNext].get<1>();
-        surf.zMax = diff[0].outer()[v].get<1>();
+        surf.zMin = z2;
+        surf.zMax = z1;
       }
 
       surf2D.push_back(surf);
@@ -778,10 +801,8 @@ void Foundation::createMeshData()
       surface.setSquarePolygon();
       surface.zMin = zMin;
       surface.zMax = zMin;
-      if (deepGroundBoundary == DGB_CONSTANT_TEMPERATURE ||
-        deepGroundBoundary == DGB_AUTO) {
+      if (deepGroundBoundary == DGB_FIXED_TEMPERATURE) {
           surface.boundaryConditionType = Surface::CONSTANT_TEMPERATURE;
-          surface.temperature = deepGroundTemperature;
       } else {
         surface.boundaryConditionType = Surface::ZERO_FLUX;
       }
@@ -802,7 +823,7 @@ void Foundation::createMeshData()
       surface.zMax = zSlab;
       surface.boundaryConditionType = Surface::INTERIOR_FLUX;
       surface.orientation = Surface::Z_POS;
-      surface.emissivity = slab.emissivity;
+      surface.propPtr = &slab.interior;
       surfaces.push_back(surface);
     }
 
@@ -988,10 +1009,8 @@ void Foundation::createMeshData()
       surface.setSquarePolygon();
       surface.zMin = zMin;
       surface.zMax = zMin;
-      if (deepGroundBoundary == DGB_CONSTANT_TEMPERATURE ||
-        deepGroundBoundary == DGB_AUTO) {
+      if (deepGroundBoundary == DGB_FIXED_TEMPERATURE) {
           surface.boundaryConditionType = Surface::CONSTANT_TEMPERATURE;
-          surface.temperature = deepGroundTemperature;
       } else {
         surface.boundaryConditionType = Surface::ZERO_FLUX;
       }
@@ -1019,7 +1038,7 @@ void Foundation::createMeshData()
       surface.zMax = zSlab;
       surface.boundaryConditionType = Surface::INTERIOR_FLUX;
       surface.orientation = Surface::Z_POS;
-      surface.emissivity = slab.emissivity;
+      surface.propPtr = &slab.interior;
       surfaces.push_back(surface);
     }
 
@@ -1036,8 +1055,7 @@ void Foundation::createMeshData()
       surface.zMax = zGrade;
       surface.boundaryConditionType = Surface::EXTERIOR_FLUX;
       surface.orientation = Surface::Z_POS;
-      surface.emissivity = soilEmissivity;
-      surface.absorptivity = soilAbsorptivity;
+      surface.propPtr = &grade;
       surfaces.push_back(surface);
     }
     if (twoParameters)
@@ -1053,8 +1071,7 @@ void Foundation::createMeshData()
       surface.zMax = zGrade;
       surface.boundaryConditionType = Surface::EXTERIOR_FLUX;
       surface.orientation = Surface::Z_POS;
-      surface.emissivity = soilEmissivity;
-      surface.absorptivity = soilAbsorptivity;
+      surface.propPtr = &grade;
       surfaces.push_back(surface);
     }
 
@@ -1128,7 +1145,7 @@ void Foundation::createMeshData()
         double& Tin = wallTopInteriorTemperature;
         double& Tout = wallTopExteriorTemperature;
         double Tdiff = (Tin - Tout);
-        std::size_t N = (xyWallTopExterior - xyWallTopInterior)/mesh.minCellDim;
+        std::size_t N = (xyWallTopExterior - xyWallTopInterior + DBL_EPSILON)/mesh.minCellDim;
         double temperature = Tin - (1.0/N)/2*Tdiff;
 
         for (std::size_t n = 1; n <= N; n++)
@@ -1157,7 +1174,7 @@ void Foundation::createMeshData()
           double& Tin = wallTopInteriorTemperature;
           double& Tout = wallTopExteriorTemperature;
           double Tdiff = (Tin - Tout);
-          std::size_t N = (xyWallTopExterior - xyWallTopInterior)/mesh.minCellDim;
+          std::size_t N = (xyWallTopExterior - xyWallTopInterior + DBL_EPSILON)/mesh.minCellDim;
           double temperature = Tin - (1.0/N)/2*Tdiff;
 
           for (std::size_t n = 1; n <= N; n++)
@@ -1236,8 +1253,7 @@ void Foundation::createMeshData()
         surface.zMax = s.zMax;
         surface.boundaryConditionType = s.boundaryConditionType;
         surface.orientation = s.orientation;
-        surface.emissivity = s.emissivity;
-        surface.absorptivity = s.absorptivity;
+        surface.propPtr = s.propPtr;
 
         surfaces.push_back(surface);
       }
@@ -1259,8 +1275,7 @@ void Foundation::createMeshData()
         else if (s.orientation == Surface::X_NEG) {
           surface.orientation = Surface::X_POS;
         }
-        surface.emissivity = s.emissivity;
-        surface.absorptivity = s.absorptivity;
+        surface.propPtr = s.propPtr;
 
         surfaces.push_back(surface);
       }
@@ -1651,11 +1666,9 @@ void Foundation::createMeshData()
       surface.setSquarePolygon();
       surface.zMin = zMin;
       surface.zMax = zMin;
-      if (deepGroundBoundary == DGB_CONSTANT_TEMPERATURE ||
-        deepGroundBoundary == DGB_AUTO)
+      if (deepGroundBoundary == DGB_FIXED_TEMPERATURE)
       {
         surface.boundaryConditionType = Surface::CONSTANT_TEMPERATURE;
-        surface.temperature = deepGroundTemperature;
       } else {
         surface.boundaryConditionType = Surface::ZERO_FLUX;
       }
@@ -1675,7 +1688,7 @@ void Foundation::createMeshData()
       surface.zMax = zSlab;
       surface.boundaryConditionType = Surface::INTERIOR_FLUX;
       surface.orientation = Surface::Z_POS;
-      surface.emissivity = slab.emissivity;
+      surface.propPtr = &slab.interior;
       surfaces.push_back(surface);
     }
 
@@ -1700,8 +1713,7 @@ void Foundation::createMeshData()
       surface.zMax = zGrade;
       surface.boundaryConditionType = Surface::EXTERIOR_FLUX;
       surface.orientation = Surface::Z_POS;
-      surface.emissivity = soilEmissivity;
-      surface.absorptivity = soilAbsorptivity;
+      surface.propPtr = &grade;
       surfaces.push_back(surface);
     }
 
@@ -1758,7 +1770,7 @@ void Foundation::createMeshData()
         double& Tin = wallTopInteriorTemperature;
         double& Tout = wallTopExteriorTemperature;
         double Tdiff = (Tin - Tout);
-        std::size_t N = (xyWallTopExterior - xyWallTopInterior)/mesh.minCellDim;
+        std::size_t N = (xyWallTopExterior - xyWallTopInterior + DBL_EPSILON)/mesh.minCellDim;
         double temperature = Tin - (1.0/N)/2*Tdiff;
 
         for (std::size_t n = 1; n <= N; n++)
@@ -1850,8 +1862,7 @@ void Foundation::createMeshData()
             surface.orientation = Surface::Y_POS;
             break;
           }
-          surface.emissivity = s.emissivity;
-          surface.absorptivity = s.absorptivity;
+          surface.propPtr = s.propPtr;
           surfaces.push_back(surface);
         }
 
@@ -1875,8 +1886,7 @@ void Foundation::createMeshData()
         surface.zMax = s.zMax;
         surface.boundaryConditionType = s.boundaryConditionType;
         surface.orientation = s.orientation;
-        surface.emissivity = s.emissivity;
-        surface.absorptivity = s.absorptivity;
+        surface.propPtr = s.propPtr;
         surfaces.push_back(surface);
 
       }
@@ -2262,11 +2272,9 @@ void Foundation::createMeshData()
       surface.setSquarePolygon();
       surface.zMin = zMin;
       surface.zMax = zMin;
-      if (deepGroundBoundary == DGB_CONSTANT_TEMPERATURE ||
-        deepGroundBoundary == DGB_AUTO)
+      if (deepGroundBoundary == DGB_FIXED_TEMPERATURE)
       {
           surface.boundaryConditionType = Surface::CONSTANT_TEMPERATURE;
-          surface.temperature = deepGroundTemperature;
       } else {
         surface.boundaryConditionType = Surface::ZERO_FLUX;
       }
@@ -2288,7 +2296,7 @@ void Foundation::createMeshData()
       surface.zMax = zSlab;
       surface.boundaryConditionType = Surface::INTERIOR_FLUX;
       surface.orientation = Surface::Z_POS;
-      surface.emissivity = slab.emissivity;
+      surface.propPtr = &slab.interior;
       surfaces.push_back(surface);
     }
 
@@ -2307,8 +2315,7 @@ void Foundation::createMeshData()
       surface.zMax = zGrade;
       surface.boundaryConditionType = Surface::EXTERIOR_FLUX;
       surface.orientation = Surface::Z_POS;
-      surface.emissivity = soilEmissivity;
-      surface.absorptivity = soilAbsorptivity;
+      surface.propPtr = &grade;
       surfaces.push_back(surface);
     }
 
@@ -2358,7 +2365,7 @@ void Foundation::createMeshData()
         double& Tin = wallTopInteriorTemperature;
         double& Tout = wallTopExteriorTemperature;
         double Tdiff = (Tin - Tout);
-        std::size_t N = (xyWallTopExterior - xyWallTopInterior)/mesh.minCellDim;
+        std::size_t N = (xyWallTopExterior - xyWallTopInterior + DBL_EPSILON)/mesh.minCellDim;
         double temperature = Tin - (1.0/N)/2*Tdiff;
 
         for (std::size_t n = 1; n <= N; n++)
@@ -2463,8 +2470,7 @@ void Foundation::createMeshData()
               surface.orientation = Surface::Y_POS;
               break;
             }
-            surface.emissivity = s.emissivity;
-            surface.absorptivity = s.absorptivity;
+            surface.propPtr = s.propPtr;
             surfaces.push_back(surface);
           }
         }
@@ -2494,8 +2500,7 @@ void Foundation::createMeshData()
         surface.zMax = s.zMax;
         surface.boundaryConditionType = s.boundaryConditionType;
         surface.orientation = s.orientation;
-        surface.emissivity = s.emissivity;
-        surface.absorptivity = s.absorptivity;
+        surface.propPtr = s.propPtr;
         surfaces.push_back(surface);
 
       }
@@ -3030,6 +3035,20 @@ void Foundation::createMeshData()
   yMeshData.intervals = yIntervals;
   zMeshData.intervals = zIntervals;
 
+}
+
+double Foundation::getConvectionCoeff(double Tsurf, double Tamb, double hfGlass,
+                                  double roughness, bool isExterior, double cosTilt) const
+{
+  if (convectionCalculationMethod == Foundation::CCM_AUTO)
+    return getDOE2ConvectionCoeff(Tsurf,Tamb,hfGlass,roughness,cosTilt);
+  else //if (foundation.convectionCalculationMethod == Foundation::CCM_CONSTANT_COEFFICIENT)
+  {
+    if (isExterior)
+      return exteriorConvectiveCoefficient;
+    else
+      return interiorConvectiveCoefficient;
+  }
 }
 
 }

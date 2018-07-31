@@ -87,7 +87,7 @@ class OutputReport: public std::vector<OutputVariable>
 {
 public:
   void setOutputMap();
-  std::map<Surface::SurfaceType, std::vector<GroundOutput::OutputType>> outputMap;
+  std::vector<Surface::SurfaceType> outputMap;
   boost::posix_time::time_duration minFrequency;
 };
 
@@ -136,6 +136,19 @@ public:
   };
 
   OutdoorTemperatureMethod outdoorTemperatureMethod;
+
+  // Deep Ground options
+  double deepGroundTemperature;
+  enum DeepGroundBoundaryType
+  {
+    DGBT_AUTO,
+    DGBT_CONSTANT_TEMPERATURE,
+    DGBT_ZERO_FLUX
+  };
+
+  DeepGroundBoundaryType deepGroundBoundaryType;
+
+
 };
 
 class Input

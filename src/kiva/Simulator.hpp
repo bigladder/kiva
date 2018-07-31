@@ -68,8 +68,6 @@ private:
 
   double getInitialTemperature(boost::posix_time::ptime t, double z);
 
-  double getDeepGroundTemperature();
-
   void updateBoundaryConditions(boost::posix_time::ptime t);
 
 };

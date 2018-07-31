@@ -7,6 +7,7 @@
 #include "Mesher.hpp"
 #include "Functions.hpp"
 #include "Geometry.hpp"
+#include "Algorithms.hpp"
 
 namespace Kiva {
 
@@ -42,13 +43,28 @@ public:
 
 };
 
+class SurfaceProperties {
+public:
+  SurfaceProperties()
+      : emissivity(0.8),
+        absorptivity(0.8),
+        roughness(0.00208)
+  {}
+  SurfaceProperties(double e, double a, double r)
+      : emissivity(e),
+        absorptivity(a),
+        roughness(r)
+  {}
+  double emissivity, absorptivity, roughness;
+};
+
 class LIBKIVA_EXPORT Wall
 {
 public:
 
-  double interiorEmissivity;
-  double exteriorEmissivity;
-  double exteriorAbsorptivity;
+  SurfaceProperties interior;
+  SurfaceProperties exterior;
+
   double heightAboveGrade;  // [m]
   double depthBelowSlab;  // [m]
   std::vector <Layer> layers;
@@ -61,7 +77,7 @@ class LIBKIVA_EXPORT Slab
 {
 public:
 
-  double emissivity;
+  SurfaceProperties interior;
   std::vector <Layer> layers;
 
   double totalWidth();
@@ -125,7 +141,7 @@ public:
   Polygon polygon;
   double xMin, xMax, yMin, yMax, zMin, zMax;
   SurfaceType type;
-  double emissivity, absorptivity, temperature;
+  SurfaceProperties *propPtr;
 
   enum BoundaryConditionType
   {
@@ -148,12 +164,21 @@ public:
     Z_NEG
   };
   Orientation orientation;
+  std::size_t orientation_dim, orientation_dir;
 
-  std::vector<std::tuple<std::size_t,std::size_t,std::size_t> > indices;
+  std::vector<std::size_t> indices;
 
-  double area;
+  // Geometry
+  double area, tilt, azimuth, cosTilt;
+
+  // Environment
+  double temperature;
+  double radiantTemperature;
+  double hfGlass;  // calculate once per time step to speed up convection calculations
+  double effectiveLWViewFactorQtr;  // F^0.25, calculate once per time step to speed up long wave calculations
 
   void setSquarePolygon();
+  void calcTilt();
 };
 
 class RangeType
@@ -198,11 +223,9 @@ public:
   double foundationDepth; // [m] below top of wall
   double orientation;  // [radians] from north
 
-  double deepGroundTemperature;  // [K]
   enum DeepGroundBoundary
   {
-    DGB_AUTO,
-    DGB_CONSTANT_TEMPERATURE,
+    DGB_FIXED_TEMPERATURE,
     DGB_ZERO_FLUX
   };
 
@@ -219,9 +242,8 @@ public:
   WallTopBoundary wallTopBoundary;
 
   Material soil;
-  double soilAbsorptivity;  // [frac]
-  double soilEmissivity;  // [frac]
-  double surfaceRoughness;  // [m]
+
+  SurfaceProperties grade;
 
   // Geometry
   enum CoordinateSystem
@@ -272,7 +294,6 @@ public:
   // Meshing
   Mesh mesh;
 
-
   // Simulation Control
   enum NumericalScheme
   {
@@ -314,6 +335,8 @@ public:
   double netPerimeter;
 
   void createMeshData();
+  double getConvectionCoeff(double Tsurf, double Tamb, double hForced,
+                            double roughness, bool isExterior, double cosTilt) const;
 };
 
 }
