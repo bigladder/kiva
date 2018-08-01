@@ -89,4 +89,6 @@ if (KIVA_TESTING)
   endif()
 endif()
 
-include(Install)
+if (KIVA_EXE_BUILD)
+  include(Install)
+endif()
