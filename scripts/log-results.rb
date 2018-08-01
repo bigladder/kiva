@@ -55,6 +55,7 @@ def main(ci_path, rt_dir, arch, test_dir, rt_url)
     tag_name = "src_#{the_ci_sha}_#{arch}"
     tag_exists = !(g_rt.tags.select {|t| t.name == tag_name}.empty?)
     if tag_exists
+      puts("Tag exists, retagging...")
       retag(g_rt.dir, tag_name, rt_url)
     else
       puts("Adding tag #{tag_name}")
