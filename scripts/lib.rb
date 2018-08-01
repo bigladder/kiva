@@ -2,6 +2,9 @@ require('git')
 require('fileutils')
 require('open3')
 
+SLEEP_TIME = 1 # seconds
+MAX_ITER = 4
+
 def is_pull_request?
   travis_pr = ENV['TRAVIS_PULL_REQUEST']
   puts("TRAVIS_PULL_REQUEST=#{travis_pr}")
@@ -133,63 +136,62 @@ end
 # robust pull/push
 def robust_push_pull(g, branch, the_commit, the_tag, rt_url)
   puts("Starting robust_push_pull")
-  begin
-    puts("Attempting to pull")
-    g.pull(rt_url, branch) if g.is_remote_branch?(branch)
-    puts("Pull attempt succeeded")
-  rescue => e
-    puts("Trying to fix suspected auto-merge conflict")
-    puts("Error: #{e.message}")
-    puts("Git repo directory: #{g.dir}")
-    # OK, we probably have a merge conflict
-    # we need to:
-    # 1. find which files are in conflict
-    # 2. `git checkout --ours #{filename}` for each file in conflict
-    # 3. re-add the files
-    # 4. re-commit the files with some sort of commit message
+  1.upto(MAX_ITER).each do |try_no|
+    puts("Attempt #{try_no}/#{MAX_ITER}")
+    begin
+      puts("Attempting to pull")
+      g.pull(rt_url, branch) if g.is_remote_branch?(branch)
+      puts("Pull attempt succeeded")
+    rescue => e
+      puts("Trying to fix suspected auto-merge conflict")
+      puts("Error: #{e.message}")
+      puts("Git repo directory: #{g.dir}")
+      # OK, we probably have a merge conflict
+      # we need to:
+      # 1. find which files are in conflict
+      # 2. `git checkout --ours #{filename}` for each file in conflict
+      # 3. re-add the files
+      # 4. re-commit the files with some sort of commit message
 
-    # `git diff --name-only --diff-filter=U`
-    puts("Asking git for list of conflicted files")
-    files_in_conflict = `cd #{g.dir} && git diff --name-only --diff-filter=U`
-    puts("files in conflict: #{files_in_conflict.split.inspect}")
-    files_in_conflict.split.each do |fname|
-      puts("checking out and re-adding #{fname}")
-      `cd #{g.dir} && git checkout --ours #{fname}`
-      g.add(fname)
+      # `git diff --name-only --diff-filter=U`
+      puts("Asking git for list of conflicted files")
+      files_in_conflict = `cd #{g.dir} && git diff --name-only --diff-filter=U`
+      puts("files in conflict: #{files_in_conflict.split.inspect}")
+      files_in_conflict.split.each do |fname|
+        puts("checking out and re-adding #{fname}")
+        `cd #{g.dir} && git checkout --ours #{fname}`
+        g.add(fname)
+      end
+      puts("(Re-)Committing...")
+      g.commit("Commit to fix auto-merge conflict\n#{the_commit}")
+      puts("Done!")
     end
-    puts("(Re-)Committing...")
-    g.commit("Commit to fix auto-merge conflict\n#{the_commit}")
-    puts("Done!")
-  end
-  puts("Pushing to origin!")
-  begin
-    g.push(rt_url, "HEAD:#{branch}", {:tags=>true})
-  rescue => e
-    # Possible that we have an error related to remote tagging
-    # Let's check if the word "tag" is in the error message
-    puts("-------")
-    puts("push caused an error...\n#{e.message}")
-    if e.message.include?("tag")
-      # if tag already exists on remote, we need to delete, force annotate, and push again.
-      puts("apparently, tag already exists on remote!")
-      puts("attempt a retag...")
-      retag(g.dir, the_tag, rt_url)
-      puts("back from retag...")
-      puts("Trying to push again")
+    puts("Pushing to origin!")
+    begin
       g.push(rt_url, "HEAD:#{branch}", {:tags=>true})
-      puts("Push succeeded...")
-    else
-      # We don't know what happened. Report error and bail.
-      puts("Don't know how to handle this error... exiting...")
+    rescue => e
+      # Possible that we have an error related to remote tagging
+      # Let's check if the word "tag" is in the error message
       puts("-------")
-      exit(1)
+      puts("push caused an error...\n#{e.message}")
+      if e.message.include?("tag")
+        # if tag already exists on remote, we need to delete, force annotate, and push again.
+        puts("apparently, tag already exists on remote!")
+        puts("attempt a retag...")
+        retag(g.dir, the_tag, rt_url)
+        puts("back from retag...")
+        next
+      else
+        # We don't know what happened. Report error and bail.
+        puts("Don't know how to handle this error... exiting...")
+        puts("-------")
+        exit(1)
+      end
     end
+    break
   end
   puts("Done robust_pull_push!")
 end
-
-SLEEP_TIME = 1 # seconds
-MAX_ITER = 4
 
 def retag(git_dir, tag_name, rt_url)
   puts("Tag, #{tag_name}, exists")
