@@ -189,11 +189,11 @@ def robust_push_pull(g, branch, the_commit, the_tag, rt_url)
 end
 
 SLEEP_TIME = 1 # seconds
+MAX_ITER = 4
 
 def retag(git_dir, tag_name, rt_url)
   puts("Tag, #{tag_name}, exists")
-  tag_still_exists = true
-  while tag_still_exists do
+  1.upto(MAX_ITER).each do
     sleep(SLEEP_TIME)
     # delete tag on remote
     # See https://stackoverflow.com/a/19300065
@@ -202,7 +202,8 @@ def retag(git_dir, tag_name, rt_url)
     puts("Remote deletion attempted. Return code: #{$?}")
     tag_output = `cd #{git_dir} && git ls-remote "#{rt_url}" refs/tags/#{tag_name}`
     puts("Tag query attempted. Return value: #{tag_output}")
-    tag_still_exists = !(tag_output.strip.empty?)
+    tag_deleted = tag_output.strip.empty?
+    break if tag_deleted
   end
   # force annotate the tag again
   puts("Force annotating the local tag again")
