@@ -157,6 +157,7 @@ def robust_push_pull(g, branch, the_commit, the_tag, rt_url)
       puts("Asking git for list of conflicted files")
       files_in_conflict = `cd #{g.dir} && git diff --name-only --diff-filter=U`
       puts("files in conflict: #{files_in_conflict.split.inspect}")
+      puts("diff of conflicts: #{`cd #{g.dir} && git diff`}")
       files_in_conflict.split.each do |fname|
         puts("checking out and re-adding #{fname}")
         `cd #{g.dir} && git checkout --ours #{fname}`
