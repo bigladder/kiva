@@ -1,3 +1,4 @@
+require_relative('utils')
 require('git')
 require('fileutils')
 require('open3')
@@ -123,9 +124,9 @@ def run_case(in_root, out_root, arch, a, c)
     File.write(p, data)
     files_to_add << p
   end
-  w['stdout.log', stdout]
-  w['stderr.log', stderr]
-  w['exitcode.log', exitcode]
+  w['stdout.log', UTILS.universal_newline(stdout)]
+  w['stderr.log', UTILS.universal_newline(stderr)]
+  #w['exitcode.log', exitcode]
   c[:input_files].each do |f|
     FileUtils.rm(File.join(path, File.basename(f)))
   end
