@@ -37,7 +37,7 @@ def main(ci_path, rt_dir, arch, test_dir, rt_url)
   puts("LastTest.log copied")
   puts("Attempting to add any new files")
   chngs = UTILS.list_changes(g_rt.dir)
-  chngs['Deleted'].each do {|f| `cd #{g_rt.dir} && git rm #{f}`}
+  chngs['Deleted'].each {|f| `cd #{g_rt.dir} && git rm #{f}`}
   g_rt.add(:all=>true)
   puts("All files added")
   puts("Attempting to see if there are any changes cached after 'add --all'")
