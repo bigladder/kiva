@@ -38,7 +38,7 @@ def main(ci_path, rt_dir, arch, test_dir, rt_url)
   puts("Attempting to add any new files")
   chngs = UTILS.list_changes(g_rt.dir)
   puts("Logging #{chngs['Deleted'].length} deleted files")
-  chngs['Deleted'].each {|f| `cd #{g_rt.dir} && git rm #{f}`}
+  chngs['Deleted'].each {|f| `cd #{g_rt.dir} && git rm --force #{f}`}
   g_rt.add(:all=>true)
   puts("All files added")
   puts("Attempting to see if there are any changes cached after 'add --all'")
@@ -48,6 +48,7 @@ def main(ci_path, rt_dir, arch, test_dir, rt_url)
     puts("- code is: #{code}")
   else
     puts("Changes found")
+    puts("- code is: #{code}")
     puts("Committing...")
     the_commit = "#{the_ci_msg} [#{arch}]\n{:src-sha \"#{the_ci_sha}\" " +
       ":src-msg \"#{the_ci_msg}\" " +
@@ -67,7 +68,8 @@ def main(ci_path, rt_dir, arch, test_dir, rt_url)
     end
     puts("Tag added")
     puts("Attempting to push/pull")
-    robust_push_pull(g_rt, the_branch, the_commit, tag_name, rt_url, our_dir=arch)
+    robust_push_pull(g_rt, the_branch, the_commit, tag_name, rt_url,
+                     our_dir=arch, to_be_deleted=chngs['Deleted'])
     puts("push/pull succeeded")
   end
 end

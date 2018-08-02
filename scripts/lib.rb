@@ -135,7 +135,7 @@ def run_case(in_root, out_root, arch, a, c)
 end
 
 # robust pull/push
-def robust_push_pull(g, branch, the_commit, the_tag, rt_url, our_dir=nil)
+def robust_push_pull(g, branch, the_commit, the_tag, rt_url, our_dir=nil, to_be_deleted=nil)
   puts("Starting robust_push_pull")
   1.upto(MAX_ITER).each do |try_no|
     puts("Attempt #{try_no}/#{MAX_ITER}")
@@ -192,7 +192,7 @@ def robust_push_pull(g, branch, the_commit, the_tag, rt_url, our_dir=nil)
           whos = "theirs"
         end
         deleted = false
-        if chngs['Delete'].include?(fname)
+        if chngs['Delete'].include?(fname) or (!to_be_deleted.nil? and to_be_deleted.include?(fname))
           `cd #{g.dir} && git rm #{fname}`
           deleted = true
         else
