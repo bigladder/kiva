@@ -146,7 +146,7 @@ def robust_push_pull(g, branch, the_commit, the_tag, rt_url, our_dir=nil)
       #cmd = "git pull -X ours --allow-unrelated-histories #{rt_url} #{branch}"
       cmd = "git pull #{rt_url} #{branch}"
       puts("running command: #{cmd}")
-      out, err, status = Open3.capture3(cmd)
+      out, err, status = Open3.capture3(cmd) if g.is_remote_branch?(branch)
       raise 'Error' if status != 0
       puts("Pull attempt successful")
       puts("Adding and Committing any changes")
