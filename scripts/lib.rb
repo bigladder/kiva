@@ -143,7 +143,7 @@ def robust_push_pull(g, branch, the_commit, the_tag, rt_url)
       puts("Attempting to pull")
       #g.pull(rt_url, branch) if g.is_remote_branch?(branch)
       if g.is_remote_branch?(branch)
-        msg = `cd #{g.dir} && git pull -Xours`
+        msg = `cd #{g.dir} && git pull -Xours,ignore-space-at-eol`
       end
       puts("Pull attempt errorcode: #{$?}")
       raise msg if $?.exitstatus != 0
