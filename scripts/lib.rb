@@ -142,7 +142,7 @@ def robust_push_pull(g, branch, the_commit, the_tag, rt_url)
     begin
       puts("Attempting to pull")
       #g.pull(rt_url, branch) if g.is_remote_branch?(branch)
-      cmd = "git pull -Xours,ignore-space-at-eol #{rt_url} #{branch}"
+      cmd = "git pull -Xours,ignore-space-at-eol --allow-unrelated-histories #{rt_url} #{branch}"
       puts("running command: #{cmd}")
       out, err, status = Open3.capture3(cmd)
       raise 'Error' if status != 0
