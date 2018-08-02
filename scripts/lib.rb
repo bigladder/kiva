@@ -142,14 +142,15 @@ def robust_push_pull(g, branch, the_commit, the_tag, rt_url)
     begin
       puts("Attempting to pull")
       #g.pull(rt_url, branch) if g.is_remote_branch?(branch)
-      if g.is_remote_branch?(branch)
-        msg = `cd #{g.dir} && git pull -Xours,ignore-space-at-eol`
-      end
-      puts("Pull attempt errorcode: #{$?}")
-      raise msg if $?.exitstatus != 0
+      cmd = "git pull -Xours,ignore-space-at-eol #{rt_url} #{branch}"
+      puts("running command: #{cmd}")
+      out, err, status = Open3.capture3(cmd)
+      raise 'Error' if status != 0
+      puts("Pull attempt successful")
     rescue => e
       puts("Trying to fix suspected auto-merge conflict")
-      puts("Error: #{e.message}")
+      puts("stdout: #{out}")
+      puts("stderr: #{err}")
       puts("Git repo directory: #{g.dir}")
       # OK, we probably have a merge conflict
       # we need to:
@@ -169,7 +170,7 @@ def robust_push_pull(g, branch, the_commit, the_tag, rt_url)
       files_in_conflict.split.each do |fname|
         puts("checking out and re-adding #{fname}")
         `cd #{g.dir} && git checkout --ours #{fname}`
-        g.add(fname)
+        g.add(fname) if $?.exitstatus == 0
       end
       puts("(Re-)Committing...")
       g.commit("Commit to fix auto-merge conflict\n#{the_commit}")
