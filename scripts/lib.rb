@@ -141,13 +141,13 @@ def robust_push_pull(g, branch, the_commit, the_tag, rt_url, our_dir=nil)
     puts("Attempt #{try_no}/#{MAX_ITER}")
     begin
       puts("Attempting to pull")
-      #g.pull(rt_url, branch) if g.is_remote_branch?(branch)
+      g.pull(rt_url, branch) if g.is_remote_branch?(branch)
       # -X ignore-space-at-eol
       #cmd = "git pull -X ours --allow-unrelated-histories #{rt_url} #{branch}"
-      cmd = "git pull #{rt_url} #{branch}"
-      puts("running command: #{cmd}")
-      out, err, status = Open3.capture3(cmd) if g.is_remote_branch?(branch)
-      raise 'Error' if status != 0
+      #cmd = "git pull #{rt_url} #{branch}"
+      #puts("running command: #{cmd}")
+      #out, err, status = Open3.capture3(cmd) if g.is_remote_branch?(branch)
+      #raise 'Error' if status != 0
       puts("Pull attempt successful")
       puts("Adding and Committing any changes")
       g.add(all: true)
@@ -161,8 +161,9 @@ def robust_push_pull(g, branch, the_commit, the_tag, rt_url, our_dir=nil)
       end
     rescue => e
       puts("Trying to fix suspected auto-merge conflict")
-      puts("stdout: #{out}")
-      puts("stderr: #{err}")
+      puts("Error: #{e.message}")
+      #puts("stdout: #{out}")
+      #puts("stderr: #{err}")
       puts("Git repo directory: #{g.dir}")
       # OK, we probably have a merge conflict
       # we need to:
@@ -179,6 +180,8 @@ def robust_push_pull(g, branch, the_commit, the_tag, rt_url, our_dir=nil)
       puts("diff of conflicts:")
       puts("#{`cd #{g.dir} && git diff --ws-error-highlight=all`}")
       puts("="*60)
+      num_ours = 0
+      num_theirs = 0
       files_in_conflict.split.each do |fname|
         puts("checking out and re-adding #{fname}")
         # If under our architecture, use --ours; else --theirs...
@@ -189,10 +192,27 @@ def robust_push_pull(g, branch, the_commit, the_tag, rt_url, our_dir=nil)
           whos = "theirs"
         end
         `cd #{g.dir} && git checkout --#{whos} #{fname}`
-        g.add(fname) if $?.exitstatus == 0
+        if $?.exitstatus == 0
+          g.add(fname) 
+          if whos == "ours"
+            num_ours += 1
+          else
+            num_theirs += 1
+          end
+        end
       end
-      puts("(Re-)Committing...")
-      g.commit("Commit to fix auto-merge conflict\n#{the_commit}")
+      puts("Number added: theirs: #{num_theirs} ours: #{num_ours}")
+      if files_in_conflict.length > 0
+        code = system("cd #{g.dir} && git diff --quiet --cached --exit-code")
+        if !code
+          puts("(Re-)Committing...")
+          g.commit("Commit to fix auto-merge conflict\n#{the_commit}")
+        else
+          puts("No changes to commit, moving forward")
+        end
+      else
+        puts("Number of files in conflict is 0 (warning: how did we get into this branch?)")
+      end
       puts("Done!")
     end
     puts("Pushing to origin!")
