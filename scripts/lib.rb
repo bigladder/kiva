@@ -148,6 +148,11 @@ def robust_push_pull(g, branch, the_commit, the_tag, rt_url)
       out, err, status = Open3.capture3(cmd)
       raise 'Error' if status != 0
       puts("Pull attempt successful")
+      puts("Adding and Committing any changes")
+      g.add(all: true)
+      puts("Added all")
+      g.commit("Committing changes from merge...\n#{the_commit}")
+      puts("Commit successful")
     rescue => e
       puts("Trying to fix suspected auto-merge conflict")
       puts("stdout: #{out}")
