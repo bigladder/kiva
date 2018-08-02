@@ -171,7 +171,7 @@ def robust_push_pull(g, branch, the_commit, the_tag, rt_url, our_dir=nil)
       # 2. `git checkout --ours #{filename}` for each file in conflict
       # 3. re-add the files
       # 4. re-commit the files with some sort of commit message
-
+      chngs = UTILS.list_changes(g.dir)
       # `git diff --name-only --diff-filter=U`
       puts("Asking git for list of conflicted files")
       files_in_conflict = `cd #{g.dir} && git diff --name-only --diff-filter=U`
@@ -191,9 +191,15 @@ def robust_push_pull(g, branch, the_commit, the_tag, rt_url, our_dir=nil)
         else
           whos = "theirs"
         end
-        `cd #{g.dir} && git checkout --#{whos} #{fname}`
+        deleted = false
+        if chngs['Delete'].include?(fname)
+          `cd #{g.dir} && git rm #{fname}`
+          deleted = true
+        else
+          `cd #{g.dir} && git checkout --#{whos} #{fname}`
+        end
         if $?.exitstatus == 0
-          g.add(fname) 
+          g.add(fname) if not deleted
           if whos == "ours"
             num_ours += 1
           else
