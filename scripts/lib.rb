@@ -141,8 +141,12 @@ def robust_push_pull(g, branch, the_commit, the_tag, rt_url)
     puts("Attempt #{try_no}/#{MAX_ITER}")
     begin
       puts("Attempting to pull")
-      g.pull(rt_url, branch) if g.is_remote_branch?(branch)
-      puts("Pull attempt succeeded")
+      #g.pull(rt_url, branch) if g.is_remote_branch?(branch)
+      if g.is_remote_branch?(branch)
+        msg = `cd #{g.dir} && git pull -Xours`
+      end
+      puts("Pull attempt errorcode: #{$?}")
+      raise msg if $?.exitstatus != 0
     rescue => e
       puts("Trying to fix suspected auto-merge conflict")
       puts("Error: #{e.message}")
