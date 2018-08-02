@@ -192,7 +192,7 @@ def robust_push_pull(g, branch, the_commit, the_tag, rt_url, our_dir=nil, to_be_
           whos = "theirs"
         end
         deleted = false
-        d1 = chngs['Delete'].include?(fname) 
+        d1 = chngs['Deleted'].include?(fname) 
         d2 = (!to_be_deleted.nil? and to_be_deleted.include?(fname))
         if d1 or d2
           `cd #{g.dir} && git rm #{fname}`
