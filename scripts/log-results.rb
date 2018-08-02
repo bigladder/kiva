@@ -67,7 +67,7 @@ def main(ci_path, rt_dir, arch, test_dir, rt_url)
     end
     puts("Tag added")
     puts("Attempting to push/pull")
-    robust_push_pull(g_rt, the_branch, the_commit, tag_name, rt_url)
+    robust_push_pull(g_rt, the_branch, the_commit, tag_name, rt_url, our_dir=arch)
     puts("push/pull succeeded")
   end
 end

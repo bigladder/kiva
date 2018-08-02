@@ -135,7 +135,7 @@ def run_case(in_root, out_root, arch, a, c)
 end
 
 # robust pull/push
-def robust_push_pull(g, branch, the_commit, the_tag, rt_url)
+def robust_push_pull(g, branch, the_commit, the_tag, rt_url, our_dir=nil)
   puts("Starting robust_push_pull")
   1.upto(MAX_ITER).each do |try_no|
     puts("Attempt #{try_no}/#{MAX_ITER}")
@@ -143,16 +143,22 @@ def robust_push_pull(g, branch, the_commit, the_tag, rt_url)
       puts("Attempting to pull")
       #g.pull(rt_url, branch) if g.is_remote_branch?(branch)
       # -X ignore-space-at-eol
-      cmd = "git pull -X ours --allow-unrelated-histories #{rt_url} #{branch}"
+      #cmd = "git pull -X ours --allow-unrelated-histories #{rt_url} #{branch}"
+      cmd = "git pull #{rt_url} #{branch}"
       puts("running command: #{cmd}")
       out, err, status = Open3.capture3(cmd)
       raise 'Error' if status != 0
       puts("Pull attempt successful")
       puts("Adding and Committing any changes")
       g.add(all: true)
-      puts("Added all")
-      g.commit("Committing changes from merge...\n#{the_commit}")
-      puts("Commit successful")
+      code = system("cd #{g.dir} && git diff --quiet --cached --exit-code")
+      if !code
+        puts("Added all")
+        g.commit("Committing changes from merge...\n#{the_commit}")
+        puts("Commit successful")
+      else
+        puts("No changes to commit moving forward")
+      end
     rescue => e
       puts("Trying to fix suspected auto-merge conflict")
       puts("stdout: #{out}")
@@ -175,7 +181,14 @@ def robust_push_pull(g, branch, the_commit, the_tag, rt_url)
       puts("="*60)
       files_in_conflict.split.each do |fname|
         puts("checking out and re-adding #{fname}")
-        `cd #{g.dir} && git checkout --ours #{fname}`
+        # If under our architecture, use --ours; else --theirs...
+        whos = nil
+        if our_dir.nil? or fname.include?(our_dir)
+          whos = "ours"
+        else
+          whos = "theirs"
+        end
+        `cd #{g.dir} && git checkout --#{whos} #{fname}`
         g.add(fname) if $?.exitstatus == 0
       end
       puts("(Re-)Committing...")
