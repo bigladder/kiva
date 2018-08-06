@@ -1,4 +1,5 @@
 require_relative('lib')
+require_relative('utils')
 
 ############################################################
 # Required Inputs
@@ -14,65 +15,65 @@ ARCH = File.read(File.expand_path('build/arch.txt',CI_PATH))
 
 ############################################################
 def main(ci_path, rt_dir, arch, test_dir, rt_url)
-  puts("Starting main")
-  puts("Opening git on CI_PATH")
+  debug = false
   g_ci = Git.open(ci_path)
-  puts("Opened...")
-  puts("Getting current branch...")
   the_branch = determine_branch
-  puts("Current branch, #{the_branch}, obtained")
-  puts("Getting SHA of HEAD...")
+  puts("  Current branch, #{the_branch}, obtained")
   the_ci_sha = g_ci.object("HEAD").sha
-  puts("Sha of HEAD obtained: #{the_ci_sha}")
-  puts("Getting Message of HEAD")
+  puts("  SHA of HEAD obtained: #{the_ci_sha}")
   the_ci_msg = g_ci.log[0].message # used to be "commit('HEAD')", but it creates bad message after GitHub merge
-  puts("Message of HEAD obtained:\n#{the_ci_msg}")
-  puts("Attempting to OPEN the RegressTest repo")
+  puts("  Message of HEAD obtained:\n  #{the_ci_msg}")
   g_rt = Git.open(rt_dir)
-  puts("RegressTest repo opened")
-  puts("- RegressTest repo directory: #{g_rt.dir}")
-  puts("Adding LastTest.log")
-  FileUtils.cp(File.join('..', 'build','Testing','Temporary','LastTest.log'), File.join(rt_dir,arch))
-  puts("LastTest.log copied")
-  puts("Attempting to add any new files")
+  puts("  RegressTest repo opened at: #{g_rt.dir}")
+  if debug
+    UTILS::git_status(g_rt.dir)
+  end
+  FileUtils.cp(File.join('..', 'build', 'Testing', 'Temporary', 'LastTest.log'), File.join(rt_dir, arch))
+  puts("  LastTest.log copied")
+  puts("  Attempting to add any new files\n\n")
+  chngs = UTILS.list_changes(g_rt.dir)
+  puts("Logging #{chngs['Deleted'].length} deleted files")
+  chngs['Deleted'].each {|f| `cd #{g_rt.dir} && git rm --force #{f}`}
   g_rt.add(:all=>true)
-  puts("All files added")
-  puts("Attempting to see if there are any changes cached after 'add --all'")
   code = system("cd #{g_rt.dir} && git diff --quiet --cached --exit-code")
   if code
-    puts("No changes found")
-    puts("- code is: #{code}")
+    puts("  No changes found")
   else
-    puts("Changes found")
-    puts("Committing...")
+    puts("  Changes found. Committing...")
     the_commit = "#{the_ci_msg} [#{arch}]\n{:src-sha \"#{the_ci_sha}\" " +
       ":src-msg \"#{the_ci_msg}\" " +
       ":arch \"#{arch}\" " +
       ":src-branch \"#{the_branch}\"}"
     g_rt.commit(the_commit)
-    puts("Committed")
-    puts("Tagging...")
+    puts("  Committed")
+    puts("  Tagging...")
     tag_name = "src_#{the_ci_sha}_#{arch}"
-    tag_exists = ! g_rt.tags.select {|t| t.name == tag_name}.empty?
+    tag_exists = !(g_rt.tags.select {|t| t.name == tag_name}.empty?)
     if tag_exists
+      puts("  Tag exists, retagging...")
       retag(g_rt.dir, tag_name, rt_url)
     else
-      puts("Adding tag #{tag_name}")
+      puts("  Adding tag #{tag_name}")
       g_rt.add_tag(tag_name, {a: true, m: "Add source sha"})
     end
-    puts("Tag added")
-    puts("Attempting to push/pull")
-    robust_push_pull(g_rt, the_branch, the_commit, tag_name, rt_url)
-    puts("push/pull succeeded")
+    puts("  Tag added")
+    puts("  Attempting to push/pull")
+    robust_push_pull(g_rt, the_branch, the_commit, tag_name, rt_url,
+                     our_dir=arch, to_be_deleted=chngs['Deleted'])
+    puts("  Push/pull succeeded")
+  end
+  if debug
+    UTILS::git_status(g_rt.dir)
+    UTILS::git_log(g_rt.dir)
   end
 end
 
-puts("scripts/log-results.rb Start!")
+puts("\n\n\nLogging results")
 
 if not is_pull_request?
   main(CI_PATH, RT_DIR, ARCH, TEST_DIR, RT_URL)
 else
-  puts("Skipping log-results.rb due to being a pull request")
+  puts("Skipping logging results due to being a pull request")
 end
 
-puts("scripts/log-results.rb Done!")
+puts("Results logged!")
