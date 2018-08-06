@@ -194,7 +194,7 @@ def robust_push_pull(g, branch, the_commit, the_tag, rt_url, our_dir=nil, to_be_
       puts("    Asking git for list of conflicted files")
       files_in_conflict = `cd #{g.dir} && git diff --name-only --diff-filter=U`
       puts("    files in conflict: #{files_in_conflict.split.inspect}")
-      puts("    " + ""="*60)
+      puts("    " + "="*60)
       puts("    diff of conflicts:")
       puts("#{`cd #{g.dir} && git diff --ws-error-highlight=all`}")
       puts("    " + "="*60)
