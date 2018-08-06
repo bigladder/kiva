@@ -1,3 +1,4 @@
+require_relative('utils')
 require('open3')
 require('fileutils')
 require('time')
@@ -40,10 +41,11 @@ def run_case(exe_path, in_file, weather_file, output_path)
     p = File.join(output_dir, name)
     File.write(p, data)
   end
-  w['stdout.log', stdout]
-  w['stderr.log', stderr]
-  w['exitcode.log', exitcode]
-  w['timings.log', (t_end - t_start).to_s + " seconds"]
+  # Ensure logs are written with universal newline \n
+  w['stdout.log', UTILS.universal_newline(stdout)]
+  w['stderr.log', UTILS.universal_newline(stderr)]
+  #w['exitcode.log', exitcode]
+  #w['timings.log', (t_end - t_start).to_s + " seconds"]
   puts("run_case complete!")
   return exitcode.success?
 end
