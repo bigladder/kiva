@@ -1,29 +1,28 @@
-/* Copyright (c) 2012-2017 Big Ladder Software LLC. All rights reserved.
-* See the LICENSE file for additional terms and conditions. */
+/* Copyright (c) 2012-2018 Big Ladder Software LLC. All rights reserved.
+ * See the LICENSE file for additional terms and conditions. */
 
 #ifndef INPUT_HPP_
 #define INPUT_HPP_
 
 #include <fstream>
 
-#include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/date_time/gregorian/gregorian.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
 
 #include <boost/filesystem/operations.hpp>
 
 #include <boost/lexical_cast.hpp>
 
-#include "Mesher.hpp"
 #include "Foundation.hpp"
 #include "Geometry.hpp"
 #include "GroundOutput.hpp"
 #include "GroundPlot.hpp"
+#include "Mesher.hpp"
 #include "WeatherData.hpp"
 
 using namespace Kiva;
 
-class SimulationControl
-{
+class SimulationControl {
 public:
   // Simulation Control
   boost::gregorian::date startDate;
@@ -35,16 +34,10 @@ public:
   void setStartTime();
 };
 
-class Initialization
-{
+class Initialization {
 public:
   double initialTemperature;
-  enum InitializationMethod
-  {
-    IM_KUSUDA,
-    IM_CONSTANT_TEMPERATURE,
-    IM_STEADY_STATE
-  };
+  enum InitializationMethod { IM_KUSUDA, IM_CONSTANT_TEMPERATURE, IM_STEADY_STATE };
 
   long warmupDays;
   long implicitAccelTimestep;
@@ -53,8 +46,7 @@ public:
   InitializationMethod initializationMethod;
 };
 
-class OutputSnapshots
-{
+class OutputSnapshots {
 public:
   boost::gregorian::date startDate;
   boost::gregorian::date endDate;
@@ -66,8 +58,7 @@ public:
   bool zRangeSet;
 };
 
-class OutputVariable
-{
+class OutputVariable {
 private:
   static const std::vector<std::string> headers;
   static const std::vector<std::vector<Surface::SurfaceType>> surfaceTypes;
@@ -80,26 +71,22 @@ public:
   GroundOutput::OutputType outType;
 
   OutputVariable(int varID);
-
 };
 
-class OutputReport: public std::vector<OutputVariable>
-{
+class OutputReport : public std::vector<OutputVariable> {
 public:
   void setOutputMap();
   std::vector<Surface::SurfaceType> outputMap;
   boost::posix_time::time_duration minFrequency;
 };
 
-class Output
-{
+class Output {
 public:
   OutputReport outputReport;
   std::vector<OutputSnapshots> outputSnapshots;
 };
 
-class DataFile
-{
+class DataFile {
 public:
   std::string fileName;
   std::pair<int, int> firstIndex;
@@ -107,52 +94,34 @@ public:
   boost::filesystem::path searchDir;
 
   void readData();
-
 };
 
-class Boundaries
-{
+class Boundaries {
 public:
   double indoorAirTemperature; // [K]
   DataFile indoorAirTemperatureFile;
 
-  enum IndoorTemperatureMethod
-  {
-    ITM_FILE,
-    ITM_CONSTANT_TEMPERATURE
-  };
+  enum IndoorTemperatureMethod { ITM_FILE, ITM_CONSTANT_TEMPERATURE };
 
   IndoorTemperatureMethod indoorTemperatureMethod;
 
   // Local wind speed characteristics
-  double deltaLocal;  // [m]
-  double alphaLocal;  // [-]
+  double deltaLocal; // [m]
+  double alphaLocal; // [-]
 
   double outdoorDryBulbTemperature;
-  enum OutdoorTemperatureMethod
-  {
-    OTM_WEATHER_FILE,
-    OTM_CONSTANT_TEMPERATURE
-  };
+  enum OutdoorTemperatureMethod { OTM_WEATHER_FILE, OTM_CONSTANT_TEMPERATURE };
 
   OutdoorTemperatureMethod outdoorTemperatureMethod;
 
   // Deep Ground options
   double deepGroundTemperature;
-  enum DeepGroundBoundaryType
-  {
-    DGBT_AUTO,
-    DGBT_CONSTANT_TEMPERATURE,
-    DGBT_ZERO_FLUX
-  };
+  enum DeepGroundBoundaryType { DGBT_AUTO, DGBT_CONSTANT_TEMPERATURE, DGBT_ZERO_FLUX };
 
   DeepGroundBoundaryType deepGroundBoundaryType;
-
-
 };
 
-class Input
-{
+class Input {
 public:
   SimulationControl simulationControl;
   Foundation foundation;

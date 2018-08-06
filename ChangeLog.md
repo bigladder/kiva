@@ -1,3 +1,17 @@
+0.5.0 Released 6 August 2018
+----------------------------
+### Features:
+* 10-25% speed improvements!
+* Changed to more permissive BSD 3-clause license.
+* Added better access to boundary conditions in `libkiva`, including:
+  * mean radiant temperatures seen by the slab and interior walls
+  * modifiable deep ground boundary temperature
+
+### Fixes:
+* Major refactoring of source code to eliminate redundancies in code.
+* Fix changing surface cell properties (e.g., emissivity) via the higher level
+  `Foundation` inputs in `libkiva`.
+
 0.4.0 Released 4 April 2017
 ---------------------------
 ### Features:
