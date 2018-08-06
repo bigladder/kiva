@@ -32,6 +32,7 @@ def main(ci_path, rt_dir, arch, test_dir, rt_url)
   g_rt = Git.open(rt_dir)
   puts("RegressTest repo opened")
   puts("- RegressTest repo directory: #{g_rt.dir}")
+  UTILS::git_status(g_rt.dir)
   puts("Adding LastTest.log")
   FileUtils.cp(File.join('..', 'build', 'Testing', 'Temporary', 'LastTest.log'), File.join(rt_dir, arch))
   puts("LastTest.log copied")
@@ -72,6 +73,8 @@ def main(ci_path, rt_dir, arch, test_dir, rt_url)
                      our_dir=arch, to_be_deleted=chngs['Deleted'])
     puts("push/pull succeeded")
   end
+  UTILS::git_status(g_rt.dir)
+  UTILS::git_log(g_rt.dir)
 end
 
 puts("scripts/log-results.rb Start!")

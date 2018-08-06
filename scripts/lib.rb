@@ -27,12 +27,9 @@ def is_pull_request?
   end
 end
 
-# String String String String -> Git::Base
+# String String -> Git::Base
 # Robustly clones a source repo to the given target
 # repo_url: String   = URL to repository to clone from
-# branch: String     = Commit SHA or Branch Name of a branch to switch to
-# ref_commit: String = Commit SHA, Tag, or Branch Name to serve as the tag to
-#                      branch off of
 # local_path: String = File path to where the cloned repository should live on
 #                      the local filesystem
 def robust_clone(repo_url, local_path)

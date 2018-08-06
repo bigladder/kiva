@@ -19,4 +19,14 @@ module UTILS
      end
      out
   end
+
+  def self.git_status(dir)
+    puts("Calling git status")
+    puts(`cd #{dir} && git status`)
+  end
+
+  def self.git_log(dir)
+    puts("Calling git log")
+    puts(`cd #{dir} && git log --max-count=10 --pretty=format:"%h - {%p} [%an]: %s"`)
+  end
 end

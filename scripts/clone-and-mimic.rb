@@ -1,4 +1,5 @@
 require_relative('lib')
+require_relative('utils')
 
 ############################################################
 # Required Inputs
@@ -29,11 +30,15 @@ def main(ci_path, rt_url, rt_dir, arch, test_dir)
   puts("Message of HEAD obtained:\n#{the_ci_msg}")
   puts("Attempting to CLONE the RegressTest repo")
   g_rt = robust_clone(rt_url, rt_dir)
+  UTILS::git_status(g_rt.dir)
+  UTILS::git_log(g_rt.dir)
   puts("RegressTest repo cloned")
   puts("- RegressTest repo directory: #{g_rt.dir}")
   puts("Setting Git username and email")
   g_rt.config('user.name', "CI: #{arch}")
   g_rt.config('user.email', "ci@ci.org")
+  puts("Running `git config -l`")
+  puts(`git config -l`)
   puts("Changing directory to mimic source: #{g_rt.dir}")
   `cd "#{g_rt.dir}"` # && git config --global credential.helper store`
   #File.write("#{ENV['HOME']}/.git-credentials", "https://$($env:PATOKEN):x-oauth-basic@github.com\n", mode: 'wb')
@@ -41,6 +46,8 @@ def main(ci_path, rt_url, rt_dir, arch, test_dir)
   puts("Attempting to mimic source")
   mimic_source(g_rt, the_branch, the_ci_sha)
   puts("Source mimicked")
+  UTILS::git_status(g_rt.dir)
+  UTILS::git_log(g_rt.dir)
 end
 
 puts("scripts/clone-and-mimic.rb Start!")
