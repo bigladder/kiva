@@ -8,13 +8,11 @@ MAX_ITER = 4
 
 def is_pull_request?
   travis_pr = ENV['TRAVIS_PULL_REQUEST']
-  puts("TRAVIS_PULL_REQUEST=#{travis_pr}")
   if travis_pr == "false"
     false
   elsif travis_pr.nil? or travis_pr.empty?
     # OK, we're not on Travis...
     av_pr = ENV['APPVEYOR_PULL_REQUEST_NUMBER']
-    puts("APPVEYOR_PULL_REQUEST_NUMBER=#{av_pr}")
     if av_pr.nil? or av_pr.empty?
       false
     else
@@ -122,18 +120,9 @@ def determine_branch
 end
 
 def mimic_source(g, branch, src_commit)
-  puts("Mimicking source repository")
-  puts("- branch: #{branch}")
-  puts("- src_commit: #{src_commit}")
-  #ref_commit = find_commit_from_substr(g, src_commit)
-  #puts("- ref_commit = #{ref_commit}")
-  #if ref_commit.nil?
-  #  puts("no relevant tag in repository")
-  #elsif not g.is_branch?(branch)
-  #  puts("checking out upstream")
-  #  g.checkout(ref_commit)
-  #end
-  puts("creating and checking out new branch, #{branch}")
+  puts("  Mimicking source repository")
+  puts("  - branch: #{branch}")
+  puts("  - src_commit: #{src_commit}")
   g.branch(branch).checkout
 end
 
@@ -169,11 +158,9 @@ end
 
 # robust pull/push
 def robust_push_pull(g, branch, the_commit, the_tag, rt_url, our_dir=nil, to_be_deleted=nil)
-  puts("Starting robust_push_pull")
   1.upto(MAX_ITER).each do |try_no|
-    puts("Attempt #{try_no}/#{MAX_ITER}")
+    puts("    Attempt #{try_no} (of #{MAX_ITER})")
     begin
-      puts("Attempting to pull")
       g.pull(rt_url, branch) if g.is_remote_branch?(branch)
       # -X ignore-space-at-eol
       #cmd = "git pull -X ours --allow-unrelated-histories #{rt_url} #{branch}"
@@ -181,8 +168,6 @@ def robust_push_pull(g, branch, the_commit, the_tag, rt_url, our_dir=nil, to_be_
       #puts("running command: #{cmd}")
       #out, err, status = Open3.capture3(cmd) if g.is_remote_branch?(branch)
       #raise 'Error' if status != 0
-      puts("Pull attempt successful")
-      puts("Adding and Committing any changes")
       g.add(all: true)
       code = system("cd #{g.dir} && git diff --quiet --cached --exit-code")
       if !code
@@ -193,11 +178,11 @@ def robust_push_pull(g, branch, the_commit, the_tag, rt_url, our_dir=nil, to_be_
         puts("No changes to commit moving forward")
       end
     rescue => e
-      puts("Trying to fix suspected auto-merge conflict")
-      puts("Error: #{e.message}")
-      #puts("stdout: #{out}")
-      #puts("stderr: #{err}")
-      puts("Git repo directory: #{g.dir}")
+      puts("    Trying to fix suspected auto-merge conflict")
+      puts("    Error: #{e.message}")
+      #puts("    stdout: #{out}")
+      #puts("    stderr: #{err}")
+      puts("    Git repo directory: #{g.dir}")
       # OK, we probably have a merge conflict
       # we need to:
       # 1. find which files are in conflict
@@ -206,13 +191,13 @@ def robust_push_pull(g, branch, the_commit, the_tag, rt_url, our_dir=nil, to_be_
       # 4. re-commit the files with some sort of commit message
       chngs = UTILS.list_changes(g.dir)
       # `git diff --name-only --diff-filter=U`
-      puts("Asking git for list of conflicted files")
+      puts("    Asking git for list of conflicted files")
       files_in_conflict = `cd #{g.dir} && git diff --name-only --diff-filter=U`
-      puts("files in conflict: #{files_in_conflict.split.inspect}")
-      puts("="*60)
-      puts("diff of conflicts:")
+      puts("    files in conflict: #{files_in_conflict.split.inspect}")
+      puts("    " + ""="*60)
+      puts("    diff of conflicts:")
       puts("#{`cd #{g.dir} && git diff --ws-error-highlight=all`}")
-      puts("="*60)
+      puts("    " + "="*60)
       num_ours = 0
       num_theirs = 0
       files_in_conflict.split.each do |fname|
@@ -242,45 +227,45 @@ def robust_push_pull(g, branch, the_commit, the_tag, rt_url, our_dir=nil, to_be_
           end
         end
       end
-      puts("Number added: theirs: #{num_theirs} ours: #{num_ours}")
+      puts("    Number added: theirs: #{num_theirs} ours: #{num_ours}")
       if files_in_conflict.length > 0
         code = system("cd #{g.dir} && git diff --quiet --cached --exit-code")
         if !code
           puts("(Re-)Committing...")
           g.commit("Commit to fix auto-merge conflict\n#{the_commit}")
         else
-          puts("No changes to commit, moving forward")
+          puts("    No changes to commit, moving forward")
         end
       else
-        puts("Number of files in conflict is 0 (warning: how did we get into this branch?)")
+        puts("    Number of files in conflict is 0 (warning: how did we get into this branch?)")
       end
-      puts("Done!")
+      puts("    Done!")
     end
-    puts("Pushing to origin!")
+    puts("    Pushing to origin!")
     begin
       g.push(rt_url, "HEAD:#{branch}", {:tags=>true})
     rescue => e
       # Possible that we have an error related to remote tagging
       # Let's check if the word "tag" is in the error message
-      puts("-------")
-      puts("push caused an error...\n#{e.message}")
+      puts("    -------")
+      puts("    push caused an error...\n#{e.message}")
       if e.message.include?("tag")
         # if tag already exists on remote, we need to delete, force annotate, and push again.
-        puts("apparently, tag already exists on remote!")
-        puts("attempt a retag...")
+        puts("    apparently, tag already exists on remote!")
+        puts("    attempt a retag...")
         retag(g.dir, the_tag, rt_url)
-        puts("back from retag...")
+        puts("    back from retag...")
         next
       else
         # We don't know what happened. Report error and bail.
-        puts("Don't know how to handle this error... exiting...")
-        puts("-------")
+        puts("    Don't know how to handle this error... exiting...")
+        puts("    -------")
         exit(1)
       end
     end
     break
   end
-  puts("Done robust_pull_push!")
+  puts("  Done robust_pull_push!")
 end
 
 def retag(git_dir, tag_name, rt_url)
@@ -289,16 +274,16 @@ def retag(git_dir, tag_name, rt_url)
     sleep(SLEEP_TIME)
     # delete tag on remote
     # See https://stackoverflow.com/a/19300065
-    puts('Deleting tag on remote...')
+    puts('    Deleting tag on remote...')
     `cd #{git_dir} && git push --quiet "#{rt_url}" :refs/tags/#{tag_name}`
-    puts("Remote deletion attempted. Return code: #{$?}")
+    puts("    Remote deletion attempted. Return code: #{$?}")
     tag_output = `cd #{git_dir} && git ls-remote "#{rt_url}" refs/tags/#{tag_name}`
-    puts("Tag query attempted. Return value: #{tag_output}")
+    puts("    Tag query attempted. Return value: #{tag_output}")
     tag_deleted = tag_output.strip.empty?
     break if tag_deleted
   end
   # force annotate the tag again
-  puts("Force annotating the local tag again")
+  puts("    Force annotating the local tag again")
   `cd #{git_dir} && git tag -fa #{tag_name} -m "Add source sha"`
-  puts("Force annotation return code: #{$?}")
+  puts("    Force annotation return code: #{$?}")
 end

@@ -61,7 +61,6 @@ build_script:
   - if "%COMPILER%"=="MSVC" (cmake "-G%GENERATOR%" "-DKIVA_STATIC_LIB=OFF" ..)
   - if "%COMPILER%"=="MinGW" (cmake "-G%GENERATOR%" -DCMAKE_BUILD_TYPE="%CONFIG%" "-DKIVA_STATIC_LIB=OFF" ..)
   - git config --global core.autocrlf true
-  - git config -l
   - ruby ..\scripts\clone-and-mimic.rb
   - if "%COMPILER%"=="MSVC" (cmake --build . --config "%CONFIG%" -- /m)
   - if "%COMPILER%"=="MinGW" (cmake --build .)

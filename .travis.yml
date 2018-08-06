@@ -52,7 +52,6 @@ script:
       export SRC_BRANCH=$TRAVIS_BRANCH || travis_terminate 1;
       cmake -DKIVA_STATIC_LIB=OFF .. || travis_terminate 1;
       git config --global core.autocrlf input || travis_terminate 1;
-      git config -l || travis_terminate 1;
       ruby ../scripts/clone-and-mimic.rb || travis_terminate 1;
     else
       cmake -DKIVA_COVERAGE=ON -DKIVA_STATIC_LIB=OFF -DCMAKE_BUILD_TYPE=Debug .. || travis_terminate 1;

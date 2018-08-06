@@ -15,46 +15,37 @@ ARCH = File.read(File.expand_path('build/arch.txt',CI_PATH))
 
 ############################################################
 def main(ci_path, rt_url, rt_dir, arch, test_dir)
-  puts("Starting main")
-  puts("Opening git on CI_PATH")
+  debug = false
   g_ci = Git.open(ci_path)
-  puts("Opened...")
-  puts("Getting current branch...")
   the_branch = determine_branch
-  puts("Current branch, #{the_branch}, obtained")
-  puts("Getting SHA of HEAD...")
+  puts("  Current branch, #{the_branch}, obtained")
   the_ci_sha = g_ci.object("HEAD").sha
-  puts("Sha of HEAD obtained: #{the_ci_sha}")
-  puts("Getting Message of HEAD")
+  puts("  SHA of main repository HEAD: #{the_ci_sha}")
   the_ci_msg = g_ci.object("HEAD").message
-  puts("Message of HEAD obtained:\n#{the_ci_msg}")
-  puts("Attempting to CLONE the RegressTest repo")
+  puts("  Message of HEAD obtained:\n  #{the_ci_msg}")
   puts("- rt_url: #{rt_url}")
   puts("- rt_dir: #{rt_dir}")
   puts("- the_branch: #{the_branch}")
   g_rt = robust_clone(rt_url, rt_dir, the_branch)
-  UTILS::git_status(g_rt.dir)
-  UTILS::git_log(g_rt.dir)
-  puts("RegressTest repo cloned")
-  puts("- RegressTest repo directory: #{g_rt.dir}")
-  puts("Setting Git username and email")
+  if debug
+    UTILS::git_status(g_rt.dir)
+    UTILS::git_log(g_rt.dir)
+  end
+  puts("  RegressTest repo cloned to: #{g_rt.dir}")
   g_rt.config('user.name', "CI: #{arch}")
   g_rt.config('user.email', "ci@ci.org")
-  puts("Running `git config -l`")
-  puts(`git config -l`)
-  puts("Changing directory to mimic source: #{g_rt.dir}")
   `cd "#{g_rt.dir}"` # && git config --global credential.helper store`
   #File.write("#{ENV['HOME']}/.git-credentials", "https://$($env:PATOKEN):x-oauth-basic@github.com\n", mode: 'wb')
-  puts("Git username and email set")
-  puts("Attempting to mimic source")
   mimic_source(g_rt, the_branch, the_ci_sha)
-  puts("Source mimicked")
-  UTILS::git_status(g_rt.dir)
-  UTILS::git_log(g_rt.dir)
-  UTILS::git_list_branches(g_rt.dir)
+  puts("  Source mimicked")
+  if debug
+      UTILS::git_status(g_rt.dir)
+      UTILS::git_log(g_rt.dir)
+      UTILS::git_list_branches(g_rt.dir)
+  end
 end
 
-puts("scripts/clone-and-mimic.rb Start!")
+puts("\n\n\nCloning test results repository.")
 
 if not is_pull_request?
   main(CI_PATH, RT_URL, RT_DIR, ARCH, TEST_DIR)
@@ -62,4 +53,4 @@ else
   puts("Skipping clone and mimic due to being a pull request")
 end
 
-puts("scripts/clone-and-mimic.rb Done!")
+puts("Cloning test results repository completed!")
