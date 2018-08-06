@@ -1,5 +1,5 @@
-0.5.0 Released ??????? 2018
----------------------------
+0.5.0 Released 6 August 2018
+----------------------------
 ### Features:
 * 10-25% speed improvements!
 * Changed to more permissive BSD 3-clause license.
