@@ -64,7 +64,7 @@ def robust_clone(repo_url, local_path, remote_branch)
     end
   else
     FileUtils.mkdir_p(local_path)
-    if UTILS::git_remote_branch_exists?(remote_url, remote_branch)
+    if UTILS::git_remote_branch_exists?(repo_url, remote_branch)
       `cd #{local_path} && git clone -b #{remote_branch} #{repo_url}`
     else
       `cd #{local_path} && git clone #{repo_url} && git checkout -b #{remote_branch}`
