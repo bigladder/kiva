@@ -30,9 +30,9 @@ def main(ci_path, rt_dir, arch, test_dir, rt_url)
   end
   FileUtils.cp(File.join('..', 'build', 'Testing', 'Temporary', 'LastTest.log'), File.join(rt_dir, arch))
   puts("  LastTest.log copied")
-  puts("  Attempting to add any new files")
+  puts("  Attempting to add any new files\n\n")
   chngs = UTILS.list_changes(g_rt.dir)
-  puts("  Logging #{chngs['Deleted'].length} deleted files")
+  puts("Logging #{chngs['Deleted'].length} deleted files")
   chngs['Deleted'].each {|f| `cd #{g_rt.dir} && git rm --force #{f}`}
   g_rt.add(:all=>true)
   code = system("cd #{g_rt.dir} && git diff --quiet --cached --exit-code")

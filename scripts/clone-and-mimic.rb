@@ -23,9 +23,9 @@ def main(ci_path, rt_url, rt_dir, arch, test_dir)
   puts("  SHA of main repository HEAD: #{the_ci_sha}")
   the_ci_msg = g_ci.object("HEAD").message
   puts("  Message of HEAD obtained:\n  #{the_ci_msg}")
-  puts("- rt_url: #{rt_url}")
-  puts("- rt_dir: #{rt_dir}")
-  puts("- the_branch: #{the_branch}")
+  puts("  - Results repo URL: #{rt_url}")
+  puts("  - Results directory: #{rt_dir}")
+  puts("  - Results branch: #{the_branch}")
   g_rt = robust_clone(rt_url, rt_dir, the_branch)
   if debug
     UTILS::git_status(g_rt.dir)
