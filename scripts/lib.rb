@@ -62,10 +62,10 @@ def robust_clone(repo_url, local_path, remote_branch)
         puts("local_path is empty")
         if UTILS::git_remote_branch_exists?(remote_url, remote_branch)
           puts("remote branch (#{remote_branch}) exists, cloning it...")
-          `cd #{local_path} && git clone -b #{remote_branch} #{repo_url}`
+          `cd #{local_path} && git clone -b #{remote_branch} #{repo_url} .`
         else
           puts("remote branch (#{remote_branch}) does NOT exist, checking out default branch and making new local branch")
-          `cd #{local_path} && git clone #{repo_url} && git checkout -b #{remote_branch}`
+          `cd #{local_path} && git clone #{repo_url} . && git checkout -b #{remote_branch}`
         end
         puts("opening git repo at local_path")
         g = Git.open(local_path)
@@ -77,12 +77,15 @@ def robust_clone(repo_url, local_path, remote_branch)
     puts("local_path does NOT exist, creating...")
     FileUtils.mkdir_p(local_path)
     puts("local_path created")
+    puts("local_path: #{local_path}")
     if UTILS::git_remote_branch_exists?(repo_url, remote_branch)
-      puts("remote_branch (#{remote_branch}) exists on remote... cloneing")
-      `cd #{local_path} && git clone -b #{remote_branch} #{repo_url}`
+      puts("remote_branch (#{remote_branch}) exists on remote... cloning")
+      cmd = "cd #{local_path} && git clone -b #{remote_branch} #{repo_url} ."
+      puts("cmd: #{cmd}")
+      `#{cmd}`
     else
       puts("remote_branch (#{remote_branch}) DOES NOT exist; cloning default and creating local branch")
-      `cd #{local_path} && git clone #{repo_url} && git checkout -b #{remote_branch}`
+      `cd #{local_path} && git clone #{repo_url} . && git checkout -b #{remote_branch}`
     end
     puts("opening local git repo")
     g = Git.open(local_path)
