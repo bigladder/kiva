@@ -48,6 +48,7 @@ def main(ci_path, rt_url, rt_dir, arch, test_dir)
   puts("Source mimicked")
   UTILS::git_status(g_rt.dir)
   UTILS::git_log(g_rt.dir)
+  UTILS::git_list_branches(g_rt.dir)
 end
 
 puts("scripts/clone-and-mimic.rb Start!")

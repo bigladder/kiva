@@ -29,4 +29,14 @@ module UTILS
     puts("Calling git log")
     puts(`cd #{dir} && git log --max-count=10 --pretty=format:"%h - {%p} [%an]: %s"`)
   end
+
+  def self.git_list_branches(dir)
+    puts("Detailed List of Local and Remote Branches:")
+    puts(`cd #{dir} && git branch -a -v`)
+  end
+
+  def self.git_remote_branch_exists?(remote_url, branch)
+    `git ls-remote --exit-code --heads #{remote_url} #{branch}`
+    $?.exitstatus == 0
+  end
 end
