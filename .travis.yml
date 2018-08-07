@@ -80,6 +80,8 @@ deploy:
   provider: releases
   api_key:
     secure: ib3OgBNSf5dOvQ7AGWwYTzHWQeHGqPpEjPPw0lgitDhC7uQ+ZZHBVfcv/NfOYuZcQqkhsAinPv7Uw0mKj+OslVvqbOOIUCERtH4ir3Z/9kDV8S838upLO86JyCM8y0ZU5Qn6maZU1VTlSt5XbGsoCdUVRtxOSETdg8zZgzksBbdavo3ymtdIy/BUI4K3tCqKZFc/71r2IRorLZ+2TPdiIxe+LHCxNUEca6uLweRi+oI2wrRXjfVGWoqzLX8/P0EHkEMjB81Z1BSz45x3/prE5HEV2bCwme78BOsRDesR2SB46tvbdEHNlR6Z9tKTWxfzyvCtyqYpucfjy9SkD4m808/sH+7dG5PJZwENw3NqapoQmsfwWvG2O0J3ia8mlvfHCTPngcE6uUBo/VxcyLkF3ic7AWjG3Coj+ONAKWOYi02X0sF8bURY6YKeGxkNe+77V8lLcR7B3tMZVG2mY+lxiJV85FtVhds6s5mLhxr3kcIEiyITp+EYkS8Za3SL4Tc7H2apyIB18R0g9ZBj/Dw23cJrnPKdgS2pI+n16JRiXC1bGz0SdeMI4A3NfJGvKgPHvujZDGEEPrcUOzwDvKcumH5BaQ7Lbeb88Pn/EN6FAc9+2u2UuGo01iLBE1hjtruw9zzl4KiQEs9qvP4RzUvKGj6PVR63raGHXusM2We1uok=
+  file_glob: true
   file: kiva*.zip
+  skip_cleanup: true
   on:
     tags: true
