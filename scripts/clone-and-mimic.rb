@@ -9,7 +9,7 @@ CI_PATH = File.expand_path('..', THIS_DIR)
 TEST_DIR = File.expand_path(ENV['RT_DIR'], CI_PATH)
 # regression testing repository URL
 # PATOKEN = personal access token
-RT_URL = "https://#{ENV['RT_URL']}"
+RT_URL = "https://#{ENV['PATOKEN']}:x-oauth-basic@#{ENV['RT_URL']}"
 RT_DIR = File.expand_path(ENV['RT_DIR'], CI_PATH)
 ARCH = File.read(File.expand_path('build/arch.txt',CI_PATH))
 
@@ -23,10 +23,15 @@ def main(ci_path, rt_url, rt_dir, arch, test_dir)
   puts("  SHA of main repository HEAD: #{the_ci_sha}")
   the_ci_msg = g_ci.object("HEAD").message
   puts("  Message of HEAD obtained:\n  #{the_ci_msg}")
+  if get_tag
+    results_branch = get_tag
+  else
+    results_branch = the_branch
+  end
   puts("  - Results repo URL: #{rt_url}")
   puts("  - Results directory: #{rt_dir}")
-  puts("  - Results branch: #{the_branch}")
-  g_rt = robust_clone(rt_url, rt_dir, the_branch)
+  puts("  - Results branch: #{results_branch}")
+  g_rt = robust_clone(rt_url, rt_dir, results_branch)
   if debug
     UTILS::git_status(g_rt.dir)
     UTILS::git_log(g_rt.dir)
@@ -36,7 +41,7 @@ def main(ci_path, rt_url, rt_dir, arch, test_dir)
   g_rt.config('user.email', "ci@ci.org")
   `cd "#{g_rt.dir}"` # && git config --global credential.helper store`
   #File.write("#{ENV['HOME']}/.git-credentials", "https://$($env:PATOKEN):x-oauth-basic@github.com\n", mode: 'wb')
-  mimic_source(g_rt, the_branch, the_ci_sha)
+  mimic_source(g_rt, results_branch, the_ci_sha)
   puts("  Source mimicked")
   if debug
       UTILS::git_status(g_rt.dir)

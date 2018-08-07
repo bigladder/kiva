@@ -25,13 +25,28 @@ def is_pull_request?
   end
 end
 
+def get_tag
+  # Returns the tag if this build is from a pushed tag
+  travis_tag = ENV['TRAVIS_TAG']
+  appveyor_tag = ENV['APPVEYOR_REPO_TAG_NAME']
+  if (travis_tag.nil? or travis_tag.empty?) and (appveyor_tag.nil? or appveyor_tag.empty?)
+    return nil
+  else
+    if travis_tag
+      return travis_tag
+    else
+      return appveyor_tag
+    end
+  end
+end
+
 # String String String -> Git::Base
 # Robustly clones a source repo to the given target
 # repo_url: String   = URL to repository to clone from
 # local_path: String = File path to where the cloned repository should live on
 #                      the local filesystem
 # remote_branch: String = string of branch to clone
-def robust_clone(repo_url, local_path, remote_branch)
+def robust_clone(repo_url, local_path, branch_name)
   g = nil
   if File.exist?(local_path)
     if File.exist?(File.join(local_path, '.git'))
@@ -46,22 +61,24 @@ def robust_clone(repo_url, local_path, remote_branch)
       end
       puts("  fetching changes")
       `cd #{local_path} && git fetch`
-      if UTILS::git_remote_branch_exists?(remote_url, remote_branch)
-        puts("  remote branch (#{remote_branch}) exists, checking out...")
-        `cd #{local_path} && git checkout -b #{remote_branch} origin/#{remote_branch}`
+      if UTILS::git_remote_branch_exists?(remote_url, branch_name)
+        puts("  remote branch (#{branch_name}) exists, checking out...")
+        `cd #{local_path} && git checkout -b #{branch_name} origin/#{branch_name}`
       else
-        puts("  remote branch doesn't exist, creating local branch with name #{remote_branch}")
-        `cd #{local_path} && git checkout -b #{remote_branch}`
+        puts("  remote branch doesn't exist, creating local branch with name #{branch_name}")
+        `cd #{local_path} && git checkout -b #{branch_name}`
+        `cd #{local_path} && git push -u origin #{branch_name}`
       end
     else
       puts("  local_path exists but no .git directory in it...")
       if Dir[File.join(local_path, '*')].empty?
-        if UTILS::git_remote_branch_exists?(remote_url, remote_branch)
-          puts("  remote branch (#{remote_branch}) exists, cloning it...")
-          `cd #{local_path} && git clone -b #{remote_branch} #{repo_url} .`
+        if UTILS::git_remote_branch_exists?(remote_url, branch_name)
+          puts("  remote branch (#{branch_name}) exists, cloning it...")
+          `cd #{local_path} && git clone -b #{branch_name} #{repo_url} .`
         else
-          puts("  remote branch (#{remote_branch}) does NOT exist, checking out default branch and making new local branch")
-          `cd #{local_path} && git clone #{repo_url} . && git checkout -b #{remote_branch}`
+          puts("  remote branch (#{branch_name}) does NOT exist, checking out default branch and making new local branch")
+          `cd #{local_path} && git clone #{repo_url} . && git checkout -b #{branch_name}`
+          `cd #{local_path} && git push -u origin #{branch_name}`
         end
         g = Git.open(local_path)
       else
@@ -70,13 +87,14 @@ def robust_clone(repo_url, local_path, remote_branch)
     end
   else
     FileUtils.mkdir_p(local_path)
-    if UTILS::git_remote_branch_exists?(repo_url, remote_branch)
-      puts("  Cloning remote_branch: #{remote_branch}")
-      cmd = "cd #{local_path} && git clone -b #{remote_branch} #{repo_url} ."
+    if UTILS::git_remote_branch_exists?(repo_url, branch_name)
+      puts("  Cloning remote_branch: #{branch_name}")
+      cmd = "cd #{local_path} && git clone -b #{branch_name} #{repo_url} ."
       `#{cmd}`
     else
-      puts("  Remote_branch (#{remote_branch}) DOES NOT exist; cloning default and creating local branch")
-      `cd #{local_path} && git clone #{repo_url} . && git checkout -b #{remote_branch}`
+      puts("  Remote_branch (#{branch_name}) DOES NOT exist; cloning default and creating local branch")
+      `cd #{local_path} && git clone #{repo_url} . && git checkout -b #{branch_name}`
+      `cd #{local_path} && git push -u origin #{branch_name}`
     end
     g = Git.open(local_path)
   end
@@ -153,7 +171,7 @@ def robust_push_pull(g, branch, the_commit, the_tag, rt_url, our_dir=nil, to_be_
   1.upto(MAX_ITER).each do |try_no|
     puts("    Attempt #{try_no} (of #{MAX_ITER})")
     begin
-      g.pull(rt_url, branch) if g.is_remote_branch?(branch)
+      `cd #{g.dir} && git pull #{rt_url} #{branch} --rebase` if g.is_remote_branch?(branch)
       # -X ignore-space-at-eol
       #cmd = "git pull -X ours --allow-unrelated-histories #{rt_url} #{branch}"
       #cmd = "git pull #{rt_url} #{branch}"
@@ -252,7 +270,7 @@ def robust_push_pull(g, branch, the_commit, the_tag, rt_url, our_dir=nil, to_be_
         # We don't know what happened. Report error and bail.
         puts("    Don't know how to handle this error... exiting...")
         puts("    -------")
-        exit(1)
+        next
       end
     end
     break
@@ -261,7 +279,7 @@ def robust_push_pull(g, branch, the_commit, the_tag, rt_url, our_dir=nil, to_be_
 end
 
 def retag(git_dir, tag_name, rt_url)
-  puts("Tag, #{tag_name}, exists")
+  puts("    Tag, #{tag_name}, exists")
   1.upto(MAX_ITER).each do
     sleep(SLEEP_TIME)
     # delete tag on remote
