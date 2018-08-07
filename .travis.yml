@@ -79,7 +79,7 @@ after_success:
 deploy:
   provider: script
   skip_cleanup: true
-  script: "curl --ftp-create-dirs -T kiva*.zip -u $FTP_USER:$FTP_PASSWORD ftp://downloads.bigladdersoftware.com/downloads.bigladdersoftware.com/files/"
+  script: "curl --ftp-create-dirs -T kiva*.zip -u $FTP_USER:$FTP_PASSWORD sftp://bigladdersoftware.com/download.bigladdersoftware.com/files/"
   on:
     all_branches: true
     condition: "\"$COVERAGE\" == false"

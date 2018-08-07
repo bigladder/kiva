@@ -79,13 +79,13 @@ artifacts:
 
 deploy:
   - provider: FTP
-    protocol: ftp
-    host: downloads.bigladdersoftware.com
+    protocol: sftp
+    host: bigladdersoftware.com
     username:
       secure: q+D7xTdD5KtZ4MPyNO5rwSLMwiEETZkZtRsd/Fij+gA=
     password:
       secure: yJAGrbf+NQzLleqlplKu3w==
-    folder: downloads.bigladdersoftware.com/files/
+    folder: download.bigladdersoftware.com/files/
     on:
       COMPILER: MSVC
       appveyor_repo_tag: true
