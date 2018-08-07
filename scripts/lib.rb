@@ -25,6 +25,21 @@ def is_pull_request?
   end
 end
 
+def get_tag
+  # Returns the tag if this build is from a pushed tag
+  travis_tag = ENV['TRAVIS_TAG']
+  appveyor_tag = ENV['APPVEYOR_REPO_TAG_NAME']
+  if (travis_tag.nil? or travis_tag.empty?) and (appveyor_tag.nil? or appveyor_tag.empty?)
+    return nil
+  else
+    if travis_tag
+      return travis_tag
+    else
+      return appveyor_tag
+    end
+  end
+end
+
 # String String String -> Git::Base
 # Robustly clones a source repo to the given target
 # repo_url: String   = URL to repository to clone from
@@ -261,7 +276,7 @@ def robust_push_pull(g, branch, the_commit, the_tag, rt_url, our_dir=nil, to_be_
 end
 
 def retag(git_dir, tag_name, rt_url)
-  puts("Tag, #{tag_name}, exists")
+  puts("    Tag, #{tag_name}, exists")
   1.upto(MAX_ITER).each do
     sleep(SLEEP_TIME)
     # delete tag on remote

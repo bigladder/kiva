@@ -47,14 +47,18 @@ def main(ci_path, rt_dir, arch, test_dir, rt_url)
     g_rt.commit(the_commit)
     puts("  Committed")
     puts("  Tagging...")
-    tag_name = "src_#{the_ci_sha}_#{arch}"
+    if get_tag
+      tag_name = "src_#{get_tag}_#{arch}"
+    else
+      tag_name = "src_#{the_ci_sha}_#{arch}"
+    end
     tag_exists = !(g_rt.tags.select {|t| t.name == tag_name}.empty?)
     if tag_exists
       puts("  Tag exists, retagging...")
       retag(g_rt.dir, tag_name, rt_url)
     else
       puts("  Adding tag #{tag_name}")
-      g_rt.add_tag(tag_name, {a: true, m: "Add source sha"})
+      g_rt.add_tag(tag_name, {a: true, m: "Add source tag"})
     end
     puts("  Tag added")
     puts("  Attempting to push/pull")
