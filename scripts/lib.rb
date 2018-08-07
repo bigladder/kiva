@@ -168,7 +168,7 @@ def robust_push_pull(g, branch, the_commit, the_tag, rt_url, our_dir=nil, to_be_
   1.upto(MAX_ITER).each do |try_no|
     puts("    Attempt #{try_no} (of #{MAX_ITER})")
     begin
-      g.pull(rt_url, branch) if g.is_remote_branch?(branch)
+      `cd #{g.dir} && git pull #{rt_url} #{branch} --rebase` if g.is_remote_branch?(branch)
       # -X ignore-space-at-eol
       #cmd = "git pull -X ours --allow-unrelated-histories #{rt_url} #{branch}"
       #cmd = "git pull #{rt_url} #{branch}"
@@ -267,7 +267,6 @@ def robust_push_pull(g, branch, the_commit, the_tag, rt_url, our_dir=nil, to_be_
         # We don't know what happened. Report error and bail.
         puts("    Don't know how to handle this error... exiting...")
         puts("    -------")
-        exit(1)
       end
     end
     break
