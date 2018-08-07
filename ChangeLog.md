@@ -1,4 +1,4 @@
-0.5.0 Released 6 August 2018
+0.5.0 Released 7 August 2018
 ----------------------------
 ### Features:
 * 10-25% speed improvements!
