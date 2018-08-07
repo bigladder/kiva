@@ -25,6 +25,11 @@ def main(ci_path, rt_dir, arch, test_dir, rt_url)
   puts("  Message of HEAD obtained:\n  #{the_ci_msg}")
   g_rt = Git.open(rt_dir)
   puts("  RegressTest repo opened at: #{g_rt.dir}")
+  if get_tag
+    results_branch = get_tag
+  else
+    results_branch = the_branch
+  end
   if debug
     UTILS::git_status(g_rt.dir)
   end
@@ -43,7 +48,7 @@ def main(ci_path, rt_dir, arch, test_dir, rt_url)
     the_commit = "#{the_ci_msg} [#{arch}]\n{:src-sha \"#{the_ci_sha}\" " +
       ":src-msg \"#{the_ci_msg}\" " +
       ":arch \"#{arch}\" " +
-      ":src-branch \"#{the_branch}\"}"
+      ":src-branch \"#{results_branch}\"}"
     g_rt.commit(the_commit)
     puts("  Committed")
     puts("  Tagging...")
@@ -62,7 +67,7 @@ def main(ci_path, rt_dir, arch, test_dir, rt_url)
     end
     puts("  Tag added")
     puts("  Attempting to push/pull")
-    robust_push_pull(g_rt, the_branch, the_commit, tag_name, rt_url,
+    robust_push_pull(g_rt, results_branch, the_commit, tag_name, rt_url,
                      our_dir=arch, to_be_deleted=chngs['Deleted'])
     puts("  Push/pull succeeded")
   end
