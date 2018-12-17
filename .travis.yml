@@ -55,7 +55,7 @@ script:
     else
       cmake -DKIVA_COVERAGE=ON -DKIVA_STATIC_LIB=OFF -DCMAKE_BUILD_TYPE=Debug .. || travis_terminate 1;
     fi
-  - make -j
+  - make -j2
   - >
     if [[ "$COVERAGE" == true ]]; then
       ctest -R integration\. || travis_terminate 1;
