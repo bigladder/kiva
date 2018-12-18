@@ -14,17 +14,15 @@ matrix:
   include:
     - os: osx
       compiler: clang
-      osx_image: xcode7.3
+      osx_image: xcode10.1
       env: COMPILER=clang COVERAGE=false
     - os: linux
       compiler: gcc
-      sudo: required
-      dist: trusty
+      dist: xenial
       env: COMPILER=gcc COVERAGE=false
     - os: linux
       compiler: gcc
-      sudo: required
-      dist: trusty
+      dist: xenial
       env: COMPILER=gcc COVERAGE=true
 
 # Note: travis_terminate comes from http://steven.casagrande.io/articles/travis-ci-and-if-statements/
@@ -41,6 +39,7 @@ before_install:
       sudo apt-get -y -qq update;
       sudo apt-get -y install cmake;
       sudo apt-get -y install gfortran;
+      sudo apt-get -y install libglu1-mesa-dev freeglut3-dev mesa-common-dev;
     fi
   - cmake --version
 
@@ -56,7 +55,7 @@ script:
     else
       cmake -DKIVA_COVERAGE=ON -DKIVA_STATIC_LIB=OFF -DCMAKE_BUILD_TYPE=Debug .. || travis_terminate 1;
     fi
-  - make -j
+  - make -j2
   - >
     if [[ "$COVERAGE" == true ]]; then
       ctest -R integration\. || travis_terminate 1;
