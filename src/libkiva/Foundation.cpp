@@ -846,14 +846,14 @@ void Foundation::createMeshData() {
       } else if (coordinateSystem == CS_CARTESIAN) {
         reductionLength2 = ap;
       }
-    }
-
-    if (reductionStrategy == RS_RR) {
+    } else if (reductionStrategy == RS_RR) {
       twoParameters = false;
       double rrA = (perimeter - sqrt(perimeter * perimeter - 4 * PI * area)) / PI;
       double rrB = (perimeter - PI * rrA) * 0.5;
       reductionLength2 = (rrA)*0.5;
       linearAreaMultiplier = rrB;
+    } else if (reductionStrategy != RS_CUSTOM) {
+      showMessage(MSG_ERR, "Invalid two-dimensional transformation strategy.");
     }
 
     xMin = 0.0;
