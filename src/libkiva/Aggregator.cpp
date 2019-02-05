@@ -1,6 +1,8 @@
 /* Copyright (c) 2012-2018 Big Ladder Software LLC. All rights reserved.
  * See the LICENSE file for additional terms and conditions. */
 
+#include <math.h>
+
 #include "Aggregator.hpp"
 #include "Errors.hpp"
 #include "Foundation.hpp"
