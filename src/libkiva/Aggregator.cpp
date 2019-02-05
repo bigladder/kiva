@@ -1,7 +1,7 @@
 /* Copyright (c) 2012-2018 Big Ladder Software LLC. All rights reserved.
  * See the LICENSE file for additional terms and conditions. */
 
-#include <math.h>
+#include <cmath>
 
 #include "Aggregator.hpp"
 #include "Errors.hpp"
@@ -62,7 +62,7 @@ void Aggregator::calc_weighted_results() {
     double Ta = grnd->getSurfaceAverageValue({surface_type, Kiva::GroundOutput::OT_AVG_TEMP});
     double qi = grnd->getSurfaceAverageValue({surface_type, Kiva::GroundOutput::OT_FLUX});
 
-    if (!isfinite(Ts)) {
+    if (!std::isfinite(Ts)) {
       showMessage(MSG_ERR, "Kiva is not giving realistic results!");
     }
 
