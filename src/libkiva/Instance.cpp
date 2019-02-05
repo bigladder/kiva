@@ -25,7 +25,6 @@ void Instance::create() {
 
   ground = std::make_shared<Ground>(*foundation.get(), outputMap);
   ground->buildDomain();
-
 }
 
 } // namespace Kiva

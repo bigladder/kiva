@@ -12,27 +12,23 @@ class Aggregator {
 public:
   Aggregator();
   Aggregator(Surface::SurfaceType st);
-  void add_instance(Surface::SurfaceType st, Ground* grnd, double weight);
-  void add_instance(Ground* grnd, double weight);
+  void add_instance(Surface::SurfaceType st, Ground *grnd, double weight);
+  void add_instance(Ground *grnd, double weight);
   void calc_weighted_results();
 
   struct Results {
     double hconv, hrad, qtot, qconv, qrad, Tconv, Tavg, Trad;
-    void reset() {
-      hconv = hrad = qtot = qconv = qrad = Tconv = Tavg = Trad = 0.0;
-    }
+    void reset() { hconv = hrad = qtot = qconv = qrad = Tconv = Tavg = Trad = 0.0; }
   };
 
   Results results;
 
 private:
   void validate();
-  std::vector<std::pair<Ground*,double>> instances;
+  std::vector<std::pair<Ground *, double>> instances;
   Surface::SurfaceType surface_type;
   bool surface_type_set, validated;
 };
-
-
 
 } // namespace Kiva
 

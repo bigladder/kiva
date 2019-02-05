@@ -17,8 +17,7 @@ public:
   void create();
   std::shared_ptr<Ground> ground;
   std::shared_ptr<Foundation> foundation;
-
-};
+;
 
 } // namespace Kiva
 

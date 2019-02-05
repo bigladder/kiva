@@ -4,9 +4,9 @@
 #ifndef AGGREGATOR_FIXTURE_HPP_
 #define AGGREGATOR_FIXTURE_HPP_
 
-#include "base-fixture.hpp"
 #include "Aggregator.hpp"
 #include "Instance.hpp"
+#include "base-fixture.hpp"
 
 using namespace Kiva;
 
@@ -15,7 +15,7 @@ public:
   void SetUp() {
     fndSlab = typical_fnd();
     fndBsmt = typical_fnd();
-    fndBsmt.foundationDepth = 2;  // m
+    fndBsmt.foundationDepth = 2; // m
 
     instances.emplace_back(fndSlab);
     instances.emplace_back(fndBsmt);
@@ -26,7 +26,7 @@ public:
     bcs.slabRadiantTemp = 310.15;
     bcs.wallRadiantTemp = 310.15;
 
-    for (auto& instance : instances) {
+    for (auto &instance : instances) {
       Foundation::NumericalScheme tempNS = instance.ground->foundation.numericalScheme;
       instance.ground->foundation.numericalScheme = Foundation::NS_STEADY_STATE;
       instance.ground->calculate(bcs);

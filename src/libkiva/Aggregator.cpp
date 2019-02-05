@@ -7,44 +7,37 @@
 
 namespace Kiva {
 
-Aggregator::Aggregator() :
-  surface_type_set(false),
-  validated(false)
-{}
+Aggregator::Aggregator() : surface_type_set(false), validated(false) {}
 
-Aggregator::Aggregator(Surface::SurfaceType st) :
-  surface_type(st),
-  surface_type_set(true),
-  validated(false)
-{}
+Aggregator::Aggregator(Surface::SurfaceType st)
+    : surface_type(st), surface_type_set(true), validated(false) {}
 
-void Aggregator::add_instance(Surface::SurfaceType st, Ground* grnd, double weight) {
+void Aggregator::add_instance(Surface::SurfaceType st, Ground *grnd, double weight) {
   // Check if surface type is the same as already set. If not yet set, set it now.
   if (!surface_type_set) {
     surface_type = st;
   } else if (st != surface_type) {
-    showMessage(MSG_ERR,"Inconsistent surface type added to aggregator.");
+    showMessage(MSG_ERR, "Inconsistent surface type added to aggregator.");
   }
   add_instance(grnd, weight);
 }
 
-void Aggregator::add_instance(Ground* grnd, double weight) {
-  instances.push_back({grnd, weight});
-}
+void Aggregator::add_instance(Ground *grnd, double weight) { instances.push_back({grnd, weight}); }
 
 void Aggregator::validate() {
   // Check if surface type exists in all instances
   // Check if weights add up to 1.0
   double check_weights = 0.0;
-  for (auto& instance : instances) {
-    Ground* grnd = instance.first;
+  for (auto &instance : instances) {
+    Ground *grnd = instance.first;
     check_weights += instance.second;
     if (!grnd->foundation.hasSurface[surface_type]) {
-      showMessage(MSG_ERR,"Aggregation requested for surface that is not part of foundation instance.");
+      showMessage(MSG_ERR,
+                  "Aggregation requested for surface that is not part of foundation instance.");
     }
   }
   if (!isEqual(check_weights, 1.0)) {
-    showMessage(MSG_ERR,"The weights of associated Kiva instances do not add to unity.");
+    showMessage(MSG_ERR, "The weights of associated Kiva instances do not add to unity.");
   }
   validated = true;
 }
@@ -55,29 +48,28 @@ void Aggregator::calc_weighted_results() {
   }
   results.reset();
   double Tz, Tr;
-  for (auto& instance : instances)
-  {
-    Ground* grnd = instance.first;
+  for (auto &instance : instances) {
+    Ground *grnd = instance.first;
     Tz = grnd->bcs.indoorTemp;
-    Tr = surface_type == Surface::ST_WALL_INT ? grnd->bcs.wallRadiantTemp : grnd->bcs.slabRadiantTemp;
+    Tr = surface_type == Surface::ST_WALL_INT ? grnd->bcs.wallRadiantTemp
+                                              : grnd->bcs.slabRadiantTemp;
     double p = instance.second;
-    double hci = grnd->getSurfaceAverageValue({ surface_type, Kiva::GroundOutput::OT_CONV });
-    double hri = grnd->getSurfaceAverageValue({ surface_type, Kiva::GroundOutput::OT_RAD });
-    double Ts = grnd->getSurfaceAverageValue({ surface_type, Kiva::GroundOutput::OT_TEMP });
-    double Ta = grnd->getSurfaceAverageValue({ surface_type, Kiva::GroundOutput::OT_AVG_TEMP});
-    double qi = grnd->getSurfaceAverageValue({ surface_type, Kiva::GroundOutput::OT_FLUX });
+    double hci = grnd->getSurfaceAverageValue({surface_type, Kiva::GroundOutput::OT_CONV});
+    double hri = grnd->getSurfaceAverageValue({surface_type, Kiva::GroundOutput::OT_RAD});
+    double Ts = grnd->getSurfaceAverageValue({surface_type, Kiva::GroundOutput::OT_TEMP});
+    double Ta = grnd->getSurfaceAverageValue({surface_type, Kiva::GroundOutput::OT_AVG_TEMP});
+    double qi = grnd->getSurfaceAverageValue({surface_type, Kiva::GroundOutput::OT_FLUX});
 
-    if (!isfinite(Ts))
-    {
-      showMessage(MSG_ERR,"Kiva is not giving realistic results!");
+    if (!isfinite(Ts)) {
+      showMessage(MSG_ERR, "Kiva is not giving realistic results!");
     }
 
-    results.qconv += p*hci*(Tz - Ts);
-    results.qrad += p*hri*(Tr - Ts);
-    results.qtot += p*qi;
-    results.hconv += p*hci;
-    results.hrad += p*hri;
-    results.Tavg += p*Ta;
+    results.qconv += p * hci * (Tz - Ts);
+    results.qrad += p * hri * (Tr - Ts);
+    results.qtot += p * qi;
+    results.hconv += p * hci;
+    results.hrad += p * hri;
+    results.Tavg += p * Ta;
   }
 
   results.Tconv = Tz - results.qconv / results.hconv;
