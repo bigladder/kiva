@@ -8,7 +8,7 @@
 
 namespace Kiva {
 
-class Aggregator {
+class LIBKIVA_EXPORT Aggregator {
 public:
   Aggregator();
   Aggregator(Surface::SurfaceType st);
