@@ -10,7 +10,7 @@
 
 namespace Kiva {
 
-class Instance {
+class LIBKIVA_EXPORT Instance {
 public:
   Instance() = default;
   Instance(Foundation fnd);
