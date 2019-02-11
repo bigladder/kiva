@@ -23,7 +23,19 @@ void Instance::create() {
     outputMap.push_back(Surface::ST_WALL_INT);
   }
 
+  if (!foundation->useDetailedExposedPerimeter || !isConvex(foundation->polygon)) {
+    if (foundation->reductionStrategy == Foundation::RS_BOUNDARY) {
+      foundation->reductionStrategy = Foundation::RS_AP;
+    }
+  }
+
   ground = std::make_shared<Ground>(*foundation.get(), outputMap);
+
+  if (foundation->reductionStrategy == Foundation::RS_BOUNDARY) {
+    ground->calculateBoundaryLayer();
+    ground->setNewBoundaryGeometry();
+  }
+
   ground->buildDomain();
 }
 

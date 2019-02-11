@@ -26,6 +26,8 @@ void Aggregator::add_instance(Surface::SurfaceType st, Ground *grnd, double weig
 
 void Aggregator::add_instance(Ground *grnd, double weight) { instances.push_back({grnd, weight}); }
 
+std::size_t Aggregator::size() { return instances.size(); }
+
 void Aggregator::validate() {
   // Check if surface type exists in all instances
   // Check if weights add up to 1.0

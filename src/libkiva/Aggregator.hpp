@@ -14,6 +14,7 @@ public:
   Aggregator(Surface::SurfaceType st);
   void add_instance(Surface::SurfaceType st, Ground *grnd, double weight);
   void add_instance(Ground *grnd, double weight);
+  std::size_t size();
   void calc_weighted_results();
 
   struct Results {
