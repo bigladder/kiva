@@ -16,6 +16,7 @@ public:
   Instance(Foundation fnd);
   void create();
   void calculate(double ts = 0.0);
+  void calculate_surface_averages();
   std::shared_ptr<Ground> ground;
   std::shared_ptr<Foundation> foundation;
   std::shared_ptr<BoundaryConditions> bcs;
