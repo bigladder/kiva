@@ -39,4 +39,8 @@ void Instance::create() {
   ground->buildDomain();
 }
 
+void Instance::calculate(double ts) {
+	ground->calculate(*bcs, ts);
+}
+
 } // namespace Kiva

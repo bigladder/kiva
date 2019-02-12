@@ -15,8 +15,10 @@ public:
   Instance() = default;
   Instance(Foundation fnd);
   void create();
+  void calculate(double ts = 0.0);
   std::shared_ptr<Ground> ground;
   std::shared_ptr<Foundation> foundation;
+  std::shared_ptr<BoundaryConditions> bcs;
 };
 
 } // namespace Kiva
