@@ -16,7 +16,10 @@
   double NAME(double x);                                                                           \
   }
 
-#define CONST_CONV(HC) [=](double, double, double, double, double) -> double { return HC; };
+#define KIVA_CONST_CONV(HC) [=](double, double, double, double, double) -> double { return HC; }
+#define KIVA_HF_DEF [=](double, double, double, double windSpeed) -> double { return windSpeed; }
+#define KIVA_HF_ZERO [=](double, double, double, double) -> double { return 0.0; }
+
 
 namespace Kiva {
 
@@ -27,10 +30,13 @@ MEMOIZE_DECL(pow0617)
 
 typedef std::function<double(double, double, double, double, double)> ConvectionAlgorithm;
 
+typedef std::function<double(double, double, double, double)> ForcedConvectionTerm;
+
 double cbrt_a(double x);
 
-// TODO: use defaulting inputs
-double LIBKIVA_EXPORT getDOE2ConvectionCoeff(double Tsurf, double Tamb, double hfGlass,
+double LIBKIVA_EXPORT getMoWiTTForcedTerm(double cosTilt, double azimuth, double windDir, double windSpeed);
+
+double LIBKIVA_EXPORT getDOE2ConvectionCoeff(double Tsurf, double Tamb, double hfTerm,
                                              double roughness, double cosTilt);
 
 bool isWindward(double cosTilt, double azimuth, double windDirection);
