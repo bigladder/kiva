@@ -562,8 +562,8 @@ Input inputParser(std::string inputFile) {
                "CONSTANT") {
       double hc_ext = yamlInput["Boundaries"]["Exterior Convective Coefficient"].as<double>();
       double hc_int = yamlInput["Boundaries"]["Interior Convective Coefficient"].as<double>();
-      boundaries.exteriorConvectionAlgorithm = CONST_CONV(hc_ext);
-      boundaries.interiorConvectionAlgorithm = CONST_CONV(hc_int);
+      boundaries.exteriorConvectionAlgorithm = KIVA_CONST_CONV(hc_ext);
+      boundaries.interiorConvectionAlgorithm = KIVA_CONST_CONV(hc_int);
     }
   } else {
     boundaries.exteriorConvectionAlgorithm = &getDOE2ConvectionCoeff;
