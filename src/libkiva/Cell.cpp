@@ -615,7 +615,7 @@ void BoundaryCell::calcCellADI(std::size_t dim, const double & /*timestep*/,
     ifCellADI(dim, sdim, dir, A, Alt[dir], bVal);
     break;
   case Surface::EXTERIOR_FLUX:
-git     efCellADI(dim, sdim, dir, A, Alt[dir], bVal);
+    efCellADI(dim, sdim, dir, A, Alt[dir], bVal);
     break;
   }
 }
