@@ -41,7 +41,14 @@ void Aggregator::validate() {
     }
   }
   if (!isEqual(check_weights, 1.0)) {
-    showMessage(MSG_ERR, "The weights of associated Kiva instances do not add to unity.");
+    if (isEqual(check_weights, 1.0, 0.01)) {
+      for (auto &instance : instances) {
+        instance.second /= check_weights;
+        showMessage(MSG_WARN, "The weights of associated Kiva instances do not quite add to unity--check exposed perimeter values. Weights will be slightly modified to add to unity.");
+      }
+    } else {
+      showMessage(MSG_ERR, "The weights of associated Kiva instances do not add to unity--check exposed perimeter values.");
+    }
   }
   validated = true;
 }
