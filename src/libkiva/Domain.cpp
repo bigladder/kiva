@@ -63,11 +63,6 @@ void Domain::setDomain(Foundation &foundation) {
     Surface *surfacePtr;
 
     int numZeroDims = getNumZeroDims(i, j, k);
-    if (numZeroDims == 0) {
-      // Shouldn't be a surface cell
-      showMessage(MSG_ERR, "A normal cell was detected within a surface.");
-    }
-
     bool xNotBoundary = i != 0 && i != dim_lengths[0] - 1;
     bool yNotBoundary = j != 0 && j != dim_lengths[1] - 1;
     bool zNotBoundary = k != 0 && k != dim_lengths[2] - 1;
@@ -80,6 +75,12 @@ void Domain::setDomain(Foundation &foundation) {
             isLessOrEqual(mesh[2].centers[k], surface.zMax)) {
           cellType = CellType::BOUNDARY;
           surfacePtr = &surface;
+
+          if (numZeroDims == 0) {
+            // Shouldn't be a surface cell
+            showMessage(MSG_ERR, "A normal cell was detected within a surface.");
+          }
+
           // Point/Line cells not on the boundary should be
           // zero-thickness cells
           if (foundation.numberOfDimensions == 3) {
