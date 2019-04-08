@@ -13,6 +13,7 @@
 
 #include <boost/lexical_cast.hpp>
 
+#include "Algorithms.hpp"
 #include "Foundation.hpp"
 #include "Geometry.hpp"
 #include "GroundOutput.hpp"
@@ -119,6 +120,10 @@ public:
   enum DeepGroundBoundaryType { DGBT_AUTO, DGBT_CONSTANT_TEMPERATURE, DGBT_ZERO_FLUX };
 
   DeepGroundBoundaryType deepGroundBoundaryType;
+
+  // Convection
+  ConvectionAlgorithm interiorConvectionAlgorithm;
+  ConvectionAlgorithm exteriorConvectionAlgorithm;
 };
 
 class Input {

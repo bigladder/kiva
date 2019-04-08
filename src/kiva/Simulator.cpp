@@ -386,13 +386,14 @@ double Simulator::getInitialTemperature(boost::posix_time::ptime t, double z) {
 }
 
 void Simulator::updateBoundaryConditions(boost::posix_time::ptime t) {
+  double Tin;
   if (input.boundaries.indoorTemperatureMethod == Boundaries::ITM_FILE)
-    bcs.indoorTemp = input.boundaries.indoorAirTemperatureFile.data.getValue(t);
+    Tin = input.boundaries.indoorAirTemperatureFile.data.getValue(t);
   else // Boundaries::ITM_CONSTANT_TEMPERATURE)
-    bcs.indoorTemp = input.boundaries.indoorAirTemperature;
+    Tin = input.boundaries.indoorAirTemperature;
 
-  bcs.slabRadiantTemp = bcs.indoorTemp;
-  bcs.wallRadiantTemp = bcs.indoorTemp;
+  bcs.slabConvectiveTemp = bcs.wallConvectiveTemp = bcs.slabRadiantTemp = bcs.wallRadiantTemp = Tin;
+
   if (input.boundaries.outdoorTemperatureMethod == Boundaries::OTM_WEATHER_FILE)
     bcs.outdoorTemp = weatherData.dryBulbTemp.getValue(t);
   else // Boundaries::OTM_CONSTANT_TEMPERATURE)

@@ -1,8 +1,8 @@
 /* Copyright (c) 2012-2018 Big Ladder Software LLC. All rights reserved.
  * See the LICENSE file for additional terms and conditions. */
-
-#include "InputParser.hpp"
+ 
 #include "Errors.hpp"
+#include "InputParser.hpp"
 
 Input inputParser(std::string inputFile) {
 
@@ -555,18 +555,19 @@ Input inputParser(std::string inputFile) {
   }
 
   if (yamlInput["Boundaries"]["Convection Calculation Method"].IsDefined()) {
-    if (yamlInput["Boundaries"]["Convection Calculation Method"].as<std::string>() == "AUTO")
-      foundation.convectionCalculationMethod = Foundation::CCM_AUTO;
-    else if (yamlInput["Boundaries"]["Convection Calculation Method"].as<std::string>() ==
-             "CONSTANT") {
-      foundation.convectionCalculationMethod = Foundation::CCM_CONSTANT_COEFFICIENT;
-      foundation.interiorConvectiveCoefficient =
-          yamlInput["Boundaries"]["Interior Convective Coefficient"].as<double>();
-      foundation.exteriorConvectiveCoefficient =
-          yamlInput["Boundaries"]["Exterior Convective Coefficient"].as<double>();
+    if (yamlInput["Boundaries"]["Convection Calculation Method"].as<std::string>() == "AUTO") {
+      boundaries.exteriorConvectionAlgorithm = &getDOE2ConvectionCoeff;
+      boundaries.interiorConvectionAlgorithm = &getDOE2ConvectionCoeff;
+    } else if (yamlInput["Boundaries"]["Convection Calculation Method"].as<std::string>() ==
+               "CONSTANT") {
+      double hc_ext = yamlInput["Boundaries"]["Exterior Convective Coefficient"].as<double>();
+      double hc_int = yamlInput["Boundaries"]["Interior Convective Coefficient"].as<double>();
+      boundaries.exteriorConvectionAlgorithm = KIVA_CONST_CONV(hc_ext);
+      boundaries.interiorConvectionAlgorithm = KIVA_CONST_CONV(hc_int);
     }
   } else {
-    foundation.convectionCalculationMethod = Foundation::CCM_AUTO;
+    boundaries.exteriorConvectionAlgorithm = &getDOE2ConvectionCoeff;
+    boundaries.interiorConvectionAlgorithm = &getDOE2ConvectionCoeff;
   }
 
   if (yamlInput["Boundaries"]["Outdoor Air Temperature Method"].IsDefined()) {
