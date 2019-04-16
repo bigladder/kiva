@@ -1,3 +1,21 @@
+0.6.0 Released 16 April 2019
+----------------------------
+### Features:
+* Add Aggregators and Instances to libkiva. These are high level objects
+  used for performing common functions when integrating Kiva into whole
+  building simulation tools.
+* Add the ability to define callback functions for convection algorithms.
+  This is useful when a program calling into libkiva has a variety of
+  algorithms to choose from.
+* Boundary conditions now include the option of defining different
+  convective temperatures for walls and slabs.
+
+### Fixes:
+* Fix typo in copying of MoWiTT convection correlations.
+* Fix issue where the top of exterior insulation could be part of both the
+  wall-top and grade boundaries.
+
+
 0.5.0 Released 7 August 2018
 ----------------------------
 ### Features:
