@@ -310,7 +310,7 @@ TEST_F(FoundationFixture, foundationSurfaces) {
     Domain domain(fnd);
     EXPECT_EQ(fnd.surfaces[6].type, Surface::ST_GRADE);
     EXPECT_EQ(fnd.surfaces[8].type, Surface::ST_WALL_TOP);
-    EXPECT_NEAR(fnd.surfaces[8].xMax, fnd.surfaces[6].xMin,0.00001);
+    EXPECT_NEAR(fnd.surfaces[8].xMax, fnd.surfaces[6].xMin, 0.00001);
 }
 
 TEST_F(FoundationFixture, foundationSurfaces2) {
@@ -326,7 +326,7 @@ TEST_F(FoundationFixture, foundationSurfaces2) {
     Domain domain(fnd);
     EXPECT_EQ(fnd.surfaces[5].type, Surface::ST_SLAB_CORE);
     EXPECT_EQ(fnd.surfaces[8].type, Surface::ST_WALL_TOP);
-    EXPECT_NEAR(fnd.surfaces[5].xMax, fnd.surfaces[8].xMin,0.00001);
+    EXPECT_NEAR(fnd.surfaces[5].xMax, fnd.surfaces[8].xMin, 0.00001);
 }
 
 
