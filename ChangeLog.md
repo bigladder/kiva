@@ -1,3 +1,9 @@
+0.6.1 Released 24 September 2019
+--------------------------------
+### Fixes:
+* Fix issue where the top of interior insulation could be part of both the
+  wall-top and slab boundaries.
+
 0.6.0 Released 16 April 2019
 ----------------------------
 ### Features:
@@ -14,7 +20,6 @@
 * Fix typo in copying of MoWiTT convection correlations.
 * Fix issue where the top of exterior insulation could be part of both the
   wall-top and grade boundaries.
-
 
 0.5.0 Released 7 August 2018
 ----------------------------
