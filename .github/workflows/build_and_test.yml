@@ -1,0 +1,87 @@
+name: Build and Test
+
+on: push
+
+env:
+  RT_URL: github.com/bigladder/kiva-test-results.git
+  RT_DIR: build/test/results
+jobs:
+  build-and-test:
+    name: Build
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            config: Release
+            static_lib: ON
+            coverage: OFF
+          # - os: windows-latest
+          #   config: Release
+          #   static_lib: ON
+          #   coverage: OFF
+          - os: macos-latest
+            config: Release
+            static_lib: ON
+            coverage: OFF
+          - os: ubuntu-latest
+            config: Debug
+            static_lib: OFF
+            coverage: ON
+    defaults:
+      run:
+        shell: bash
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Create Build Directory
+        run: cmake -E make_directory ${{github.workspace}}/build
+      - name: Install Mac Tools
+        if: matrix.os == 'macos-latest'
+        run: |
+          rvm use 2.3;
+          brew install gcc;
+          rvm use 2.0;
+      - name: Install Linux Libraries
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get -y -qq update
+          sudo apt-get -y install cmake
+          sudo apt-get -y install gfortran
+          sudo apt-get -y install libglu1-mesa-dev freeglut3-dev mesa-common-dev
+      - name: Configure CMake
+        run: cmake -B build -DKIVA_COVERAGE="${{ matrix.coverage }}" -DKIVA_STATIC_LIB="${{ matrix.static_lib }}" -DCMAKE_BUILD_TYPE="${{ matrix.config }}"
+      - name: Build
+        run: cmake --build build --config ${{ matrix.config }}
+
+      - name: Unit test
+        uses: GabrielBB/xvfb-action@v1
+        if: matrix.coverage == 'ON'
+        with:
+          run: ctest -R unit\. 
+          working-directory: build
+      - name: Code Coverage Analysis
+        if: matrix.coverage == 'ON'
+        run: make gcov
+        working-directory: build
+      - name: Upload Code Coverage Report
+        if: matrix.coverage == 'ON'
+        uses: codecov/codecov-action@v2
+          with:
+            flags: unit
+
+      - name: Integration test
+        uses: GabrielBB/xvfb-action@v1
+        if: matrix.coverage == 'ON'
+        with:
+          run: ctest -R integration\.
+          working-directory: build
+      - name: Code Coverage Analysis
+        if: matrix.coverage == 'ON'
+        run: make gcov
+        working-directory: build
+      - name: Upload Code Coverage Report
+        if: matrix.coverage == 'ON'
+        uses: codecov/codecov-action@v2
+          with:
+            flags: integration
