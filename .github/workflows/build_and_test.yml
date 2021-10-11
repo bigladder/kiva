@@ -67,8 +67,8 @@ jobs:
       - name: Upload Code Coverage Report
         if: matrix.coverage == 'ON'
         uses: codecov/codecov-action@v2
-          with:
-            flags: unit
+        with:
+          flags: unit
 
       - name: Integration test
         uses: GabrielBB/xvfb-action@v1
@@ -83,5 +83,5 @@ jobs:
       - name: Upload Code Coverage Report
         if: matrix.coverage == 'ON'
         uses: codecov/codecov-action@v2
-          with:
-            flags: integration
+        with:
+          flags: integration
