@@ -34,14 +34,13 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+      - name: Setup tooling
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 2.0
+          #bundler-cache: true
       - name: Create Build Directory
         run: cmake -E make_directory ${{github.workspace}}/build
-      - name: Install Mac Tools
-        if: matrix.os == 'macos-latest'
-        run: |
-          rvm use 2.3;
-          brew install gcc;
-          rvm use 2.0;
       - name: Install Linux Libraries
         if: matrix.os == 'ubuntu-latest'
         run: |
