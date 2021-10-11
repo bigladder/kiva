@@ -46,12 +46,28 @@ jobs:
         run: |
           sudo apt-get -y -qq update
           sudo apt-get -y install cmake
+          # are these next two necessary?
           sudo apt-get -y install gfortran
           sudo apt-get -y install libglu1-mesa-dev freeglut3-dev mesa-common-dev
       - name: Configure CMake
         run: cmake -B build -DKIVA_COVERAGE="${{ matrix.coverage }}" -DKIVA_STATIC_LIB="${{ matrix.static_lib }}" -DCMAKE_BUILD_TYPE="${{ matrix.config }}"
+      - name: Post-configure
+        if: matrix.coverage == 'OFF'
+        run: |
+          git config --global core.autocrlf input
+          ruby ../scripts/clone-and-mimic.rb
+        working-directory: build
       - name: Build
         run: cmake --build build --config ${{ matrix.config }}
+
+      - name: Log results for no-coverage
+        uses: GabrielBB/xvfb-action@v1
+        if: matrix.coverage == 'OFF'
+        with:
+          run: |
+            ctest --output-on-failure
+            ruby ../scripts/log-results.rb 
+          working-directory: build
 
       - name: Unit test
         uses: GabrielBB/xvfb-action@v1
@@ -84,3 +100,4 @@ jobs:
         uses: codecov/codecov-action@v2
         with:
           flags: integration
+
