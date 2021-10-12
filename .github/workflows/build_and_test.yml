@@ -54,6 +54,7 @@ jobs:
       - name: Post-configure
         if: matrix.coverage == 'OFF'
         run: |
+          gem install git
           git config --global core.autocrlf input
           ruby ../scripts/clone-and-mimic.rb
         working-directory: build
