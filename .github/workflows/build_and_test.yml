@@ -5,6 +5,7 @@ on: push
 env:
   RT_URL: github.com/bigladder/kiva-test-results.git
   RT_DIR: build/test/results
+  SRC_BRANCH: ${{github.head_ref}}
 jobs:
   build-and-test:
     name: Build
@@ -35,8 +36,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
       - name: Get branch name
-        id: branch-name
         uses: tj-actions/branch-names@v5
+        id: branch-name
       - name: Setup tooling
         uses: ruby/setup-ruby@v1
         with:
@@ -60,6 +61,7 @@ jobs:
           gem install git
           git config --global core.autocrlf input
           echo "SRC_BRANCH=${{steps.branch-name.outputs.current_branch}}" >> $GITHUB_ENV
+          echo "SRC_BRANCH: $SRC_BRANCH"
           ruby ../scripts/clone-and-mimic.rb
         working-directory: build
       - name: Build
