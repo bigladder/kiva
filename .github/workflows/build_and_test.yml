@@ -60,7 +60,7 @@ jobs:
         run: |
           gem install git
           git config --global core.autocrlf input
-          echo "SRC_BRANCH=${{steps.branch-name.outputs.current_branch}}" >> $GITHUB_ENV
+          echo "SRC_BRANCH=${{GITHUB_REF#refs/heads/}}" >> $GITHUB_ENV
           echo "SRC_BRANCH: $SRC_BRANCH"
           ruby ../scripts/clone-and-mimic.rb
         working-directory: build
