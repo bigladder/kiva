@@ -37,6 +37,8 @@ jobs:
       - name: Get branch name
         uses: tj-actions/branch-names@v5
         id: branch-name
+        run: |
+          echo "SRC_BRANCH=${{steps.branch-name.outputs.current_branch}}" >> $GITHUB_ENV
       - name: Setup tooling
         uses: ruby/setup-ruby@v1
         with:
@@ -60,8 +62,8 @@ jobs:
         run: |
           gem install git
           git config --global core.autocrlf input
-          echo "SRC_BRANCH=${{steps.branch-name.outputs.current_branch}}" >> $GITHUB_ENV
-          echo "SRC_BRANCH: $SRC_BRANCH"
+          #echo "SRC_BRANCH=${{steps.branch-name.outputs.current_branch}}" >> $GITHUB_ENV
+          echo "SRC_BRANCH: ${{SRC_BRANCH}}"
           ruby ../scripts/clone-and-mimic.rb
         working-directory: build
       - name: Build
