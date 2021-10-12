@@ -34,6 +34,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+      - name: Get branch name
+        id: branch-name
+        uses: tj-actions/branch-names@v5
       - name: Setup tooling
         uses: ruby/setup-ruby@v1
         with:
@@ -56,6 +59,7 @@ jobs:
         run: |
           gem install git
           git config --global core.autocrlf input
+          echo "SRC_BRANCH=${{steps.branch-name.outputs.current_branch}}" >> $GITHUB_ENV
           ruby ../scripts/clone-and-mimic.rb
         working-directory: build
       - name: Build
