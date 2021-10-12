@@ -57,10 +57,11 @@ jobs:
         run: cmake -B build -DKIVA_COVERAGE="${{ matrix.coverage }}" -DKIVA_STATIC_LIB="${{ matrix.static_lib }}" -DCMAKE_BUILD_TYPE="${{ matrix.config }}"
       - name: Post-configure
         if: matrix.coverage == 'OFF'
+        shell: bash
         run: |
           gem install git
           git config --global core.autocrlf input
-          echo "SRC_BRANCH=${{GITHUB_REF#refs/heads/}}" >> $GITHUB_ENV
+          echo "SRC_BRANCH=${{steps.branch-name.outputs.current_branch}}" >> $GITHUB_ENV
           echo "SRC_BRANCH: $SRC_BRANCH"
           ruby ../scripts/clone-and-mimic.rb
         working-directory: build
