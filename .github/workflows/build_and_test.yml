@@ -6,7 +6,7 @@ env:
   RT_URL: github.com/bigladder/kiva-test-results.git
   RT_DIR: build/test/results
   SRC_BRANCH: ${GITHUB_REF#refs/heads/}
-  PATOKEN: 2yWRGGytWw4GjxqH57yssvmTRY6yUxZkJ+ld3BEtQXceyGrwbaNh44G/CnNMFfcR
+  #PATOKEN: 2yWRGGytWw4GjxqH57yssvmTRY6yUxZkJ+ld3BEtQXceyGrwbaNh44G/CnNMFfcR
 jobs:
   build-and-test:
     name: Build
