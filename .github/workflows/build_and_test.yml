@@ -54,6 +54,11 @@ jobs:
       - name: Create Build Directory
         run: cmake -E make_directory ${{github.workspace}}/build
 
+      - name: Install Linux Libraries
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get -y install libglu1-mesa-dev freeglut3-dev mesa-common-dev
+
       - name: Configure CMake
         run: cmake -B build -DKIVA_COVERAGE="${{ matrix.coverage }}" -DKIVA_STATIC_LIB="${{ matrix.static_lib }}" -DCMAKE_BUILD_TYPE="${{ matrix.config }}"
 
