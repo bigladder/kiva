@@ -5,6 +5,7 @@ on: push
 env:
   RT_URL: github.com/bigladder/kiva-test-results.git
   RT_DIR: build/test/results
+  SRC_BRANCH: ${GITHUB_REF#refs/heads/}
 jobs:
   build-and-test:
     name: Build
@@ -37,9 +38,11 @@ jobs:
       - name: Get branch name
         uses: tj-actions/branch-names@v5
         id: branch-name
-        with:
-          run: |
-            echo "SRC_BRANCH=${{steps.branch-name.outputs.current_branch}}" >> $GITHUB_ENV
+      - name: Save branch name
+        run: |
+          echo "SRC_BRANCH=${{steps.branch-name.outputs.current_branch}}" >> $GITHUB_ENV
+      - name: Print environment
+        run: env
       - name: Setup tooling
         uses: ruby/setup-ruby@v1
         with:
