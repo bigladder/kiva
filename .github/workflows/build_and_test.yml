@@ -86,7 +86,7 @@ jobs:
 
       - name: Run basic tests Windows
         if: matrix.coverage == 'OFF' && matrix.os == 'windows-latest'
-        run: ctest -C ${{matrix.config}}--output-on-failure
+        run: ctest -C ${{matrix.config}} --output-on-failure
         working-directory: build
 
       - name: Log results for no-coverage
