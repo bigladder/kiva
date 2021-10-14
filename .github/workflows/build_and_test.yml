@@ -80,8 +80,13 @@ jobs:
         run: cmake --build build --config ${{ matrix.config }}
 
       - name: Run basic tests
-        if: matrix.coverage == 'OFF'
+        if: matrix.coverage == 'OFF' && matrix.os != 'windows-latest'
         run: ctest --output-on-failure
+        working-directory: build
+
+      - name: Run basic tests Windows
+        if: matrix.coverage == 'OFF' && matrix.os == 'windows-latest'
+        run: ctest -C ${{matrix.config}}--output-on-failure
         working-directory: build
 
       - name: Log results for no-coverage
