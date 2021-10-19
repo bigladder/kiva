@@ -57,6 +57,7 @@ jobs:
       - name: Install Linux Libraries
         if: matrix.os == 'ubuntu-latest'
         run: |
+          sudo apt-get update
           sudo apt-get -y install libglu1-mesa-dev freeglut3-dev mesa-common-dev
 
       - name: Configure CMake Windows
