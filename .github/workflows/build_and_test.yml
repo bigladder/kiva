@@ -5,7 +5,7 @@ on: push
 env:
   RT_URL: github.com/bigladder/kiva-test-results.git
   RT_DIR: build/test/results
-  SRC_BRANCH: ${GITHUB_REF#refs/heads/}
+  #SRC_BRANCH: ${GITHUB_REF#refs/heads/}
   PATOKEN: ${{ secrets.GITHUB_TOKEN }}
 jobs:
   build-and-test:
