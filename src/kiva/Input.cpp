@@ -83,12 +83,12 @@ void OutputReport::setOutputMap() {
 
 void DataFile::readData() {
   // Check relative to working directory first
-  boost::filesystem::path dataFilePath(fileName);
+  std::filesystem::path dataFilePath(fileName);
 
-  if (!boost::filesystem::exists(dataFilePath)) {
+  if (!std::filesystem::exists(dataFilePath)) {
     // Then check relative to input file Directory
 
-    if (!boost::filesystem::exists(searchDir / dataFilePath)) {
+    if (!std::filesystem::exists(searchDir / dataFilePath)) {
       // Print an error and exit
       showMessage(MSG_ERR, "Unable to read data file.");
     } else {
@@ -117,7 +117,7 @@ void DataFile::readData() {
     columns.assign(tok.begin(), tok.end());
 
     if (row > firstIndex.first) {
-      data.push_back(double(boost::lexical_cast<double>(columns[firstIndex.second])));
+      data.push_back(std::stod(columns[firstIndex.second]));
     }
     columns.clear();
   }

@@ -22,10 +22,7 @@ endif()
 
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${kiva_link_flags}")
 
-set(links boost_date_time
-          boost_program_options
-          boost_filesystem
-          boost_system
+set(links boost_program_options
           yaml-cpp )
 
 

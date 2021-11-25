@@ -9,8 +9,6 @@
 #include <boost/date_time/gregorian/gregorian.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
-#include <boost/filesystem/operations.hpp>
-
 #include <boost/lexical_cast.hpp>
 
 #include "Algorithms.hpp"
@@ -92,7 +90,7 @@ public:
   std::string fileName;
   std::pair<int, int> firstIndex;
   HourlyData data;
-  boost::filesystem::path searchDir;
+  std::filesystem::path searchDir;
 
   void readData();
 };

@@ -8,8 +8,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../libkiva/)
 
 add_library(groundplot STATIC ${kiva_src})
 
-set(links boost_filesystem
-          boost_system
+set(links fmt
           mgl-static )
 
 if( MSVC )

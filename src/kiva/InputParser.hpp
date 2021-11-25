@@ -8,8 +8,6 @@
 
 #include "yaml-cpp/yaml.h"
 
-#include <boost/filesystem/operations.hpp>
-
 #include "Input.hpp"
 #include "WeatherData.hpp"
 

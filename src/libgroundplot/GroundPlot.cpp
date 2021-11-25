@@ -5,8 +5,7 @@
 #define GroundPlot_CPP
 
 #include "GroundPlot.hpp"
-
-static const double EPSILON = 1E-5;
+#include <fmt/core.h>
 
 namespace Kiva {
 
@@ -20,8 +19,8 @@ SnapshotSettings::SnapshotSettings()
 GroundPlot::GroundPlot(SnapshotSettings &snapshotSettings, Domain &domain, Foundation &foundation)
     : snapshotSettings(snapshotSettings), blocks(foundation.blocks), surfaces(foundation.surfaces) {
 
-  boost::filesystem::remove_all(snapshotSettings.dir);
-  boost::filesystem::create_directory(snapshotSettings.dir);
+  std::filesystem::remove_all(snapshotSettings.dir);
+  std::filesystem::create_directory(snapshotSettings.dir);
 
   frameNumber = 0;
 
@@ -273,22 +272,19 @@ void GroundPlot::createFrame(std::string timeStamp) {
   switch (sliceType) {
   case XY: {
     std::string sliceString =
-        "Z = " + str(boost::format("%0.2f") % (slice * distanceUnitConversion)) + " " +
-        distanceUnit;
+        "Z = " + fmt::format("Z = {:0.2f} {}",slice * distanceUnitConversion, distanceUnit);
     if (snapshotSettings.axes)
       gr.Puts(hText, vText - vTextSpacing, sliceString.c_str(), ":AL");
   } break;
   case XZ: {
     std::string sliceString =
-        "Y = " + str(boost::format("%0.2f") % (slice * distanceUnitConversion)) + " " +
-        distanceUnit;
+        "Y = " + fmt::format("Z = {:0.2f} {}",slice * distanceUnitConversion, distanceUnit);
     if (snapshotSettings.axes)
       gr.Puts(hText, vText - vTextSpacing, sliceString.c_str(), ":AL");
   } break;
   case YZ: {
     std::string sliceString =
-        "X = " + str(boost::format("%0.2f") % (slice * distanceUnitConversion)) + " " +
-        distanceUnit;
+        "X = " + fmt::format("Z = {:0.2f} {}",slice * distanceUnitConversion, distanceUnit);
     if (snapshotSettings.axes)
       gr.Puts(hText, vText - vTextSpacing, sliceString.c_str(), ":AL");
   }
@@ -586,11 +582,11 @@ void GroundPlot::createFrame(std::string timeStamp) {
 
   if (snapshotSettings.format == SnapshotSettings::F_PNG)
     gr.WritePNG(
-        (snapshotSettings.dir + "/" + str(boost::format("%04d") % frameNumber) + ".png").c_str(),
+        (fmt::format("{}/{:04d}.png",snapshotSettings.dir,frameNumber)).c_str(),
         "", false);
   else if (snapshotSettings.format == SnapshotSettings::F_TEX)
     gr.WriteTEX(
-        (snapshotSettings.dir + "/" + str(boost::format("%04d") % frameNumber) + ".tex").c_str());
+        (fmt::format("{}/{:04d}.tex",snapshotSettings.dir,frameNumber)).c_str());
 
   frameNumber += 1;
   nextPlotTime += snapshotSettings.frequency;
