@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 2.8)
+cmake_minimum_required (VERSION 3.10)
 project (kiva)
 
 option(KIVA_COVERAGE "Add coverage reports" OFF)
@@ -9,6 +9,7 @@ option( KIVA_GROUND_PLOT "Build ground plotting library" ON )
 mark_as_advanced(FORCE BUILD_GROUND_PLOT)
 option( KIVA_TESTING "Build tests" ON )
 
+find_package(Git QUIET)
 
 set(CMAKE_MODULE_PATH "${kiva_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 
