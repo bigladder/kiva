@@ -1,0 +1,123 @@
+name: Build and Test
+
+on: push
+
+env:
+  RT_URL: github.com/bigladder/kiva-test-results.git
+  RT_DIR: build/test/results
+  PATOKEN: ${{ secrets.CI_PA_TOKEN }}
+jobs:
+  build-and-test:
+    name: Build
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            config: Release
+            static_lib: ON
+            coverage: OFF
+          - os: windows-latest
+            config: Release
+            static_lib: ON
+            coverage: OFF
+          - os: macos-latest
+            config: Release
+            static_lib: ON
+            coverage: OFF
+          - os: ubuntu-latest
+            config: Debug
+            static_lib: OFF
+            coverage: ON
+    defaults:
+      run:
+        shell: bash
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Get branch name
+        uses: tj-actions/branch-names@v5
+        id: branch-name
+
+      - name: Save branch name
+        run: |
+          echo "SRC_BRANCH=${{steps.branch-name.outputs.current_branch}}" >> $GITHUB_ENV
+
+      - name: Setup tooling
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 2.0
+          #bundler-cache: true
+
+      - name: Create Build Directory
+        run: cmake -E make_directory ${{github.workspace}}/build
+
+      - name: Install Linux Libraries
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get -y install libglu1-mesa-dev freeglut3-dev mesa-common-dev
+
+      - name: Configure CMake Windows
+        if: matrix.os == 'windows-latest'
+        run: cmake -S . -B build -G "Visual Studio 16 2019" -DKIVA_COVERAGE="${{ matrix.coverage }}" -DKIVA_STATIC_LIB="${{ matrix.static_lib }}" -DCMAKE_BUILD_TYPE="${{ matrix.config }}"
+        shell: cmd
+
+      - name: Configure CMake
+        if: matrix.os != 'windows-latest'
+        run: cmake -S . -B build -DKIVA_COVERAGE="${{ matrix.coverage }}" -DKIVA_STATIC_LIB="${{ matrix.static_lib }}" -DCMAKE_BUILD_TYPE="${{ matrix.config }}"
+
+      - name: Post-configure
+        if: matrix.coverage == 'OFF'
+        run: |
+          gem install git
+          git config --global core.autocrlf input
+          ruby ../scripts/clone-and-mimic.rb
+        working-directory: build
+
+      - name: Build
+        run: cmake --build build --config ${{ matrix.config }}
+
+      - name: Run basic tests
+        if: matrix.coverage == 'OFF' && matrix.os != 'windows-latest'
+        run: ctest --output-on-failure
+        working-directory: build
+
+      - name: Run basic tests Windows
+        if: matrix.coverage == 'OFF' && matrix.os == 'windows-latest'
+        run: ctest -C ${{matrix.config}} --output-on-failure
+        working-directory: build
+
+      - name: Log results for no-coverage
+        if: matrix.coverage == 'OFF'
+        run: ruby ../scripts/log-results.rb 
+        working-directory: build
+
+      - name: Unit test
+        if: matrix.coverage == 'ON'
+        run: ctest -R unit\. 
+        working-directory: build
+
+      - name: Integration test
+        if: matrix.coverage == 'ON'
+        run: ctest -R integration\.
+        working-directory: build
+
+      - name: Code Coverage Analysis
+        if: matrix.coverage == 'ON'
+        run: make gcov
+        working-directory: build
+
+      - name: Upload Code Coverage Report (Unit)
+        if: matrix.coverage == 'ON'
+        uses: codecov/codecov-action@v2
+        with:
+          flags: unit
+
+      - name: Upload Code Coverage Report (Integration)
+        if: matrix.coverage == 'ON'
+        uses: codecov/codecov-action@v2
+        with:
+          flags: integration
+
