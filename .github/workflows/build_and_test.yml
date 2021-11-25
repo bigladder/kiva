@@ -91,12 +91,12 @@ jobs:
 
       - name: Log results for no-coverage
         if: matrix.coverage == 'OFF'
-        run: ruby ../scripts/log-results.rb 
+        run: ruby ../scripts/log-results.rb
         working-directory: build
 
       - name: Unit test
         if: matrix.coverage == 'ON'
-        run: ctest -R unit\. 
+        run: ctest -R unit\.
         working-directory: build
 
       - name: Integration test
