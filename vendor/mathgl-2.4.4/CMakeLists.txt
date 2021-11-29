@@ -70,13 +70,13 @@ function(mgl_add_lib mgl_tmp_lib)
        endif(${mgl_tmp_lib} MATCHES mgl)
        set(mgl_src_lst ${ARGV})
        list(REMOVE_AT mgl_src_lst 0)
-#       add_library(${mgllib} SHARED ${mgl_src_lst})
+       add_library(${mgllib} SHARED ${mgl_src_lst})
        add_library(${mgllib}-static STATIC ${mgl_src_lst})
-#       set_target_properties(${mgllib} PROPERTIES SOVERSION ${MathGL_SOVERSION})
-#       set_target_properties(${mgllib} PROPERTIES DEFINE_SYMBOL "mgl_EXPORTS")
-#       set_target_properties(${mgllib} PROPERTIES C_VISIBILITY_PRESET hidden)
-#       set_target_properties(${mgllib} PROPERTIES CXX_VISIBILITY_PRESET hidden)
-#       set_target_properties(${mgllib} PROPERTIES VISIBILITY_INLINES_HIDDEN 1)
+       set_target_properties(${mgllib} PROPERTIES SOVERSION ${MathGL_SOVERSION})
+       set_target_properties(${mgllib} PROPERTIES DEFINE_SYMBOL "mgl_EXPORTS")
+       set_target_properties(${mgllib} PROPERTIES C_VISIBILITY_PRESET hidden)
+       set_target_properties(${mgllib} PROPERTIES CXX_VISIBILITY_PRESET hidden)
+       set_target_properties(${mgllib} PROPERTIES VISIBILITY_INLINES_HIDDEN 1)
        target_compile_definitions(${mgllib}-static PUBLIC MGL_STATIC_DEFINE)
        if(MSVC)
 	   set(mgl_lib_static "-static")
@@ -91,15 +91,15 @@ function(mgl_add_lib mgl_tmp_lib)
 	   set_target_properties(${mgllib}-static PROPERTIES CLEAN_DIRECT_OUTPUT 1)
        endif(MSVC)
        if(enable-mgl2)
-#               set_target_properties(${mgllib} PROPERTIES OUTPUT_NAME "${mgllib2}${mgl_lib_end}")
+               set_target_properties(${mgllib} PROPERTIES OUTPUT_NAME "${mgllib2}${mgl_lib_end}")
                set_target_properties(${mgllib}-static PROPERTIES OUTPUT_NAME "${mgllib2}${mgl_lib_static}${mgl_lib_end}")
        else(enable-mgl2)
-#               set_target_properties(${mgllib} PROPERTIES OUTPUT_NAME "${mgllib}${mgl_lib_end}")
+               set_target_properties(${mgllib} PROPERTIES OUTPUT_NAME "${mgllib}${mgl_lib_end}")
                set_target_properties(${mgllib}-static PROPERTIES OUTPUT_NAME "${mgllib}${mgl_lib_static}${mgl_lib_end}")
        endif(enable-mgl2)
 
        install(
-               TARGETS ${mgllib}-static #${mgllib}
+               TARGETS ${mgllib}-static ${mgllib}
                EXPORT MathGLTargets
                RUNTIME DESTINATION ${MathGL_INSTALL_BIN_DIR}
                ARCHIVE DESTINATION ${MathGL_INSTALL_LIB_DIR}

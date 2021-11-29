@@ -46,11 +46,11 @@ if(MGL_HAVE_OPENGL)
 	set(mgl_hdr ${mgl_hdr} ../include/mgl2/opengl.h )
 endif(MGL_HAVE_OPENGL)
 
-#include(GenerateExportHeader)
+include(GenerateExportHeader)
 mgl_add_lib(mgl ${mgl_src} ${mgl_hdr})
-#generate_export_header(mgl EXPORT_FILE_NAME ../include/mgl2/dllexport.h)
+generate_export_header(mgl EXPORT_FILE_NAME ../include/mgl2/dllexport.h)
 
-#target_link_libraries(mgl ${MGL_DEP_LIBS})
+target_link_libraries(mgl ${MGL_DEP_LIBS})
 target_link_libraries(mgl-static ${MGL_DEP_LIBS})
 
 mgl_po_src(${mgl_src} ${mgl_hdr})
