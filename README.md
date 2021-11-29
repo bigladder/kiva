@@ -1,8 +1,8 @@
 ![](docs/images/kiva-logo.png)
 
 [![Documentation Status](https://readthedocs.org/projects/kiva/badge/?version=latest)](http://kiva.readthedocs.org/en/latest/?badge=latest)
-[![Build Status](https://travis-ci.org/bigladder/kiva.svg?branch=develop)](https://travis-ci.org/bigladder/kiva)
-[![Build Status](https://ci.appveyor.com/api/projects/status/pv2c4no2mv4uds26/branch/develop?svg=true)](https://ci.appveyor.com/project/bigladder/kiva/branch/develop) [![codecov](https://codecov.io/gh/bigladder/kiva/branch/develop/graph/badge.svg)](https://codecov.io/gh/bigladder/kiva)
+[![Build and Test](https://github.com/bigladder/kiva/actions/workflows/build_and_test.yml/badge.svg)](https://github.com/bigladder/kiva/actions/workflows/build_and_test.yml)
+[![codecov](https://codecov.io/gh/bigladder/kiva/branch/develop/graph/badge.svg)](https://codecov.io/gh/bigladder/kiva)
 
 Kiva
 ====
