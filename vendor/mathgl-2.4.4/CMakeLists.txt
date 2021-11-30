@@ -98,13 +98,15 @@ function(mgl_add_lib mgl_tmp_lib)
                set_target_properties(${mgllib}-static PROPERTIES OUTPUT_NAME "${mgllib}${mgl_lib_static}${mgl_lib_end}")
        endif(enable-mgl2)
 
-       install(
+#[[ Kiva customization
+	   install(
                TARGETS ${mgllib}-static ${mgllib}
                EXPORT MathGLTargets
                RUNTIME DESTINATION ${MathGL_INSTALL_BIN_DIR}
                ARCHIVE DESTINATION ${MathGL_INSTALL_LIB_DIR}
                LIBRARY DESTINATION ${MathGL_INSTALL_LIB_DIR}
        )
+]]
 endfunction(mgl_add_lib mgl_tmp_lib)
 
 MACRO(MGL_DEPENDENT_OPTION option doc default depends1 force1 depends2 force2)
@@ -210,8 +212,8 @@ CMAKE_DEPENDENT_OPTION(enable-qt5asqt "Set Qt5 as default libmgl-qt" OFF "enable
 
 # msvc fwprintf print char* for the specifier of "%s" format
 if(MSVC AND MSVC_VERSION GREATER 1899)
-	SET(CMAKE_CXX_FLAGS "/EHsc -D_CRT_STDIO_ISO_WIDE_SPECIFIERS ${CMAKE_CXX_FLAGS}")
-	SET(CMAKE_C_FLAGS "-D_CRT_STDIO_ISO_WIDE_SPECIFIERS ${CMAKE_C_FLAGS}")
+#	SET(CMAKE_CXX_FLAGS "/EHsc -D_CRT_STDIO_ISO_WIDE_SPECIFIERS ${CMAKE_CXX_FLAGS}")
+#	SET(CMAKE_C_FLAGS "-D_CRT_STDIO_ISO_WIDE_SPECIFIERS ${CMAKE_C_FLAGS}")
 endif(MSVC AND MSVC_VERSION GREATER 1899)
 
 include(CheckCXXSourceCompiles)
@@ -519,10 +521,12 @@ if(enable-png)
 	if(NOT MGL_HAVE_ZLIB)
 		message(SEND_ERROR "You have to enable ZLib if you plan to use PNG export.")
 	endif(NOT MGL_HAVE_ZLIB)
+#[[ Kiva Customization
 	include(FindPNG)
 	if(NOT PNG_FOUND)
 		message(SEND_ERROR "Couldn't find PNG library.")
 	endif(NOT PNG_FOUND)
+]]
 	set(MGL_DEP_LIBS ${PNG_LIBRARIES} ${MGL_DEP_LIBS})
 	include_directories(${PNG_INCLUDE_DIR})
 else(enable-png)
@@ -739,7 +743,7 @@ add_subdirectory( src )
 add_subdirectory( include )
 if(NOT enable-lgpl)
 	if(MGL_HAVE_QT)
-		add_subdirectory( udav )
+#		add_subdirectory( udav )
 		if(enable-json-sample)
 			add_subdirectory( json )
 		endif(enable-json-sample)
@@ -801,4 +805,4 @@ endif(MGL_USE_LIBINTL)
 set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES "${mgl_clean_files}")
 
 # WARNING!!! DO NOT ADD ANYTHING AFTER THIS LINE!
-add_subdirectory ( scripts )
+#add_subdirectory ( scripts )

@@ -344,7 +344,7 @@ struct PRCVector2d
 if(fld != c.fld) \
   return (fld < c.fld);
 #define PRCMAP(PRCtype) \
-struct PRCtype##Cmp : public std::binary_function <const PRCtype*, const PRCtype*, bool> \
+struct PRCtype##Cmp \
 { bool operator()(const PRCtype* Left, const PRCtype* Right) const  { return (*Left < *Right); } }; \
 typedef std::map<PRCtype*,uint32_t,PRCtype##Cmp> PRCtype##Map;
 #define PRCLIST(PRCtype) \
