@@ -9,6 +9,11 @@ if (KIVA_EXE_BUILD OR KIVA_GROUND_PLOT)
   set(ZLIB_COMPAT ON CACHE BOOL "" FORCE)
   add_subdirectory(zlib-ng)
 
+  if (MSVC)
+    target_compile_options(zlibstatic PRIVATE /wd5105)
+    target_compile_options(zlib PRIVATE /wd5105)
+  endif()
+
   set(PNG_TESTS OFF CACHE BOOL "" FORCE)
   set(PNG_SHARED OFF CACHE BOOL "" FORCE)
   set(PNG_BUILD_ZLIB ON CACHE BOOL "" FORCE)
@@ -26,8 +31,15 @@ if (KIVA_EXE_BUILD OR KIVA_GROUND_PLOT)
   set(PNG_INCLUDE_DIRS ${PNG_INCLUDE_DIR})
   add_subdirectory(mathgl-2.4.4)
 
-  target_compile_options(mgl PRIVATE -Wno-deprecated-declarations -Wno-tautological-constant-out-of-range-compare)
-  target_compile_options(mgl-static PRIVATE -Wno-deprecated-declarations -Wno-tautological-constant-out-of-range-compare)
+  if (MSVC)
+    target_compile_options(mgl PRIVATE /wd4477 /wd4334)
+    target_compile_options(mgl-static PRIVATE /wd4477 /wd4334)
+  else()
+    target_compile_options(mgl PRIVATE -Wno-deprecated-declarations -Wno-tautological-constant-out-of-range-compare)
+    target_compile_options(mgl-static PRIVATE -Wno-deprecated-declarations -Wno-tautological-constant-out-of-range-compare)
+  endif()
+
+  set_target_properties(mgl zlib PROPERTIES EXCLUDE_FROM_ALL 1 EXCLUDE_FROM_DEFAULT_BUILD 1)
 
   if (KIVA_EXE_BUILD)
     add_subdirectory(boost-1.77.0)
@@ -40,8 +52,9 @@ if (KIVA_EXE_BUILD OR KIVA_GROUND_PLOT)
     set(YAML_MSVC_SHARED_RT OFF CACHE BOOL "" FORCE)
     add_subdirectory(yaml-cpp)
 
-    target_compile_options(yaml-cpp PRIVATE -Wno-shadow)
-
+    if (NOT MSVC)
+      target_compile_options(yaml-cpp PRIVATE -Wno-shadow)
+    endif()
   endif()
 endif()
 

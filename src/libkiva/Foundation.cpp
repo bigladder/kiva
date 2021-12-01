@@ -1818,7 +1818,7 @@ void Foundation::createMeshData() {
       double xyPosition = 0.0;
 
       // Foundation Wall
-      for (int n = wall.layers.size() - 1; n >= 0; n--) {
+      for (std::size_t n = wall.layers.size() - 1; n < wall.layers.size() /*>= 0*/; n--) {
         Polygon poly;
         poly = offset(polygon, xyPosition + wall.layers[n].thickness);
 
@@ -2396,7 +2396,7 @@ void Foundation::createMeshData() {
       double xyPosition = 0.0;
 
       // Foundation Wall
-      for (int n = wall.layers.size() - 1; n >= 0; n--) {
+      for (std::size_t n = wall.layers.size() - 1; n < wall.layers.size() /*>= 0*/; n--) {
         Polygon tempPoly;
         tempPoly = offset(polygon, xyPosition + wall.layers[n].thickness);
 

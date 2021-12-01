@@ -151,6 +151,10 @@ set(kiva_src Aggregator.cpp
 
 option( KIVA_STATIC_LIB "Make libkiva a static library" ON )
 
+if (MSVC)
+  # Remove "potential loss of data" warning in Boost
+  set_source_files_properties(Geometry.cpp PROPERTIES COMPILE_FLAGS /wd4244)
+endif()
 
 if (KIVA_STATIC_LIB)
   add_library(libkiva STATIC ${kiva_src})
