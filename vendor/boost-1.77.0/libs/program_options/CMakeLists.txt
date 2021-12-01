@@ -22,7 +22,7 @@ add_library(boost_program_options
 
 add_library(Boost::program_options ALIAS boost_program_options)
 
-target_include_directories(boost_program_options PUBLIC ${PROJECT_SOURCE_DIR})
+target_include_directories(boost_program_options PUBLIC ${BOOST_SOURCE_DIR})
 
 target_compile_definitions(boost_program_options
   PUBLIC BOOST_PROGRAM_OPTIONS_NO_LIB

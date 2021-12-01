@@ -10,29 +10,11 @@ set(kiva_src Main.cpp
 
 set(CMAKE_INSTALL_RPATH "@executable_path")
 
-include_directories(${kiva_BINARY_DIR}/src/libkiva/)
 add_executable(kiva ${kiva_src})
 
-set(kiva_link_flags "")
+target_link_libraries(kiva libkiva groundplot boost_program_options yaml-cpp)
 
-if(${ENABLE_OPENMP})
-  set(kiva_link_flags "${kiva_link_flags} -fopenmp")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
-endif()
-
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${kiva_link_flags}")
-
-set(links boost_program_options
-          yaml-cpp )
-
-
-if( MSVC )
-  set_target_properties(yaml-cpp PROPERTIES COMPILE_FLAGS "/W0")
-else()
-  set_target_properties(yaml-cpp PROPERTIES COMPILE_FLAGS "-w")
-endif()
-
-target_link_libraries(kiva ${links} libkiva groundplot)
+target_include_directories(kiva PRIVATE "${groundplot_SOURCE_DIR}")
 
 if (KIVA_COVERAGE)
   add_coverage(kiva)

@@ -25,56 +25,6 @@ set( CMAKE_LIBRARY_OUTPUT_DIRECTORY "${kiva_BINARY_DIR}" )
 set( CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${kiva_BINARY_DIR}" )
 set( CMAKE_RUNTIME_OUTPUT_DIRECTORY "${kiva_BINARY_DIR}" )
 
-set(CMAKE_CXX_STANDARD 17)
-
-if (KIVA_EXE_BUILD)
-  set(CompilerFlags
-          CMAKE_CXX_FLAGS
-          CMAKE_CXX_FLAGS_DEBUG
-          CMAKE_CXX_FLAGS_RELEASE
-          CMAKE_C_FLAGS
-          CMAKE_C_FLAGS_DEBUG
-          CMAKE_C_FLAGS_RELEASE
-          )
-  foreach(CompilerFlag ${CompilerFlags})
-    string(REPLACE "/MD" "/MT" ${CompilerFlag} "${${CompilerFlag}}")
-  endforeach()
-endif()
-
-if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-  if (UNIX)
-    add_definitions("-fPIC")
-  endif()
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wextra")
-endif()
-
-if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated-register -Wno-deprecated-declarations")
-endif()
-
-if( MSVC AND NOT ( CMAKE_CXX_COMPILER_ID STREQUAL "Intel" ) )
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4251")
-endif()
-
-include_directories( ${kiva_SOURCE_DIR}/src/libkiva)
-include_directories( SYSTEM ${kiva_SOURCE_DIR}/vendor/boost-1.77.0)
-include_directories( SYSTEM ${kiva_SOURCE_DIR}/vendor/eigen)
-include_directories( SYSTEM ${kiva_SOURCE_DIR}/vendor/fmt)
-
-if (KIVA_EXE_BUILD OR KIVA_GROUND_PLOT)
-  add_definitions("-DBOOST_ALL_NO_LIB")
-  include_directories( ${kiva_SOURCE_DIR}/src/libgroundplot)
-  include_directories( SYSTEM ${kiva_SOURCE_DIR}/vendor/mathgl-2.4.4/include)
-  include_directories( SYSTEM ${kiva_BINARY_DIR}/vendor/mathgl-2.4.4/include)
-  if (KIVA_EXE_BUILD)
-    include_directories( SYSTEM ${kiva_SOURCE_DIR}/vendor/yaml-cpp/include)
-  endif()
-endif()
-
-if (KIVA_TESTING)
-  include_directories( SYSTEM ${kiva_SOURCE_DIR}/vendor/gtest/include/)
-endif()
-
 add_subdirectory(vendor)
 add_subdirectory(src/libkiva)
 

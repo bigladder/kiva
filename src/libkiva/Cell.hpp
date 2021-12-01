@@ -15,8 +15,6 @@
 #include <memory>
 #include <numeric>
 
-#include <Eigen/SparseCore>
-
 namespace Kiva {
 
 enum CellType {
