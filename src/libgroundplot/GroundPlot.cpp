@@ -4,8 +4,19 @@
 #ifndef GroundPlot_CPP
 #define GroundPlot_CPP
 
-#include "GroundPlot.hpp"
+#if __has_include(<filesystem>)
+#include <filesystem>
+namespace filesys = std::filesystem;
+#elif __has_include(<experimental/filesystem>)
+#include <experimental/filesystem>
+namespace filesys = std::experimental::filesystem;
+#else
+#error "no filesystem support"
+#endif
+
 #include <fmt/core.h>
+
+#include "GroundPlot.hpp"
 
 namespace Kiva {
 
@@ -19,8 +30,8 @@ SnapshotSettings::SnapshotSettings()
 GroundPlot::GroundPlot(SnapshotSettings &snapshotSettings, Domain &domain, Foundation &foundation)
     : snapshotSettings(snapshotSettings), blocks(foundation.blocks), surfaces(foundation.surfaces) {
 
-  std::filesystem::remove_all(snapshotSettings.dir);
-  std::filesystem::create_directory(snapshotSettings.dir);
+  filesys::remove_all(snapshotSettings.dir);
+  filesys::create_directory(snapshotSettings.dir);
 
   frameNumber = 0;
 

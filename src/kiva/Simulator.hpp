@@ -44,7 +44,7 @@ private:
 
   std::vector<GroundPlot> plots;
   std::ofstream outputFile;
-  std::filesystem::path outputDir;
+  filesys::path outputDir;
   void initializePlots();
   void initializeConditions();
 
