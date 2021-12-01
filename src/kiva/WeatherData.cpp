@@ -50,7 +50,7 @@ double HourlyData::getValue(boost::posix_time::ptime t) {
   boost::gregorian::date newYearDate(year, boost::gregorian::Jan, 1);
   boost::posix_time::ptime newYear(newYearDate);
   boost::posix_time::time_duration duration = t - newYear;
-  __int64 second = duration.total_seconds();
+  int64_t second = duration.total_seconds();
   double hour = second / 60.0 / 60.0;
   short hour_before = static_cast<short>(hour);
   short hour_after = hour_before + 1;
