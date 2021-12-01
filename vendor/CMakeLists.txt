@@ -26,6 +26,9 @@ if (KIVA_EXE_BUILD OR KIVA_GROUND_PLOT)
   set(PNG_INCLUDE_DIRS ${PNG_INCLUDE_DIR})
   add_subdirectory(mathgl-2.4.4)
 
+  target_compile_options(mgl PRIVATE -Wno-deprecated-declarations -Wno-tautological-constant-out-of-range-compare)
+  target_compile_options(mgl-static PRIVATE -Wno-deprecated-declarations -Wno-tautological-constant-out-of-range-compare)
+
   if (KIVA_EXE_BUILD)
     add_subdirectory(boost-1.77.0)
 
@@ -36,6 +39,9 @@ if (KIVA_EXE_BUILD OR KIVA_GROUND_PLOT)
     set(YAML_CPP_INSTALL OFF CACHE BOOL "" FORCE)
     set(YAML_MSVC_SHARED_RT OFF CACHE BOOL "" FORCE)
     add_subdirectory(yaml-cpp)
+
+    target_compile_options(yaml-cpp PRIVATE -Wno-shadow)
+
   endif()
 endif()
 
