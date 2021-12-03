@@ -2,6 +2,7 @@ include(initialize-submodules)
 initialize_submodules()
 
 add_subdirectory(fmt)
+add_subdirectory(boost-1.77.0)
 
 if (KIVA_EXE_BUILD OR KIVA_GROUND_PLOT)
 
@@ -42,8 +43,6 @@ if (KIVA_EXE_BUILD OR KIVA_GROUND_PLOT)
   set_target_properties(mgl zlib PROPERTIES EXCLUDE_FROM_ALL 1 EXCLUDE_FROM_DEFAULT_BUILD 1)
 
   if (KIVA_EXE_BUILD)
-    add_subdirectory(boost-1.77.0)
-
     set_property(GLOBAL PROPERTY CTEST_TARGETS_ADDED 1)
     set(YAML_BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
     set(YAML_CPP_CLANG_FORMAT_EXE OFF CACHE BOOL "" FORCE)
