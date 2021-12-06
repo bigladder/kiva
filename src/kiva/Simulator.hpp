@@ -13,8 +13,6 @@
 
 #include <boost/lexical_cast.hpp>
 
-#include <boost/filesystem/operations.hpp>
-
 #include "BoundaryConditions.hpp"
 #include "Geometry.hpp"
 #include "Ground.hpp"
@@ -46,7 +44,7 @@ private:
 
   std::vector<GroundPlot> plots;
   std::ofstream outputFile;
-  boost::filesystem::path outputDir;
+  filesys::path outputDir;
   void initializePlots();
   void initializeConditions();
 

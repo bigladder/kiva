@@ -13,7 +13,7 @@ Input inputParser(std::string inputFile) {
   Initialization initialization;
   Output output;
 
-  boost::filesystem::path inputPath(inputFile);
+  std::filesystem::path inputPath(inputFile);
 
   YAML::Node yamlInput = YAML::LoadFile(inputPath.string());
 

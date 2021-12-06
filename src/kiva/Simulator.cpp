@@ -4,6 +4,8 @@
 #include "Simulator.hpp"
 #include "Errors.hpp"
 
+#include <fmt/core.h>
+
 using namespace Kiva;
 
 static const double PI = 4.0 * atan(1.0);
@@ -12,7 +14,7 @@ Simulator::Simulator(WeatherData &weatherData, Input &input, std::string outputF
     : weatherData(weatherData), input(input),
       ground(input.foundation, input.output.outputReport.outputMap) {
   // set up output file
-  boost::filesystem::path outputPath(outputFileName);
+  std::filesystem::path outputPath(outputFileName);
   outputDir = outputPath.parent_path();
   outputFile.open(outputFileName.c_str());
   outputFile << "Timestamp" << printOutputHeaders() << std::endl;
@@ -449,7 +451,7 @@ std::string Simulator::printOutputLine() {
 
     if (totalArea > 0.0) {
       double value = out.outType == GroundOutput::OT_RATE ? totalValue : totalVA / totalArea;
-      outputLine += ", " + boost::lexical_cast<std::string>(value);
+      outputLine += fmt::format(", {}", value);
     } else {
       outputLine += ", NAN";
     }

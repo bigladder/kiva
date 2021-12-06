@@ -8,3 +8,5 @@ sandbox.*
 sandbox/
 *.pptx
 .idea/
+.vs/
+.vscode/

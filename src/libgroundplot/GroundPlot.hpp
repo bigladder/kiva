@@ -6,10 +6,6 @@
 
 #include <mgl2/mgl.h>
 
-#include <boost/filesystem/operations.hpp>
-#include <boost/format.hpp>
-#include <boost/lexical_cast.hpp>
-
 #include "../libkiva/Domain.hpp"
 #include "../libkiva/Foundation.hpp"
 #include "../libkiva/Functions.hpp"

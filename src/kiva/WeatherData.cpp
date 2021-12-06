@@ -46,14 +46,14 @@ HourlyData::HourlyData() { dataType = DT_METEOROLOGICAL; }
 HourlyData::HourlyData(DataType dT) { dataType = dT; }
 
 double HourlyData::getValue(boost::posix_time::ptime t) {
-  long year = t.date().year();
+  unsigned short year = t.date().year();
   boost::gregorian::date newYearDate(year, boost::gregorian::Jan, 1);
   boost::posix_time::ptime newYear(newYearDate);
   boost::posix_time::time_duration duration = t - newYear;
-  long second = duration.total_seconds();
+  int64_t second = duration.total_seconds();
   double hour = second / 60.0 / 60.0;
-  long hour_before = hour;
-  long hour_after = hour_before + 1;
+  short hour_before = static_cast<short>(hour);
+  short hour_after = hour_before + 1;
 
   // Handle leap year days
   if (boost::gregorian::gregorian_calendar::is_leap_year(year) && hour >= 1416.0) {

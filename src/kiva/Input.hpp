@@ -6,10 +6,19 @@
 
 #include <fstream>
 
+#if __has_include(<filesystem>)
+#include <filesystem>
+namespace filesys = std::filesystem;
+#elif __has_include(<experimental/filesystem>)
+#include <experimental/filesystem>
+namespace filesys = std::experimental::filesystem;
+#else
+#error "no filesystem support"
+#endif
+
+
 #include <boost/date_time/gregorian/gregorian.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
-
-#include <boost/filesystem/operations.hpp>
 
 #include <boost/lexical_cast.hpp>
 
@@ -92,7 +101,7 @@ public:
   std::string fileName;
   std::pair<int, int> firstIndex;
   HourlyData data;
-  boost::filesystem::path searchDir;
+  filesys::path searchDir;
 
   void readData();
 };
