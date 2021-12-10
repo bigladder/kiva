@@ -31,16 +31,20 @@ if(EXISTS "${kiva_SOURCE_DIR}/.git")
   string(TOLOWER "${TARGET_OS}-${BIT}" KIVA_PACKAGE_CONFIG)
   set(KIVA_PACKAGE_CONFIG ${KIVA_PACKAGE_CONFIG} PARENT_SCOPE)
 
-  execute_process(
-    COMMAND git rev-parse --abbrev-ref HEAD
-    WORKING_DIRECTORY ${kiva_SOURCE_DIR}
-    RESULT_VARIABLE git_branch_exit_status
-    OUTPUT_VARIABLE GIT_BRANCH
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-  )
+  if(DEFINED ENV{SRC_BRANCH})
+    set(GIT_BRANCH "$ENV{SRC_BRANCH}")
+  else()
+    execute_process(
+      COMMAND git rev-parse --abbrev-ref HEAD
+      WORKING_DIRECTORY ${kiva_SOURCE_DIR}
+      RESULT_VARIABLE git_branch_exit_status
+      OUTPUT_VARIABLE GIT_BRANCH
+      OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
 
-  if (NOT ${git_branch_exit_status} MATCHES "0")
-    set(GIT_BRANCH "unknown-branch")
+    if (NOT ${git_branch_exit_status} MATCHES "0")
+      set(GIT_BRANCH "unknown-branch")
+    endif()
   endif()
 
   execute_process(
