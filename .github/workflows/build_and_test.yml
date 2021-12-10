@@ -47,11 +47,6 @@ jobs:
         run: |
           echo "SRC_BRANCH=${{steps.branch-name.outputs.current_branch}}" >> $GITHUB_ENV
 
-      - name: Setup tooling
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: 2.0
-
       - name: Create Build Directory
         run: cmake -E make_directory ${{github.workspace}}/build
 
@@ -64,6 +59,14 @@ jobs:
       - name: Configure CMake
         run: cmake -S . -B build -DKIVA_COVERAGE="${{ matrix.coverage }}" -DKIVA_STATIC_LIB="${{ matrix.static_lib }}" -DCMAKE_BUILD_TYPE="${{ matrix.config }}"
 
+      - name: Build
+        run: cmake --build build --config ${{ matrix.config }}
+
+      - name: Setup tooling
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 2.0
+
       - name: Post-configure
         if: matrix.coverage == 'OFF'
         run: |
@@ -71,9 +74,6 @@ jobs:
           git config --global core.autocrlf input
           ruby ../scripts/clone-and-mimic.rb
         working-directory: build
-
-      - name: Build
-        run: cmake --build build --config ${{ matrix.config }}
 
       - name: Run basic tests
         run: ctest -C ${{matrix.config}} --output-on-failure
