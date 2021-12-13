@@ -50,6 +50,7 @@ jobs:
 
       - name: Package
         run: cpack -C Release -B ${{github.workspace}}
+        working-directory: build
 
       - name: Upload executable to release assets
         uses: AButler/upload-release-assets@v2.0
