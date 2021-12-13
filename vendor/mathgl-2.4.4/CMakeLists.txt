@@ -14,6 +14,10 @@ if(NOT CMAKE_BUILD_TYPE)
 		None(CMAKE_CXX_FLAGS or CMAKE_C_FLAGS used) Debug Release RelWithDebInfo MinSizeRel." FORCE)
 endif(NOT CMAKE_BUILD_TYPE)
 
+if (POLICY CMP0127)
+	cmake_policy(SET CMP0127 OLD)
+endif()
+
 set(CMAKE_VERBOSE_MAKEFILE ON)
 set(MathGL_VERSION_MAJOR 2)
 set(MathGL_VERSION_MINOR 4)

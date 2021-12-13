@@ -36,6 +36,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
 
       - name: Get branch name
         uses: tj-actions/branch-names@v5
@@ -44,12 +46,6 @@ jobs:
       - name: Save branch name
         run: |
           echo "SRC_BRANCH=${{steps.branch-name.outputs.current_branch}}" >> $GITHUB_ENV
-
-      - name: Setup tooling
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: 2.0
-          #bundler-cache: true
 
       - name: Create Build Directory
         run: cmake -E make_directory ${{github.workspace}}/build
@@ -60,14 +56,13 @@ jobs:
           sudo apt-get update
           sudo apt-get -y install libglu1-mesa-dev freeglut3-dev mesa-common-dev
 
-      - name: Configure CMake Windows
-        if: matrix.os == 'windows-latest'
-        run: cmake -S . -B build -G "Visual Studio 16 2019" -DKIVA_COVERAGE="${{ matrix.coverage }}" -DKIVA_STATIC_LIB="${{ matrix.static_lib }}" -DCMAKE_BUILD_TYPE="${{ matrix.config }}"
-        shell: cmd
-
       - name: Configure CMake
-        if: matrix.os != 'windows-latest'
         run: cmake -S . -B build -DKIVA_COVERAGE="${{ matrix.coverage }}" -DKIVA_STATIC_LIB="${{ matrix.static_lib }}" -DCMAKE_BUILD_TYPE="${{ matrix.config }}"
+
+      - name: Setup tooling
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 2.0
 
       - name: Post-configure
         if: matrix.coverage == 'OFF'
@@ -81,12 +76,6 @@ jobs:
         run: cmake --build build --config ${{ matrix.config }}
 
       - name: Run basic tests
-        if: matrix.coverage == 'OFF' && matrix.os != 'windows-latest'
-        run: ctest --output-on-failure
-        working-directory: build
-
-      - name: Run basic tests Windows
-        if: matrix.coverage == 'OFF' && matrix.os == 'windows-latest'
         run: ctest -C ${{matrix.config}} --output-on-failure
         working-directory: build
 
