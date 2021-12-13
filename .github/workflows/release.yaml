@@ -43,10 +43,10 @@ jobs:
           sudo apt-get -y install libglu1-mesa-dev freeglut3-dev mesa-common-dev
 
       - name: Configure CMake
-        run: cmake -S . -B build -DKIVA_COVERAGE="${{ matrix.coverage }}" -DKIVA_STATIC_LIB="${{ matrix.static_lib }}" -DCMAKE_BUILD_TYPE="${{ matrix.config }}"
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 
       - name: Build
-        run: cmake --build build --config ${{ matrix.config }}
+        run: cmake --build build --config Release
 
       - name: Package
         run: cpack -C Release -B ${{github.workspace}}
