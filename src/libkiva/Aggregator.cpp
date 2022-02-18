@@ -84,8 +84,8 @@ void Aggregator::calc_weighted_results() {
     results.Tavg += p * Ta;
   }
 
-  results.Tconv = Tz - results.qconv / results.hconv;
-  results.Trad = Tr - results.qrad / results.hrad;
+  results.Tconv = results.hconv == 0 ? Tz : Tz - results.qconv / results.hconv;
+  results.Trad = results.hrad == 0 ? Tr : Tr - results.qrad / results.hrad;
 
   return;
 }
