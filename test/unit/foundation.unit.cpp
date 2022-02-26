@@ -277,8 +277,15 @@ TEST_F(AggregatorFixture, validation) {
   floor_results.add_instance(instances[0].ground.get(), 0.25);
   floor_results.add_instance(instances[1].ground.get(), 0.75);
   floor_results.calc_weighted_results(); // Expect success
+}
 
-  // Test for zero convection from foundation
+// Test for zero convection from foundation
+TEST_F(AggregatorFixture, zeroConvection) {
+
+  Aggregator floor_results;
+
+  floor_results = Aggregator(Surface::SurfaceType::ST_SLAB_CORE);
+  floor_results.add_instance(instances[0].ground.get(), 1.0);
   for (auto &surface : instances[0].foundation->surfaces) {
     for (auto index : surface.indices) {
       // Set slab temperature to match air temperature
@@ -293,8 +300,7 @@ TEST_F(AggregatorFixture, validation) {
 
   instances[0].ground->groundOutput.outputValues[{Surface::SurfaceType::ST_SLAB_CORE,
                                                   GroundOutput::OT_CONV}] = 0;
-  instances[1].ground->groundOutput.outputValues[{Surface::SurfaceType::ST_SLAB_CORE,
-                                                  GroundOutput::OT_CONV}] = 0;
+
   floor_results.calc_weighted_results();
   EXPECT_EQ(floor_results.results.Tconv,
             310.15); // Check that Tconv equals slab convective temperature when convection is zero
