@@ -132,6 +132,10 @@ void Foundation::createMeshData() {
     buildingSurfaces.push_back(poly);
   }
 
+  if (!isCounterClockWise(polygon)) {
+      boost::geometry::correct(polygon);
+  }
+
   Material air;
   air.conductivity = 0.02587;
   air.density = 1.275;

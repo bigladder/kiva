@@ -1,9 +1,9 @@
 /* Copyright (c) 2012-2021 Big Ladder Software LLC. All rights reserved.
  * See the LICENSE file for additional terms and conditions. */
 
-#include "fixtures/foundation-fixture.hpp"
 #include "fixtures/aggregator-fixture.hpp"
 #include "fixtures/bestest-fixture.hpp"
+#include "fixtures/foundation-fixture.hpp"
 #include "fixtures/typical-fixture.hpp"
 
 #include "Errors.hpp"
@@ -261,7 +261,6 @@ TEST_F(AggregatorFixture, validation) {
   EXPECT_DEATH(floor_results.calc_weighted_results(),
                "Aggregation requested for surface that is not part of foundation instance.");
 
-
   floor_results = Aggregator(Surface::SurfaceType::ST_SLAB_CORE);
 
   floor_results.add_instance(instances[0].ground.get(), 0.25);
@@ -285,50 +284,67 @@ TEST_F(TypicalFixture, convectionCallback) {
   double hc2 = bcs.slabConvectionAlgorithm(290., 295., 0., 0., 0.);
   EXPECT_NE(hc1, hc2);
   EXPECT_EQ(2.0, hc2);
-  bcs.slabConvectionAlgorithm = [=](double Tsurf, double Tamb, double HfTerm, double roughness, double cosTilt) -> double {
-      double deltaT = Tsurf - Tamb;
-      return hc2 + deltaT*deltaT + hc1 - getDOE2ConvectionCoeff(Tsurf, Tamb, HfTerm, roughness, cosTilt);
+  bcs.slabConvectionAlgorithm = [=](double Tsurf, double Tamb, double HfTerm, double roughness,
+                                    double cosTilt) -> double {
+    double deltaT = Tsurf - Tamb;
+    return hc2 + deltaT * deltaT + hc1 -
+           getDOE2ConvectionCoeff(Tsurf, Tamb, HfTerm, roughness, cosTilt);
   };
   double hc3 = bcs.slabConvectionAlgorithm(290., 295., 0., 0., 0.);
 
   EXPECT_NEAR(hc3, 27.0, 0.00001);
-
 }
 
 TEST_F(FoundationFixture, foundationSurfaces) {
-    fnd.foundationDepth = 1.0;
-    fnd.wall.heightAboveGrade = 0.0;
-    Material insulation(0.0288, 28.0, 1450.0);
-    InputBlock extIns;
-    extIns.z = 0;
-    extIns.x = fnd.wall.totalWidth();
-    extIns.depth = 1.0;
-    extIns.width = 0.05;
-    extIns.material = insulation;
-    fnd.inputBlocks.push_back(extIns);
-    fnd.createMeshData();
-    Domain domain(fnd);
-    EXPECT_EQ(fnd.surfaces[6].type, Surface::ST_GRADE);
-    EXPECT_EQ(fnd.surfaces[8].type, Surface::ST_WALL_TOP);
-    EXPECT_NEAR(fnd.surfaces[8].xMax, fnd.surfaces[6].xMin, 0.00001);
+  fnd.foundationDepth = 1.0;
+  fnd.wall.heightAboveGrade = 0.0;
+  Material insulation(0.0288, 28.0, 1450.0);
+  InputBlock extIns;
+  extIns.z = 0;
+  extIns.x = fnd.wall.totalWidth();
+  extIns.depth = 1.0;
+  extIns.width = 0.05;
+  extIns.material = insulation;
+  fnd.inputBlocks.push_back(extIns);
+  fnd.createMeshData();
+  Domain domain(fnd);
+  EXPECT_EQ(fnd.surfaces[6].type, Surface::ST_GRADE);
+  EXPECT_EQ(fnd.surfaces[8].type, Surface::ST_WALL_TOP);
+  EXPECT_NEAR(fnd.surfaces[8].xMax, fnd.surfaces[6].xMin, 0.00001);
 }
 
 TEST_F(FoundationFixture, foundationSurfaces2) {
-    Material insulation(0.0288, 28.0, 1450.0);
-    InputBlock intIns;
-    intIns.z = 0.0;
-    intIns.x = 0.0;
-    intIns.depth = 1.0;
-    intIns.width = -0.05;
-    intIns.material = insulation;
-    fnd.inputBlocks.push_back(intIns);
-    fnd.createMeshData();
-    Domain domain(fnd);
-    EXPECT_EQ(fnd.surfaces[5].type, Surface::ST_SLAB_CORE);
-    EXPECT_EQ(fnd.surfaces[8].type, Surface::ST_WALL_TOP);
-    EXPECT_NEAR(fnd.surfaces[5].xMax, fnd.surfaces[8].xMin, 0.00001);
+  Material insulation(0.0288, 28.0, 1450.0);
+  InputBlock intIns;
+  intIns.z = 0.0;
+  intIns.x = 0.0;
+  intIns.depth = 1.0;
+  intIns.width = -0.05;
+  intIns.material = insulation;
+  fnd.inputBlocks.push_back(intIns);
+  fnd.createMeshData();
+  Domain domain(fnd);
+  EXPECT_EQ(fnd.surfaces[5].type, Surface::ST_SLAB_CORE);
+  EXPECT_EQ(fnd.surfaces[8].type, Surface::ST_WALL_TOP);
+  EXPECT_NEAR(fnd.surfaces[5].xMax, fnd.surfaces[8].xMin, 0.00001);
 }
 
+TEST_F(FoundationFixture, clockwiseSurface) {
+  Material insulation(0.0288, 28.0, 1450.0);
+  InputBlock intIns;
+  intIns.z = 0.0;
+  intIns.x = 0.0;
+  intIns.depth = 1.0;
+  intIns.width = -0.05;
+  intIns.material = insulation;
+  fnd.inputBlocks.push_back(intIns);
+  fnd.polygon.clear();
+  fnd.polygon.outer().push_back(Point(-6.0, -6.0));
+  fnd.polygon.outer().push_back(Point(6.0, -6.0));
+  fnd.polygon.outer().push_back(Point(6.0, 6.0));
+  fnd.polygon.outer().push_back(Point(-6.0, 6.0));
+  fnd.createMeshData();
+}
 
 // Google Test main
 int main(int argc, char **argv) {

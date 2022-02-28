@@ -40,6 +40,7 @@ MultiPolygon mirrorY(MultiPolygon poly, double y);
 Polygon symmetricUnit(Polygon poly);
 bool isXSymmetric(Polygon poly);
 bool isYSymmetric(Polygon poly);
+bool isCounterClockWise(Polygon poly);
 double getXmin(Polygon poly, std::size_t vertex);
 double getYmin(Polygon poly, std::size_t vertex);
 double getXmax(Polygon poly, std::size_t vertex);

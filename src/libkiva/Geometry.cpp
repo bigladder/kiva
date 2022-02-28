@@ -11,6 +11,14 @@ namespace Kiva {
 
 static const double PI = 4.0 * atan(1.0);
 
+bool isCounterClockWise(Polygon poly) {
+  double area = boost::geometry::area(poly);
+  if (area < 0) {
+    return false;
+  }
+  return true;
+}
+
 bool isRectilinear(Polygon poly) {
   for (std::size_t v = 0; v < poly.outer().size(); v++) {
     double x = poly.outer()[v].get<0>();
