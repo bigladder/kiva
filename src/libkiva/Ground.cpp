@@ -383,7 +383,7 @@ void Ground::calculateSurfaceAverages() {
 
     if (totalArea > 0.0) {
       double Tconv = TAconv / totalArea;
-      double Tavg = Tconv - totalQc / hcA;
+      double Tavg = hcA == 0 ? Tconv : Tconv - totalQc / hcA;
       double hcAvg = hcA / totalArea;
       double hrAvg = hrA / totalArea;
       double hAvg = hA / totalArea;
