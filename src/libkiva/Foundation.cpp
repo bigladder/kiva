@@ -133,7 +133,8 @@ void Foundation::createMeshData() {
   }
 
   if (!isCounterClockWise(polygon)) {
-      boost::geometry::correct(polygon);
+    boost::geometry::correct(polygon);
+    showMessage(MSG_WARN, "Foundation floor polygon was modified to be counterclockwise as required in Kiva.");
   }
 
   Material air;

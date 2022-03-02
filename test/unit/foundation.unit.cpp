@@ -1,9 +1,9 @@
 /* Copyright (c) 2012-2021 Big Ladder Software LLC. All rights reserved.
  * See the LICENSE file for additional terms and conditions. */
 
+#include "fixtures/foundation-fixture.hpp"
 #include "fixtures/aggregator-fixture.hpp"
 #include "fixtures/bestest-fixture.hpp"
-#include "fixtures/foundation-fixture.hpp"
 #include "fixtures/typical-fixture.hpp"
 
 #include "Errors.hpp"
@@ -343,7 +343,9 @@ TEST_F(FoundationFixture, clockwiseSurface) {
   fnd.polygon.outer().push_back(Point(6.0, -6.0));
   fnd.polygon.outer().push_back(Point(6.0, 6.0));
   fnd.polygon.outer().push_back(Point(-6.0, 6.0));
+  EXPECT_FALSE(isCounterClockWise(fnd.polygon));
   fnd.createMeshData();
+  EXPECT_TRUE(isCounterClockWise(fnd.polygon));
 }
 
 // Google Test main
