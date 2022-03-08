@@ -132,6 +132,11 @@ void Foundation::createMeshData() {
     buildingSurfaces.push_back(poly);
   }
 
+  if (!isCounterClockWise(polygon)) {
+    boost::geometry::correct(polygon);
+    showMessage(MSG_WARN, "Foundation floor polygon was modified to be counterclockwise as required in Kiva.");
+  }
+
   Material air;
   air.conductivity = 0.02587;
   air.density = 1.275;
