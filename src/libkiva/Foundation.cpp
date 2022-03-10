@@ -1289,7 +1289,7 @@ void Foundation::createMeshData() {
         double xPosition = xRef2;
 
         // Foundation Wall
-        for (std::size_t n = wall.layers.size() - 1; n < wall.layers.size() /* && n >= 0 */; n--) {
+        for (int n = static_cast<int>(wall.layers.size()) - 1; n >= 0; n--) {
           Block block;
           block.material = wall.layers[n].material;
           block.blockType = Block::SOLID;
@@ -1309,7 +1309,7 @@ void Foundation::createMeshData() {
         double xPosition = xRef1;
 
         // Foundation Wall
-        for (std::size_t n = wall.layers.size() - 1; n < wall.layers.size() /* && n >= 0 */; n--) {
+        for (int n = static_cast<int>(wall.layers.size()) - 1; n >= 0; n--) {
           Block block;
           block.material = wall.layers[n].material;
           block.blockType = Block::SOLID;
@@ -1820,7 +1820,7 @@ void Foundation::createMeshData() {
       double xyPosition = 0.0;
 
       // Foundation Wall
-      for (std::size_t n = wall.layers.size() - 1; n < wall.layers.size() /*>= 0*/; n--) {
+      for (int n = static_cast<int>(wall.layers.size() - 1); n >= 0; n--) {
         Polygon poly;
         poly = offset(polygon, xyPosition + wall.layers[n].thickness);
 
@@ -2398,7 +2398,7 @@ void Foundation::createMeshData() {
       double xyPosition = 0.0;
 
       // Foundation Wall
-      for (std::size_t n = wall.layers.size() - 1; n < wall.layers.size() /*>= 0*/; n--) {
+      for (int n = static_cast<int>(wall.layers.size() - 1); n >= 0; n--) {
         Polygon tempPoly;
         tempPoly = offset(polygon, xyPosition + wall.layers[n].thickness);
 
