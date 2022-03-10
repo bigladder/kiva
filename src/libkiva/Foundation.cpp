@@ -1111,9 +1111,6 @@ void Foundation::createMeshData() {
         }
 
         if (twoParameters) {
-          double &Tin = wallTopInteriorTemperature;
-          double &Tout = wallTopExteriorTemperature;
-          double Tdiff = (Tin - Tout);
           std::size_t N = (std::size_t)((xyWallTopExterior - xyWallTopInterior + DBL_EPSILON) / mesh.minCellDim);
           double temperature = Tin - (1.0 / N) / 2 * Tdiff;
 
