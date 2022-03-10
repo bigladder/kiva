@@ -1328,19 +1328,22 @@ void Foundation::createMeshData() {
 
     // General blocks
     for (auto &b : inputBlocks) {
-      Block block;
-      block.material = b.material;
-      block.blockType = Block::SOLID;
-      block.xMin = xRef2 + b.box.min_corner().get<0>();
-      block.xMax = xRef2 + b.box.max_corner().get<0>();
-      block.yMin = 0.0;
-      block.yMax = 1.0;
-      block.setSquarePolygon();
-      block.zMin = b.box.min_corner().get<1>();
-      block.zMax = b.box.max_corner().get<1>();
-      blocks.push_back(block);
+      {
+        Block block;
+        block.material = b.material;
+        block.blockType = Block::SOLID;
+        block.xMin = xRef2 + b.box.min_corner().get<0>();
+        block.xMax = xRef2 + b.box.max_corner().get<0>();
+        block.yMin = 0.0;
+        block.yMax = 1.0;
+        block.setSquarePolygon();
+        block.zMin = b.box.min_corner().get<1>();
+        block.zMax = b.box.max_corner().get<1>();
+        blocks.push_back(block);
+      }
 
       if (twoParameters) {
+        Block block;
         block.material = b.material;
         block.blockType = Block::SOLID;
         block.xMin = xRef1 - b.box.min_corner().get<0>();
