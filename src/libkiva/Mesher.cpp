@@ -28,7 +28,7 @@ Mesher::Mesher(MeshData &data) : data(data) {
     double max = data.points[i + 1];
     double length = max - min;
     double cellWidth;
-    int numCells;
+    int numCells{0};
 
     if (isEqual(length, 0.0)) {
       // Zero width cells (used for boundary conditions)
@@ -126,7 +126,7 @@ Mesher::Mesher(MeshData &data) : data(data) {
           } else {
             bool search = true;
             int N = 0;
-            double multiplier;
+            double multiplier{0};
 
             while (search) {
               multiplier = 0.0;
