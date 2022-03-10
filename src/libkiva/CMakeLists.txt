@@ -184,7 +184,7 @@ target_include_directories(libkiva PUBLIC
   "${BOOST_SOURCE_DIR}"
   "${kiva_SOURCE_DIR}/vendor/eigen")
 
-target_compile_options(libkiva PRIVATE /W4)
+target_compile_options(libkiva PUBLIC /W4)
 target_compile_features(libkiva PUBLIC cxx_std_17) # Should be PRIVATE once boost is cleaned out of public API
 
 include(GenerateExportHeader)
