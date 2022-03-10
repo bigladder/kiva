@@ -546,16 +546,16 @@ void Ground::setNewBoundaryGeometry() {
       vNext2 = v + 2;
 
     Point a = foundation.polygon.outer()[vPrev];
-    Point b = foundation.polygon.outer()[v];
+    Point m_b = foundation.polygon.outer()[v];
     Point c = foundation.polygon.outer()[vNext];
     Point d = foundation.polygon.outer()[vNext2];
 
     // Correct U-turns
     if (foundation.isExposedPerimeter[vPrev] && foundation.isExposedPerimeter[v] &&
         foundation.isExposedPerimeter[vNext]) {
-      if (isEqual(getAngle(a, b, c) + getAngle(b, c, d), PI)) {
-        double AB = getDistance(a, b);
-        double BC = getDistance(b, c);
+      if (isEqual(getAngle(a, m_b, c) + getAngle(m_b, c, d), PI)) {
+        double AB = getDistance(a, m_b);
+        double BC = getDistance(m_b, c);
         double CD = getDistance(c, d);
         double edgeDistance = BC;
         double reductionDistance = std::min(AB, CD);
@@ -565,9 +565,9 @@ void Ground::setNewBoundaryGeometry() {
     }
 
     if (foundation.isExposedPerimeter[vPrev] && foundation.isExposedPerimeter[v]) {
-      double alpha = getAngle(a, b, c);
-      double A = getDistance(a, b);
-      double B = getDistance(b, c);
+      double alpha = getAngle(a, m_b, c);
+      double A = getDistance(a, m_b);
+      double B = getDistance(m_b, c);
 
       if (sin(alpha) > 0) {
         double f = getBoundaryDistance(1 - sin(alpha / 2) / (1 + cos(alpha / 2))) / sin(alpha / 2);
@@ -588,7 +588,7 @@ void Ground::setNewBoundaryGeometry() {
     }
 
     if (!foundation.isExposedPerimeter[v]) {
-      interiorPerimeter += getDistance(b, c);
+      interiorPerimeter += getDistance(m_b, c);
     }
   }
 
