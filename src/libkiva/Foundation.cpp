@@ -1111,8 +1111,8 @@ void Foundation::createMeshData() {
         }
 
         if (twoParameters) {
-          std::size_t N = (std::size_t)((xyWallTopExterior - xyWallTopInterior + DBL_EPSILON) / mesh.minCellDim);
-          double temperature = Tin - (1.0 / N) / 2 * Tdiff;
+          N = (std::size_t)((xyWallTopExterior - xyWallTopInterior + DBL_EPSILON) / mesh.minCellDim);
+          temperature = Tin - (1.0 / N) / 2 * Tdiff;
 
           for (std::size_t n = 1; n <= N; n++) {
             Surface surface;
@@ -2035,11 +2035,11 @@ void Foundation::createMeshData() {
     Box boundingBox;
     boost::geometry::envelope(symmetricPoly, boundingBox);
 
-    double xMinBB = boundingBox.min_corner().get<0>();
-    double yMinBB = boundingBox.min_corner().get<1>();
+    xMinBB = boundingBox.min_corner().get<0>();
+    yMinBB = boundingBox.min_corner().get<1>();
 
-    double xMaxBB = boundingBox.max_corner().get<0>();
-    double yMaxBB = boundingBox.max_corner().get<1>();
+    xMaxBB = boundingBox.max_corner().get<0>();
+    yMaxBB = boundingBox.max_corner().get<1>();
 
     if (isXSymm)
       xMin = xMinBB;
