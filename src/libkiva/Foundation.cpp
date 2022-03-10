@@ -1341,7 +1341,6 @@ void Foundation::createMeshData() {
       blocks.push_back(block);
 
       if (twoParameters) {
-        Block block;
         block.material = b.material;
         block.blockType = Block::SOLID;
         block.xMin = xRef1 - b.box.min_corner().get<0>();
@@ -1410,20 +1409,20 @@ void Foundation::createMeshData() {
   } else if (numberOfDimensions == 3 && !useSymmetry) {
 #if defined(KIVA_3D)
     // TODO 3D
-    Box boundingBox;
-    boost::geometry::envelope(polygon, boundingBox);
+    Box _boundingBox;
+    boost::geometry::envelope(polygon, _boundingBox);
 
-    xMinBB = boundingBox.min_corner().get<0>();
-    yMinBB = boundingBox.min_corner().get<1>();
+    double _xMinBB = _boundingBox.min_corner().get<0>();
+    double _yMinBB = _boundingBox.min_corner().get<1>();
 
-    xMaxBB = boundingBox.max_corner().get<0>();
-    yMaxBB = boundingBox.max_corner().get<1>();
+    double _xMaxBB = _boundingBox.max_corner().get<0>();
+    double _yMaxBB = _boundingBox.max_corner().get<1>();
 
-    xMin = xMinBB - farFieldWidth;
-    yMin = yMinBB - farFieldWidth;
+    xMin = _xMinBB - farFieldWidth;
+    yMin = _yMinBB - farFieldWidth;
 
-    xMax = xMaxBB + farFieldWidth;
-    yMax = yMaxBB + farFieldWidth;
+    xMax = _xMaxBB + farFieldWidth;
+    yMax = _yMaxBB + farFieldWidth;
 
     if (isGreaterThan(zMax, 0.0)) {
 
@@ -2032,27 +2031,27 @@ void Foundation::createMeshData() {
 
     nV = symmetricPoly.outer().size();
 
-    Box boundingBox;
-    boost::geometry::envelope(symmetricPoly, boundingBox);
+    Box _boundingBox;
+    boost::geometry::envelope(symmetricPoly, _boundingBox);
 
-    xMinBB = boundingBox.min_corner().get<0>();
-    yMinBB = boundingBox.min_corner().get<1>();
+    double _xMinBB = _boundingBox.min_corner().get<0>();
+    double _yMinBB = _boundingBox.min_corner().get<1>();
 
-    xMaxBB = boundingBox.max_corner().get<0>();
-    yMaxBB = boundingBox.max_corner().get<1>();
+    double _xMaxBB = _boundingBox.max_corner().get<0>();
+    double _yMaxBB = _boundingBox.max_corner().get<1>();
 
     if (isXSymm)
-      xMin = xMinBB;
+      xMin = _xMinBB;
     else
-      xMin = xMinBB - farFieldWidth;
+      xMin = _xMinBB - farFieldWidth;
 
     if (isYSymm)
-      yMin = yMinBB;
+      yMin = _yMinBB;
     else
-      yMin = yMinBB - farFieldWidth;
+      yMin = _yMinBB - farFieldWidth;
 
-    xMax = xMaxBB + farFieldWidth;
-    yMax = yMaxBB + farFieldWidth;
+    xMax = _xMaxBB + farFieldWidth;
+    yMax = _yMaxBB + farFieldWidth;
 
     Box domainBox(Point(xMin, yMin), Point(xMax, yMax));
 
