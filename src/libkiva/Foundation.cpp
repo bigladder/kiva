@@ -1413,11 +1413,11 @@ void Foundation::createMeshData() {
     Box boundingBox;
     boost::geometry::envelope(polygon, boundingBox);
 
-    double xMinBB = boundingBox.min_corner().get<0>();
-    double yMinBB = boundingBox.min_corner().get<1>();
+    xMinBB = boundingBox.min_corner().get<0>();
+    yMinBB = boundingBox.min_corner().get<1>();
 
-    double xMaxBB = boundingBox.max_corner().get<0>();
-    double yMaxBB = boundingBox.max_corner().get<1>();
+    xMaxBB = boundingBox.max_corner().get<0>();
+    yMaxBB = boundingBox.max_corner().get<1>();
 
     xMin = xMinBB - farFieldWidth;
     yMin = yMinBB - farFieldWidth;
