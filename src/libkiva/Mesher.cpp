@@ -201,7 +201,7 @@ std::size_t Mesher::getNearestIndex(double position) {
           return i;
       }
     }
-    return NULL;
+    return 0;
   }
 }
 
@@ -216,7 +216,7 @@ std::size_t Mesher::getNextIndex(double position) {
           isLessThan(position, this->centers[i + 1]))
         return i + 1;
     }
-    return NULL;
+    return 0;
   }
 }
 
@@ -231,7 +231,7 @@ std::size_t Mesher::getPreviousIndex(double position) {
           isLessOrEqual(position, this->centers[i]))
         return i - 1;
     }
-    return NULL;
+    return 0;
   }
 }
 } // namespace Kiva

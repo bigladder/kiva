@@ -97,7 +97,7 @@ void Ground::calculateADEUpwardSweep() {
 
 void Ground::calculateADEDownwardSweep() {
   // Downward sweep (Solve V Matrix starting from I, K)
-  for (size_t index = num_cells - 1; /* i >= 0 && */ index < num_cells; index--) {
+  for (int index = static_cast<int>(num_cells) - 1; index >= 0; index--) {
     auto this_cell = domain.cell[index];
     this_cell->calcCellADEDown(timestep, foundation, bcs, V[index]);
   }
@@ -548,15 +548,15 @@ void Ground::setNewBoundaryGeometry() {
     Point a = foundation.polygon.outer()[vPrev];
     Point m_b = foundation.polygon.outer()[v];
     Point c = foundation.polygon.outer()[vNext];
-    Point d = foundation.polygon.outer()[vNext2];
+    Point m_d = foundation.polygon.outer()[vNext2];
 
     // Correct U-turns
     if (foundation.isExposedPerimeter[vPrev] && foundation.isExposedPerimeter[v] &&
         foundation.isExposedPerimeter[vNext]) {
-      if (isEqual(getAngle(a, m_b, c) + getAngle(m_b, c, d), PI)) {
+      if (isEqual(getAngle(a, m_b, c) + getAngle(m_b, c, m_d), PI)) {
         double AB = getDistance(a, m_b);
         double BC = getDistance(m_b, c);
-        double CD = getDistance(c, d);
+        double CD = getDistance(c, m_d);
         double edgeDistance = BC;
         double reductionDistance = std::min(AB, CD);
         double reductionValue = 1 - getBoundaryValue(edgeDistance);
