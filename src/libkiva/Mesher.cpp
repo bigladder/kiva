@@ -202,6 +202,7 @@ std::size_t Mesher::getNearestIndex(double position) {
       }
     }
     showMessage(MSG_ERR, "Could not find the nearest Index.");
+    return 0;
   }
 }
 
@@ -217,6 +218,7 @@ std::size_t Mesher::getNextIndex(double position) {
         return i + 1;
     }
     showMessage(MSG_ERR, "Could not find the next Index.");
+    return 0;
   }
 }
 
@@ -232,6 +234,7 @@ std::size_t Mesher::getPreviousIndex(double position) {
         return i - 1;
     }
     showMessage(MSG_ERR, "Could not find the previous Index.");
+    return 0;
   }
 }
 } // namespace Kiva
