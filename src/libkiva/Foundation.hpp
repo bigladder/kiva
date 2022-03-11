@@ -51,7 +51,7 @@ public:
   SurfaceProperties exterior;
 
   double heightAboveGrade; // [m]
-  double depthBelowSlab;   // [m]
+  double depthBelowSlab{}; // [m]
   std::vector<Layer> layers;
 
   double totalWidth();

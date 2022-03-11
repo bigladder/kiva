@@ -8,12 +8,14 @@ namespace Kiva {
 
 static const double PI = 4.0 * atan(1.0);
 
-Material::Material() {}
+Material::Material() : conductivity{0}, density{0}, specificHeat{0} {}
 
 Material::Material(double k, double rho, double cp)
     : conductivity(k), density(rho), specificHeat(cp) {}
 
-InputBlock::InputBlock() : x(0.0), z(0.0), width(0.0), depth(0.0) {}
+InputBlock::InputBlock()
+    : x(0.0), z(0.0), width(0.0), depth(0.0),
+      box(Point(0, 0), Point(1, 1)) {}
 
 double Wall::totalWidth() {
   double width = 0.0;
