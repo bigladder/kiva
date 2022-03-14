@@ -14,7 +14,7 @@ if (MSVC)
   set_source_files_properties(${groundplot_src} PROPERTIES COMPILE_FLAGS "/wd4100 /wd4458 /wd4702")
 endif()
 
-target_compile_options(groundplot PUBLIC -Wall)
+target_compile_options(groundplot PUBLIC -W4)
 
 if (KIVA_COVERAGE)
   add_coverage(groundplot)
