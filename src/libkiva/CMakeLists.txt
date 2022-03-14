@@ -127,7 +127,7 @@ configure_file (
     "${PROJECT_BINARY_DIR}/Version.hpp"
 )
 
-set(kiva_src Aggregator.cpp
+set(libkiva_src Aggregator.cpp
              Aggregator.hpp
              Algorithms.cpp
              Algorithms.hpp
@@ -157,18 +157,18 @@ option( KIVA_STATIC_LIB "Make libkiva a static library" ON )
 
 if (MSVC)
   # Remove "potential loss of data" warning in Boost
-  set_source_files_properties(${kiva_src} PROPERTIES COMPILE_FLAGS "/wd4100 /wd4244 /wd4702 /wd4127 /wd4459")
+  set_source_files_properties(${libkiva_src} PROPERTIES COMPILE_FLAGS "/wd4100 /wd4244 /wd4702 /wd4127 /wd4459")
 endif()
 
 if (KIVA_STATIC_LIB)
-  add_library(libkiva STATIC ${kiva_src})
+  add_library(libkiva STATIC ${libkiva_src})
   target_compile_definitions(libkiva PRIVATE LIBKIVA_STATIC_DEFINE)
   if(UNIX)
     target_compile_options(libkiva PUBLIC -fPIC)
   endif()
 else()
   set(CMAKE_MACOSX_RPATH 1)
-  add_library(libkiva SHARED ${kiva_src})
+  add_library(libkiva SHARED ${libkiva_src})
   if(KIVA_EXE_BUILD)
     install(TARGETS libkiva DESTINATION bin/)
   endif()
