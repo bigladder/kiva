@@ -21,7 +21,10 @@ if (MSVC)
   set_source_files_properties(${kiva_src} PROPERTIES COMPILE_FLAGS /wd4458)
 endif()
 
-target_compile_options(kiva PUBLIC -w4)
+target_compile_options(kiva PRIVATE
+  $<$<CXX_COMPILER_ID:MSVC>:/W4 /WX>
+  $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic>
+)
 
 if (KIVA_COVERAGE)
   add_coverage(kiva)
