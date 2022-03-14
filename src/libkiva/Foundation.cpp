@@ -105,13 +105,12 @@ Foundation::Foundation()
       deepGroundBoundary(DGB_ZERO_FLUX), wallTopBoundary(WTB_ZERO_FLUX),
       soil(Material(1.73, 1842, 419)), grade(SurfaceProperties(0.9, 0.9, 0.03)),
       coordinateSystem(CS_CARTESIAN), numberOfDimensions(2), useSymmetry(true),
-      reductionStrategy(RS_BOUNDARY), exposedFraction(1.0), useDetailedExposedPerimeter(false),
-      buildingHeight(0.0), hasWall(true), hasSlab(true), perimeterSurfaceWidth(0.0),
-      hasPerimeterSurface(false), isXSymm{false}, mesh(Mesh()), numericalScheme(NS_ADI),
-      linearAreaMultiplier{0}, isYSymm{false}, fADI(0.00001), tolerance(1.0e-6),
-      maxIterations(100000), netArea{0}, reductionLength1{0},
-      wallTopInteriorTemperature{0}, wallTopExteriorTemperature{0}, netPerimeter{0},
-      twoParameters{false}, reductionLength2{0} {}
+      reductionStrategy(RS_BOUNDARY), isXSymm{false}, exposedFraction(1.0), useDetailedExposedPerimeter(false),
+      buildingHeight(0.0), hasWall(true), wallTopInteriorTemperature{0}, wallTopExteriorTemperature{0},
+      twoParameters{false}, reductionLength1{0}, reductionLength2{0},
+      linearAreaMultiplier{0}, isYSymm{false}, hasSlab(true), perimeterSurfaceWidth(0.0),
+      hasPerimeterSurface(false), mesh(Mesh()), numericalScheme(NS_ADI),
+      fADI(0.00001), tolerance(1.0e-6), maxIterations(100000), netArea{0}, netPerimeter{0} {}
 
 void Foundation::createMeshData() {
   std::size_t nV = polygon.outer().size();
