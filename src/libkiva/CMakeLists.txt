@@ -156,10 +156,9 @@ set(libkiva_src Aggregator.cpp
 option( KIVA_STATIC_LIB "Make libkiva a static library" ON )
 
 if (MSVC)
-  # Remove "potential loss of data" warning in Boost
   set_source_files_properties(${libkiva_src} PROPERTIES COMPILE_FLAGS "/wd4100 /wd4244 /wd4702 /wd4127 /wd4459")
 else()
-  set_source_files_properties(${libkiva_src} PROPERTIES COMPILE_FLAGS "-Wno-unused-parameter")
+  set_source_files_properties(${libkiva_src} PROPERTIES COMPILE_FLAGS "-Wno-unused-parameter -Wno-reorder-ctor")
 endif()
 
 if (KIVA_STATIC_LIB)
@@ -186,10 +185,9 @@ target_include_directories(libkiva PUBLIC
   "${BOOST_SOURCE_DIR}"
   "${kiva_SOURCE_DIR}/vendor/eigen")
 
-#target_compile_options(libkiva PUBLIC -w4)
 target_compile_options(libkiva PRIVATE
-  $<$<CXX_COMPILER_ID:MSVC>:/W4 /WX>
-  $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic>
+  $<$<CXX_COMPILER_ID:MSVC>:/W4>                              # Eventually add /WX
+  $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic>  # Eventually add -Werror
 )
 target_compile_features(libkiva PUBLIC cxx_std_17) # Should be PRIVATE once boost is cleaned out of public API
 
