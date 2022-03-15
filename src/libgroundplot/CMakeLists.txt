@@ -19,8 +19,9 @@ elseif (UNIX)
 endif()
 
 target_compile_options(groundplot PRIVATE
-  $<$<CXX_COMPILER_ID:MSVC>:/W4>                              # Eventually add /WX
-  $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic>  # Eventually add -Werror
+  $<$<CXX_COMPILER_ID:MSVC>:/W4>    # Eventually add /WX
+  $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>,$<CXX_COMPILER_ID:GNU>>: # Checks for GCC and Clang
+  -Wall -Wextra -Wpedantic>         # Eventually add -Werror
 )
 
 if (KIVA_COVERAGE)
