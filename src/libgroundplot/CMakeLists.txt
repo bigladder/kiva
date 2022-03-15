@@ -15,7 +15,7 @@ elseif (IOS)
   set_source_files_properties(GroundPlot.cpp PROPERTIES COMPILE_FLAGS "-Wno-unused-parameter")
 elseif (UNIX)
   # unknown-pragmas comes from using pragma omp parallel. It is a knonw issue. Possible solution will be to add '-fopenmp'
-  set_source_files_properties(GroundPlot.cpp PROPERTIES COMPILE_FLAGS "-Wno-unused-parameter -Wno-misleading-indentation -Wno-unknown-pragmas")
+  set_source_files_properties(GroundPlot.cpp PROPERTIES COMPILE_FLAGS "-Wno-unused-parameter -Wno-misleading-indentation -Wno-maybe-uninitialized -Wno-unknown-pragmas")
 endif()
 
 target_compile_options(groundplot PRIVATE
