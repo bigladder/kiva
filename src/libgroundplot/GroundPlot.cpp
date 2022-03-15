@@ -154,21 +154,22 @@ GroundPlot::GroundPlot(SnapshotSettings &snapshotSettings, Domain &domain, Found
   }
 
   if (sliceType == Z_1D) {
-    mglData hDatRef(vAxis.nN), hGridRef(vAxis.nN + 1), TDatRef(vAxis.nN), TGridRef(vAxis.nN + 1);
+    mglData hDatRef(static_cast<long>(vAxis.nN)), hGridRef(static_cast<long>(vAxis.nN + 1)), TDatRef(static_cast<long>(vAxis.nN)), TGridRef(static_cast<long>(vAxis.nN + 1));
     TDat = TDatRef;
     TGrid = TGridRef;
     hDat = hDatRef;
     hGrid = hGridRef;
   } else {
-    mglData hDatRef(hAxis.nN), hGridRef(hAxis.nN + 1), TDatRef(hAxis.nN, vAxis.nN),
-        TGridRef(hAxis.nN + 1, vAxis.nN + 1);
+    mglData hDatRef(static_cast<long>(hAxis.nN)), hGridRef(static_cast<long>(hAxis.nN + 1)), TDatRef(static_cast<long>(hAxis.nN), static_cast<long>(vAxis.nN)),
+        TGridRef(static_cast<long>(hAxis.nN + 1), static_cast<long>(vAxis.nN + 1));
     TDat = TDatRef;
     TGrid = TGridRef;
     hDat = hDatRef;
     hGrid = hGridRef;
   }
 
-  mglData vDatRef(vAxis.nN), vGridRef(vAxis.nN + 1), cDatRef(contourLevels);
+  mglData vDatRef(static_cast<long>(vAxis.nN)), vGridRef(static_cast<long>(vAxis.nN + 1)),
+      cDatRef(static_cast<long>(contourLevels));
 
   vDat = vDatRef;
   vGrid = vGridRef;
@@ -250,7 +251,7 @@ void GroundPlot::createFrame(std::string timeStamp) {
   gr.Clf(1, 1, 1);
   double aspect = 1.0;
   int height = snapshotSettings.size;
-  int width = height * aspect;
+  int width = height * static_cast<int>(aspect);
 
   gr.SetSize(width, height);
 

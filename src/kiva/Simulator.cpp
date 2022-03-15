@@ -113,7 +113,7 @@ void Simulator::initializeConditions() {
 
       for (boost::posix_time::ptime t = tAccelStart; t <= tAccelEnd; t += accelTimestep) {
         updateBoundaryConditions(t);
-        ground.calculate(bcs, accelTimestep.total_seconds());
+        ground.calculate(bcs, static_cast<double>(accelTimestep.total_seconds()));
         printStatus(t);
       }
 
@@ -130,7 +130,7 @@ void Simulator::initializeConditions() {
 
       for (boost::posix_time::ptime t = tWarmupStart; t <= tWarmupEnd; t += simulationTimestep) {
         updateBoundaryConditions(t);
-        ground.calculate(bcs, simulationTimestep.total_seconds());
+        ground.calculate(bcs, static_cast<double>(accelTimestep.total_seconds()));
         printStatus(t);
       }
     }
@@ -224,9 +224,9 @@ void Simulator::initializePlots() {
     boost::posix_time::ptime endTime(input.output.outputSnapshots[p].endDate +
                                      boost::gregorian::days(1));
 
-    plots[p].tStart = (startTime - input.simulationControl.startTime).total_seconds();
-    plots[p].nextPlotTime = (startTime - input.simulationControl.startTime).total_seconds();
-    plots[p].tEnd = (endTime - input.simulationControl.startTime).total_seconds();
+    plots[p].tStart = static_cast<double>((startTime - input.simulationControl.startTime).total_seconds());
+    plots[p].nextPlotTime = static_cast<double>((startTime - input.simulationControl.startTime).total_seconds());
+    plots[p].tEnd = static_cast<double>((endTime - input.simulationControl.startTime).total_seconds());
   }
 }
 
@@ -238,7 +238,7 @@ void Simulator::simulate() {
   boost::posix_time::time_duration simDuration = simEnd - simStart;
 
   prevOutputTime = input.simulationControl.startTime - input.output.outputReport.minFrequency;
-  double timestep = input.simulationControl.timestep.total_seconds();
+  double timestep = static_cast<double>(input.simulationControl.timestep.total_seconds());
 
   for (boost::posix_time::ptime t = simStart; t < simEnd;
        t = t + input.simulationControl.timestep) {
@@ -264,7 +264,7 @@ void Simulator::simulate() {
 
 void Simulator::plot(boost::posix_time::ptime t) {
   for (std::size_t p = 0; p < plots.size(); p++) {
-    if (plots[p].makeNewFrame((t - input.simulationControl.startTime).total_seconds())) {
+    if (plots[p].makeNewFrame(static_cast<double>((t - input.simulationControl.startTime).total_seconds()))) {
       std::string timeStamp = to_simple_string(t);
 
       std::size_t nI = plots[p].iMax - plots[p].iMin + 1;
@@ -370,7 +370,7 @@ double Simulator::getInitialTemperature(boost::posix_time::ptime t, double z) {
     boost::gregorian::date dayBegin(year, boost::gregorian::Jan, 1);
     boost::posix_time::ptime tYearStart(dayBegin);
     boost::posix_time::time_duration tSinceYearStart = t - tYearStart;
-    double trel = tSinceYearStart.total_seconds();
+    double trel = static_cast<double>(tSinceYearStart.total_seconds());
     double tshift = weatherData.hourOfMinimumTemperature * 60.0 * 60.0;
     double seconds_in_day = 60.0 * 60.0 * 24.0;
     double Tamp = (weatherData.maximumAverageMontlyTemperature -
