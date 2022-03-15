@@ -156,8 +156,8 @@ set(libkiva_src Aggregator.cpp
 option( KIVA_STATIC_LIB "Make libkiva a static library" ON )
 
 set(libkiva_suppress_warnings Geometry.cpp
-                              Ground.cpp
-                              Foundation.cpp
+                              Ground.cpp     # unknow-pragma
+                              Foundation.cpp # Reorder
                               Aggregator.cpp
                               Cell.cpp
                               Domain.cpp
@@ -168,7 +168,7 @@ if (MSVC)
 elseif (APPLE)
   set_source_files_properties(${libkiva_suppress_warnings} PROPERTIES COMPILE_FLAGS "-Wno-unused-parameter -Wno-reorder-ctor")
 elseif (UNIX)
-  set_source_files_properties(${libkiva_suppress_warnings} PROPERTIES COMPILE_FLAGS "-Wno-unused-parameter -Wno-reorder -Wno-maybe-uninitialized -Wno-unknown-pragmas")
+  set_source_files_properties(${libkiva_suppress_warnings} PROPERTIES COMPILE_FLAGS "-Wno-reorder -Wno-unknown-pragmas")
 endif()
 
 if (KIVA_STATIC_LIB)

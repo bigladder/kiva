@@ -4,7 +4,17 @@
 #ifndef GROUNDPLOT_H_
 #define GROUNDPLOT_H_
 
+//#if defined(__GNUC__)
+//#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunknown-pragmas"
+#pragma GCC diagnostic ignored "-Wmisleading-indentation"
+//#endif
 #include <mgl2/mgl.h>
+#pragma GCC diagnostic warning "-Wunknown-pragmas"
+#pragma GCC diagnostic warning "-Wmisleading-indentation"
+//#if defined(__GNUC__)
+//#pragma GCC diagnostic pop
+//#endif
 
 #include "../libkiva/Domain.hpp"
 #include "../libkiva/Foundation.hpp"
