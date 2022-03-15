@@ -155,10 +155,16 @@ set(libkiva_src Aggregator.cpp
 
 option( KIVA_STATIC_LIB "Make libkiva a static library" ON )
 
+set(libkiva_suppress_warnings Geometry.cpp
+                              Ground.cpp
+                              Foundation.cpp)
+
 if (MSVC)
-  set_source_files_properties(${libkiva_src} PROPERTIES COMPILE_FLAGS "/wd4100 /wd4244 /wd4702 /wd4127 /wd4459")
-else()
-  set_source_files_properties(${libkiva_src} PROPERTIES COMPILE_FLAGS "-Wno-unused-parameter -Wno-reorder-ctor")
+  set_source_files_properties(${libkiva_suppress_warnings} PROPERTIES COMPILE_FLAGS "/wd4100 /wd4244 /wd4702 /wd4127 /wd4459 /wd6011 /wd6386 ")
+elseif (IOS)
+  set_source_files_properties(${libkiva_suppress_warnings} PROPERTIES COMPILE_FLAGS "-Wno-unused-parameter -Wno-reorder-ctor")
+elseif (UNIX)
+  set_source_files_properties(${libkiva_suppress_warnings} PROPERTIES COMPILE_FLAGS "-Wno-unused-parameter -Wno-reorder")
 endif()
 
 if (KIVA_STATIC_LIB)

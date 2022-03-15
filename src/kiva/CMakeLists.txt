@@ -16,10 +16,17 @@ target_link_libraries(kiva libkiva groundplot boost_program_options yaml-cpp)
 
 target_include_directories(kiva PRIVATE "${groundplot_SOURCE_DIR}")
 
+set(kiva_suppress_warnings Main.cpp
+                           Input.cpp
+                           InputParser.cpp
+                           Simulator.cpp)
 if (MSVC)
-  set_source_files_properties(${kiva_src} PROPERTIES COMPILE_FLAGS /wd4458)
-else()
-  set_source_files_properties(${kiva_src} PROPERTIES COMPILE_FLAGS "-Wno-unused-parameter")
+  set_source_files_properties(${kiva_suppress_warnings} PROPERTIES COMPILE_FLAGS /wd4458)
+elseif (IOS)
+  set_source_files_properties(${kiva_suppress_warnings} PROPERTIES COMPILE_FLAGS "-Wno-unused-parameter")
+elseif (UNIX)
+  # unknown-pragmas comes from using pragma omp parallel. It is a knonw issue. Possible solution will be to add '-fopenmp'
+  set_source_files_properties(${kiva_suppress_warnings} PROPERTIES COMPILE_FLAGS "-Wno-unused-parameter -Wno-misleading-indentation -Wno-unknown-pragmas")
 endif()
 
 target_compile_options(kiva PRIVATE
