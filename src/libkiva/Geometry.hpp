@@ -4,16 +4,14 @@
 #ifndef GEOMETRY_H_
 #define GEOMETRY_H_
 
-//#pragma GCC diagnostic push
+#pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
 #include <boost/geometry.hpp>
 #include <boost/geometry/geometries/geometries.hpp>
 #include <boost/geometry/multi/geometries/multi_point.hpp>
 #include <boost/geometry/multi/geometries/multi_polygon.hpp>
-#pragma GCC diagnostic warning "-Wunused-parameter"
-#pragma GCC diagnostic warning "-Wmaybe-uninitialized"
-//#pragma GCC diagnostic pop
+#pragma GCC diagnostic pop
 
 #include "Functions.hpp"
 #include "libkiva_export.h"

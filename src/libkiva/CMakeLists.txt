@@ -168,7 +168,7 @@ if (MSVC)
 elseif (APPLE)
   set_source_files_properties(${libkiva_suppress_warnings} PROPERTIES COMPILE_FLAGS "-Wno-unused-parameter -Wno-reorder-ctor")
 elseif (UNIX)
-  set_source_files_properties(${libkiva_suppress_warnings} PROPERTIES COMPILE_FLAGS "-Wno-reorder -Wno-unknown-pragmas")
+  #set_source_files_properties(${libkiva_suppress_warnings} PROPERTIES COMPILE_FLAGS "-Wno-reorder -Wno-unknown-pragmas")
 endif()
 
 if (KIVA_STATIC_LIB)
