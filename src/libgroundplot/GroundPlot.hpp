@@ -4,10 +4,20 @@
 #ifndef GROUNDPLOT_H_
 #define GROUNDPLOT_H_
 
+#if defined(_MSC_VER)
+#pragma warning(push)
+#pragma warning(disable : 4068)
+#pragma warning(disable : 4458)
+#elif defined(__GNUC__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wmisleading-indentation"
+#endif
 #include <mgl2/mgl.h>
+#if defined(_MSC_VER)
+#pragma warning(pop)
+#elif defined(__GNUC__)
 #pragma GCC diagnostic pop
+#endif
 
 #include "../libkiva/Domain.hpp"
 #include "../libkiva/Foundation.hpp"

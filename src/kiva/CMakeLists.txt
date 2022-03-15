@@ -21,7 +21,7 @@ set(kiva_suppress_warnings Main.cpp
                            InputParser.cpp
                            Simulator.cpp)
 if (MSVC)
-  set_source_files_properties(${kiva_suppress_warnings} PROPERTIES COMPILE_FLAGS /wd4458)
+  #set_source_files_properties(${kiva_suppress_warnings} PROPERTIES COMPILE_FLAGS /wd4458)
 elseif (APPLE)
   set_source_files_properties(${kiva_suppress_warnings} PROPERTIES COMPILE_FLAGS "-Wno-unused-parameter")
 elseif (UNIX)

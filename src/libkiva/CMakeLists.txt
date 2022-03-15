@@ -164,7 +164,7 @@ set(libkiva_suppress_warnings Geometry.cpp
                               Instance.cpp)
 
 if (MSVC)
-  set_source_files_properties(${libkiva_suppress_warnings} PROPERTIES COMPILE_FLAGS "/wd4100 /wd4244 /wd4702 /wd4127 /wd4459 /wd6011 /wd6386 ")
+  #set_source_files_properties(${libkiva_suppress_warnings} PROPERTIES COMPILE_FLAGS "/wd4100 /wd4244 /wd4702 /wd4127 /wd4459 /wd6011 /wd6386 ")
 elseif (APPLE)
   set_source_files_properties(${libkiva_suppress_warnings} PROPERTIES COMPILE_FLAGS "-Wno-unused-parameter -Wno-reorder-ctor")
 elseif (UNIX)

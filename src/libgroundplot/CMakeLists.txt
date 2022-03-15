@@ -10,7 +10,7 @@ target_link_libraries(groundplot fmt mgl-static libkiva)
 target_include_directories(groundplot PUBLIC "${MathGL2_SOURCE_DIR}/include" "${MathGL2_BINARY_DIR}/include")
 
 if (MSVC)
-  set_source_files_properties(GroundPlot.cpp PROPERTIES COMPILE_FLAGS "/wd4100 /wd4458 /wd4702")
+  #set_source_files_properties(GroundPlot.cpp PROPERTIES COMPILE_FLAGS "/wd4100 /wd4458 /wd4702")
 elseif (APPLE)
   set_source_files_properties(GroundPlot.cpp PROPERTIES COMPILE_FLAGS "-Wno-unused-parameter")
 elseif (UNIX)
