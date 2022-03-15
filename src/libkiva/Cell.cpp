@@ -780,11 +780,11 @@ void BoundaryCell::ifCellADI(const std::size_t dim, const std::size_t sdim, cons
   A = kcoeff[sdim][dir] / dist[sdim][dir] + (hc + hr);
   if (dim == sdim) {
     Alt = -kcoeff[sdim][dir] / dist[sdim][dir];
-    bVal = (hc + hr) * Tair + heatGain;
+    bVal = hc * Tair + hr * Trad + heatGain;
   } else {
     Alt = 0.0;
     bVal = *(told_ptr + sign * stepsize[sdim]) * kcoeff[sdim][dir] / dist[sdim][dir] +
-           (hc + hr) * Tair + heatGain;
+           hc * Tair + hr * Trad + heatGain;
   }
 }
 
@@ -817,7 +817,7 @@ void BoundaryCell::ifCellMatrix(const std::size_t dim, const std::size_t dir, do
 
   A = kcoeff[dim][dir] / dist[dim][dir] + (hc + hr);
   Alt = -kcoeff[dim][dir] / dist[dim][dir];
-  bVal = (hc + hr) * Tair + heatGain;
+  bVal = hc * Tair + hr * Trad + heatGain;
 }
 
 void BoundaryCell::efCellMatrix(const std::size_t dim, const std::size_t dir, double &A,
@@ -846,7 +846,7 @@ void BoundaryCell::ifCellADEUp(const std::size_t dim, const std::size_t dir, dou
   } else /*if (dir == 0)*/ {
     bit = *(&U - stepsize[dim]);
   }
-  U = (kcoeff[dim][dir] * bit / dist[dim][dir] + (hc + hr) * Tair + heatGain) /
+  U = (kcoeff[dim][dir] * bit / dist[dim][dir] + hc * Tair + hr * Trad + heatGain) /
       (kcoeff[dim][dir] / dist[dim][dir] + (hc + hr));
 }
 
@@ -880,7 +880,7 @@ void BoundaryCell::ifCellADEDown(const std::size_t dim, const std::size_t dir, d
   } else /*if (dir == 0)*/ {
     bit = *(told_ptr - stepsize[dim]);
   }
-  V = (kcoeff[dim][dir] * bit / dist[dim][dir] + (hc + hr) * Tair + heatGain) /
+  V = (kcoeff[dim][dir] * bit / dist[dim][dir] + hc * Tair + hr * Trad + heatGain) /
       (kcoeff[dim][dir] / dist[dim][dir] + (hc + hr));
 }
 
@@ -908,7 +908,7 @@ double BoundaryCell::ifCellExplicit(const std::size_t dim, const std::size_t &di
   int sign = (dir == 0) ? -1 : 1;
 
   return (kcoeff[dim][dir] * *(told_ptr + sign * stepsize[dim]) / dist[dim][dir] +
-          (hc + hr) * Tair + heatGain) /
+          hc * Tair + hr * Trad + heatGain) /
          (kcoeff[dim][dir] / dist[dim][dir] + (hc + hr));
 }
 
