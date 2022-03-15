@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2021 Big Ladder Software LLC. All rights reserved.
+/* Copyright (c) 2012-2022 Big Ladder Software LLC. All rights reserved.
  * See the LICENSE file for additional terms and conditions. */
 
 #ifndef INPUT_HPP_
@@ -15,7 +15,6 @@ namespace filesys = std::experimental::filesystem;
 #else
 #error "no filesystem support"
 #endif
-
 
 #include <boost/date_time/gregorian/gregorian.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>

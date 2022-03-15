@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2021 Big Ladder Software LLC. All rights reserved.
+/* Copyright (c) 2012-2022 Big Ladder Software LLC. All rights reserved.
  * See the LICENSE file for additional terms and conditions. */
 
 #ifndef Cell_CPP
@@ -759,8 +759,8 @@ BoundaryCell::calculateHeatFlux(int ndims, double &TNew, std::size_t nX, std::si
                                               surfacePtr->propPtr->roughness, cosTilt);            \
   double hr = getExteriorIRCoeff(surfacePtr->propPtr->emissivity, *told_ptr, Tair, Fqtr);
 
-void BoundaryCell::zfCellADI(const std::size_t dim, const std::size_t sdim, const std::size_t sign, double &A,
-                             double &Alt, double &bVal) {
+void BoundaryCell::zfCellADI(const std::size_t dim, const std::size_t sdim, const std::size_t sign,
+                             double &A, double &Alt, double &bVal) {
   A = 1.0;
   if (dim == sdim) {
     Alt = -1.0;
@@ -771,7 +771,8 @@ void BoundaryCell::zfCellADI(const std::size_t dim, const std::size_t sdim, cons
   }
 }
 
-void BoundaryCell::ifCellADI(const std::size_t dim, const std::size_t sdim, const std::size_t dir, double &A, double &Alt, double &bVal) {
+void BoundaryCell::ifCellADI(const std::size_t dim, const std::size_t sdim, const std::size_t dir,
+                             double &A, double &Alt, double &bVal) {
   INTFLUX_PREFACE
 
   int sign = (dir == 0) ? -1 : 1;
@@ -787,7 +788,8 @@ void BoundaryCell::ifCellADI(const std::size_t dim, const std::size_t sdim, cons
   }
 }
 
-void BoundaryCell::efCellADI(const std::size_t dim, const std::size_t sdim, const std::size_t dir, double &A, double &Alt, double &bVal) {
+void BoundaryCell::efCellADI(const std::size_t dim, const std::size_t sdim, const std::size_t dir,
+                             double &A, double &Alt, double &bVal) {
   EXTFLUX_PREFACE
 
   int sign = (dir == 0) ? -1 : 1;
@@ -809,7 +811,8 @@ void BoundaryCell::zfCellMatrix(double &A, double &Alt, double &bVal) {
   bVal = 0.0;
 }
 
-void BoundaryCell::ifCellMatrix(const std::size_t dim, const std::size_t dir, double &A, double &Alt, double &bVal) {
+void BoundaryCell::ifCellMatrix(const std::size_t dim, const std::size_t dir, double &A,
+                                double &Alt, double &bVal) {
   INTFLUX_PREFACE
 
   A = kcoeff[dim][dir] / dist[dim][dir] + (hc + hr);
@@ -817,7 +820,8 @@ void BoundaryCell::ifCellMatrix(const std::size_t dim, const std::size_t dir, do
   bVal = (hc + hr) * Tair + heatGain;
 }
 
-void BoundaryCell::efCellMatrix(const std::size_t dim, const std::size_t dir, double &A, double &Alt, double &bVal) {
+void BoundaryCell::efCellMatrix(const std::size_t dim, const std::size_t dir, double &A,
+                                double &Alt, double &bVal) {
   EXTFLUX_PREFACE
 
   A = kcoeff[dim][dir] / dist[dim][dir] + (hc + hr);

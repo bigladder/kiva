@@ -1,8 +1,8 @@
-/* Copyright (c) 2012-2021 Big Ladder Software LLC. All rights reserved.
+/* Copyright (c) 2012-2022 Big Ladder Software LLC. All rights reserved.
  * See the LICENSE file for additional terms and conditions. */
 
-#include "Errors.hpp"
 #include "InputParser.hpp"
+#include "Errors.hpp"
 
 Input inputParser(std::string inputFile) {
 

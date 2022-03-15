@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2021 Big Ladder Software LLC. All rights reserved.
+/* Copyright (c) 2012-2022 Big Ladder Software LLC. All rights reserved.
  * See the LICENSE file for additional terms and conditions. */
 
 #ifndef GroundPlot_CPP
@@ -283,19 +283,19 @@ void GroundPlot::createFrame(std::string timeStamp) {
   switch (sliceType) {
   case XY: {
     std::string sliceString =
-        "Z = " + fmt::format("Z = {:0.2f} {}",slice * distanceUnitConversion, distanceUnit);
+        "Z = " + fmt::format("Z = {:0.2f} {}", slice * distanceUnitConversion, distanceUnit);
     if (snapshotSettings.axes)
       gr.Puts(hText, vText - vTextSpacing, sliceString.c_str(), ":AL");
   } break;
   case XZ: {
     std::string sliceString =
-        "Y = " + fmt::format("Z = {:0.2f} {}",slice * distanceUnitConversion, distanceUnit);
+        "Y = " + fmt::format("Z = {:0.2f} {}", slice * distanceUnitConversion, distanceUnit);
     if (snapshotSettings.axes)
       gr.Puts(hText, vText - vTextSpacing, sliceString.c_str(), ":AL");
   } break;
   case YZ: {
     std::string sliceString =
-        "X = " + fmt::format("Z = {:0.2f} {}",slice * distanceUnitConversion, distanceUnit);
+        "X = " + fmt::format("Z = {:0.2f} {}", slice * distanceUnitConversion, distanceUnit);
     if (snapshotSettings.axes)
       gr.Puts(hText, vText - vTextSpacing, sliceString.c_str(), ":AL");
   }
@@ -592,12 +592,10 @@ void GroundPlot::createFrame(std::string timeStamp) {
   }
 
   if (snapshotSettings.format == SnapshotSettings::F_PNG)
-    gr.WritePNG(
-        (fmt::format("{}/{:04d}.png",snapshotSettings.dir,frameNumber)).c_str(),
-        "", false);
+    gr.WritePNG((fmt::format("{}/{:04d}.png", snapshotSettings.dir, frameNumber)).c_str(), "",
+                false);
   else if (snapshotSettings.format == SnapshotSettings::F_TEX)
-    gr.WriteTEX(
-        (fmt::format("{}/{:04d}.tex",snapshotSettings.dir,frameNumber)).c_str());
+    gr.WriteTEX((fmt::format("{}/{:04d}.tex", snapshotSettings.dir, frameNumber)).c_str());
 
   frameNumber += 1;
   nextPlotTime += snapshotSettings.frequency;
