@@ -11,7 +11,7 @@ target_include_directories(groundplot PUBLIC "${MathGL2_SOURCE_DIR}/include" "${
 
 if (MSVC)
   set_source_files_properties(GroundPlot.cpp PROPERTIES COMPILE_FLAGS "/wd4100 /wd4458 /wd4702")
-elseif (IOS)
+elseif (APPLE)
   set_source_files_properties(GroundPlot.cpp PROPERTIES COMPILE_FLAGS "-Wno-unused-parameter")
 elseif (UNIX)
   # unknown-pragmas comes from using pragma omp parallel. It is a knonw issue. Possible solution will be to add '-fopenmp'

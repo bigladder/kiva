@@ -22,7 +22,7 @@ set(kiva_suppress_warnings Main.cpp
                            Simulator.cpp)
 if (MSVC)
   set_source_files_properties(${kiva_suppress_warnings} PROPERTIES COMPILE_FLAGS /wd4458)
-elseif (IOS)
+elseif (APPLE)
   set_source_files_properties(${kiva_suppress_warnings} PROPERTIES COMPILE_FLAGS "-Wno-unused-parameter")
 elseif (UNIX)
   # unknown-pragmas comes from using pragma omp parallel. It is a knonw issue. Possible solution will be to add '-fopenmp'
