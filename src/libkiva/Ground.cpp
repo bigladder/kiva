@@ -74,13 +74,17 @@ void Ground::calculateADE() {
 // Solve for new values (Main loop)
 #if defined(_OPENMP)
 #pragma omp parallel sections num_threads(2)
+#endif
   {
+#if defined(_OPENMP)
 #pragma omp section
+#endif
     calculateADEUpwardSweep();
+#if defined(_OPENMP)
 #pragma omp section
+#endif
     calculateADEDownwardSweep();
   }
-#endif
   for (size_t index = 0; index < num_cells; ++index) {
     TNew[index] = 0.5 * (U[index] + V[index]);
 
