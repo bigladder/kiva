@@ -13,7 +13,7 @@
 #elif defined(__APPLE__)
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-parameter"
-#elif defined(__GNU__)
+#elif defined(__gnu_linux__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
@@ -26,7 +26,7 @@
 #pragma warning(pop)
 #elif defined(__APPLE__)
 #pragma clang diagnostic pop
-#elif defined(__GNU__)
+#elif defined(__gnu_linux__)
 #pragma GCC diagnostic pop
 #endif
 

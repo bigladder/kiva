@@ -8,14 +8,14 @@
 #pragma warning(push)
 #pragma warning(disable : 4068)
 #pragma warning(disable : 4458)
-#elif defined(__GNUC__)
+#elif defined(__gnu_linux__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wmisleading-indentation"
 #endif
 #include <mgl2/mgl.h>
 #if defined(_MSC_VER)
 #pragma warning(pop)
-#elif defined(__GNUC__)
+#elif defined(__gnu_linux__)
 #pragma GCC diagnostic pop
 #endif
 
