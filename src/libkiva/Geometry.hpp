@@ -10,7 +10,10 @@
 #pragma warning(disable : 4127)
 #pragma warning(disable : 4244)
 #pragma warning(disable : 4702)
-#elif defined(__GNUC__)
+#elif defined(__APPLE__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-parameter"
+#elif defined(__GNU__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
@@ -21,7 +24,9 @@
 #include <boost/geometry/multi/geometries/multi_polygon.hpp>
 #if defined(_MSC_VER)
 #pragma warning(pop)
-#elif defined(__GNUC__)
+#elif defined(__APPLE__)
+#pragma clang diagnostic pop
+#elif defined(__GNU__)
 #pragma GCC diagnostic pop
 #endif
 
