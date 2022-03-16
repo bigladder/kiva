@@ -188,9 +188,9 @@ target_include_directories(libkiva PUBLIC
   "${kiva_SOURCE_DIR}/vendor/eigen")
 
 target_compile_options(libkiva PRIVATE
-  $<$<CXX_COMPILER_ID:MSVC>:/W4>    # Eventually add /WX
+  $<$<CXX_COMPILER_ID:MSVC>:/W4 /WX>    # Eventually add /WX
   $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>,$<CXX_COMPILER_ID:GNU>>: # Checks for GCC and Clang
-  -Wall -Wextra -Wpedantic>         # Eventually add -Werror
+  -Wall -Wextra -Wpedantic -Werror>         # Eventually add -Werror
 )
 target_compile_features(libkiva PUBLIC cxx_std_17) # Should be PRIVATE once boost is cleaned out of public API
 

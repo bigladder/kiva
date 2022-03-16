@@ -22,9 +22,9 @@ set(kiva_suppress_warnings Main.cpp
                            Simulator.cpp)
 
 target_compile_options(kiva PRIVATE
-  $<$<CXX_COMPILER_ID:MSVC>:/W4>    # Eventually add /WX
+  $<$<CXX_COMPILER_ID:MSVC>:/W4 /WX>    # Eventually add /WX
   $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>,$<CXX_COMPILER_ID:GNU>>: # Checks for GCC and Clang
-  -Wall -Wextra -Wpedantic>         # Eventually add -Werror
+  -Wall -Wextra -Wpedantic -Werror>         # Eventually add -Werror
 )
 
 if (KIVA_COVERAGE)
