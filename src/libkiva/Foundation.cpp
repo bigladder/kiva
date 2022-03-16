@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2021 Big Ladder Software LLC. All rights reserved.
+/* Copyright (c) 2012-2022 Big Ladder Software LLC. All rights reserved.
  * See the LICENSE file for additional terms and conditions. */
 
 #include "Foundation.hpp"
@@ -138,7 +138,9 @@ void Foundation::createMeshData() {
 
   if (!isCounterClockWise(polygon)) {
     boost::geometry::correct(polygon);
-    showMessage(MSG_WARN, "Foundation floor polygon was modified to be counterclockwise as required in Kiva.");
+    showMessage(
+        MSG_WARN,
+        "Foundation floor polygon was modified to be counterclockwise as required in Kiva.");
   }
 
   Material air;
@@ -232,17 +234,19 @@ void Foundation::createMeshData() {
 
     // Blocks along the top may be part of a wall.
     if (isEqual(bZmax, zMax)) {
-      if (isGreaterOrEqual(bXmax,xyWallTopInterior) && isLessThan(bXmin,xyWallTopInterior)) {
-        // Block is likely part of wall if it's narrow relative to wall or if there is any foundation depth
+      if (isGreaterOrEqual(bXmax, xyWallTopInterior) && isLessThan(bXmin, xyWallTopInterior)) {
+        // Block is likely part of wall if it's narrow relative to wall or if there is any
+        // foundation depth
         if (std::abs(b.width) <= wall.totalWidth() / 2. || foundationDepth > 0.0) {
           xyWallTopInterior = std::min(bXmin, xyWallTopInterior);
           if (foundationDepth == 0.0) {
-              xySlabNear = xyWallTopInterior;
+            xySlabNear = xyWallTopInterior;
           }
         }
       }
-      if (isLessOrEqual(bXmin,xyWallTopExterior) && isGreaterThan(bXmax,xyWallTopExterior)) {
-        // Block is likely part of wall if it's narrow relative to wall or if the wall top is above grade
+      if (isLessOrEqual(bXmin, xyWallTopExterior) && isGreaterThan(bXmax, xyWallTopExterior)) {
+        // Block is likely part of wall if it's narrow relative to wall or if the wall top is above
+        // grade
         if (std::abs(b.width) <= wall.totalWidth() / 2. ||
             (hasWall && wall.heightAboveGrade > 0.0)) {
           xyWallTopExterior = std::max(bXmax, xyWallTopExterior);
@@ -1092,7 +1096,8 @@ void Foundation::createMeshData() {
         double &Tin = wallTopInteriorTemperature;
         double &Tout = wallTopExteriorTemperature;
         double Tdiff = (Tin - Tout);
-        std::size_t N = (std::size_t)((xyWallTopExterior - xyWallTopInterior + DBL_EPSILON) / mesh.minCellDim);
+        std::size_t N =
+            (std::size_t)((xyWallTopExterior - xyWallTopInterior + DBL_EPSILON) / mesh.minCellDim);
         double temperature = Tin - (1.0 / N) / 2 * Tdiff;
 
         for (std::size_t n = 1; n <= N; n++) {
@@ -1675,7 +1680,8 @@ void Foundation::createMeshData() {
         double &Tin = wallTopInteriorTemperature;
         double &Tout = wallTopExteriorTemperature;
         double Tdiff = (Tin - Tout);
-        std::size_t N = (std::size_t)((xyWallTopExterior - xyWallTopInterior + DBL_EPSILON) / mesh.minCellDim);
+        std::size_t N =
+            (std::size_t)((xyWallTopExterior - xyWallTopInterior + DBL_EPSILON) / mesh.minCellDim);
         double temperature = Tin - (1.0 / N) / 2 * Tdiff;
 
         for (std::size_t n = 1; n <= N; n++) {
@@ -2226,7 +2232,8 @@ void Foundation::createMeshData() {
         double &Tin = wallTopInteriorTemperature;
         double &Tout = wallTopExteriorTemperature;
         double Tdiff = (Tin - Tout);
-        std::size_t N = (std::size_t)((xyWallTopExterior - xyWallTopInterior + DBL_EPSILON) / mesh.minCellDim);
+        std::size_t N =
+            (std::size_t)((xyWallTopExterior - xyWallTopInterior + DBL_EPSILON) / mesh.minCellDim);
         double temperature = Tin - (1.0 / N) / 2 * Tdiff;
 
         for (std::size_t n = 1; n <= N; n++) {
