@@ -155,14 +155,6 @@ set(libkiva_src Aggregator.cpp
 
 option( KIVA_STATIC_LIB "Make libkiva a static library" ON )
 
-set(libkiva_suppress_warnings Geometry.cpp
-                              Ground.cpp     # unknow-pragma
-                              Foundation.cpp # Reorder
-                              Aggregator.cpp
-                              Cell.cpp
-                              Domain.cpp
-                              Instance.cpp)
-
 if (KIVA_STATIC_LIB)
   add_library(libkiva STATIC ${libkiva_src})
   target_compile_definitions(libkiva PRIVATE LIBKIVA_STATIC_DEFINE)
@@ -188,9 +180,9 @@ target_include_directories(libkiva PUBLIC
   "${kiva_SOURCE_DIR}/vendor/eigen")
 
 target_compile_options(libkiva PRIVATE
-  $<$<CXX_COMPILER_ID:MSVC>:/W4 /WX>    # Eventually add /WX
-  $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>,$<CXX_COMPILER_ID:GNU>>: # Checks for GCC and Clang
-  -Wall -Wextra -Wpedantic -Werror>         # Eventually add -Werror
+  $<$<CXX_COMPILER_ID:MSVC>:/W4 /WX>
+  $<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>,$<CXX_COMPILER_ID:GNU>>:
+  -Wall -Wextra -Wpedantic -Werror>
 )
 target_compile_features(libkiva PUBLIC cxx_std_17) # Should be PRIVATE once boost is cleaned out of public API
 

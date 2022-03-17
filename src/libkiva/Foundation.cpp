@@ -13,9 +13,7 @@ Material::Material() : conductivity{0}, density{0}, specificHeat{0} {}
 Material::Material(double k, double rho, double cp)
     : conductivity(k), density(rho), specificHeat(cp) {}
 
-InputBlock::InputBlock()
-    : x(0.0), z(0.0), width(0.0), depth(0.0),
-      box(Point(0, 0), Point(1, 1)) {}
+InputBlock::InputBlock() : x(0.0), z(0.0), width(0.0), depth(0.0), box(Point(0, 0), Point(0, 0)) {}
 
 double Wall::totalWidth() {
   double width = 0.0;
@@ -102,15 +100,16 @@ bool Ranges::isType(double position, RangeType::Type type) {
 
 Foundation::Foundation()
     : deepGroundDepth(40.0), farFieldWidth(40.0), foundationDepth(0.0), orientation(0.0),
-      deepGroundBoundary(DGB_ZERO_FLUX), wallTopInteriorTemperature{0}, wallTopExteriorTemperature{0},
-      wallTopBoundary(WTB_ZERO_FLUX), soil(Material(1.73, 1842, 419)), grade(SurfaceProperties(0.9, 0.9, 0.03)),
+      deepGroundBoundary(DGB_ZERO_FLUX), wallTopInteriorTemperature{0},
+      wallTopExteriorTemperature{0}, wallTopBoundary(WTB_ZERO_FLUX),
+      soil(Material(1.73, 1842, 419)), grade(SurfaceProperties(0.9, 0.9, 0.03)),
       coordinateSystem(CS_CARTESIAN), numberOfDimensions(2), useSymmetry(true),
-      reductionStrategy(RS_BOUNDARY), twoParameters{false}, reductionLength1{0}, reductionLength2{0},
-      linearAreaMultiplier{0}, isXSymm{false}, isYSymm{false}, exposedFraction(1.0),
-      useDetailedExposedPerimeter(false), buildingHeight(0.0),
-      hasWall(true), hasSlab(true), perimeterSurfaceWidth(0.0),
-      hasPerimeterSurface(false),  mesh(Mesh()), numericalScheme(NS_ADI),
-      fADI(0.00001), tolerance(1.0e-6), maxIterations(100000), netArea{0}, netPerimeter{0} {}
+      reductionStrategy(RS_BOUNDARY), twoParameters{false}, reductionLength1{0},
+      reductionLength2{0}, linearAreaMultiplier{0}, isXSymm{false}, isYSymm{false},
+      exposedFraction(1.0), useDetailedExposedPerimeter(false), buildingHeight(0.0), hasWall(true),
+      hasSlab(true), perimeterSurfaceWidth(0.0), hasPerimeterSurface(false), mesh(Mesh()),
+      numericalScheme(NS_ADI), fADI(0.00001), tolerance(1.0e-6),
+      maxIterations(100000), netArea{0}, netPerimeter{0} {}
 
 void Foundation::createMeshData() {
   std::size_t nV = polygon.outer().size();
@@ -1092,36 +1091,43 @@ void Foundation::createMeshData() {
     if (wallTopBoundary == WTB_LINEAR_DT) {
       // Wall Top
       if (hasWall) {
-        double position = 0.0;
-        double &Tin = wallTopInteriorTemperature;
-        double &Tout = wallTopExteriorTemperature;
-        double Tdiff = (Tin - Tout);
-        std::size_t N =
-            (std::size_t)((xyWallTopExterior - xyWallTopInterior + DBL_EPSILON) / mesh.minCellDim);
-        double temperature = Tin - (1.0 / N) / 2 * Tdiff;
+        {
+          double position = 0.0;
+          double &Tin = wallTopInteriorTemperature;
+          double &Tout = wallTopExteriorTemperature;
+          double Tdiff = (Tin - Tout);
+          std::size_t N = (std::size_t)((xyWallTopExterior - xyWallTopInterior + DBL_EPSILON) /
+                                        mesh.minCellDim);
+          double temperature = Tin - (1.0 / N) / 2 * Tdiff;
 
-        for (std::size_t n = 1; n <= N; n++) {
-          Surface surface;
-          surface.type = Surface::ST_WALL_TOP;
-          surface.xMin = xRef2 + position;
-          surface.xMax = xRef2 + position + (xyWallTopExterior - xyWallTopInterior) / N;
-          surface.yMin = 0.0;
-          surface.yMax = 1.0;
-          surface.setSquarePolygon();
-          surface.zMin = zMax;
-          surface.zMax = zMax;
-          surface.boundaryConditionType = Surface::CONSTANT_TEMPERATURE;
-          surface.orientation = Surface::Z_POS;
-          surface.temperature = temperature;
-          surfaces.push_back(surface);
+          for (std::size_t n = 1; n <= N; n++) {
+            Surface surface;
+            surface.type = Surface::ST_WALL_TOP;
+            surface.xMin = xRef2 + position;
+            surface.xMax = xRef2 + position + (xyWallTopExterior - xyWallTopInterior) / N;
+            surface.yMin = 0.0;
+            surface.yMax = 1.0;
+            surface.setSquarePolygon();
+            surface.zMin = zMax;
+            surface.zMax = zMax;
+            surface.boundaryConditionType = Surface::CONSTANT_TEMPERATURE;
+            surface.orientation = Surface::Z_POS;
+            surface.temperature = temperature;
+            surfaces.push_back(surface);
 
-          position += (xyWallTopExterior - xyWallTopInterior) / N;
-          temperature -= (1.0 / N) * Tdiff;
+            position += (xyWallTopExterior - xyWallTopInterior) / N;
+            temperature -= (1.0 / N) * Tdiff;
+          }
         }
 
         if (twoParameters) {
-          N = (std::size_t)((xyWallTopExterior - xyWallTopInterior + DBL_EPSILON) / mesh.minCellDim);
-          temperature = Tin - (1.0 / N) / 2 * Tdiff;
+          double position = 0.0;
+          double &Tin = wallTopInteriorTemperature;
+          double &Tout = wallTopExteriorTemperature;
+          double Tdiff = (Tin - Tout);
+          std::size_t N = (std::size_t)((xyWallTopExterior - xyWallTopInterior + DBL_EPSILON) /
+                                        mesh.minCellDim);
+          double temperature = Tin - (1.0 / N) / 2 * Tdiff;
 
           for (std::size_t n = 1; n <= N; n++) {
             Surface surface;
@@ -1421,20 +1427,12 @@ void Foundation::createMeshData() {
   } else if (numberOfDimensions == 3 && !useSymmetry) {
 #if defined(KIVA_3D)
     // TODO 3D
-    Box _boundingBox;
-    boost::geometry::envelope(polygon, _boundingBox);
 
-    double _xMinBB = _boundingBox.min_corner().get<0>();
-    double _yMinBB = _boundingBox.min_corner().get<1>();
+    xMin = xMinBB - farFieldWidth;
+    yMin = yMinBB - farFieldWidth;
 
-    double _xMaxBB = _boundingBox.max_corner().get<0>();
-    double _yMaxBB = _boundingBox.max_corner().get<1>();
-
-    xMin = _xMinBB - farFieldWidth;
-    yMin = _yMinBB - farFieldWidth;
-
-    xMax = _xMaxBB + farFieldWidth;
-    yMax = _yMaxBB + farFieldWidth;
+    xMax = xMaxBB + farFieldWidth;
+    yMax = yMaxBB + farFieldWidth;
 
     if (isGreaterThan(zMax, 0.0)) {
 
@@ -2044,27 +2042,18 @@ void Foundation::createMeshData() {
 
     nV = symmetricPoly.outer().size();
 
-    Box _boundingBox;
-    boost::geometry::envelope(symmetricPoly, _boundingBox);
-
-    double _xMinBB = _boundingBox.min_corner().get<0>();
-    double _yMinBB = _boundingBox.min_corner().get<1>();
-
-    double _xMaxBB = _boundingBox.max_corner().get<0>();
-    double _yMaxBB = _boundingBox.max_corner().get<1>();
-
     if (isXSymm)
-      xMin = _xMinBB;
+      xMin = xMinBB;
     else
-      xMin = _xMinBB - farFieldWidth;
+      xMin = xMinBB - farFieldWidth;
 
     if (isYSymm)
-      yMin = _yMinBB;
+      yMin = yMinBB;
     else
-      yMin = _yMinBB - farFieldWidth;
+      yMin = yMinBB - farFieldWidth;
 
-    xMax = _xMaxBB + farFieldWidth;
-    yMax = _yMaxBB + farFieldWidth;
+    xMax = xMaxBB + farFieldWidth;
+    yMax = yMaxBB + farFieldWidth;
 
     Box domainBox(Point(xMin, yMin), Point(xMax, yMax));
 
