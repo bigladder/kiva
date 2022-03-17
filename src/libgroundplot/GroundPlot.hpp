@@ -6,8 +6,8 @@
 
 #if defined(_MSC_VER)
 #pragma warning(push)
-#pragma warning(disable : 4068)
-#pragma warning(disable : 4458)
+#pragma warning(disable : 4068) // Unknown pragma
+#pragma warning(disable : 4458) // Declaration hides class member
 #elif defined(__gnu_linux__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wmisleading-indentation"
