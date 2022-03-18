@@ -8,19 +8,15 @@
 #pragma warning(push)
 #pragma warning(disable : 4068) // Unknown pragma
 #pragma warning(disable : 4458) // Declaration hides class member
-#elif defined(__GNUC__)
-#if defined(__linux__)
+#elif defined(__GNUC__) && defined(__linux__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wmisleading-indentation"
-#endif
 #endif
 #include <mgl2/mgl.h>
 #if defined(_MSC_VER)
 #pragma warning(pop)
-#elif defined(__GNUC__)
-#if defined(__linux__)
+#elif defined(__GNUC__) && defined(__linux__)
 #pragma GCC diagnostic pop
-#endif
 #endif
 
 #include "../libkiva/Domain.hpp"
