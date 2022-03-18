@@ -26,14 +26,12 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-copy"
 #endif
-#endif
 #include <Eigen/IterativeLinearSolvers>
 #include <Eigen/SparseCore>
 #if defined(_MSC_VER)
 #pragma warning(pop)
 #elif defined(__gnu_linux__)
 #pragma GCC diagnostic pop
-#endif
 #endif
 
 namespace Kiva {
