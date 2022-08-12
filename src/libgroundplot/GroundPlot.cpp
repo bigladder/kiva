@@ -84,9 +84,9 @@ GroundPlot::GroundPlot(SnapshotSettings &snapshotSettings, Domain &domain, Found
       kMax -= 1;
   }
 
-  std::size_t nI = iMax - iMin + 1;
-  std::size_t nJ = jMax - jMin + 1;
-  std::size_t nK = kMax - kMin + 1;
+  nI = iMax - iMin + 1;
+  nJ = jMax - jMin + 1;
+  nK = kMax - kMin + 1;
 
   xMin = domain.mesh[0].dividers[0];
   xMax = domain.mesh[0].dividers[domain.dim_lengths[0]];
@@ -154,13 +154,15 @@ GroundPlot::GroundPlot(SnapshotSettings &snapshotSettings, Domain &domain, Found
   }
 
   if (sliceType == Z_1D) {
-    mglData hDatRef(static_cast<long>(vAxis.nN)), hGridRef(static_cast<long>(vAxis.nN + 1)), TDatRef(static_cast<long>(vAxis.nN)), TGridRef(static_cast<long>(vAxis.nN + 1));
+    mglData hDatRef(static_cast<long>(vAxis.nN)), hGridRef(static_cast<long>(vAxis.nN + 1)),
+        TDatRef(static_cast<long>(vAxis.nN)), TGridRef(static_cast<long>(vAxis.nN + 1));
     TDat = TDatRef;
     TGrid = TGridRef;
     hDat = hDatRef;
     hGrid = hGridRef;
   } else {
-    mglData hDatRef(static_cast<long>(hAxis.nN)), hGridRef(static_cast<long>(hAxis.nN + 1)), TDatRef(static_cast<long>(hAxis.nN), static_cast<long>(vAxis.nN)),
+    mglData hDatRef(static_cast<long>(hAxis.nN)), hGridRef(static_cast<long>(hAxis.nN + 1)),
+        TDatRef(static_cast<long>(hAxis.nN), static_cast<long>(vAxis.nN)),
         TGridRef(static_cast<long>(hAxis.nN + 1), static_cast<long>(vAxis.nN + 1));
     TDat = TDatRef;
     TGrid = TGridRef;
@@ -209,8 +211,46 @@ GroundPlot::GroundPlot(SnapshotSettings &snapshotSettings, Domain &domain, Found
   }
 }
 
-void GroundPlot::createFrame(std::string timeStamp) {
+std::size_t GroundPlot::getPlotIndex(std::size_t i, std::size_t j, std::size_t k) {
+  return (i - iMin) + nI * (j - jMin) + nI * nJ * (k - kMin);
+}
 
+void GroundPlot::setupPlot(Ground &ground) {
+  for (std::size_t k = kMin; k <= kMax; k++) {
+    for (std::size_t j = jMin; j <= jMax; j++) {
+      for (std::size_t i = iMin; i <= iMax; i++) {
+        std::size_t plot_index = getPlotIndex(i, j, k);
+        std::size_t index = ground.domain.getIndex(i, j, k);
+        if (snapshotSettings.plotType == SnapshotSettings::P_TEMP) {
+          if (snapshotSettings.outputUnits == SnapshotSettings::IP)
+            TDat.a[plot_index] = (ground.TNew[index] - 273.15) * 9 / 5 + 32.0;
+          else
+            TDat.a[plot_index] = ground.TNew[index] - 273.15;
+        } else {
+          double du = distanceUnitConversion;
+          std::array<double, 3> Qflux = ground.calculateHeatFlux(index);
+          double Qx = Qflux[0];
+          double Qy = Qflux[1];
+          double Qz = Qflux[2];
+          double Qmag = sqrt(Qx * Qx + Qy * Qy + Qz * Qz);
+
+          if (snapshotSettings.fluxDir == SnapshotSettings::D_M)
+            TDat.a[plot_index] = Qmag / (du * du);
+          else if (snapshotSettings.fluxDir == SnapshotSettings::D_X)
+            TDat.a[plot_index] = Qx / (du * du);
+          else if (snapshotSettings.fluxDir == SnapshotSettings::D_Y)
+            TDat.a[plot_index] = Qy / (du * du);
+          else if (snapshotSettings.fluxDir == SnapshotSettings::D_Z)
+            TDat.a[plot_index] = Qz / (du * du);
+        }
+      }
+    }
+  }
+}
+
+void GroundPlot::createFrame(Ground &ground, std::string timeStamp) {
+
+  setupPlot(ground);
   std::string distanceUnit;
   std::string temperatureUnit;
   std::string fluxUnit;
