@@ -62,7 +62,6 @@ jobs:
 
       - name: Configure CMake
         run: cmake -S . -B build -DKIVA_COVERAGE="${{ matrix.coverage }}" -DKIVA_STATIC_LIB="${{ matrix.static_lib }}" -DCMAKE_BUILD_TYPE="${{ matrix.config }}"
-        if: matrix.os == 'ubuntu-latest'
 
       - name: Setup tooling
         uses: ruby/setup-ruby@v1
