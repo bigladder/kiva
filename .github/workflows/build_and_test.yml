@@ -58,7 +58,7 @@ jobs:
 
       - name: Use GCC-11
         if: matrix.os == 'ubuntu-latest'
-        run: echo "CC=gcc-11" >> $GITHUB_ENV || echo "CXX=g++-11" >> $GIHUB_ENV
+        run: echo "CC=gcc-11" >> $GITHUB_ENV && echo "CXX=g++-11" >> $GIHUB_ENV
         #env:
         #  CC: gcc-11
         #  CXX: g++-11
