@@ -19,8 +19,8 @@ jobs:
             cc: "cl"
             cxx: "cl"
           - os: macos-latest
-            cc: "clang"
-            cxx: "clang++"
+            cc: '$(brew --prefix llvm@14)/bin/clang'
+            cxx: '$(brew --prefix llvm@14)/bin/clang++'
     defaults:
       run:
         shell: bash
@@ -46,7 +46,7 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt-get update
-          sudo apt-get -y install libglu1-mesa-dev freeglut3-dev mesa-common-dev 
+          sudo apt-get -y install libglu1-mesa-dev freeglut3-dev mesa-common-dev
 
       - name: Configure CMake
         cc: ${{ matrix.cc }}
