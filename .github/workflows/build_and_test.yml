@@ -29,8 +29,8 @@ jobs:
             config: Release
             static_lib: ON
             coverage: OFF
-            cc: '$(brew --prefix llvm@14)/bin/clang'
-            cxx: '$(brew --prefix llvm@14)/bin/clang++'
+            cc: 'clang14'
+            cxx: 'clang++14'
           - os: ubuntu-latest
             config: Debug
             static_lib: OFF
