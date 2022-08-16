@@ -59,8 +59,8 @@ jobs:
       - name: Configure CMake
         if: matrix.os == 'ubuntu-latest'
         env:
-          CC: gcc-11
-          CXX: g++-11
+          CC: gcc-10
+          CXX: g++-10
         run: cmake -S . -B build -DKIVA_COVERAGE="${{ matrix.coverage }}" -DKIVA_STATIC_LIB="${{ matrix.static_lib }}" -DCMAKE_BUILD_TYPE="${{ matrix.config }}"
 
       - name: Setup tooling
