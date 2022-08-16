@@ -17,8 +17,9 @@ jobs:
             config: Release
             static_lib: ON
             coverage: OFF
-            gcc: 10
-            g++: 10
+            env:
+              gcc: 10
+              g++: 10
           - os: windows-latest
             config: Release
             static_lib: ON
@@ -31,8 +32,9 @@ jobs:
             config: Debug
             static_lib: OFF
             coverage: ON
-            CC: gcc-10
-            CXX: g++-10
+            env:
+              CC: gcc-10
+              CXX: g++-10
     defaults:
       run:
         shell: bash
