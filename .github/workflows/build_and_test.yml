@@ -54,13 +54,13 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt-get update
-          sudo apt-get -y install libglu1-mesa-dev freeglut3-dev mesa-common-dev
+          sudo apt-get -y install libglu1-mesa-dev freeglut3-dev mesa-common-dev gcc-11 g++-11
+
+      - name: Use GCC-11
+        if: matrix.os == 'ubuntu-latest'
+        run: echo "CC=gcc-11" >> $GITHUB_ENV && echo "CXX=g++-11" >> $GITHUB_ENV
 
       - name: Configure CMake
-        if: matrix.os == 'ubuntu-latest'
-        env:
-          CC: gcc-10
-          CXX: g++-10
         run: cmake -S . -B build -DKIVA_COVERAGE="${{ matrix.coverage }}" -DKIVA_STATIC_LIB="${{ matrix.static_lib }}" -DCMAKE_BUILD_TYPE="${{ matrix.config }}"
 
       - name: Setup tooling
