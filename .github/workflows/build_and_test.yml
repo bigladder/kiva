@@ -29,8 +29,8 @@ jobs:
             config: Release
             static_lib: ON
             coverage: OFF
-            cc: 'clang14'
-            cxx: 'clang++14'
+            cc: 'clang'
+            cxx: 'clang++'
           - os: ubuntu-latest
             config: Debug
             static_lib: OFF

@@ -19,8 +19,8 @@ jobs:
             cc: "cl"
             cxx: "cl"
           - os: macos-latest
-            cc: '$(brew --prefix llvm@14)/bin/clang'
-            cxx: '$(brew --prefix llvm@14)/bin/clang++'
+            cc: 'clang'
+            cxx: 'clang++'
     defaults:
       run:
         shell: bash
