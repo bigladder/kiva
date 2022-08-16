@@ -18,6 +18,8 @@ jobs:
             static_lib: ON
             coverage: OFF
             gcc: 11
+            CC: gcc-11
+            CXX: g++-11
           - os: windows-latest
             config: Release
             static_lib: ON
