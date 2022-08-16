@@ -65,6 +65,9 @@ jobs:
           sudo apt-get -y install libglu1-mesa-dev freeglut3-dev mesa-common-dev
 
       - name: Configure CMake
+        env: 
+            CC: ${{ matrix.cc }}
+            CXX: ${{ matrix.cxx }}
         run: cmake -S . -B build -DKIVA_COVERAGE="${{ matrix.coverage }}" -DKIVA_STATIC_LIB="${{ matrix.static_lib }}" -DCMAKE_BUILD_TYPE="${{ matrix.config }}"
 
       - name: Setup tooling
