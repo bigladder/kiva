@@ -13,8 +13,14 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
+            cc: "gcc-10"
+            cxx: "g++-10"
           - os: windows-latest
+            cc: "cl"
+            cxx: "cl"
           - os: macos-latest
+            cc: "clang"
+            cxx: "clang++"
     defaults:
       run:
         shell: bash
@@ -40,13 +46,11 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt-get update
-          sudo apt-get -y install libglu1-mesa-dev freeglut3-dev mesa-common-dev gcc-11 g++-11
-
-      - name: Use GCC-11
-        if: matrix.os == 'ubuntu-latest'
-        run: echo "CC=gcc-11" >> $GITHUB_ENV && echo "CXX=g++-11" >> $GITHUB_ENV
+          sudo apt-get -y install libglu1-mesa-dev freeglut3-dev mesa-common-dev 
 
       - name: Configure CMake
+        cc: ${{ matrix.cc }}
+        cxx: ${{ matrix.cxx }}
         run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 
       - name: Build

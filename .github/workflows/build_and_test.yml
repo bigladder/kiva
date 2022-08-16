@@ -66,8 +66,8 @@ jobs:
 
       - name: Configure CMake
         env: 
-            CC: ${{ matrix.cc }}
-            CXX: ${{ matrix.cxx }}
+          CC: ${{ matrix.cc }}
+          CXX: ${{ matrix.cxx }}
         run: cmake -S . -B build -DKIVA_COVERAGE="${{ matrix.coverage }}" -DKIVA_STATIC_LIB="${{ matrix.static_lib }}" -DCMAKE_BUILD_TYPE="${{ matrix.config }}"
 
       - name: Setup tooling
