@@ -13,49 +13,55 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-22.04
+          - os: ubuntu
+            os-ver: "22.04"
             config: Release
             static_lib: ON
             coverage: OFF
-            cc: "gcc-11"
-            cxx: "g++-11"
-          - os: ubuntu-20.04
+            cc: gcc-11
+            cxx: g++-11
+          - os: ubuntu
+            os-ver: "20.04"
             config: Release
             static_lib: ON
             coverage: OFF
-            cc: "gcc-10"
-            cxx: "g++-10"
-          - os: windows-2022
+            cc: gcc-10
+            cxx: g++-10
+          - os: windows
+            os-ver: "2022"
             config: Release
             static_lib: ON
             coverage: OFF
-            cc: "cl"
-            cxx: "cl"
-          - os: macos-12
+            cc: cl
+            cxx: cl
+          - os: macos
+            os-ver: "12"
             config: Release
             static_lib: ON
             coverage: OFF
-            cc: 'clang'
-            cxx: 'clang++'
-          - os: macos-11
+            cc: clang
+            cxx: clang++
+          - os: macos
+            os-ver: "11"
             config: Release
             static_lib: ON
             coverage: OFF
-            cc: 'clang'
-            cxx: 'clang++'
-          - os: ubuntu-20.04
+            cc: clang
+            cxx: clang++
+          - os: ubuntu
+            os-ver: "20.04"
             config: Debug
             static_lib: OFF
             coverage: ON
-            cc: "gcc-10"
-            cxx: "g++-10"
+            cc: gcc-10
+            cxx: g++-10
     defaults:
       run:
         shell: bash
     env: 
       CC: ${{ matrix.cc }}
       CXX: ${{ matrix.cxx }}
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}-${{ matrix.os_ver }}
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -74,7 +80,7 @@ jobs:
         run: cmake -E make_directory ${{github.workspace}}/build
 
       - name: Install Linux Libraries
-        if: matrix.os == 'ubuntu-20.04' || matrix.os == 'ubuntu-22.04'
+        if: matrix.os == 'ubuntu'
         run: |
           sudo apt-get update
           sudo apt-get -y install libglu1-mesa-dev freeglut3-dev mesa-common-dev
