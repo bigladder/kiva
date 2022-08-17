@@ -13,25 +13,37 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-latest
+          - os: ubuntu-22.04
+            config: Release
+            static_lib: ON
+            coverage: OFF
+            cc: "gcc-11"
+            cxx: "g++-11"
+          - os: ubuntu-20.04
             config: Release
             static_lib: ON
             coverage: OFF
             cc: "gcc-10"
             cxx: "g++-10"
-          - os: windows-latest
+          - os: windows-2022
             config: Release
             static_lib: ON
             coverage: OFF
             cc: "cl"
             cxx: "cl"
-          - os: macos-latest
+          - os: macos-12
             config: Release
             static_lib: ON
             coverage: OFF
             cc: 'clang'
             cxx: 'clang++'
-          - os: ubuntu-latest
+          - os: macos-11
+            config: Release
+            static_lib: ON
+            coverage: OFF
+            cc: 'clang'
+            cxx: 'clang++'
+          - os: ubuntu-20.04
             config: Debug
             static_lib: OFF
             coverage: ON

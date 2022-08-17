@@ -12,13 +12,13 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-latest
+          - os: ubuntu-20.04
             cc: "gcc-10"
             cxx: "g++-10"
-          - os: windows-latest
+          - os: windows-2022
             cc: "cl"
             cxx: "cl"
-          - os: macos-latest
+          - os: macos-11
             cc: 'clang'
             cxx: 'clang++'
     defaults:
