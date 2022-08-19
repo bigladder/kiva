@@ -13,26 +13,55 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-latest
+          - os: ubuntu
+            os_ver: "22.04"
             config: Release
             static_lib: ON
             coverage: OFF
-          - os: windows-latest
+            cc: gcc-11
+            cxx: g++-11
+          - os: ubuntu
+            os_ver: "20.04"
             config: Release
             static_lib: ON
             coverage: OFF
-          - os: macos-latest
+            cc: gcc-10
+            cxx: g++-10
+          - os: windows
+            os_ver: "2022"
             config: Release
             static_lib: ON
             coverage: OFF
-          - os: ubuntu-latest
+            cc: cl
+            cxx: cl
+          - os: macos
+            os_ver: "12"
+            config: Release
+            static_lib: ON
+            coverage: OFF
+            cc: clang
+            cxx: clang++
+          - os: macos
+            os_ver: "11"
+            config: Release
+            static_lib: ON
+            coverage: OFF
+            cc: clang
+            cxx: clang++
+          - os: ubuntu
+            os_ver: "20.04"
             config: Debug
             static_lib: OFF
             coverage: ON
+            cc: gcc-10
+            cxx: g++-10
     defaults:
       run:
         shell: bash
-    runs-on: ${{ matrix.os }}
+    env: 
+      CC: ${{ matrix.cc }}
+      CXX: ${{ matrix.cxx }}
+    runs-on: ${{ matrix.os }}-${{ matrix.os_ver }}
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -51,7 +80,7 @@ jobs:
         run: cmake -E make_directory ${{github.workspace}}/build
 
       - name: Install Linux Libraries
-        if: matrix.os == 'ubuntu-latest'
+        if: matrix.os == 'ubuntu'
         run: |
           sudo apt-get update
           sudo apt-get -y install libglu1-mesa-dev freeglut3-dev mesa-common-dev
