@@ -11,7 +11,7 @@ $<$<CXX_COMPILER_ID:MSVC>:
     /WX # Turn warnings into errors
   >
 >
-$<$<CXX_COMPILER_ID:GNU>:
+$<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>>:
   -Wall 
   -Wextra 
   -Wpedantic 
@@ -20,12 +20,4 @@ $<$<CXX_COMPILER_ID:GNU>:
   >
 >
 
-$<$<CXX_COMPILER_ID:Clang>:
-  -Wall 
-  -Wextra 
-  -Wpedantic
-  $<$<BOOL:${KIVA_WERROR}>:
-    -Werror # Turn warnings into errors
-  >
->
 )
