@@ -8,7 +8,7 @@ option(ENABLE_OPENMP "Use OpenMP" OFF)
 option( KIVA_GROUND_PLOT "Build ground plotting library" ON )
 mark_as_advanced(FORCE BUILD_GROUND_PLOT)
 option( KIVA_TESTING "Build tests" ON )
-option( KIVA_WERROR "Turn on warnings into error" ON )
+option( KIVA_WERROR "Turn on warnings into error" OFF )
 
 find_package(Git QUIET)
 
