@@ -16,11 +16,6 @@ target_link_libraries(kiva libkiva groundplot boost_program_options yaml-cpp kiv
 
 target_include_directories(kiva PRIVATE "${groundplot_SOURCE_DIR}")
 
-set(kiva_suppress_warnings Main.cpp
-                           Input.cpp
-                           InputParser.cpp
-                           Simulator.cpp)
-
 if (KIVA_COVERAGE)
   add_coverage(kiva)
 endif()
