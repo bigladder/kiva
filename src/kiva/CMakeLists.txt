@@ -12,7 +12,7 @@ set(CMAKE_INSTALL_RPATH "@executable_path")
 
 add_executable(kiva ${kiva_src})
 
-target_link_libraries(kiva libkiva groundplot boost_program_options yaml-cpp kiva_common_interface)
+target_link_libraries(kiva PRIVATE libkiva groundplot boost_program_options yaml-cpp kiva_common_interface)
 
 target_include_directories(kiva PRIVATE "${groundplot_SOURCE_DIR}")
 

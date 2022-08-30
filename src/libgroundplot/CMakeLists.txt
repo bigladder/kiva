@@ -5,7 +5,7 @@ set(groundplot_src  GroundPlot.cpp
 
 add_library(groundplot STATIC ${groundplot_src})
 
-target_link_libraries(groundplot fmt mgl-static libkiva kiva_common_interface)
+target_link_libraries(groundplot PRIVATE fmt mgl-static libkiva kiva_common_interface)
 
 target_include_directories(groundplot PUBLIC "${MathGL2_SOURCE_DIR}/include" "${MathGL2_BINARY_DIR}/include")
 
