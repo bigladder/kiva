@@ -31,7 +31,7 @@ Pre-requisites:
 Building Kiva from source
 -------------------------
 
-1. Clone the git repository, or download and extract the source code (`tar.gz` or `zip`).
+1. Clone the git repository.
 2. Make a directory called `build` inside the top level of your source.
 3. Open a console in the `build` directory.
 4. Type `cmake ..`.
