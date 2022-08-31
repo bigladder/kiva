@@ -762,6 +762,8 @@ std::array<double, 3> Ground::calculateHeatFlux(std::size_t index) {
 
 void Ground::writeCSV(std::string path) {
 
+  // Used for debugging purposes
+
   std::ofstream output;
   output.open(path);
 
@@ -796,7 +798,9 @@ void Ground::writeCSV(std::string path) {
       double Qmag = sqrt(Qx * Qx + Qy * Qy + Qz * Qz);
       value = Qmag;
 
-      value = domain.cell[index]->surfacePtr ? domain.cell[index]->surfacePtr->type : -1.0;
+      value = domain.cell[index]->surfacePtr
+                  ? static_cast<double>(domain.cell[index]->surfacePtr->type)
+                  : -1.0;
 
       output << ", " << value;
     }
