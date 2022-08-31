@@ -55,7 +55,7 @@ jobs:
           sudo apt-get -y install libglu1-mesa-dev freeglut3-dev mesa-common-dev
 
       - name: Configure CMake
-        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DKIVA_WERROR="ON"
 
       - name: Build
         run: cmake --build build --config Release
