@@ -760,33 +760,45 @@ std::array<double, 3> Ground::calculateHeatFlux(std::size_t index) {
                                                nZ, domain.cell);
 }
 
-void Ground::writeCSV() {
+void Ground::writeCSV(std::string path) {
 
   std::ofstream output;
-  output.open("Plot.csv");
+  output.open(path);
 
   std::size_t j = nY / 2;
   for (std::size_t i = 0; i < nX; i++) {
 
-    output << ", " << i;
+    output << ", , " << i;
+  }
+
+  output << "\n, ";
+
+  for (std::size_t i = 0; i < nX; i++) {
+
+    output << ", " << domain.mesh[0].centers[i];
   }
 
   output << "\n";
 
-  for (std::size_t k = nZ - 1; k >= 0 && k < nZ; k--) {
+  for (std::size_t k = nZ - 1; k < nZ /*k >= 0*/; k--) {
 
-    output << k;
+    output << k << ", " << domain.mesh[2].centers[k];
 
     for (std::size_t i = 0; i < nX; i++) {
 
+      double value;
       std::size_t index = domain.getIndex(i, j, k);
+
       std::array<double, 3> Qflux = calculateHeatFlux(index);
       double Qx = Qflux[0];
       double Qy = Qflux[1];
       double Qz = Qflux[2];
       double Qmag = sqrt(Qx * Qx + Qy * Qy + Qz * Qz);
+      value = Qmag;
 
-      output << ", " << Qmag;
+      value = domain.cell[index]->surfacePtr ? domain.cell[index]->surfacePtr->type : -1.0;
+
+      output << ", " << value;
     }
 
     output << "\n";

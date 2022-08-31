@@ -88,6 +88,7 @@ private:
 
 public:
   // mglGraph gr;
+  GroundPlot() = default;
   SnapshotSettings snapshotSettings;
   std::vector<Block> blocks;
   std::vector<Surface> surfaces;
