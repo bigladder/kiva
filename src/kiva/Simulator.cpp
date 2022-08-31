@@ -89,11 +89,10 @@ void Simulator::initializeConditions() {
       printStatus(tInit);
       input.foundation.numericalScheme = tempNS;
     } else {
-      std::size_t index;
       for (size_t i = 0; i < ground.nX; ++i) {
         for (size_t j = 0; j < ground.nY; ++j) {
           for (size_t k = 0; k < ground.nZ; ++k) {
-            index = i + ground.nX * j + ground.nX * ground.nY * k;
+            std::size_t index = ground.domain.getIndex(i, j, k);
             ground.TOld[index] = getInitialTemperature(tInit, ground.domain.mesh[2].centers[k]);
           }
         }
@@ -224,9 +223,12 @@ void Simulator::initializePlots() {
     boost::posix_time::ptime endTime(input.output.outputSnapshots[p].endDate +
                                      boost::gregorian::days(1));
 
-    plots[p].tStart = static_cast<double>((startTime - input.simulationControl.startTime).total_seconds());
-    plots[p].nextPlotTime = static_cast<double>((startTime - input.simulationControl.startTime).total_seconds());
-    plots[p].tEnd = static_cast<double>((endTime - input.simulationControl.startTime).total_seconds());
+    plots[p].tStart =
+        static_cast<double>((startTime - input.simulationControl.startTime).total_seconds());
+    plots[p].nextPlotTime =
+        static_cast<double>((startTime - input.simulationControl.startTime).total_seconds());
+    plots[p].tEnd =
+        static_cast<double>((endTime - input.simulationControl.startTime).total_seconds());
   }
 }
 
@@ -264,86 +266,11 @@ void Simulator::simulate() {
 
 void Simulator::plot(boost::posix_time::ptime t) {
   for (std::size_t p = 0; p < plots.size(); p++) {
-    if (plots[p].makeNewFrame(static_cast<double>((t - input.simulationControl.startTime).total_seconds()))) {
+    if (plots[p].makeNewFrame(
+            static_cast<double>((t - input.simulationControl.startTime).total_seconds()))) {
       std::string timeStamp = to_simple_string(t);
 
-      std::size_t nI = plots[p].iMax - plots[p].iMin + 1;
-      std::size_t nJ = plots[p].jMax - plots[p].jMin + 1;
-
-      for (size_t k = plots[p].kMin; k <= plots[p].kMax; k++) {
-        for (size_t j = plots[p].jMin; j <= plots[p].jMax; j++) {
-          for (size_t i = plots[p].iMin; i <= plots[p].iMax; i++) {
-            std::size_t index =
-                (i - plots[p].iMin) + nI * (j - plots[p].jMin) + nI * nJ * (k - plots[p].kMin);
-            if (input.output.outputSnapshots[p].snapshotSettings.plotType ==
-                SnapshotSettings::P_TEMP) {
-              if (input.output.outputSnapshots[p].snapshotSettings.outputUnits ==
-                  SnapshotSettings::IP)
-                plots[p].TDat.a[index] = (ground.TNew[index] - 273.15) * 9 / 5 + 32.0;
-              else
-                plots[p].TDat.a[index] = ground.TNew[index] - 273.15;
-            } else {
-              double du = plots[p].distanceUnitConversion;
-              std::vector<double> Qflux = ground.domain.cell[index]->calculateHeatFlux(
-                  ground.foundation.numberOfDimensions, ground.TNew[index], ground.nX, ground.nY,
-                  ground.nZ, ground.domain.cell);
-              double Qx = Qflux[0];
-              double Qy = Qflux[1];
-              double Qz = Qflux[2];
-              double Qmag = sqrt(Qx * Qx + Qy * Qy + Qz * Qz);
-
-              if (input.output.outputSnapshots[p].snapshotSettings.fluxDir == SnapshotSettings::D_M)
-                plots[p].TDat.a[index] = Qmag / (du * du);
-              else if (input.output.outputSnapshots[p].snapshotSettings.fluxDir ==
-                       SnapshotSettings::D_X)
-                plots[p].TDat.a[index] = Qx / (du * du);
-              else if (input.output.outputSnapshots[p].snapshotSettings.fluxDir ==
-                       SnapshotSettings::D_Y)
-                plots[p].TDat.a[index] = Qy / (du * du);
-              else if (input.output.outputSnapshots[p].snapshotSettings.fluxDir ==
-                       SnapshotSettings::D_Z)
-                plots[p].TDat.a[index] = Qz / (du * du);
-            }
-          }
-        }
-      }
-
-      /*
-      std::ofstream output;
-      output.open("Plot.csv");
-
-      for (std::size_t i = 0; i < nX; i++)
-      {
-
-        output << ", " << i;
-
-      }
-
-      output << "\n";
-
-      for (std::size_t k = nZ - 1; k >= 0 && k < nZ; k--)
-      {
-
-        output << k;
-
-        for (std::size_t i = 0; i < nX; i++)
-        {
-
-          std::vector<double> Qflux = calculateHeatFlux(i,nY/2,k);
-          double Qx = Qflux[0];
-          double Qy = Qflux[1];
-          double Qz = Qflux[2];
-          double Qmag = sqrt(Qx*Qx + Qy*Qy + Qz*Qz);
-
-          output << ", " << Qflux[3];
-
-        }
-
-        output << "\n";
-      }
-      output.close();*/
-
-      plots[p].createFrame(timeStamp.substr(5, timeStamp.size() - 5));
+      plots[p].createFrame(ground, timeStamp.substr(5, timeStamp.size() - 5));
     }
   }
 }
