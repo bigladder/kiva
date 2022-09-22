@@ -65,27 +65,29 @@ Input inputParser(std::string inputFile) {
   foundation.foundationDepth = yamlInput["Foundation"]["Foundation Depth"].as<double>();
 
   // Slab
+  foundation.slab.interior.emissivity = 0.8;
   if (yamlInput["Foundation"]["Slab"].IsDefined()) {
-    foundation.hasSlab = true;
 
-    for (size_t i = 0; i < yamlInput["Foundation"]["Slab"]["Layers"].size(); i++) {
+    if (yamlInput["Foundation"]["Slab"]["Layers"].size()) {
+      foundation.hasSlab = true;
+      for (size_t i = 0; i < yamlInput["Foundation"]["Slab"]["Layers"].size(); i++) {
 
-      Layer tempLayer;
-      tempLayer.thickness = yamlInput["Foundation"]["Slab"]["Layers"][i]["Thickness"].as<double>();
-      tempLayer.material =
-          materials[yamlInput["Foundation"]["Slab"]["Layers"][i]["Material"].as<std::string>()];
+        Layer tempLayer;
+        tempLayer.thickness =
+            yamlInput["Foundation"]["Slab"]["Layers"][i]["Thickness"].as<double>();
+        tempLayer.material =
+            materials[yamlInput["Foundation"]["Slab"]["Layers"][i]["Material"].as<std::string>()];
 
-      foundation.slab.layers.push_back(tempLayer);
+        foundation.slab.layers.push_back(tempLayer);
+      }
+    } else {
+      foundation.hasSlab = false;
     }
 
     if (yamlInput["Foundation"]["Slab"]["Emissivity"].IsDefined()) {
       foundation.slab.interior.emissivity =
           yamlInput["Foundation"]["Slab"]["Emissivity"].as<double>();
-    } else {
-      foundation.slab.interior.emissivity = 0.8;
     }
-  } else {
-    foundation.hasSlab = false;
   }
 
   // Wall
@@ -554,20 +556,20 @@ Input inputParser(std::string inputFile) {
     boundaries.alphaLocal = 0.22;
   }
 
+  boundaries.bcs.gradeConvectionAlgorithm = boundaries.bcs.extWallConvectionAlgorithm =
+      &getDOE2ConvectionCoeff;
+  boundaries.bcs.slabConvectionAlgorithm = boundaries.bcs.intWallConvectionAlgorithm =
+      &getDOE2ConvectionCoeff;
   if (yamlInput["Boundaries"]["Convection Calculation Method"].IsDefined()) {
-    if (yamlInput["Boundaries"]["Convection Calculation Method"].as<std::string>() == "AUTO") {
-      boundaries.exteriorConvectionAlgorithm = &getDOE2ConvectionCoeff;
-      boundaries.interiorConvectionAlgorithm = &getDOE2ConvectionCoeff;
-    } else if (yamlInput["Boundaries"]["Convection Calculation Method"].as<std::string>() ==
-               "CONSTANT") {
+    if (yamlInput["Boundaries"]["Convection Calculation Method"].as<std::string>() == "CONSTANT") {
       double hc_ext = yamlInput["Boundaries"]["Exterior Convective Coefficient"].as<double>();
       double hc_int = yamlInput["Boundaries"]["Interior Convective Coefficient"].as<double>();
-      boundaries.exteriorConvectionAlgorithm = KIVA_CONST_CONV(hc_ext);
-      boundaries.interiorConvectionAlgorithm = KIVA_CONST_CONV(hc_int);
+      boundaries.bcs.gradeConvectionAlgorithm = boundaries.bcs.extWallConvectionAlgorithm =
+          KIVA_CONST_CONV(hc_ext);
+      boundaries.bcs.slabConvectionAlgorithm = boundaries.bcs.intWallConvectionAlgorithm =
+          KIVA_CONST_CONV(hc_int);
     }
   } else {
-    boundaries.exteriorConvectionAlgorithm = &getDOE2ConvectionCoeff;
-    boundaries.interiorConvectionAlgorithm = &getDOE2ConvectionCoeff;
   }
 
   if (yamlInput["Boundaries"]["Outdoor Air Temperature Method"].IsDefined()) {

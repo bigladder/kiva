@@ -22,6 +22,7 @@ namespace filesys = std::experimental::filesystem;
 #include <boost/lexical_cast.hpp>
 
 #include "Algorithms.hpp"
+#include "BoundaryConditions.hpp"
 #include "Foundation.hpp"
 #include "Geometry.hpp"
 #include "GroundOutput.hpp"
@@ -129,9 +130,7 @@ public:
 
   DeepGroundBoundaryType deepGroundBoundaryType;
 
-  // Convection
-  ConvectionAlgorithm interiorConvectionAlgorithm;
-  ConvectionAlgorithm exteriorConvectionAlgorithm;
+  BoundaryConditions bcs;
 };
 
 class Input {
