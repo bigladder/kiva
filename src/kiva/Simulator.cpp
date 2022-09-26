@@ -32,6 +32,8 @@ Simulator::Simulator(WeatherData &weatherData, Input &input, std::string outputF
     }
   }
 
+  bcs = input.boundaries.bcs;
+
   if (input.foundation.reductionStrategy == Foundation::RS_BOUNDARY) {
     ground.calculateBoundaryLayer();
     ground.setNewBoundaryGeometry();

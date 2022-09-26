@@ -128,6 +128,7 @@ void WeatherData::importEPW(std::string epwFile) {
 
   hourOfMinimumTemperature = hour;
   double Tmin = 9999;
+  const double TKelvin = 273.15;
 
   std::vector<int> months;
   std::vector<int> days;
@@ -162,7 +163,7 @@ void WeatherData::importEPW(std::string epwFile) {
       boost::posix_time::ptime dateTime = newYearDate + boost::posix_time::hours(hour);
       double hourOfDay = dateTime.time_of_day().total_seconds() / 3600.0;
 
-      double Tdb = double(boost::lexical_cast<double>(columns[6])) + 273.15;
+      double Tdb = double(boost::lexical_cast<double>(columns[6])) + TKelvin;
 
       months.push_back(int(boost::lexical_cast<int>(columns[1])));
 
@@ -182,7 +183,7 @@ void WeatherData::importEPW(std::string epwFile) {
 
       dryBulbTemp.push_back(Tdb); // [K]
 
-      double Tdp = double(boost::lexical_cast<double>(columns[7])) + 273.15;
+      double Tdp = double(boost::lexical_cast<double>(columns[7])) + TKelvin;
 
       dewPointTemp.push_back(Tdp); // [K]
 
@@ -209,7 +210,7 @@ void WeatherData::importEPW(std::string epwFile) {
 
       opaqueSkyCover.push_back(double(boost::lexical_cast<double>(columns[23]))); // [tenths]
 
-      double eSky = 0.787 + 0.764 * log(Tdp / Tdb) *
+      double eSky = 0.787 + 0.764 * log(Tdp / TKelvin) *
                                 (1 + 0.0224 * fc - 0.0035 * pow(fc, 2) + 0.00028 * pow(fc, 3));
 
       skyEmissivity.push_back(eSky); // [frac]
