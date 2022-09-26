@@ -1330,12 +1330,13 @@ void Foundation::createMeshData() {
         double xPosition = xRef2;
 
         // Foundation Wall
-        for (size_t n = wall.layers.size() - 1; n-->0; ) {
+        for (size_t n = wall.layers.size(); n > 0; n--) {
+          size_t index = n - 1;
           Block block;
-          block.material = wall.layers[n].material;
+          block.material = wall.layers[index].material;
           block.blockType = Block::SOLID;
           block.xMin = xPosition;
-          block.xMax = xPosition + wall.layers[n].thickness;
+          block.xMax = xPosition + wall.layers[index].thickness;
           block.yMin = 0.0;
           block.yMax = 1.0;
           block.setSquarePolygon();
@@ -1350,11 +1351,12 @@ void Foundation::createMeshData() {
         double xPosition = xRef1;
 
         // Foundation Wall
-        for (size_t n = wall.layers.size() - 1; n--> 0; ) {
+        for (size_t n = wall.layers.size(); n > 0; n--) {
+          size_t index = n - 1;
           Block block;
-          block.material = wall.layers[n].material;
+          block.material = wall.layers[index].material;
           block.blockType = Block::SOLID;
-          block.xMin = xPosition - wall.layers[n].thickness;
+          block.xMin = xPosition - wall.layers[index].thickness;
           block.xMax = xPosition;
           block.yMin = 0.0;
           block.yMax = 1.0;
@@ -1856,9 +1858,10 @@ void Foundation::createMeshData() {
       double xyPosition = 0.0;
 
       // Foundation Wall
-      for (size_t n = wall.layers.size() - 1; n--> 0; ) {
+      for (size_t n = wall.layers.size(); n > 0; n--) {
+        size_t index = n - 1;
         Polygon poly;
-        poly = offset(polygon, xyPosition + wall.layers[n].thickness);
+        poly = offset(polygon, xyPosition + wall.layers[index].thickness);
 
         Polygon temp;
         temp = offset(polygon, xyPosition);
@@ -1869,12 +1872,12 @@ void Foundation::createMeshData() {
         poly.inners().push_back(ring);
 
         Block block;
-        block.material = wall.layers[n].material;
+        block.material = wall.layers[index].material;
         block.blockType = Block::SOLID;
         block.polygon = poly;
         block.zMin = zWall;
         block.zMax = zMax;
-        xyPosition += wall.layers[n].thickness;
+        xyPosition += wall.layers[index].thickness;
         blocks.push_back(block);
       }
     }
@@ -2426,9 +2429,10 @@ void Foundation::createMeshData() {
       double xyPosition = 0.0;
 
       // Foundation Wall
-      for (size_t n = wall.layers.size() - 1; n--> 0; ) {
+      for (size_t n = wall.layers.size(); n > 0; n--) {
+        size_t index = n - 1;
         Polygon tempPoly;
-        tempPoly = offset(polygon, xyPosition + wall.layers[n].thickness);
+        tempPoly = offset(polygon, xyPosition + wall.layers[index].thickness);
 
         Polygon temp;
         temp = offset(polygon, xyPosition);
@@ -2442,12 +2446,12 @@ void Foundation::createMeshData() {
         boost::geometry::intersection(domainBox, tempPoly, poly);
 
         Block block;
-        block.material = wall.layers[n].material;
+        block.material = wall.layers[index].material;
         block.blockType = Block::SOLID;
         block.polygon = poly[0];
         block.zMin = zWall;
         block.zMax = zMax;
-        xyPosition += wall.layers[n].thickness;
+        xyPosition += wall.layers[index].thickness;
         blocks.push_back(block);
       }
     }
