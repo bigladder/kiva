@@ -365,8 +365,9 @@ void Domain::printCellTypes() {
 
   output << "\n";
 
-  for (std::size_t k = dim_lengths[2] - 1; /* k >= 0 && */ k < dim_lengths[2]; k--) {
+  for (std::size_t n = dim_lengths[2]; n > 0; n--) {
 
+    std::size_t k = n - 1;
     output << k;
 
     for (std::size_t i = 0; i < dim_lengths[0]; i++) {

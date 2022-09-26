@@ -131,7 +131,7 @@ void Simulator::initializeConditions() {
 
       for (boost::posix_time::ptime t = tWarmupStart; t <= tWarmupEnd; t += simulationTimestep) {
         updateBoundaryConditions(t);
-        ground.calculate(bcs, static_cast<double>(accelTimestep.total_seconds()));
+        ground.calculate(bcs, static_cast<double>(simulationTimestep.total_seconds()));
         printStatus(t);
       }
     }
