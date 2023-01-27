@@ -9,14 +9,14 @@ inputs:
     description: Build configuration
     default: "Release"
     required: false
+  set-up-results-logging:
+    description: "Sets up ruby scripts to log results"
+    default: true
+    required: false
   coverage:
     description: Set coverage flag (and build dynamic library)
     default: false
     required: false
-outputs:
-  current_branch:
-    description: "Current git branch"
-    value: ${{steps.branch-name.outputs.current_branch}}
 runs:
   using: composite
   steps:
@@ -49,6 +49,19 @@ runs:
     - name: Configure CMake
       run: cmake -S . -B ${{inputs.build-directory}} -DKIVA_WERROR="ON" -DKIVA_COVERAGE="${{ steps.cov.outputs.COVERAGE }}" -DKIVA_STATIC_LIB="${{ steps.cov.outputs.STATIC_LIB }}" -DCMAKE_BUILD_TYPE="${{ inputs.configuration }}"
       shell: bash
+    - name: Setup tooling
+      if: "inputs.set-up-results-logging && !inputs.coverage"
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: 2.0
+    - name: Set up results directory
+      if: "inputs.set-up-results-logging && !inputs.coverage"
+      run: |
+        gem install git
+        git config --global core.autocrlf input
+        ruby ../scripts/clone-and-mimic.rb
+      shell: bash
+      working-directory: build
     - name: Build
       run: cmake --build ${{inputs.build-directory}} --config ${{ inputs.configuration }}
       shell: bash

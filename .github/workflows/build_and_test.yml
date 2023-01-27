@@ -62,24 +62,13 @@ jobs:
         with:
           fetch-depth: 0
       - name: Build Kiva
-        id: build-kiva
         uses: ./.github/actions/build-kiva
         with:
           configuration: ${{ matrix.config }}
           coverage: ${{ matrix.coverage }}
-      - name: Save branch name
-        run: echo "CI_GIT_BRANCH=${{steps.build-kiva.outputs.current_branch}}" >> $GITHUB_ENV
-      - name: Setup tooling
-        if: "!matrix.coverage"
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: 2.0
       - name: Run tests and log results
         if: "!matrix.coverage"
         run: |
-          gem install git
-          git config --global core.autocrlf input
-          ruby ../scripts/clone-and-mimic.rb
           ctest -C ${{matrix.config}} --output-on-failure
           ruby ../scripts/log-results.rb
         working-directory: build

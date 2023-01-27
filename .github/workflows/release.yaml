@@ -38,6 +38,8 @@ jobs:
           fetch-depth: 0
       - name: Build Kiva
         uses: ./.github/actions/build-kiva
+        with:
+          set-up-results-logging: false
       - name: Package
         run: cpack -C Release
         working-directory: build
