@@ -7,7 +7,6 @@ on:
 
 jobs:
   deploy-release:
-    name: Deploy Release
     strategy:
       fail-fast: false
       matrix:
@@ -27,45 +26,23 @@ jobs:
     defaults:
       run:
         shell: bash
+    name: ${{ matrix.os }}
     env:
       CC: ${{ matrix.cc }}
       CXX: ${{ matrix.cxx }}
     runs-on: ${{ matrix.os }}-${{ matrix.os_ver }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
-
-      - name: Get branch name
-        uses: tj-actions/branch-names@v5
-        id: branch-name
-
-      - name: Save branch name
-        run: |
-          echo "SRC_BRANCH=${{steps.branch-name.outputs.current_branch}}" >> $GITHUB_ENV
-
-      - name: Create Build Directory
-        run: cmake -E make_directory ${{github.workspace}}/build
-
-      - name: Install Linux Libraries
-        if: matrix.os == 'ubuntu'
-        run: |
-          sudo apt-get update
-          sudo apt-get -y install libglu1-mesa-dev freeglut3-dev mesa-common-dev
-
-      - name: Configure CMake
-        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DKIVA_WERROR="ON"
-
-      - name: Build
-        run: cmake --build build --config Release
-
+      - name: Build Kiva
+        uses: ./.github/actions/build-kiva
       - name: Package
         run: cpack -C Release
         working-directory: build
-
       - name: Upload executable to release assets
-        uses: AButler/upload-release-assets@v2.0
+        uses: AButler/upload-release-assets@v2.0.2
         with:
           files: build/kiva*.zip
           repo-token: ${{ secrets.GITHUB_TOKEN }}
