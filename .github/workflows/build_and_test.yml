@@ -67,12 +67,12 @@ jobs:
           configuration: ${{ matrix.config }}
           coverage: ${{ matrix.coverage }}
       - name: Setup tooling
-        if: !matrix.coverage
+        if: "!matrix.coverage"
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: 2.0
       - name: Post-configure
-        if: !matrix.coverage
+        if: "!matrix.coverage"
         run: |
           gem install git
           git config --global core.autocrlf input
