@@ -74,39 +74,34 @@ jobs:
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: 2.0
-      - name: Post-configure
+      - name: Run tests and log results
         if: "!matrix.coverage"
         run: |
           gem install git
           git config --global core.autocrlf input
           ruby ../scripts/clone-and-mimic.rb
+          ctest -C ${{matrix.config}} --output-on-failure
+          ruby ../scripts/log-results.rb
         working-directory: build
-      - name: Run basic tests
-        run: ctest -C ${{matrix.config}} --output-on-failure
-        working-directory: build
-      - name: Log results for no-coverage
-        if: matrix.coverage == 'OFF'
-        run: ruby ../scripts/log-results.rb
-        working-directory: build
-      - name: Unit test
-        if: matrix.coverage == 'ON'
-        run: ctest -R unit\.
-        working-directory: build
-      - name: Integration test
-        if: matrix.coverage == 'ON'
-        run: ctest -R integration\.
-        working-directory: build
-      - name: Code Coverage Analysis
-        if: matrix.coverage == 'ON'
-        run: make gcov
+      - name: Unit tests
+        if: "matrix.coverage"
+        run: |
+          ctest -R unit\.
+          make gcov
         working-directory: build
       - name: Upload Code Coverage Report (Unit)
-        if: matrix.coverage == 'ON'
+        if: "matrix.coverage"
         uses: codecov/codecov-action@v2
         with:
           flags: unit
+      - name: Integration tests
+        if: "matrix.coverage"
+        run: |
+          ctest -R integration\.
+          make gcov
+        working-directory: build
       - name: Upload Code Coverage Report (Integration)
-        if: matrix.coverage == 'ON'
+        if: "matrix.coverage"
         uses: codecov/codecov-action@v2
         with:
           flags: integration
