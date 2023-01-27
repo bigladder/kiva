@@ -2,11 +2,16 @@
  * See the LICENSE file for additional terms and conditions. */
 
 #include <cmath>
-#include <fstream>
 #include <iostream>
 
-#include <boost/date_time/gregorian/gregorian.hpp>
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations" // sprintf in lexical_cast
+#endif
 #include <boost/date_time/posix_time/posix_time.hpp>
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 #include <boost/program_options.hpp>
 
 #include "Errors.hpp"
@@ -14,7 +19,6 @@
 #include "Simulator.hpp"
 #include "Version.hpp"
 #include "WeatherData.hpp"
-#include "libkiva_export.h"
 
 namespace po = boost::program_options;
 
