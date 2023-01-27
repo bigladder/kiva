@@ -13,6 +13,10 @@ inputs:
     description: Set coverage flag (and build dynamic library)
     default: false
     required: false
+outputs:
+  current_branch:
+    description: "Current git branch"
+    value: ${{steps.branch-name.outputs.current_branch}}
 runs:
   using: composite
   steps:
