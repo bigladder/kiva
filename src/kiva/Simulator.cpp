@@ -364,7 +364,7 @@ std::string Simulator::printOutputHeaders() {
 std::string Simulator::printOutputLine() {
   std::string outputLine = "";
 
-  for (auto out : input.output.outputReport) {
+  for (const auto &out : input.output.outputReport) {
 
     double totalValue = 0.0;
     double totalVA = 0.0;
