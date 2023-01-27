@@ -304,7 +304,7 @@ double Ground::getSurfaceArea(Surface::SurfaceType surfaceType) {
   double totalArea = 0;
 
   // Find surface(s)
-  for (auto surface : foundation.surfaces) {
+  for (const auto &surface : foundation.surfaces) {
     if (surface.type == surfaceType) {
       totalArea += surface.area;
     }
@@ -746,7 +746,7 @@ void Ground::setBoundaryConditions() {
 }
 
 void Ground::link_cells_to_temp() {
-  for (auto this_cell : domain.cell) {
+  for (const auto &this_cell : domain.cell) {
     this_cell->told_ptr = &TOld[this_cell->index];
   }
 }

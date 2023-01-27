@@ -71,8 +71,8 @@ OutputVariable::OutputVariable(int varID) {
 }
 
 void OutputReport::setOutputMap() {
-  for (auto outVar : *this) {
-    for (auto s : outVar.surfaces) {
+  for (const auto &outVar : *this) {
+    for (const auto &s : outVar.surfaces) {
       if (std::find(outputMap.begin(), outputMap.end(), s) ==
           outputMap.end()) { // If surface isn't in map create it and add to the list of outputs
         outputMap.push_back(s);

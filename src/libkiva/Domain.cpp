@@ -178,7 +178,7 @@ void Domain::setDomain(Foundation &foundation) {
 
   // Set effective properties of zero-thickness cells
   // based on other cells
-  for (auto this_cell : cell) {
+  for (const auto &this_cell : cell) {
     std::size_t index = this_cell->index;
     std::tie(i, j, k) = getCoordinates(index);
 
@@ -215,7 +215,7 @@ void Domain::setDomain(Foundation &foundation) {
   }
 
   // Calculate matrix coefficients
-  for (auto this_cell : cell) {
+  for (const auto &this_cell : cell) {
     // PDE Coefficients
     this_cell->setComputeDims(dims);
     this_cell->setDistances(dxp_vector[this_cell->coords[0]], dxm_vector[this_cell->coords[0]],
