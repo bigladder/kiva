@@ -50,12 +50,12 @@ runs:
       run: cmake -S . -B ${{inputs.build-directory}} -DKIVA_WERROR="ON" -DKIVA_COVERAGE="${{ steps.cov.outputs.COVERAGE }}" -DKIVA_STATIC_LIB="${{ steps.cov.outputs.STATIC_LIB }}" -DCMAKE_BUILD_TYPE="${{ inputs.configuration }}"
       shell: bash
     - name: Setup tooling
-      if: ${{ (inputs.set-up-results-logging == true) && (inputs.coverage == false) }}
+      #if: ${{ inputs.set-up-results-logging && !inputs.coverage }}
       uses: ruby/setup-ruby@v1
       with:
         ruby-version: 2.0
     - name: Set up results directory
-      if: ${{ (inputs.set-up-results-logging == true) && (inputs.coverage == false) }}
+      #if: ${{ inputs.set-up-results-logging && !inputs.coverage }}
       run: |
         gem install git
         git config --global core.autocrlf input
