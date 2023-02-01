@@ -4,3 +4,7 @@ coverage:
   range: "0...100"
   ignore:
     - "vendor/**/*"
+
+flag_management:
+  default_rules:
+    carryforward: false
