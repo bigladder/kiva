@@ -83,7 +83,7 @@ jobs:
         uses: codecov/codecov-action@v3
         with:
           flags: unit
-          functionalities: ["gcov"]
+          functionalities: "gcov"
           move_coverage_to_trash: true
       - name: Integration tests
         if: "matrix.coverage"
@@ -96,6 +96,6 @@ jobs:
         uses: codecov/codecov-action@v3
         with:
           flags: integration
-          functionalities: ["gcov"]
+          functionalities: "gcov"
           move_coverage_to_trash: true
 
