@@ -80,7 +80,7 @@ jobs:
         working-directory: build
       - name: Upload Code Coverage Report (Unit)
         if: "matrix.coverage"
-        uses: codecov/codecov-action@v2
+        uses: codecov/codecov-action@v3
         with:
           flags: unit
       - name: Integration tests
@@ -91,7 +91,7 @@ jobs:
         working-directory: build
       - name: Upload Code Coverage Report (Integration)
         if: "matrix.coverage"
-        uses: codecov/codecov-action@v2
+        uses: codecov/codecov-action@v3
         with:
           flags: integration
 
