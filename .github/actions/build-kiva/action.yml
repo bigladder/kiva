@@ -1,0 +1,68 @@
+name: "Build Kiva"
+description: "Get git info (for version) and build Kiva executable."
+inputs:
+  build-directory:
+    description: Build directory
+    default: "build"
+    required: false
+  configuration:
+    description: Build configuration
+    default: "Release"
+    required: false
+  set-up-results-logging:
+    description: "Sets up ruby scripts to log results"
+    default: true
+    required: false
+  coverage:
+    description: Set coverage flag (and build dynamic library)
+    default: false
+    required: false
+runs:
+  using: composite
+  steps:
+    - name: Get branch name
+      uses: tj-actions/branch-names@v6.4
+      id: branch-name
+    - name: Save branch name
+      run: echo "SRC_BRANCH=${{steps.branch-name.outputs.current_branch}}" >> $GITHUB_ENV
+      shell: bash
+    - name: Create Build Directory
+      run: cmake -E make_directory ${{github.workspace}}/${{inputs.build-directory}}
+      shell: bash
+    - name: Install Linux Libraries
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt-get update
+        sudo apt-get -y install libglu1-mesa-dev freeglut3-dev mesa-common-dev
+      shell: bash
+    - name: Set coverage variables
+      id: cov
+      run: |
+        if ${{inputs.coverage}}; then
+          echo "COVERAGE=ON" >> $GITHUB_OUTPUT
+          echo "STATIC_LIB=OFF" >> $GITHUB_OUTPUT
+        else
+          echo "COVERAGE=OFF" >> $GITHUB_OUTPUT
+          echo "STATIC_LIB=ON" >> $GITHUB_OUTPUT
+        fi
+      shell: bash
+    - name: Configure CMake
+      run: cmake -S . -B ${{inputs.build-directory}} -DKIVA_WERROR="ON" -DKIVA_COVERAGE="${{ steps.cov.outputs.COVERAGE }}" -DKIVA_STATIC_LIB="${{ steps.cov.outputs.STATIC_LIB }}" -DCMAKE_BUILD_TYPE="${{ inputs.configuration }}"
+      shell: bash
+    - name: Setup tooling
+      if: ${{ inputs.set-up-results-logging == 'true' && inputs.coverage == 'false' }}
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: 2.0
+    - name: Set up results directory
+      if: ${{ inputs.set-up-results-logging == 'true' && inputs.coverage == 'false' }}
+      run: |
+        gem install git
+        git config --global core.autocrlf input
+        ruby ../scripts/clone-and-mimic.rb
+      shell: bash
+      working-directory: build
+    - name: Build
+      run: cmake --build ${{inputs.build-directory}} --config ${{ inputs.configuration }}
+      shell: bash
+

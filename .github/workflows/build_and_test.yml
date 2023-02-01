@@ -8,7 +8,6 @@ env:
   PATOKEN: ${{ secrets.CI_PA_TOKEN }}
 jobs:
   build-and-test:
-    name: Build
     strategy:
       fail-fast: false
       matrix:
@@ -16,127 +15,87 @@ jobs:
           - os: ubuntu
             os_ver: "22.04"
             config: Release
-            static_lib: ON
-            coverage: OFF
+            coverage: false
             cc: gcc-11
             cxx: g++-11
           - os: ubuntu
             os_ver: "20.04"
             config: Release
-            static_lib: ON
-            coverage: OFF
+            coverage: false
             cc: gcc-10
             cxx: g++-10
           - os: windows
             os_ver: "2022"
             config: Release
-            static_lib: ON
-            coverage: OFF
+            coverage: false
             cc: cl
             cxx: cl
           - os: macos
             os_ver: "12"
             config: Release
-            static_lib: ON
-            coverage: OFF
+            coverage: false
             cc: clang
             cxx: clang++
           - os: macos
             os_ver: "11"
             config: Release
-            static_lib: ON
-            coverage: OFF
+            coverage: false
             cc: clang
             cxx: clang++
           - os: ubuntu
             os_ver: "20.04"
             config: Debug
-            static_lib: OFF
-            coverage: ON
+            coverage: true
             cc: gcc-10
             cxx: g++-10
     defaults:
       run:
         shell: bash
+    name: ${{ matrix.os }}-${{ matrix.os_ver }} ${{ matrix.cxx }} ${{ matrix.config }} coverage=${{ matrix.coverage }}
     env: 
       CC: ${{ matrix.cc }}
       CXX: ${{ matrix.cxx }}
     runs-on: ${{ matrix.os }}-${{ matrix.os_ver }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
-
-      - name: Get branch name
-        uses: tj-actions/branch-names@v5
-        id: branch-name
-
-      - name: Save branch name
-        run: |
-          echo "SRC_BRANCH=${{steps.branch-name.outputs.current_branch}}" >> $GITHUB_ENV
-
-      - name: Create Build Directory
-        run: cmake -E make_directory ${{github.workspace}}/build
-
-      - name: Install Linux Libraries
-        if: matrix.os == 'ubuntu'
-        run: |
-          sudo apt-get update
-          sudo apt-get -y install libglu1-mesa-dev freeglut3-dev mesa-common-dev
-
-      - name: Configure CMake
-        run: cmake -S . -B build -DKIVA_WERROR="ON" -DKIVA_COVERAGE="${{ matrix.coverage }}" -DKIVA_STATIC_LIB="${{ matrix.static_lib }}" -DCMAKE_BUILD_TYPE="${{ matrix.config }}"
-
-      - name: Setup tooling
-        uses: ruby/setup-ruby@v1
+      - name: Build Kiva
+        uses: ./.github/actions/build-kiva
         with:
-          ruby-version: 2.0
-
-      - name: Post-configure
-        if: matrix.coverage == 'OFF'
+          configuration: ${{ matrix.config }}
+          coverage: ${{ matrix.coverage }}
+      - name: Run tests and log results
+        if: "!matrix.coverage"
         run: |
-          gem install git
-          git config --global core.autocrlf input
-          ruby ../scripts/clone-and-mimic.rb
+          ctest -C ${{matrix.config}} --output-on-failure
+          ruby ../scripts/log-results.rb
         working-directory: build
-
-      - name: Build
-        run: cmake --build build --config ${{ matrix.config }}
-
-      - name: Run basic tests
-        run: ctest -C ${{matrix.config}} --output-on-failure
+      - name: Unit tests
+        if: "matrix.coverage"
+        run: |
+          ctest -R unit\.
+          make gcov
         working-directory: build
-
-      - name: Log results for no-coverage
-        if: matrix.coverage == 'OFF'
-        run: ruby ../scripts/log-results.rb
-        working-directory: build
-
-      - name: Unit test
-        if: matrix.coverage == 'ON'
-        run: ctest -R unit\.
-        working-directory: build
-
-      - name: Integration test
-        if: matrix.coverage == 'ON'
-        run: ctest -R integration\.
-        working-directory: build
-
-      - name: Code Coverage Analysis
-        if: matrix.coverage == 'ON'
-        run: make gcov
-        working-directory: build
-
       - name: Upload Code Coverage Report (Unit)
-        if: matrix.coverage == 'ON'
-        uses: codecov/codecov-action@v2
+        if: "matrix.coverage"
+        uses: codecov/codecov-action@v3
         with:
           flags: unit
-
+          functionalities: "gcov"
+          move_coverage_to_trash: true
+      - name: Integration tests
+        if: "matrix.coverage"
+        run: |
+          ctest -R integration\.
+          make gcov
+        working-directory: build
       - name: Upload Code Coverage Report (Integration)
-        if: matrix.coverage == 'ON'
-        uses: codecov/codecov-action@v2
+        if: "matrix.coverage"
+        uses: codecov/codecov-action@v3
         with:
           flags: integration
+          functionalities: "gcov"
+          move_coverage_to_trash: true
 

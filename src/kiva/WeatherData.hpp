@@ -10,9 +10,16 @@
 #include <numeric>
 
 #include <boost/algorithm/string.hpp>
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations" // sprintf in lexical_cast
+#endif
 #include <boost/date_time/gregorian/gregorian.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/lexical_cast.hpp>
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 #include <boost/tokenizer.hpp>
 
 std::istream &safeGetline(std::istream &is, std::string &t);
