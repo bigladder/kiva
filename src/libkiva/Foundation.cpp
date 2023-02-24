@@ -620,6 +620,36 @@ void Foundation::createMeshData() {
 
   zRanges.ranges.push_back(zNearRange);
 
+  // Calculate area and perimeter
+  double area = boost::geometry::area(polygon);           // [m2] Area of foundation
+  double perimeter = boost::geometry::perimeter(polygon); // [m] Perimeter of foundation
+
+  double interiorPerimeter = 0.0;
+
+  if (useDetailedExposedPerimeter) {
+    for (std::size_t v = 0; v < nV; v++) {
+      std::size_t vNext;
+      if (v == nV - 1) {
+        vNext = 0;
+      } else {
+        vNext = v + 1;
+      }
+
+      Point a = polygon.outer()[v];
+      Point b = polygon.outer()[vNext];
+
+      if (!isExposedPerimeter[v]) {
+        interiorPerimeter += getDistance(a, b);
+      }
+    }
+  } else {
+    interiorPerimeter = perimeter * (1.0 - exposedFraction);
+  }
+
+  netArea = area;
+  netPerimeter = (perimeter - interiorPerimeter);
+  exposedFraction = netPerimeter / perimeter;
+
   // Set 3D foundation areas (for calculation of total heat transfer rates)
 
   Box boundingBox;
@@ -705,32 +735,18 @@ void Foundation::createMeshData() {
       Polygon poly;
       poly = offset(polygon, s.xMin);
 
-      for (std::size_t v = 0; v < nV; v++) {
-        if (useDetailedExposedPerimeter) {
-          if (isExposedPerimeter[v]) {
-            std::size_t vNext;
-            if (v == nV - 1) {
-              vNext = 0;
-            } else {
-              vNext = v + 1;
-            }
-
-            Point a = poly.outer()[v];
-            Point b = poly.outer()[vNext];
-            surfaceAreas[s.type] += (s.zMax - s.zMin) * getDistance(a, b);
-          }
+      auto nV_poly = poly.outer().size();
+      for (std::size_t v = 0; v < nV_poly; v++) {
+        std::size_t vNext;
+        if (v == nV_poly - 1) {
+          vNext = 0;
         } else {
-          std::size_t vNext;
-          if (v == nV - 1) {
-            vNext = 0;
-          } else {
-            vNext = v + 1;
-          }
-
-          Point a = poly.outer()[v];
-          Point b = poly.outer()[vNext];
-          surfaceAreas[s.type] += (s.zMax - s.zMin) * getDistance(a, b);
+          vNext = v + 1;
         }
+
+        Point a = poly.outer()[v];
+        Point b = poly.outer()[vNext];
+        surfaceAreas[s.type] += (s.zMax - s.zMin) * getDistance(a, b) * exposedFraction;
       }
 
     } else {
@@ -751,34 +767,6 @@ void Foundation::createMeshData() {
   for (auto &s : surfaceAreas) {
     hasSurface[s.first] = s.second > 0.0;
   }
-
-  double area = boost::geometry::area(polygon);           // [m2] Area of foundation
-  double perimeter = boost::geometry::perimeter(polygon); // [m] Perimeter of foundation
-
-  double interiorPerimeter = 0.0;
-
-  if (useDetailedExposedPerimeter) {
-    for (std::size_t v = 0; v < nV; v++) {
-      std::size_t vNext;
-      if (v == nV - 1) {
-        vNext = 0;
-      } else {
-        vNext = v + 1;
-      }
-
-      Point a = polygon.outer()[v];
-      Point b = polygon.outer()[vNext];
-
-      if (!isExposedPerimeter[v]) {
-        interiorPerimeter += getDistance(a, b);
-      }
-    }
-  } else {
-    interiorPerimeter = perimeter * (1.0 - exposedFraction);
-  }
-
-  netArea = area;
-  netPerimeter = (perimeter - interiorPerimeter);
 
   if (isEqual(netPerimeter, 0.0)) {
     // TODO: 1D (i.e., cases with no exposed perimeter)
