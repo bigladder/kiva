@@ -1,3 +1,6 @@
+# Set CMAKE_CXX flags for kiva_test executable
+SET_CXX_FLAGS()
+
 set(kiva_test_src
       foundation.unit.cpp
       domain_test.cpp

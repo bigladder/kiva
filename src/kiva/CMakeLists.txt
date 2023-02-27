@@ -1,3 +1,6 @@
+# Set CMAKE_CXX flags for kiva executable
+SET_CXX_FLAGS()
+
 set(kiva_src Main.cpp
              Input.cpp
              Input.hpp
