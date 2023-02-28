@@ -13,6 +13,8 @@ set(kiva_src Main.cpp
 
 set(CMAKE_INSTALL_RPATH "@executable_path")
 
+# Sets the MT flag for Release or Debug config
+set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 add_executable(kiva ${kiva_src})
 
 target_link_libraries(kiva PRIVATE groundplot boost_program_options yaml-cpp kiva_common_interface)

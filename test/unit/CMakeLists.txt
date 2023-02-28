@@ -7,6 +7,8 @@ set(kiva_test_src
       cell_test.cpp
    )
 
+# Sets the MT flag for Release or Debug config
+set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 add_executable(kiva_tests ${kiva_test_src})
 
 target_link_libraries(kiva_tests PRIVATE gtest libkiva kiva_common_interface)
