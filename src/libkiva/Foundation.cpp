@@ -136,6 +136,11 @@ void Foundation::createMeshData() {
   }
 
   if (!isCounterClockWise(polygon)) {
+    if (useDetailedExposedPerimeter) {
+      showMessage(MSG_ERR,
+                  "Foundation floor polygon was entered as clockwise using detailed exposed "
+                  "perimeter. Unable to automatically reassign perimeter exposures.");
+    }
     boost::geometry::correct(polygon);
     showMessage(
         MSG_WARN,
