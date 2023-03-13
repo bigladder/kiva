@@ -256,8 +256,6 @@ public:
   double netPerimeter;
 
   void createMeshData();
-  double getConvectionCoeff(double Tsurf, double Tamb, double hForced, double roughness,
-                            bool isExterior, double cosTilt) const;
 };
 
 } // namespace Kiva
