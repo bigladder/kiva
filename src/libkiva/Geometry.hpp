@@ -55,7 +55,7 @@ enum Turn { LEFT, RIGHT };
 } // namespace geom
 
 bool isRectilinear(Polygon poly);
-Polygon offset(Polygon poly, double dist);
+Polygon offset(const Polygon &poly, const double dist);
 geom::Direction getDirectionIn(Polygon poly, std::size_t vertex);
 geom::Direction getDirectionOut(Polygon poly, std::size_t vertex);
 geom::Turn getTurn(Polygon poly, std::size_t vertex);
