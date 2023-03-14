@@ -24,7 +24,12 @@ runs:
       uses: tj-actions/branch-names@v6.4
       id: branch-name
     - name: Save branch name
-      run: echo "SRC_BRANCH=${{steps.branch-name.outputs.current_branch}}" >> $GITHUB_ENV
+      run: |
+        if ${{steps.branch-name.outputs.is_tag}} == 'true'; then
+          echo "SRC_BRANCH=${{steps.branch-name.outputs.tag}}" >> $GITHUB_ENV
+        else
+          echo "SRC_BRANCH=${{steps.branch-name.outputs.current_branch}}" >> $GITHUB_ENV
+        fi
       shell: bash
     - name: Create Build Directory
       run: cmake -E make_directory ${{github.workspace}}/${{inputs.build-directory}}
