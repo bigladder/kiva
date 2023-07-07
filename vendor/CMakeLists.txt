@@ -5,7 +5,7 @@ if (NOT TARGET fmt)
     add_subdirectory(fmt)
 endif ()
 
-add_subdirectory(boost-1.77.0)
+add_subdirectory(boost-1.82.0)
 
 if (KIVA_EXE_BUILD OR KIVA_GROUND_PLOT)
 
