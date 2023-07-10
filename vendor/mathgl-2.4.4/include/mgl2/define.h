@@ -136,7 +136,9 @@ typedef long msize;
 #define getcwd	_getcwd
 #define chdir	_chdir // BORLAND has chdir
 #endif
+#if (_MSC_VER < 1500)
 #define snprintf _snprintf
+#endif
 #if (_MSC_VER<1600) // based on https://hg.python.org/cpython/rev/9aedb876c2d7
 #define hypot	_hypot
 #endif
