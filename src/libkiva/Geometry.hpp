@@ -20,6 +20,7 @@
 #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
 #pragma GCC diagnostic ignored "-Wuninitialized"
 #pragma GCC diagnostic ignored "-Wstrict-overflow"
+#pragma GCC system_header
 #endif
 #include <boost/geometry.hpp>
 #include <boost/geometry/geometries/geometries.hpp>
