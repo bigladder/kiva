@@ -2302,7 +2302,9 @@ public:
 	{	pr=mgl_create_parser();	mgl_parser_allow_setsize(pr, setsize);	}
 	virtual ~mglParse()
 	{
+#if defined(_OPENMP)
 #pragma omp critical
+#endif
 		if(mgl_use_parser(pr,-1)<1)	mgl_delete_parser(pr);
 	}
 	/// Get pointer to internal mglParser object
