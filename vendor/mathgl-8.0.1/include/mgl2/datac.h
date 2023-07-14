@@ -474,11 +474,15 @@ using mglDataA::Last;
 	{	if(this!=&d)	Set(&d);	return d;	}
 	inline dual operator=(dual val)
 	{
+#if defined(_OPENMP)
 #pragma omp parallel for
+#endif
 		for(long i=0;i<nx*ny*nz;i++)	a[i]=val;	return val;	}
 	inline dual operator=(mreal val)
 	{
+#if defined(_OPENMP)
 #pragma omp parallel for
+#endif
 		for(long i=0;i<nx*ny*nz;i++)	a[i]=val;	return val;	}
 	/// Multiply the data by other one for each element
 	inline void operator*=(const mglDataA &d)	{	mgl_datac_mul_dat(this,&d);	}
