@@ -62,4 +62,4 @@ if(MGL_HAVE_MPI)
 	target_include_directories(mgl-mpi SYSTEM PUBLIC ${MPI_CXX_INCLUDE_PATH})
 endif(MGL_HAVE_MPI)
 
-install(FILES ${MathGL2_BINARY_DIR}/include/mgl2/dllexport.h DESTINATION ${MGL_INCLUDE_PATH})
+#install(FILES ${MathGL2_BINARY_DIR}/include/mgl2/dllexport.h DESTINATION ${MGL_INCLUDE_PATH})

@@ -1,13 +1,13 @@
 cmake_minimum_required(VERSION 3.1.0)
 
 if(POLICY CMP0078)
-	cmake_policy(SET CMP0078 NEW)
+    cmake_policy(SET CMP0078 NEW)
 endif()
 if(POLICY CMP0086)
-	cmake_policy(SET CMP0086 NEW)
+    cmake_policy(SET CMP0086 NEW)
 endif()
 if(POLICY CMP0127)
-	cmake_policy(SET CMP0127 NEW)
+    cmake_policy(SET CMP0127 NEW)
 endif()
 
 project( MathGL2 )
@@ -94,75 +94,75 @@ function(mgl_add_lib mgl_tmp_lib)
 		set (CMAKE_DEBUG_POSTFIX "d")
 		set_target_properties(${mgllib} PROPERTIES DEBUG_POSTFIX ${CMAKE_DEBUG_POSTFIX})
 		set_target_properties(${mgllib}-static PROPERTIES DEBUG_POSTFIX ${CMAKE_DEBUG_POSTFIX})
-		#		if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-		#			set(mgl_lib_end "d")
-		#		else(CMAKE_BUILD_TYPE STREQUAL "Debug")
-		#			set(mgl_lib_end)
-		#		endif(CMAKE_BUILD_TYPE STREQUAL "Debug")
+#		if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+#			set(mgl_lib_end "d")
+#		else(CMAKE_BUILD_TYPE STREQUAL "Debug")
+#			set(mgl_lib_end)
+#		endif(CMAKE_BUILD_TYPE STREQUAL "Debug")
 	elseif(MSVC)
 		set(mgl_lib_static)
 		set_target_properties(${mgllib} PROPERTIES CLEAN_DIRECT_OUTPUT 1)
-		set_target_properties(${mgllib}-static PROPERTIES CLEAN_DIRECT_OUTPUT 1)
+	set_target_properties(${mgllib}-static PROPERTIES CLEAN_DIRECT_OUTPUT 1)
 	endif(MSVC)
 	if(enable-mgl2)
-		set_target_properties(${mgllib} PROPERTIES OUTPUT_NAME "${mgllib2}${mgl_lib_end}")
-		set_target_properties(${mgllib}-static PROPERTIES OUTPUT_NAME "${mgllib2}${mgl_lib_static}${mgl_lib_end}")
+			set_target_properties(${mgllib} PROPERTIES OUTPUT_NAME "${mgllib2}${mgl_lib_end}")
+			set_target_properties(${mgllib}-static PROPERTIES OUTPUT_NAME "${mgllib2}${mgl_lib_static}${mgl_lib_end}")
 	else(enable-mgl2)
-		set_target_properties(${mgllib} PROPERTIES OUTPUT_NAME "${mgllib}${mgl_lib_end}")
-		set_target_properties(${mgllib}-static PROPERTIES OUTPUT_NAME "${mgllib}${mgl_lib_static}${mgl_lib_end}")
+			set_target_properties(${mgllib} PROPERTIES OUTPUT_NAME "${mgllib}${mgl_lib_end}")
+			set_target_properties(${mgllib}-static PROPERTIES OUTPUT_NAME "${mgllib}${mgl_lib_static}${mgl_lib_end}")
 	endif(enable-mgl2)
 
-	#[[ Kiva customization
-        install(
-                TARGETS ${mgllib} ${mgllib}-static
-                EXPORT MathGLTargets
-                RUNTIME DESTINATION ${MathGL_INSTALL_BIN_DIR}
-                ARCHIVE DESTINATION ${MathGL_INSTALL_LIB_DIR}
-                LIBRARY DESTINATION ${MathGL_INSTALL_LIB_DIR}
-        )
-    ]]
+#[[ Kiva customization
+	install(
+			TARGETS ${mgllib} ${mgllib}-static
+			EXPORT MathGLTargets
+			RUNTIME DESTINATION ${MathGL_INSTALL_BIN_DIR}
+			ARCHIVE DESTINATION ${MathGL_INSTALL_LIB_DIR}
+			LIBRARY DESTINATION ${MathGL_INSTALL_LIB_DIR}
+	)
+]]
 endfunction(mgl_add_lib mgl_tmp_lib)
 
 MACRO(MGL_DEPENDENT_OPTION option doc default depends1 force1 depends2 force2)
-	IF(${option}_ISSET MATCHES "^${option}_ISSET$")
-		SET(${option}_AVAILABLE 1)
-		IF(${force1})
-			FOREACH(d ${depends1})
-				STRING(REGEX REPLACE " +" ";" CMAKE_DEPENDENT_OPTION_DEP "${d}")
-				IF(${CMAKE_DEPENDENT_OPTION_DEP})
-				ELSE(${CMAKE_DEPENDENT_OPTION_DEP})
-					SET(${option}_AVAILABLE 0)
-					SET(depends1_AVAILABLE 1)
-				ENDIF(${CMAKE_DEPENDENT_OPTION_DEP})
-			ENDFOREACH(d)
-		ENDIF(${force1})
-		IF(${force2})
-			FOREACH(d ${depends2})
-				STRING(REGEX REPLACE " +" ";" CMAKE_DEPENDENT_OPTION_DEP "${d}")
-				IF(${CMAKE_DEPENDENT_OPTION_DEP})
-				ELSE(${CMAKE_DEPENDENT_OPTION_DEP})
-					SET(${option}_AVAILABLE 0)
-					SET(depends2_AVAILABLE 1)
-				ENDIF(${CMAKE_DEPENDENT_OPTION_DEP})
-			ENDFOREACH(d)
-		ENDIF(${force2})
-		IF(${option}_AVAILABLE)
-			OPTION(${option} "${doc}" "${default}")
-			SET(${option} "${${option}}" CACHE BOOL "${doc}" FORCE)
-		ELSE(${option}_AVAILABLE)
-			IF(${option} MATCHES "^${option}$")
-			ELSE(${option} MATCHES "^${option}$")
-				SET(${option} "${${option}}" CACHE INTERNAL "${doc}")
-			ENDIF(${option} MATCHES "^${option}$")
-			IF(depends1_AVAILABLE)
-				SET(${option} OFF)
-			ELSEIF(depends2_AVAILABLE)
-				SET(${option} ON)
-			ENDIF(depends1_AVAILABLE)
-		ENDIF(${option}_AVAILABLE)
-	ELSE(${option}_ISSET MATCHES "^${option}_ISSET$")
-		SET(${option} "${${option}_ISSET}")
-	ENDIF(${option}_ISSET MATCHES "^${option}_ISSET$")
+  IF(${option}_ISSET MATCHES "^${option}_ISSET$")
+    SET(${option}_AVAILABLE 1)
+    IF(${force1})
+    FOREACH(d ${depends1})
+      STRING(REGEX REPLACE " +" ";" CMAKE_DEPENDENT_OPTION_DEP "${d}")
+      IF(${CMAKE_DEPENDENT_OPTION_DEP})
+      ELSE(${CMAKE_DEPENDENT_OPTION_DEP})
+          SET(${option}_AVAILABLE 0)
+          SET(depends1_AVAILABLE 1)
+      ENDIF(${CMAKE_DEPENDENT_OPTION_DEP})
+    ENDFOREACH(d)
+    ENDIF(${force1})
+    IF(${force2})
+    FOREACH(d ${depends2})
+      STRING(REGEX REPLACE " +" ";" CMAKE_DEPENDENT_OPTION_DEP "${d}")
+      IF(${CMAKE_DEPENDENT_OPTION_DEP})
+      ELSE(${CMAKE_DEPENDENT_OPTION_DEP})
+          SET(${option}_AVAILABLE 0)
+          SET(depends2_AVAILABLE 1)
+      ENDIF(${CMAKE_DEPENDENT_OPTION_DEP})
+    ENDFOREACH(d)
+    ENDIF(${force2})
+    IF(${option}_AVAILABLE)
+      OPTION(${option} "${doc}" "${default}")
+      SET(${option} "${${option}}" CACHE BOOL "${doc}" FORCE)
+    ELSE(${option}_AVAILABLE)
+      IF(${option} MATCHES "^${option}$")
+      ELSE(${option} MATCHES "^${option}$")
+        SET(${option} "${${option}}" CACHE INTERNAL "${doc}")
+      ENDIF(${option} MATCHES "^${option}$")
+        IF(depends1_AVAILABLE)
+          SET(${option} OFF)
+        ELSEIF(depends2_AVAILABLE)
+          SET(${option} ON)
+        ENDIF(depends1_AVAILABLE)
+    ENDIF(${option}_AVAILABLE)
+  ELSE(${option}_ISSET MATCHES "^${option}_ISSET$")
+    SET(${option} "${${option}_ISSET}")
+  ENDIF(${option}_ISSET MATCHES "^${option}_ISSET$")
 ENDMACRO(MGL_DEPENDENT_OPTION)
 include(CMakeDependentOption)
 
@@ -230,8 +230,8 @@ string(REPLACE "." "" PY3VERSION_NODOT ${PY3VERSION_DOTTED})
 
 # msvc fwprintf print char* for the specifier of "%s" format
 if(MSVC AND MSVC_VERSION GREATER 1899)
-	#	SET(CMAKE_CXX_FLAGS "/EHsc -D_CRT_STDIO_ISO_WIDE_SPECIFIERS ${CMAKE_CXX_FLAGS}")
-	#	SET(CMAKE_C_FLAGS "-D_CRT_STDIO_ISO_WIDE_SPECIFIERS ${CMAKE_C_FLAGS}")
+#	SET(CMAKE_CXX_FLAGS "/EHsc -D_CRT_STDIO_ISO_WIDE_SPECIFIERS ${CMAKE_CXX_FLAGS}")
+#	SET(CMAKE_C_FLAGS "-D_CRT_STDIO_ISO_WIDE_SPECIFIERS ${CMAKE_C_FLAGS}")
 endif(MSVC AND MSVC_VERSION GREATER 1899)
 
 include(CheckCXXSourceCompiles)
@@ -276,9 +276,9 @@ if(enable-qt4 OR enable-qt5)
 	if(enable-qt5 AND NOT enable-qt4)
 		set(enable-qt5asqt TRUE)
 	endif(enable-qt5 AND NOT enable-qt4)
-	# 	if(NOT enable-opengl)
-	# 		message(SEND_ERROR "You cannot build MathGL with Qt4 or Qt5 without OpenGL enabled.")
-	# 	endif(NOT enable-opengl)
+# 	if(NOT enable-opengl)
+# 		message(SEND_ERROR "You cannot build MathGL with Qt4 or Qt5 without OpenGL enabled.")
+# 	endif(NOT enable-opengl)
 endif(enable-qt4 OR enable-qt5)
 
 CMAKE_DEPENDENT_OPTION(enable-json-sample "Enable JSON sample (WebKit variant is the default)." ON "QT_ENABLED" OFF)
@@ -296,7 +296,7 @@ set(MGL_CGI_PATH "${CMAKE_INSTALL_PREFIX}/${MGL_CGI_PATH_INSTALL}")
 set(MGL_DEF_FONT "STIX" CACHE STRING "Set default font name")
 
 if(NOT WIN32)
-	#	set(MGL_CGI_PATH "${CMAKE_INSTALL_PREFIX}/share/mathgl")
+#	set(MGL_CGI_PATH "${CMAKE_INSTALL_PREFIX}/share/mathgl")
 	set(MGL_DATA_PATH "${CMAKE_INSTALL_PREFIX}/share/mathgl")
 	set(MGL_DOC_PATH "${CMAKE_INSTALL_PREFIX}/share/doc/mathgl")
 	set(MGL_MAN_PATH "${CMAKE_INSTALL_PREFIX}/share/man")
@@ -338,9 +338,9 @@ include(CheckTypeSize)
 check_type_size("long" SIZEOF_LONG)
 
 if(NOT disable-C99complex)
-	# 	unset(MGL_HAVE_C99_COMPLEX)
+# 	unset(MGL_HAVE_C99_COMPLEX)
 	CHECK_CXX_SOURCE_COMPILES(
-			"#include <complex>
+	"#include <complex>
 	#include <complex.h>
 	int main(int argc, char *args[])
 	{std::complex<double> c(2.0, 1.0);
@@ -356,7 +356,7 @@ endif(NOT disable-C99complex)
 
 #unset(MGL_HAVE_NAN_INF)
 CHECK_CXX_SOURCE_COMPILES(
-		"#include <math.h>
+"#include <math.h>
 int main(){double a=NAN, b=INFINITY;return 0;}" MGL_HAVE_NAN_INF)
 if(NOT MGL_HAVE_NAN_INF)
 	set(MGL_HAVE_NAN_INF 0)
@@ -364,7 +364,7 @@ endif(NOT MGL_HAVE_NAN_INF)
 
 #unset(MGL_HAVE_ATTRIBUTE)
 CHECK_CXX_SOURCE_COMPILES(
-		"int __attribute__((pure)) test1() {return 0;}
+"int __attribute__((pure)) test1() {return 0;}
 int __attribute__((const)) test2(int x) {return x*x;}
 int main(int argc, char* argv[]) {return 0;}" MGL_HAVE_ATTRIBUTE)
 if(NOT MGL_HAVE_ATTRIBUTE)
@@ -375,11 +375,11 @@ if(NOT MSVC AND enable-rvalue)
 	SET(CMAKE_CXX_FLAGS "-std=gnu++11 ${CMAKE_CXX_FLAGS}")
 	unset(MGL_HAVE_RVAL CACHE)
 	CHECK_CXX_SOURCE_COMPILES(
-			"struct test { test() {} test(test&& a){} };
+	"struct test { test() {} test(test&& a){} };
 	int main() { test t;	return 0; }" MGL_HAVE_RVAL)
 	if(NOT MGL_HAVE_RVAL)
 		message(SEND_ERROR "Couldn't enable rvalue.")
-		#		set(MGL_HAVE_RVAL 0)
+#		set(MGL_HAVE_RVAL 0)
 	endif(NOT MGL_HAVE_RVAL)
 else(NOT MSVC AND enable-rvalue)
 	set(MGL_HAVE_RVAL 0)
@@ -388,7 +388,7 @@ endif(NOT MSVC AND enable-rvalue)
 
 
 CHECK_CXX_SOURCE_COMPILES(
-		"#include <getopt.h>
+"#include <getopt.h>
 int main(int argc, char *args[]) {
 int ch = getopt(argc, args, \"1:2:3:4:5:6:7:8:9:hno:L:C:A:s:S:q:\"); return 0; }" MGL_HAVE_GETOPT)
 if(NOT MGL_HAVE_GETOPT)
@@ -534,7 +534,7 @@ if(enable-hdf5)
 			message(SEND_ERROR "Couldn't find HDF5 library.")
 		endif(NOT HDF5_FOUND)
 	endif(NOT HDF5_FOUND)
-
+	
 	string(REPLACE "." ";" HDF_VERSION_LIST ${HDF5_VERSION})
 	list(GET HDF_VERSION_LIST 0 HDF_VERSION_MAJOR)
 	list(GET HDF_VERSION_LIST 1 HDF_VERSION_MINOR)
@@ -589,12 +589,12 @@ if(enable-png)
 	if(NOT MGL_HAVE_ZLIB)
 		message(SEND_ERROR "You have to enable ZLib if you plan to use PNG export.")
 	endif(NOT MGL_HAVE_ZLIB)
-	#[[ Kiva Customization
-        include(FindPNG)
-        if(NOT PNG_FOUND)
-            message(SEND_ERROR "Couldn't find PNG library.")
-        endif(NOT PNG_FOUND)
-    ]]
+#[[ Kiva Customization
+	include(FindPNG)
+	if(NOT PNG_FOUND)
+		message(SEND_ERROR "Couldn't find PNG library.")
+	endif(NOT PNG_FOUND)
+]]	
 	set(MGL_DEP_LIBS ${PNG_LIBRARIES} ${MGL_DEP_LIBS})
 	include_directories(${PNG_INCLUDE_DIR})
 else(enable-png)
@@ -667,7 +667,7 @@ if(enable-fltk)
 	else(NOT FLTK_FOUND)
 		include_directories(${FLTK_INCLUDE_DIR})
 		CHECK_CXX_SOURCE_COMPILES(
-				"#include <FL/Fl_Copy_Surface.H>
+		"#include <FL/Fl_Copy_Surface.H>
 		int main(){return 0;}" MGL_HAVE_FL_COPY)
 	endif(NOT FLTK_FOUND)
 	if(NOT MGL_HAVE_FL_COPY)
@@ -807,11 +807,11 @@ if(NOT MGL_HAVE_GETOPT)
 endif(NOT MGL_HAVE_GETOPT)
 
 add_subdirectory( src )
-add_subdirectory( widgets )
+#add_subdirectory( widgets )
 add_subdirectory( include )
 if(NOT enable-lgpl)
 	if(MGL_HAVE_QT)
-		#		add_subdirectory( udav )
+#		add_subdirectory( udav )
 		if(enable-json-sample)
 			add_subdirectory( json )
 		endif(enable-json-sample)
@@ -819,12 +819,12 @@ if(NOT enable-lgpl)
 	if(enable-python OR enable-lua OR enable-octave)
 		add_subdirectory( lang )
 	endif(enable-python OR enable-lua OR enable-octave)
-	#add_subdirectory( utils )
-	#add_subdirectory( examples )
-	if(NOT WIN32)
-		#	add_subdirectory( fonts )
-	endif(NOT WIN32)
-	#add_subdirectory( mgllab )
+#add_subdirectory( utils )
+#add_subdirectory( examples )
+if(NOT WIN32)
+#	add_subdirectory( fonts )
+endif(NOT WIN32)
+#add_subdirectory( mgllab )
 endif(NOT enable-lgpl)
 
 if(NOT MSVC AND NOT BORLAND)
