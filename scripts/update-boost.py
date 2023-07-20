@@ -34,7 +34,7 @@ repo_src_path=repo_path+"/src"
 repo_src_folder_names=["kiva", "libgroundplot", "libkiva"]
 
 # name of current boost folder (within repo)
-prev_repo_boost_folder_name = "boost-1.77.0"
+prev_repo_boost_folder_name = "boost-1.78.0"
 
 # new name for updated, minimized boost folder (within repo)
 dest_repo_boost_folder_name = "boost-1.82.0"
