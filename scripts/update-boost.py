@@ -1,9 +1,9 @@
 # Applies the boost bcp utility on specified portion of a repo
 # This will replace the current boost folder (already in the repo)
-# with a new boost folder that should contain only the need portions of boost,
+# with a new boost folder that should contain only the needed portions of boost,
 # and which may be retrieved from a different version of boost.
-# The previous version of boost will be stashed in the same location, with
-# a different name, and can be deleted after the transition is confirmed.
+# The previous version of boost will be stashed in the same location, (with
+# a different name, if needed), and can be deleted after the transition is confirmed.
 #
 # Notes:
 # 1. The contents of the reduced boost folder will only be expanded (not reduced)
