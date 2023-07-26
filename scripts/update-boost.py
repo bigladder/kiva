@@ -152,7 +152,7 @@ def updateBoost(bcp_command, source_boost_path, repo_path, prev_repo_boost_folde
 	if os.path.exists(stash_boost_path + "/libs/program_options/CMakeLists.txt"):
 		if os.path.exists(dest_repo_boost_path + "/libs/program_options"):
 			print("Copying  \"" + stash_boost_path + "/libs/program_options/CMakeLists.txt\"")
-			shutil.copyfile(source_boost_path + "/libs/program_options/CMakeLists.txt", dest_repo_boost_path + "/libs/program_options/CMakeLists.txt")
+			shutil.copyfile(stash_boost_path + "/libs/program_options/CMakeLists.txt", dest_repo_boost_path + "/libs/program_options/CMakeLists.txt")
 		else:
 			print("\"" + dest_repo_boost_path + "/libs/program_options\"" + " does not exist")
 	else:
