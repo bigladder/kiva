@@ -14,20 +14,20 @@
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-parameter"
 #pragma clang diagnostic ignored "-Wdeprecated-declarations" // sprintf in lexical_cast
-#elif defined(__GNUC__)
+
+#elif defined(__GNUC__) && defined(__linux__)
 // Extended precision is not used by kiva
 // Disable boost quadmath to avoid warnings
 #define BOOST_CSTDFLOAT_NO_LIBQUADMATH_CMATH
 #define BOOST_CSTDFLOAT_NO_LIBQUADMATH_IOSTREAM
 #define BOOST_CSTDFLOAT_NO_LIBQUADMATH_COMPLEX
-#if defined(__linux__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
 #pragma GCC diagnostic ignored "-Wuninitialized"
 #pragma GCC diagnostic ignored "-Wstrict-overflow"
-#endif // defined(__linux__)
-#endif // defined(__GNUC__)
+#endif // defined(_MSC_VER)
+
 #include <boost/geometry.hpp>
 #include <boost/geometry/geometries/geometries.hpp>
 #include <boost/geometry/multi/geometries/multi_point.hpp>
