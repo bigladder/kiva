@@ -71,9 +71,7 @@ import sys
 import re
 import platform
 import subprocess
-import shlex
 import shutil
-import glob
 
 # replace a word in a file
 def find_and_replace(filename, word, replacement):

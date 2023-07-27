@@ -676,7 +676,7 @@ inline T wrap_azimuth_in_radian(T const& azimuth)
     while (result > pi) { result -= two_pi; }
     while (result < -pi) { result += two_pi; }
     return result;
-};
+}
 
 
 #ifndef DOXYGEN_NO_DETAIL
