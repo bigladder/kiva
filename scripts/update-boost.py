@@ -68,8 +68,6 @@
 
 import os
 import sys
-import re
-import platform
 import subprocess
 import shutil
 
@@ -116,14 +114,6 @@ def updateBoost(bcp_command, source_boost_path, repo_path, prev_repo_boost_folde
 	if not(os.path.exists(dest_repo_boost_path)):
 		os.mkdir(dest_repo_boost_path )
 	
-	# adjust path if Windows
-	if platform.system() == "Windows":
-		source_boost_path = source_boost_path.replace("\\", "/")
-		dest_repo_boost_path = dest_repo_boost_path.replace("\\", "/")
-		stash_boost_path = stash_boost_path.replace("\\", "/")
-		bcp_command =  bcp_command.replace("\\", "/")
-		repo_path = repo_path.replace("\\", "/")
-	
 	# run bcp utility
 	bcp_list = [bcp_command, "--scan"]
 	bcp_list.append("--boost=" + source_boost_path)
@@ -131,7 +121,6 @@ def updateBoost(bcp_command, source_boost_path, repo_path, prev_repo_boost_folde
 	for repo_src_path, dirs, files in os.walk(repo_src_path, topdown = True):
 		for filename in files:
 			full_filename = os.path.join(repo_src_path, filename)
-			file_list = file_list + " \"" + full_filename + "\""
 			bcp_list.append(full_filename)
 	
 	bcp_list.append(dest_repo_boost_path)
