@@ -80,44 +80,48 @@ def find_and_replace(filename, word, replacement):
 	with open(filename, 'w') as f:
 		f.write(text)			
 
+# rename a folder, if necessary
+def check_rename_folder(orig_path):
+	i = 0
+	while os.path.exists(orig_path + "_" + str(i)):
+		i = i + 1
+	rep_path = orig_path + "_" + str(i)
+
+	# rename the current repo boost folder
+	os.rename(orig_path, rep_path)
+	print("Renamed  " + orig_path + " to " + rep_path)
+	return rep_path
+
 # source_boost_path: path to folder containing new, full boost version
 # repo_path: path to repo
 # prev_repo_boost_folder_name: name of current boost folder (within repo)
 # dest_repo_boost_folder_name: new name for updated, minimized boost folder (within repo)
 def updateBoost(bcp_command, source_boost_path, repo_path, prev_repo_boost_folder_name, dest_repo_boost_folder_name):
 
-	# path to folder and list of subfolders containing source code that uses boost
+	# path to folder and list of sub-folders containing source code that uses boost
 	repo_src_path = repo_path + "/src"
 	
-	# name with which to stash current boost folder (which can then be deleted)	
-	stash_repo_boost_folder_name = prev_repo_boost_folder_name
-	if stash_repo_boost_folder_name == dest_repo_boost_folder_name:
-		stash_repo_boost_folder_name += "_old"
-
-	# rename old boost folder
+	# generate full paths
 	prev_repo_boost_path = repo_path + "/vendor/" + prev_repo_boost_folder_name
 	dest_repo_boost_path = repo_path + "/vendor/" + dest_repo_boost_folder_name
-	stash_boost_path = repo_path + "/vendor/" + stash_repo_boost_folder_name
 
-	# append a number if stash folder exists
-	if stash_repo_boost_folder_name != prev_repo_boost_folder_name:
-		if os.path.exists(stash_boost_path):
-			i = 0
-			while os.path.exists(stash_boost_path + "_" + str(i)):
-				i = i + 1
-			stash_boost_path = stash_boost_path + "_" + str(i)
+	# name with which to stash current boost folder (which can then be deleted)	
+	stash_boost_path = prev_repo_boost_path
 
-		# rename the current repo boost folder
-		os.rename(prev_repo_boost_path, stash_boost_path)
-	
-	# make new repo boost folder
-	if not(os.path.exists(dest_repo_boost_path)):
-		os.mkdir(dest_repo_boost_path )
+	# modify stash folder name if same as dest
+	if prev_repo_boost_path == dest_repo_boost_path:
+		stash_boost_path = check_rename_folder(prev_repo_boost_path)
+
+	# if dest folder name is used, rename folder that currently has that name
+	if os.path.exists(dest_repo_boost_path):
+		check_rename_folder(dest_repo_boost_path)
+
+	# make new dest repo boost folder
+	os.mkdir(dest_repo_boost_path )
 	
 	# run bcp utility
 	bcp_list = [bcp_command, "--scan"]
 	bcp_list.append("--boost=" + source_boost_path)
-	file_list = ""
 	for repo_src_path, dirs, files in os.walk(repo_src_path, topdown = True):
 		for filename in files:
 			full_filename = os.path.join(repo_src_path, filename)
