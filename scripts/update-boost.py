@@ -80,17 +80,17 @@ def find_and_replace(filename, word, replacement):
 	with open(filename, 'w') as f:
 		f.write(text)			
 
-# rename a folder, if necessary
+# Find a unique folder name and rename the folder
 def check_rename_folder(orig_path):
 	i = 0
 	while os.path.exists(orig_path + "_" + str(i)):
 		i = i + 1
-	rep_path = orig_path + "_" + str(i)
+	mod_path = orig_path + "_" + str(i)
 
-	# rename the current repo boost folder
-	os.rename(orig_path, rep_path)
-	print("Renamed  " + orig_path + " to " + rep_path)
-	return rep_path
+	# rename the folder
+	os.rename(orig_path, mod_path)
+	print("Renamed  " + orig_path + " to " + mod_path)
+	return mod_path
 
 # source_boost_path: path to folder containing new, full boost version
 # repo_path: path to repo
