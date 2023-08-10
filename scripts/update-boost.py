@@ -99,11 +99,11 @@ def check_rename_folder(orig_path):
 def updateBoost(bcp_command, source_boost_path, repo_path, prev_repo_boost_folder_name, dest_repo_boost_folder_name):
 
 	# path to folder and list of sub-folders containing source code that uses boost
-	repo_src_path = repo_path + "/src"
+	repo_src_path = os.path.join(repo_path, "src")
 	
 	# generate full paths
-	prev_repo_boost_path = repo_path + "/vendor/" + prev_repo_boost_folder_name
-	dest_repo_boost_path = repo_path + "/vendor/" + dest_repo_boost_folder_name
+	prev_repo_boost_path = os.path.join(repo_path, "vendor", prev_repo_boost_folder_name)
+	dest_repo_boost_path = os.path.join(repo_path, "vendor", dest_repo_boost_folder_name)
 
 	# name with which to stash current boost folder (which can then be deleted)	
 	stash_boost_path = prev_repo_boost_path
@@ -133,36 +133,36 @@ def updateBoost(bcp_command, source_boost_path, repo_path, prev_repo_boost_folde
 	print(result.stdout)
 	
 	# copy CMakeLists.txt from stashed boost folder
-	if os.path.exists(stash_boost_path + "/CMakeLists.txt"):
-		print("Copying  \"" + stash_boost_path + "/CMakeLists.txt\"")
-		shutil.copyfile(stash_boost_path + "/CMakeLists.txt", dest_repo_boost_path + "/CMakeLists.txt")
+	if os.path.exists(os.path.join(stash_boost_path, "CMakeLists.txt")):
+		print("Copying  \"" + os.path.join(stash_boost_path, "CMakeLists.txt") + "\"")
+		shutil.copyfile(os.path.join(stash_boost_path, "CMakeLists.txt"), os.path.join(dest_repo_boost_path, "CMakeLists.txt"))
 	else:
-		print("\"" + stash_boost_path + "/CMakeLists.txt\" does not exist")
+		print("\"" + os.path.join(stash_boost_path, "CMakeLists.txt") + "\" does not exist")
 	
 	# copy CMakeLists.txt from stashed boost program_options folder
-	if os.path.exists(stash_boost_path + "/libs/program_options/CMakeLists.txt"):
-		if os.path.exists(dest_repo_boost_path + "/libs/program_options"):
-			print("Copying  \"" + stash_boost_path + "/libs/program_options/CMakeLists.txt\"")
-			shutil.copyfile(stash_boost_path + "/libs/program_options/CMakeLists.txt", dest_repo_boost_path + "/libs/program_options/CMakeLists.txt")
+	if os.path.exists(os.path.join(stash_boost_path, "libs/program_options/CMakeLists.txt")):
+		if os.path.exists(os.path.join(dest_repo_boost_path, "libs/program_options")):
+			print("Copying  \"" + os.path.join(stash_boost_path, "libs/program_options/CMakeLists.txt") + "\"")
+			shutil.copyfile(os.path.join(stash_boost_path, "libs/program_options/CMakeLists.txt"), os.path.join(dest_repo_boost_path, "libs/program_options/CMakeLists.txt"))
 		else:
-			print("\"" + dest_repo_boost_path + "/libs/program_options\"" + " does not exist")
+			print("\"" + os.path.join(dest_repo_boost_path, "libs/program_options") + "\" does not exist")
 	else:
-		print("\"" + stash_boost_path + "/libs/program_options/CMakeLists.txt\" does not exist")
+		print("\"" + os.path.join(stash_boost_path, "libs/program_options/CMakeLists.txt") + "\" does not exist")
 		
 	# change the boost folder name in the CMakeLists.txt file in the vendor folder
-	if os.path.exists(repo_path + "/vendor/CMakeLists.txt"):
-		print("Changing boost reference in  \"" + repo_path + "/vendor/CMakeLists.txt\"")
-		find_and_replace(repo_path + "/vendor/CMakeLists.txt", prev_repo_boost_folder_name, dest_repo_boost_folder_name)
+	if os.path.exists(os.path.join(repo_path, "vendor/CMakeLists.txt")):
+		print("Changing boost reference in  \"" + os.path.join(repo_path, "vendor/CMakeLists.txt") + "\"")
+		find_and_replace(os.path.join(repo_path, "vendor/CMakeLists.txt"), prev_repo_boost_folder_name, dest_repo_boost_folder_name)
 	else:
-		print("\"" + repo_path + "/vendor/CMakeLists.txt\" does not exist")	
+		print("\"" + os.path.join(repo_path, "vendor/CMakeLists.txt") + "\" does not exist")	
 
 	# copy license
 	file_list = os.listdir(source_boost_path)
 	for filename in file_list:
 		if "LICENSE" in filename:
 			license_name = filename
-			print("Copying  \"" + source_boost_path + "/" + license_name + "\"")
-			shutil.copyfile(source_boost_path + "/" + license_name, dest_repo_boost_path + "/" + license_name)	
+			print("Copying  \"" + os.path.join(source_boost_path, license_name) + "\"")
+			shutil.copyfile(os.path.join(source_boost_path, license_name), os.path.join(dest_repo_boost_path, license_name))	
 			
 #  main
 n_args = len(sys.argv) - 1
