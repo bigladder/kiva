@@ -1,15 +1,12 @@
-# Applies the boost bcp utility on specified portion of a repo
-# This will replace the current boost folder (already in the repo)
+# Applies the boost bcp utility to the src folder of a repo.
+# This will replace the current boost folder (already in vendor folder of the repo)
 # with a new boost folder that should contain only the need portions of boost,
 # and which may be retrieved from a different version of boost.
-# The previous version of boost will be stashed in the same location, with
-# a different name, and can be deleted after the transition is confirmed.
+# The previous boost folder will be stashed in the same location, with
+# a different name, if necessary, and can be deleted after the transition is confirmed.
 #
 # Notes:
-# 1. The contents of the reduced boost folder will only be expanded (not reduced)
-# if bcp is applied to different source-code selections.
-#
-# 2. bcp is not able to trace dependencies through macros, resulting in some 'CAUTION' statements.
+# bcp is not able to trace dependencies through macros, resulting in some 'CAUTION' statements.
 # In the case of kiva, these do not appear to be consequential.
 # -----------------------------------
 # bcp can be installed/updated on Mac using homebrew, prior to running this script:
@@ -17,8 +14,8 @@
 #   brew link boost-bcp
 #
 # Example of use on Mac:
-# python3 update-boost.py bcp /Users/USERNAME/Documents/Development/boost_1_81_0 \
-#	/Users/USERNAME/Documents/GitHub/kiva boost-1.77.0 boost-1.81.0
+# 	python3 update-boost.py bcp /Users/USERNAME/Documents/Development/boost_1_81_0 \
+#		/Users/USERNAME/Documents/GitHub/kiva boost-1.77.0 boost-1.81.0
 # -----------------------------------
 # bcp can be installed on Ubuntu (or Mac) as follows:
 # 1) Download boost version (boost_X_XX_X) at www.boost.org/users/download/
@@ -30,7 +27,7 @@
 #
 # 3) Enter:
 #	./b2 tools/bcp
-#	(A large number of messages is displayed)
+#	(A large number of messages is displayed.)
 #
 # The bcp Unix executable is in:
 #	boost_X_XX_X/dist/bin/bcp
@@ -38,10 +35,9 @@
 #	bin.v2/..
 #
 # Example of use on Ubuntu (or Mac):
-# python3 update-boost.py /Users/USERNAME/Documents/Development/boost_1_81_0/dist/bin/bcp \
-# /Users/USERNAME/Documents/Development/boost_1_81_0 \
-# /Users/USERNAME/Documents/GitHub/kiva boost-1.77.0 boost-1.81.0
-#
+# 	python3 update-boost.py /Users/USERNAME/Documents/Development/boost_1_81_0/dist/bin/bcp \
+# 		/Users/USERNAME/Documents/Development/boost_1_81_0 \
+# 		/Users/USERNAME/Documents/GitHub/kiva boost-1.77.0 boost-1.81.0
 # -------------------------------------
 # bcp can be installed on Windows as follows:
 # 1) Download boost version (boost_X_XX_X) at www.boost.org/users/download/
@@ -53,7 +49,7 @@
 #
 # 3) Enter:
 #	b2 tools/bcp
-#	(large number of messages displayed)
+#	(Large number of messages displayed.)
 #
 # bcp.exe is in:
 #	boost_X_XX_X/dist/bin/bcp
@@ -61,10 +57,10 @@
 #	bin.v2/..
 #
 # Example of use on Windows (e.g., PowerShell):
-# python3 update-boost.py \
-#	"C:\Users\USERNAME\Documents\Development\boost_1_81_0\dist\bin\bcp.exe" \
-#	"C:\Users\USERNAME\Documents\Development\boost_1_81_0" \
-# 	"C:\Users\USERNAME\Documents\kiva" boost-1.77.0 boost-1.81.0
+# 	python3 update-boost.py \
+#		"C:\Users\USERNAME\Documents\Development\boost_1_81_0\dist\bin\bcp.exe" \
+#		"C:\Users\USERNAME\Documents\Development\boost_1_81_0" \
+# 		"C:\Users\USERNAME\Documents\kiva" boost-1.77.0 boost-1.81.0
 
 import os
 import sys
@@ -88,8 +84,8 @@ def check_rename_folder(orig_path):
 	mod_path = orig_path + "_" + str(i)
 
 	# rename the folder
+	print("Renaming folder: " + orig_path + " to " + mod_path)
 	os.rename(orig_path, mod_path)
-	print("Renamed  " + orig_path + " to " + mod_path)
 	return mod_path
 
 # source_boost_path: path to folder containing new, full boost version
@@ -133,43 +129,45 @@ def updateBoost(bcp_command, source_boost_path, repo_path, prev_repo_boost_folde
 	print(result.stdout)
 	
 	# copy CMakeLists.txt from stashed boost folder
-	if os.path.exists(os.path.join(stash_boost_path, "CMakeLists.txt")):
-		print("Copying  \"" + os.path.join(stash_boost_path, "CMakeLists.txt") + "\"")
-		shutil.copyfile(os.path.join(stash_boost_path, "CMakeLists.txt"), os.path.join(dest_repo_boost_path, "CMakeLists.txt"))
+	full_filename = os.path.join(stash_boost_path, "CMakeLists.txt")
+	if os.path.exists(full_filename):
+		print("Copying file: " + full_filename)
+		shutil.copyfile(full_filename, os.path.join(dest_repo_boost_path, "CMakeLists.txt"))
 	else:
-		print("\"" + os.path.join(stash_boost_path, "CMakeLists.txt") + "\" does not exist")
+		print(full_filename + " does not exist")
 	
 	# copy CMakeLists.txt from stashed boost program_options folder
-	if os.path.exists(os.path.join(stash_boost_path, "libs/program_options/CMakeLists.txt")):
-		if os.path.exists(os.path.join(dest_repo_boost_path, "libs/program_options")):
-			print("Copying  \"" + os.path.join(stash_boost_path, "libs/program_options/CMakeLists.txt") + "\"")
-			shutil.copyfile(os.path.join(stash_boost_path, "libs/program_options/CMakeLists.txt"), os.path.join(dest_repo_boost_path, "libs/program_options/CMakeLists.txt"))
+	full_filename = os.path.join(stash_boost_path, "libs", "program_options", "CMakeLists.txt")
+	if os.path.exists(full_filename):
+		dest_folder = os.path.join(dest_repo_boost_path, "libs", "program_options")
+		if os.path.exists(dest_folder):
+			print("Copying file: " + full_filename)
+			shutil.copyfile(full_filename, os.path.join(dest_folder, "CMakeLists.txt"))
 		else:
-			print("\"" + os.path.join(dest_repo_boost_path, "libs/program_options") + "\" does not exist")
+			print(dest_folder + " does not exist")
 	else:
-		print("\"" + os.path.join(stash_boost_path, "libs/program_options/CMakeLists.txt") + "\" does not exist")
+		print(full_filename + " does not exist")
 		
 	# change the boost folder name in the CMakeLists.txt file in the vendor folder
-	if os.path.exists(os.path.join(repo_path, "vendor/CMakeLists.txt")):
-		print("Changing boost reference in  \"" + os.path.join(repo_path, "vendor/CMakeLists.txt") + "\"")
-		find_and_replace(os.path.join(repo_path, "vendor/CMakeLists.txt"), prev_repo_boost_folder_name, dest_repo_boost_folder_name)
+	full_filename = os.path.join(repo_path, "vendor", "CMakeLists.txt")
+	if os.path.exists(full_filename):
+		print("Changing boost reference in " + full_filename)
+		find_and_replace(full_filename, prev_repo_boost_folder_name, dest_repo_boost_folder_name)
 	else:
-		print("\"" + os.path.join(repo_path, "vendor/CMakeLists.txt") + "\" does not exist")	
+		print(full_filename + " does not exist")	
 
 	# copy license
 	file_list = os.listdir(source_boost_path)
 	for filename in file_list:
 		if "LICENSE" in filename:
 			license_name = filename
-			print("Copying  \"" + os.path.join(source_boost_path, license_name) + "\"")
-			shutil.copyfile(os.path.join(source_boost_path, license_name), os.path.join(dest_repo_boost_path, license_name))	
+			full_filename = os.path.join(source_boost_path, license_name)
+			print("Copying file: " + full_filename)
+			shutil.copyfile(full_filename, os.path.join(dest_repo_boost_path, license_name))	
 			
 #  main
 n_args = len(sys.argv) - 1
 
-for i in range(1, n_args + 1):
-	print(sys.argv[i])
-	
 if n_args == 5:
 	bcp_command = sys.argv[1]
 	source_boost_path = sys.argv[2]
