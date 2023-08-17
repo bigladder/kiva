@@ -92,7 +92,7 @@ def check_rename_folder(orig_path):
 # repo_path: path to repo
 # prev_repo_boost_folder_name: name of current boost folder (within repo)
 # dest_repo_boost_folder_name: new name for updated, minimized boost folder (within repo)
-def updateBoost(bcp_command, source_boost_path, repo_path, prev_repo_boost_folder_name, dest_repo_boost_folder_name):
+def update_boost(bcp_command, source_boost_path, repo_path, prev_repo_boost_folder_name, dest_repo_boost_folder_name):
 
 	# path to folder and list of sub-folders containing source code that uses boost
 	repo_src_path = os.path.join(repo_path, "src")
@@ -175,7 +175,7 @@ if n_args == 5:
 	prev_repo_boost_folder_name = sys.argv[4]
 	dest_repo_boost_folder_name = sys.argv[5]
 
-	updateBoost(bcp_command, source_boost_path, repo_path, prev_repo_boost_folder_name, dest_repo_boost_folder_name)
+	update_boost(bcp_command, source_boost_path, repo_path, prev_repo_boost_folder_name, dest_repo_boost_folder_name)
 
 else:
 	print('arguments:')
