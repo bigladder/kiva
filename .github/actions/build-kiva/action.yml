@@ -61,7 +61,7 @@ runs:
         ruby-version: 2.0
     - name: Install gems
       run:
-        gem install public_suffix -v 5.1.1
+        sudo gem install public_suffix -v 5.1.1
       shell: bash
     - name: Set up results directory
       if: ${{ inputs.set-up-results-logging == 'true' && inputs.coverage == 'false' }}
