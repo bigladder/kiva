@@ -58,11 +58,11 @@ runs:
       if: ${{ inputs.set-up-results-logging == 'true' && inputs.coverage == 'false' }}
       uses: ruby/setup-ruby@v1
       with:
-        ruby-version: 2.0
+        ruby-version: 3.0
     - name: Set up results directory
       if: ${{ inputs.set-up-results-logging == 'true' && inputs.coverage == 'false' }}
       run: |
-        gem install git -v 1.18.0
+        gem install git
         git config --global core.autocrlf input
         ruby ../scripts/clone-and-mimic.rb
       shell: bash
