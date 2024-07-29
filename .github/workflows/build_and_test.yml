@@ -46,8 +46,8 @@ jobs:
             os_ver: "24.04"
             config: Debug
             coverage: true
-            cc: gcc-10
-            cxx: g++-10
+            cc: gcc-13
+            cxx: g++-13
     defaults:
       run:
         shell: bash
