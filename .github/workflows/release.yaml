@@ -12,7 +12,7 @@ jobs:
       matrix:
         include:
           - os: ubuntu
-            os_ver: "20.04"
+            os_ver: "24.04"
             cc: gcc-10
             cxx: g++-10
           - os: windows
@@ -20,7 +20,7 @@ jobs:
             cc: cl
             cxx: cl
           - os: macos
-            os_ver: "11"
+            os_ver: "13"
             cc: clang
             cxx: clang++
     defaults:
