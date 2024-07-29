@@ -1,6 +1,9 @@
 name: Build and Test
 
-on: push
+on:
+  push:
+  schedule:
+    - cron: "0 9 * * SUN"
 
 env:
   RT_URL: github.com/bigladder/kiva-test-results.git
@@ -30,12 +33,12 @@ jobs:
             coverage: false
             cc: cl
             cxx: cl
-          - os: macos
-            os_ver: "13"
-            config: Release
-            coverage: false
-            cc: clang
-            cxx: clang++
+          # - os: macos
+          #   os_ver: "13"
+          #   config: Release
+          #   coverage: false
+          #   cc: clang
+          #   cxx: clang++
           - os: macos
             os_ver: "12"
             config: Release
@@ -43,11 +46,11 @@ jobs:
             cc: clang
             cxx: clang++
           - os: ubuntu
-            os_ver: "24.04"
+            os_ver: "22.04"
             config: Debug
             coverage: true
-            cc: gcc-13
-            cxx: g++-13
+            cc: gcc-10
+            cxx: g++-10
     defaults:
       run:
         shell: bash
