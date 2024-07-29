@@ -12,7 +12,7 @@ jobs:
       matrix:
         include:
           - os: ubuntu
-            os_ver: "24.04"
+            os_ver: "22.04"
             cc: gcc-10
             cxx: g++-10
           - os: windows
