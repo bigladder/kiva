@@ -174,9 +174,10 @@ if (${KIVA_3D})
 endif ()
 
 target_include_directories(libkiva PUBLIC
-        "${libkiva_BINARY_DIR}"
-        "${libkiva_SOURCE_DIR}"
         "${BOOST_SOURCE_DIR}"
+        "${libkiva_SOURCE_DIR}"
+        "${libkiva_BINARY_DIR}"
+        "../include"
         "${kiva_SOURCE_DIR}/vendor/eigen")
 
 target_link_libraries(libkiva PRIVATE kiva_common_interface)

@@ -1,7 +1,7 @@
 /* Copyright (c) 2012-2022 Big Ladder Software LLC. All rights reserved.
  * See the LICENSE file for additional terms and conditions. */
 
-#include "Foundation.hpp"
+#include "<kiva/foundation.h>"
 #include "Errors.hpp"
 
 namespace Kiva {
@@ -108,8 +108,8 @@ Foundation::Foundation()
       reductionLength2{0}, linearAreaMultiplier{0}, isXSymm{false}, isYSymm{false},
       exposedFraction(1.0), useDetailedExposedPerimeter(false), buildingHeight(0.0), hasWall(true),
       hasSlab(true), perimeterSurfaceWidth(0.0), hasPerimeterSurface(false), mesh(Mesh()),
-      numericalScheme(NS_ADI), fADI(0.00001), tolerance(1.0e-6),
-      maxIterations(100000), netArea{0}, netPerimeter{0} {}
+      numericalScheme(NS_ADI), fADI(0.00001), tolerance(1.0e-6), maxIterations(100000), netArea{0},
+      netPerimeter{0} {}
 
 void Foundation::createMeshData() {
   std::size_t nV = polygon.outer().size();
