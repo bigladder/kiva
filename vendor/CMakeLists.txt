@@ -5,7 +5,7 @@ if (NOT TARGET fmt)
     add_subdirectory(fmt)
 endif ()
 
-add_subdirectory(boost-1.85.0) #set by update-boost.py
+add_subdirectory(boost-1.86.0) #set by update-boost.py
 
 if (KIVA_EXE_BUILD OR KIVA_GROUND_PLOT)
 
