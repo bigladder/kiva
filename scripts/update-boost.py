@@ -1,6 +1,6 @@
 # Applies the boost bcp utility to the src folder of a repo.
 # This will replace the current boost folder (already in vendor folder of the repo)
-# with a new boost folder that should contain only the need portions of boost,
+# with a new boost folder that should contain only the needed portions of boost,
 # and which may be retrieved from a different version of boost.
 # The previous boost folder will be stashed in the same location, with
 # a different name, if necessary, and can be deleted after the transition is confirmed.
