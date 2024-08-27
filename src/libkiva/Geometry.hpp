@@ -23,8 +23,6 @@
 #endif
 #include <boost/geometry.hpp>
 #include <boost/geometry/geometries/geometries.hpp>
-#include <boost/geometry/multi/geometries/multi_point.hpp>
-#include <boost/geometry/multi/geometries/multi_polygon.hpp>
 #if defined(_MSC_VER)
 #pragma warning(pop)
 #elif defined(__clang__)
