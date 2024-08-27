@@ -67,120 +67,123 @@ import sys
 import subprocess
 import shutil
 
+
 # replace a word in a file
 def find_and_replace(filename, word, replacement):
-	text = ''
-	with open(filename, 'r') as f:
-		text = f.read()
-	text = text.replace(word, replacement)
-	with open(filename, 'w') as f:
-		f.write(text)			
+    text = ''
+    with open(filename, 'r') as f:
+        text = f.read()
+    text = text.replace(word, replacement)
+    with open(filename, 'w') as f:
+        f.write(text)
+
 
 # Find a unique folder name and rename the folder
 def check_rename_folder(orig_path):
-	i = 0
-	while os.path.exists(orig_path + "_" + str(i)):
-		i = i + 1
-	mod_path = orig_path + "_" + str(i)
+    i = 0
+    while os.path.exists(orig_path + "_" + str(i)):
+        i = i + 1
+    mod_path = orig_path + "_" + str(i)
 
-	# rename the folder
-	print("Renaming folder: " + orig_path + " to " + mod_path)
-	os.rename(orig_path, mod_path)
-	return mod_path
+    # rename the folder
+    print("Renaming folder: " + orig_path + " to " + mod_path)
+    os.rename(orig_path, mod_path)
+    return mod_path
+
 
 # source_boost_path: path to folder containing new, full boost version
 # repo_path: path to repo
 # prev_repo_boost_folder_name: name of current boost folder (within repo)
 # dest_repo_boost_folder_name: new name for updated, minimized boost folder (within repo)
 def update_boost(bcp_command, source_boost_path, repo_path, prev_repo_boost_folder_name, dest_repo_boost_folder_name):
+    # path to folder and list of sub-folders containing source code that uses boost
+    repo_src_path = os.path.join(repo_path, "src")
 
-	# path to folder and list of sub-folders containing source code that uses boost
-	repo_src_path = os.path.join(repo_path, "src")
-	
-	# generate full paths
-	prev_repo_boost_path = os.path.join(repo_path, "vendor", prev_repo_boost_folder_name)
-	dest_repo_boost_path = os.path.join(repo_path, "vendor", dest_repo_boost_folder_name)
+    # generate full paths
+    prev_repo_boost_path = os.path.join(repo_path, "vendor", prev_repo_boost_folder_name)
+    dest_repo_boost_path = os.path.join(repo_path, "vendor", dest_repo_boost_folder_name)
 
-	# name with which to stash current boost folder (which can then be deleted)	
-	stash_boost_path = prev_repo_boost_path
+    # name with which to stash current boost folder (which can then be deleted)	
+    stash_boost_path = prev_repo_boost_path
 
-	# modify stash folder name if same as dest
-	if prev_repo_boost_path == dest_repo_boost_path:
-		stash_boost_path = check_rename_folder(prev_repo_boost_path)
+    # modify stash folder name if same as dest
+    if prev_repo_boost_path == dest_repo_boost_path:
+        stash_boost_path = check_rename_folder(prev_repo_boost_path)
 
-	# if dest folder name is used, rename folder that currently has that name
-	if os.path.exists(dest_repo_boost_path):
-		check_rename_folder(dest_repo_boost_path)
+    # if dest folder name is used, rename folder that currently has that name
+    if os.path.exists(dest_repo_boost_path):
+        check_rename_folder(dest_repo_boost_path)
 
-	# make new dest repo boost folder
-	os.mkdir(dest_repo_boost_path )
-	
-	# run bcp utility
-	bcp_list = [bcp_command, "--scan"]
-	bcp_list.append("--boost=" + source_boost_path)
-	for repo_src_path, dirs, files in os.walk(repo_src_path, topdown = True):
-		for filename in files:
-			full_filename = os.path.join(repo_src_path, filename)
-			bcp_list.append(full_filename)
-	
-	bcp_list.append(dest_repo_boost_path)
-	
-	result = subprocess.run(bcp_list, stdout = subprocess.PIPE, text = True)
-	print(result.stdout)
-	
-	# copy CMakeLists.txt from stashed boost folder
-	full_filename = os.path.join(stash_boost_path, "CMakeLists.txt")
-	if os.path.exists(full_filename):
-		print("Copying file: " + full_filename)
-		shutil.copyfile(full_filename, os.path.join(dest_repo_boost_path, "CMakeLists.txt"))
-	else:
-		print(full_filename + " does not exist")
-	
-	# copy CMakeLists.txt from stashed boost program_options folder
-	full_filename = os.path.join(stash_boost_path, "libs", "program_options", "CMakeLists.txt")
-	if os.path.exists(full_filename):
-		dest_folder = os.path.join(dest_repo_boost_path, "libs", "program_options")
-		if os.path.exists(dest_folder):
-			print("Copying file: " + full_filename)
-			shutil.copyfile(full_filename, os.path.join(dest_folder, "CMakeLists.txt"))
-		else:
-			print(dest_folder + " does not exist")
-	else:
-		print(full_filename + " does not exist")
-		
-	# change the boost folder name in the CMakeLists.txt file in the vendor folder
-	full_filename = os.path.join(repo_path, "vendor", "CMakeLists.txt")
-	if os.path.exists(full_filename):
-		print("Changing boost reference in " + full_filename)
-		find_and_replace(full_filename, prev_repo_boost_folder_name, dest_repo_boost_folder_name)
-	else:
-		print(full_filename + " does not exist")	
+    # make new dest repo boost folder
+    os.mkdir(dest_repo_boost_path)
 
-	# copy license
-	file_list = os.listdir(source_boost_path)
-	for filename in file_list:
-		if "LICENSE" in filename:
-			license_name = filename
-			full_filename = os.path.join(source_boost_path, license_name)
-			print("Copying file: " + full_filename)
-			shutil.copyfile(full_filename, os.path.join(dest_repo_boost_path, license_name))	
-			
+    # run bcp utility
+    bcp_list = [bcp_command, "--scan"]
+    bcp_list.append("--boost=" + source_boost_path)
+    for repo_src_path, dirs, files in os.walk(repo_src_path, topdown=True):
+        for filename in files:
+            full_filename = os.path.join(repo_src_path, filename)
+            bcp_list.append(full_filename)
+
+    bcp_list.append(dest_repo_boost_path)
+
+    result = subprocess.run(bcp_list, stdout=subprocess.PIPE, text=True)
+    print(result.stdout)
+
+    # copy CMakeLists.txt from stashed boost folder
+    full_filename = os.path.join(stash_boost_path, "CMakeLists.txt")
+    if os.path.exists(full_filename):
+        print("Copying file: " + full_filename)
+        shutil.copyfile(full_filename, os.path.join(dest_repo_boost_path, "CMakeLists.txt"))
+    else:
+        print(full_filename + " does not exist")
+
+    # copy CMakeLists.txt from stashed boost program_options folder
+    full_filename = os.path.join(stash_boost_path, "libs", "program_options", "CMakeLists.txt")
+    if os.path.exists(full_filename):
+        dest_folder = os.path.join(dest_repo_boost_path, "libs", "program_options")
+        if os.path.exists(dest_folder):
+            print("Copying file: " + full_filename)
+            shutil.copyfile(full_filename, os.path.join(dest_folder, "CMakeLists.txt"))
+        else:
+            print(dest_folder + " does not exist")
+    else:
+        print(full_filename + " does not exist")
+
+    # change the boost folder name in the CMakeLists.txt file in the vendor folder
+    full_filename = os.path.join(repo_path, "vendor", "CMakeLists.txt")
+    if os.path.exists(full_filename):
+        print("Changing boost reference in " + full_filename)
+        find_and_replace(full_filename, prev_repo_boost_folder_name, dest_repo_boost_folder_name)
+    else:
+        print(full_filename + " does not exist")
+
+    # copy license
+    file_list = os.listdir(source_boost_path)
+    for filename in file_list:
+        if "LICENSE" in filename:
+            license_name = filename
+            full_filename = os.path.join(source_boost_path, license_name)
+            print("Copying file: " + full_filename)
+            shutil.copyfile(full_filename, os.path.join(dest_repo_boost_path, license_name))
+
+
 #  main
 n_args = len(sys.argv) - 1
 
 if n_args == 5:
-	bcp_command = sys.argv[1]
-	source_boost_path = sys.argv[2]
-	repo_path = sys.argv[3]
-	prev_repo_boost_folder_name = sys.argv[4]
-	dest_repo_boost_folder_name = sys.argv[5]
+    bcp_command = sys.argv[1]
+    source_boost_path = sys.argv[2]
+    repo_path = sys.argv[3]
+    prev_repo_boost_folder_name = sys.argv[4]
+    dest_repo_boost_folder_name = sys.argv[5]
 
-	update_boost(bcp_command, source_boost_path, repo_path, prev_repo_boost_folder_name, dest_repo_boost_folder_name)
+    update_boost(bcp_command, source_boost_path, repo_path, prev_repo_boost_folder_name, dest_repo_boost_folder_name)
 
 else:
-	print('arguments:')
-	print('1. command to invoke bcp utility')
-	print('2. path to root of boost library to install')
-	print('3. path to root of repo')
-	print('4. name of previous boost folder to replace (will be renamed, if needed)')
-	print('5. name of new boost folder to install')
+    print('arguments:')
+    print('1. command to invoke bcp utility')
+    print('2. path to root of boost library to install')
+    print('3. path to root of repo')
+    print('4. name of previous boost folder to replace (will be renamed, if needed)')
+    print('5. name of new boost folder to install')
