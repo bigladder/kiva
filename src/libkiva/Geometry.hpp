@@ -21,6 +21,13 @@
 #pragma GCC diagnostic ignored "-Wuninitialized"
 #pragma GCC diagnostic ignored "-Wstrict-overflow"
 #endif
+
+// Extended precision is not used by kiva
+// Disable boost quadmath to avoid warnings
+#define BOOST_CSTDFLOAT_NO_LIBQUADMATH_CMATH
+#define BOOST_CSTDFLOAT_NO_LIBQUADMATH_IOSTREAM
+#define BOOST_CSTDFLOAT_NO_LIBQUADMATH_COMPLEX
+
 #include <boost/geometry.hpp>
 #include <boost/geometry/geometries/geometries.hpp>
 #if defined(_MSC_VER)
