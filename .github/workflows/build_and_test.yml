@@ -45,12 +45,6 @@ jobs:
             coverage: false
             cc: clang
             cxx: clang++
-          - os: macos
-            os_ver: "11"
-            config: Release
-            coverage: false
-            cc: clang
-            cxx: clang++
           - os: ubuntu
             os_ver: "22.04"
             config: Debug
