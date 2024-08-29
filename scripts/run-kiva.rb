@@ -64,7 +64,7 @@ puts("  output file  = #{OUTPUT_FILE}")
 success = run_case(KIVA_PATH, INPUT_FILE, WEATHER_FILE, OUTPUT_FILE)
 f = lambda do |dir|
   puts("Evaluating contents of #{dir}")
-  if File.exists?(dir)
+  if File.exist?(dir)
     puts("- contents:\n  #{Dir[File.join(dir, '*')]}")
   else
     puts("- #{dir} doesn't exist...")
