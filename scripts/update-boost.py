@@ -12,10 +12,6 @@
 # bcp can be installed/updated on Mac using homebrew, prior to running this script:
 #   brew install boost-bcp
 #   brew link boost-bcp
-#
-# Example of use on Mac:
-# 	python3 update-boost.py bcp /Users/USERNAME/Documents/Development/boost_1_81_0 \
-#		/Users/USERNAME/Documents/GitHub/kiva boost-1.77.0 boost-1.81.0
 # -----------------------------------
 # bcp can be installed on Ubuntu (or Mac) as follows:
 # 1) Download boost version (boost_X_XX_X) at www.boost.org/users/download/
@@ -33,11 +29,10 @@
 #	boost_X_XX_X/dist/bin/bcp
 # and also in (for some reason):
 #	bin.v2/..
-#
+# -----------------------------------
 # Example of use on Ubuntu (or Mac):
 '''
-python3 update-boost.py bcp \
-	../../../Development/boost/boost_1_88_0 \
+python3 update-boost.py bcp ../../../Development/boost/boost_1_88_0 \
 	../ boost-1.86.0 boost-1.88.0
 '''
 # bcp can be installed on Windows as follows:
@@ -58,10 +53,12 @@ python3 update-boost.py bcp \
 #	bin.v2/..
 #
 # Example of use on Windows (e.g., PowerShell):
-# 	python3 update-boost.py \
-#		"C:\Users\USERNAME\Documents\Development\boost_1_81_0\dist\bin\bcp.exe" \
-#		"C:\Users\USERNAME\Documents\Development\boost_1_81_0" \
-# 		"C:\Users\USERNAME\Documents\kiva" boost-1.77.0 boost-1.81.0
+'''
+python3 update-boost.py \
+	"C:\Users\USERNAME\Documents\Development\boost_1_81_0\dist\bin\bcp.exe" \
+	"C:\Users\USERNAME\Documents\Development\boost_1_81_0" \
+	"C:\Users\USERNAME\Documents\kiva" boost-1.77.0 boost-1.81.0"
+'''
 
 import os
 import sys
@@ -115,7 +112,6 @@ def update_boost(bcp_command, source_boost_path, repo_path, prev_repo_boost_fold
     if os.path.exists(dest_repo_boost_path):
         check_rename_folder(dest_repo_boost_path)
 
-    print(dest_repo_boost_path)
     # make new dest repo boost folder
     os.mkdir(dest_repo_boost_path)
 
