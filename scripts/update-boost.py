@@ -35,10 +35,11 @@
 #	bin.v2/..
 #
 # Example of use on Ubuntu (or Mac):
-# 	python3 update-boost.py /Users/USERNAME/Documents/Development/boost_1_81_0/dist/bin/bcp \
-# 		/Users/USERNAME/Documents/Development/boost_1_81_0 \
-# 		/Users/USERNAME/Documents/GitHub/kiva boost-1.77.0 boost-1.81.0
-# -------------------------------------
+'''
+python3 update-boost.py bcp \
+	../../../Development/boost/boost_1_88_0 \
+	../ boost-1.86.0 boost-1.88.0
+'''
 # bcp can be installed on Windows as follows:
 # 1) Download boost version (boost_X_XX_X) at www.boost.org/users/download/
 #
@@ -114,6 +115,7 @@ def update_boost(bcp_command, source_boost_path, repo_path, prev_repo_boost_fold
     if os.path.exists(dest_repo_boost_path):
         check_rename_folder(dest_repo_boost_path)
 
+    print(dest_repo_boost_path)
     # make new dest repo boost folder
     os.mkdir(dest_repo_boost_path)
 
