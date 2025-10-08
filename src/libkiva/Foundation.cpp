@@ -604,7 +604,7 @@ void Foundation::createMeshData() {
   double xyNearInt = std::min({xyWallInterior, xyPerimeterSurface, xyNearMin});
   double xyNearExt = std::max({xyWallExterior, xyNearMax});
 
-  // Set depending on N dimensions, coordinate system, and 2D apporximation method
+  // Set depending on N dimensions, coordinate system, and 2D approximation method
   double xMin, xMax, yMin, yMax;
 
   Ranges xRanges;
