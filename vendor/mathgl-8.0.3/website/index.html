@@ -1,0 +1,195 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="styles.css">
+<title>Homepage of MathGL</title>
+
+<style type="text/css">
+.boxa {
+	text-align: center;
+	display: inline-block;
+	vertical-align: top;
+	margin: 0 25px 25px 0;
+	width: 130px;
+}
+.boxb {
+	text-align: center;
+	display: inline-block;
+	vertical-align: top;
+	margin: 0 25px 25px 0;
+	width: 210px;
+}
+</style>
+
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<!--<meta http-equiv="Refresh" content="0; url=doc_en/Main.html">-->
+</head>
+
+<body lang="en">
+
+<div class="topnav" id="mainTopnav">
+	<a href="index.html">Home</a>
+	<div class="dropdown"><button class="dropbtn">MathGL[RU]</button>
+	<div class="dropdown-content">
+		<a href="doc_ru/Main.html">сайт</a>
+		<a href="doc_ru/Overview.html">обзор</a>
+		<a href="doc_ru/Examples.html">обучение</a>
+		<a href="doc_ru/General-concepts.html">концепция</a>
+		<a href="doc_ru/MathGL-core.html">ядро</a>
+		<a href="doc_ru/Widget-classes.html">виджеты</a>
+		<a href="doc_ru/Data-processing.html">массивы данных</a>
+		<a href="doc_ru/MGL-scripts.html">скрипты</a>
+		<a href="doc_ru/All-samples.html">примеры</a>
+		<a href="doc_ru/Symbols-and-hot_002dkeys.html">приложения</a>
+	</div></div> 
+	<div class="dropdown"><button class="dropbtn">MathGL[EN]</button>
+	<div class="dropdown-content">
+		<a href="doc_en/Main.html">website</a>
+		<a href="doc_en/Overview.html">overview</a>
+		<a href="doc_en/Examples.html">examples</a>
+		<a href="doc_en/General-concepts.html">concepts</a>
+		<a href="doc_en/MathGL-core.html">core</a>
+		<a href="doc_en/Widget-classes.html">widgets</a>
+		<a href="doc_en/Data-processing.html">data arrays</a>
+		<a href="doc_en/MGL-scripts.html">scripts</a>
+		<a href="doc_en/All-samples.html">all samples</a>
+		<a href="doc_en/Symbols-and-hot_002dkeys.html">appendix</a>
+	</div></div> 
+	<div class="dropdown"><button class="dropbtn">Games</button>
+	<div class="dropdown-content">
+		<a href="games/tetris.html">Tetris</a>
+		<a href="games/pentix.html">Pentix</a>
+		<a href="games/columns.html">Columns</a>
+		<a href="games/colorex.html">Colorex</a>
+		<a href="games/shiftix.html">Shiftix</a>
+		<a href="games/hextris.html">Hextris</a>
+		<a href="games/jumps.html">Jumps</a>
+	</div></div> 
+	<a href="games/mk61.html">PocketMK</a>
+	<a href="json/json.html">MathGL+JS</a>
+<!-- 	<a href="json/mgl_cgi.html">MGL.CGI</a> -->
+	<a rel="license" href="http://creativecommons.org/licenses/by-nc/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc/4.0/88x31.png" /></a>
+	<a class="icon" onclick="showExtMenu()">&#9776;</a>
+</div>
+
+<div class="main">
+
+
+<table border="0" style="text-align:center"><tr><td rowspan="2">
+<a href="doc_en/index.html"><img src="mathgl_emblem.png" width="200" alt="MathGL documentation [EN]" style="border: 0" /></a>
+</td><td rowspan="2">
+<a href="doc_ru/index.html"><img src="mathgl_emblem.png" width="200" alt="MathGL documentation [RU]" style="border: 0" /></a>
+</td><td rowspan="2">
+<a href="json/json.html"><img src="udav_new.png" width="100" alt="JavaScript for displaing MathGL plots" style="border: 0" /></a>
+</td><td rowspan="2">
+<a href="games/mk61.html"><img src="mk61.png" width="100" alt="MK-61 emulator" style="border: 0" /></a>
+</td><td>
+<a href="games/tetris.html"><img src="tetris.png" width="50" alt="Play Tetris" style="border: 0" /></a>
+</td><td>
+<a href="games/pentix.html"><img src="pentix.png" width="50" alt="Play Pentix" style="border: 0" /></a>
+</td><td>
+<a href="games/hextris.html"><img src="hextris.png" width="50" alt="Play Hextris" style="border: 0" /></a>
+</td></tr><tr><td>
+<a href="games/columns.html"><img src="columns.png" width="50" alt="Play Columns" style="border: 0" /></a>
+</td><td>
+<a href="games/colorex.html"><img src="colorex.png" width="50" alt="Play Colorex" style="border: 0" /></a>
+</td><td>
+<a href="games/shiftix.html"><img src="shiftix.png" width="50" alt="Play Shiftix" style="border: 0" /></a>
+</td></tr><tr><td>
+<a href="doc_en/index.html">MathGL manual [EN]</a>
+</td><td>
+<a href="doc_ru/index.html">MathGL док. [RU]</a>
+</td><td>
+<a href="json/json.html">MathGL + JavaScript</a>
+</td><td>
+<a href="games/mk61.html">MK-61 emulator</a>
+</td><td colspan="3">
+<p>Games</p>
+</td></tr></table>
+
+
+<div class="section-level-extent" id="Main">
+<hr>
+<h3 class="section" id="MathGL-is-_002e_002e_002e"><span>MathGL is ...<a class="copiable-link" href="#MathGL-is-_002e_002e_002e"> &para;</a></span></h3>
+<nav style="float:right;border:1px solid black;padding:3px;margin-left:7px">
+<p>&nbsp;&nbsp;<a class="ref" href="#Main">Main page</a><br>
+&nbsp;&nbsp;<a class="ref" href="doc_en/News.html">News</a><br>
+&nbsp;&nbsp;<a class="ref" href="doc_en/Pictures.html">Pictures</a><br>
+&nbsp;&nbsp;<a class="ref" href="doc_en/Download.html">Download</a><br>
+</p>
+<table style="background-color: #fff; padding: 5px;" cellspacing=0>
+<tr><td><img src="http://groups.google.com/intl/en/images/logos/groups_logo_sm.gif" height=25 width=117 alt="Google Groups"></td></tr>
+<tr><td style="padding-left: 5px;font-size: 110%"> <a target=_blank href="http://groups.google.com/group/mathgl"><b>MathGL</b></a> </td></tr>
+</table>
+</nav>
+
+<a href="doc_en/Adding-fog.html"><img border="0" align="right" hspace="30" vspace="20" alt="Surface in fog" src="small/fog-sm.png"></a>
+<ul class="itemize mark-bullet">
+<li>a library for making high-quality scientific graphics under Linux and Windows;
+</li><li>a library for the fast data plotting and data processing of large data arrays;
+</li><li>a library for working in window and console modes and for easy embedding into other programs;
+</li><li>a library with large and growing set of graphics.
+</li></ul>
+
+<p>Now MathGL has more than 35000 lines of code, more than 55 general types of graphics for 1d, 2d and 3d data arrays, including special ones for chemical and statistical graphics. It can export graphics to raster and vector (EPS or SVG) formats. It has Qt, FLTK, OpenGL interfaces and can be used even from console programs. It has functions for data processing and script MGL language for simplification of data plotting. Also it has several types of transparency and smoothed lightning, vector fonts and TeX-like symbol parsing, arbitrary curvilinear coordinate system and many over useful things. It can be used from code written on C++/C/Fortran/Python/Octave and many other languages. Finally it is platform independent and free (under GPL v.2.0 license).
+</p>
+<p>There is a <a class="uref" href="http://sourceforge.net/forum/?group_id=152187">forum</a> where you can ask a question or suggest an improvement. However the <a class="uref" href="http://groups.google.com/group/mathgl">MathGL group</a> is preferable for quicker answer.
+</p>
+<p>For subscribing to <a class="uref" href="http://groups.google.com/group/mathgl">MathGL group</a> you can use form below
+<form action="http://groups.google.com/group/mathgl/boxsubscribe">
+Email: <input type=text name=email> <input type=submit name="sub" value="Subscribe">
+</form>
+</p>
+<p><strong class="strong">About LGPL and GPL licenses.</strong>
+Generally, MathGL is GPL library. However, you can use LGPL license for MathGL core and widgets if you don&rsquo;t use SWIG-based interfaces and disable GSL features. This can be done by using <code class="code">lgpl</code> option at build time. According this, I&rsquo;ve added the LGPL win32 binaries into <a class="ref" href="doc_en/Download.html">Download</a> page.
+</p>
+<p><strong class="strong">Latest news</strong>
+</p><ul class="itemize mark-bullet">
+<li><strong class="strong">3 October 2022</strong>
+New version (v.8.0.2) of <a class="uref" href="http://sourceforge.net/projects/mathgl">MathGL</a> is released. There are new commands (<a class="ref" href="doc_en/Data-changing.html#mode">mode</a> for Poisson equation solving, <a class="ref" href="doc_en/Make-another-data.html#histl">histl</a> for advanced histogram, jumps in <a class="ref" href="doc_en/Global-functions.html#ode">ode</a>, robust approximations in <a class="ref" href="doc_en/Nonlinear-fitting.html#fit">fit</a> and <a class="ref" href="doc_en/Nonlinear-fitting.html#fits">fits</a>) and minor bugfixes and improvents.
+
+</li><li><strong class="strong">12 January 2022</strong>
+New version (v.8.0.1) of <a class="uref" href="http://sourceforge.net/projects/mathgl">MathGL</a> is released. There are increase accuracy at line segment skipping, changes in SOVERSION numbering, minor spelling fix (thanks to Rafael Laboissière).
+
+</li><li><strong class="strong">1 January 2022.</strong>
+New version (v.8.0) of <a class="uref" href="http://sourceforge.net/projects/mathgl">MathGL</a> is released. There are change version numbering according Debian rules, and add accurate line segment and quadrangle/triangle face cutting at axis border crossing.
+
+</li><li><strong class="strong">8 December 2021.</strong>
+New version (v.2.5) of <a class="uref" href="http://sourceforge.net/projects/mathgl">MathGL</a> is released. There are big improve in formula evaluation (user-defined function, summation and product, new functions for data interpolation), new plot kind <a class="ref" href="doc_en/3D-plotting.html#dcont">dcont</a> and <a class="ref" href="doc_en/Vector-fields.html#lines">lines</a>, set of functions for random distributions, new data handling functions (like, <a class="ref" href="doc_en/Data-changing.html#keep">keep</a>), extend <a class="ref" href="doc_en/Global-functions.html#ode">ode</a> to solve PDE/cascade/etc, add mask for most of plotting functions and bugfixes, which denoted <a class="ref" href="doc_en/News.html">here</a>.
+
+</li><li><strong class="strong">8 July 2019.</strong>
+New version (v.2.4.4) of <a class="uref" href="http://sourceforge.net/projects/mathgl">MathGL</a> is released. There are new <a class="ref" href="doc_en/Make-another-data.html#minmax">minmax</a> for positions of local minimums and maximums, add <a class="ref" href="doc_en/Make-another-data.html#conts">conts</a> for coordinates of contour lines, extend formula evaluation to read and interpolate data files.
+
+</li><li><em class="emph">17 May 2017.</em>
+New version (v.2.4) of <a class="uref" href="http://sourceforge.net/projects/mathgl">MathGL</a> is released. There are <code class="code">mgllab</code> executable, string manipulation in MGL, new functions, plot types and styles, translation to Russian using <code class="code">gettext</code> and bugfixes, which denoted <a class="ref" href="doc_en/News.html">here</a>.
+</li></ul>
+
+<p>There is detailed <a class="ref" href="doc_en/News.html">news list</a>. Sourceforge project page <a class="uref" href="http://sourceforge.net/projects/mathgl/">here</a>.
+</p>
+<a href="http://www.datadvance.net"><img border="0" align="right" hspace="10" alt="DATADVANCE" src="../datadvance.png"></a>
+<p>Javascript interface was developed with support of <a class="url" href="http://www.datadvance.net">DATADVANCE</a> company.
+</p>
+<footer>
+<!--LiveInternet counter--><script type="text/javascript"><!--
+document.write("<a href='http://www.liveinternet.ru/click' "+
+"target=_blank><img src='http://counter.yadro.ru/hit?t12.2;r"+
+escape(document.referrer)+((typeof(screen)=="undefined")?"":
+";s"+screen.width+"*"+screen.height+"*"+(screen.colorDepth?
+screen.colorDepth:screen.pixelDepth))+";u"+escape(document.URL)+
+";"+Math.random()+
+"' alt='' title='LiveInternet: number of views during 24"+
+" hours, number of visitors during 24 hours and during today' "+
+"border=0 width=88 height=31></a>")//--></script><!--/LiveInternet-->
+
+<a target=_blank href="http://sourceforge.net"><img src="http://sflogo.sourceforge.net/sflogo.php?group_id=152187&amp;type=2" alt="SourceForge.net Logo" border="0" height="37" width="125"></a>
+
+<a target=_blank href="http://www.thefreecountry.com/"> <img src="http://www.thefreecountry.com/images/tfc88x31green.gif" alt="thefreecountry.com: Free Programmers' Resources, Free Webmasters' Resources, Free Security Resources, Free Software" border="0" height="31" width="88"></a>
+
+<a target=_blank href="http://sourceforge.net/donate/index.php?group_id=152187"><img src="http://images.sourceforge.net/images/project-support.jpg" width="88" height="32" border="0" alt="Support This Project" /> </a>
+</footer>
+
+</div>
+
+
+</div><script type="text/javascript" src="accordion.js"></script></body>
