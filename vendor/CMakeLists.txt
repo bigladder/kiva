@@ -44,6 +44,7 @@ if (KIVA_EXE_BUILD OR KIVA_GROUND_PLOT)
     set(PNG_INCLUDE_DIR "${libpng_SOURCE_DIR}" "${libpng_BINARY_DIR}")
     set(PNG_LIBRARIES ${PNG_LIBRARY})
     set(PNG_INCLUDE_DIRS ${PNG_INCLUDE_DIR})
+    set(enable-lgpl ON)
     add_subdirectory(mathgl-8.0.3)
 
     if (MSVC)
