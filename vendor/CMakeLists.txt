@@ -27,11 +27,12 @@ if (KIVA_EXE_BUILD OR KIVA_GROUND_PLOT)
     else ()
         set(ZLIB_LIBRARIES miniziplib)
         set(ZLIB_INCLUDE_DIRS "${miniziplib_SOURCE_DIR}" "${miniziplib_BINARY_DIR}")
+        # ZLIB_INCLUDE_DIR must be cached if mathgl is to find ZLIB using ZLIB_ROOT
         set(ZLIB_INCLUDE_DIR ${ZLIB_INCLUDE_DIRS} CACHE PATH "ZLIB include dirs")
         set(ZLIB_LIBRARY ${ZLIB_LIBRARIES})
     endif ()
 
-    set(ZLIB_ROOT "${ZLIB_INCLUDE_DIRS}") # ZLIB_INCLUDE_DIR must be cached if mathgl is to find ZLIB using ZLIB_ROOT
+    set(ZLIB_ROOT "${ZLIB_INCLUDE_DIRS}")
 
     set(PNG_TESTS OFF CACHE BOOL "" FORCE)
     set(PNG_SHARED OFF CACHE BOOL "" FORCE)
