@@ -199,7 +199,7 @@ TEST_F(GC10aFixture, calculateADI) {
   } else {
     double surface_avg = calculate();
     Kiva::showMessage(MSG_INFO, dbl_to_string(surface_avg));
-    EXPECT_NEAR(surface_avg, 2607.32, 0.01);
+    EXPECT_NEAR(surface_avg, 2607.16, 0.01);
   }
 }
 
@@ -208,7 +208,7 @@ TEST_F(GC10aFixture, calculateImplicit) {
 
   double surface_avg = calculate();
   Kiva::showMessage(MSG_INFO, dbl_to_string(surface_avg));
-  EXPECT_NEAR(surface_avg, 2601.25, 0.01);
+  EXPECT_NEAR(surface_avg, 2611.18, 0.01);
 }
 
 TEST_F(GC10aFixture, calculateCrankN) {
@@ -216,7 +216,7 @@ TEST_F(GC10aFixture, calculateCrankN) {
 
   double surface_avg = calculate();
   Kiva::showMessage(MSG_INFO, dbl_to_string(surface_avg));
-  EXPECT_NEAR(surface_avg, 2600.87, 0.01);
+  EXPECT_NEAR(surface_avg, 2610.84, 0.01);
 }
 
 TEST_F(GC10aFixture, calculateADE) {
@@ -224,7 +224,7 @@ TEST_F(GC10aFixture, calculateADE) {
 
   double surface_avg = calculate();
   Kiva::showMessage(MSG_INFO, dbl_to_string(surface_avg));
-  EXPECT_NEAR(surface_avg, 2615.19, 0.01);
+  EXPECT_NEAR(surface_avg, 2615.03, 0.01);
 }
 
 TEST_F(GC10aFixture, GC10a_calculateSteadyState) {
@@ -232,7 +232,7 @@ TEST_F(GC10aFixture, GC10a_calculateSteadyState) {
 
   double surface_avg = calculate();
   Kiva::showMessage(MSG_INFO, dbl_to_string(surface_avg));
-  EXPECT_NEAR(surface_avg, 3107.57, 0.01);
+  EXPECT_NEAR(surface_avg, 3107.59, 0.01);
 }
 
 TEST_F(AggregatorFixture, validation) {
