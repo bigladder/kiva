@@ -34,7 +34,7 @@ jobs:
             cc: cl
             cxx: cl
           - os: macos
-            os_ver: "12"
+            os_ver: "latest"
             config: Release
             coverage: false
             cc: clang
