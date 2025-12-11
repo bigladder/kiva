@@ -33,12 +33,6 @@ jobs:
             coverage: false
             cc: cl
             cxx: cl
-          # - os: macos
-          #   os_ver: "13"
-          #   config: Release
-          #   coverage: false
-          #   cc: clang
-          #   cxx: clang++
           - os: macos
             os_ver: "12"
             config: Release
