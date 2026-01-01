@@ -1,0 +1,24 @@
+name: clang-format Check
+on:
+  - push
+  - pull_request
+jobs:
+  formatting-check:
+    name: Formatting Check
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        path:
+          - 'src'
+          - 'include'
+          - 'test'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set Project Name
+        run: echo "REPOSITORY_NAME=$(echo '${{ github.repository }}' | awk -F '/' '{print $2}')" >> $GITHUB_ENV
+      - name: Run clang-format style check on ${{ matrix.path }}.
+        uses: jidicula/clang-format-action@v4.13.0
+        with:
+          clang-format-version: '16'
+          check-path: ${{ matrix.path }}

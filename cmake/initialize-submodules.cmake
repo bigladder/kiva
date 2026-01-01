@@ -1,27 +1,67 @@
-macro(initialize_submodules)
-  if(GIT_FOUND AND EXISTS "${PROJECT_SOURCE_DIR}/.git")
-    set(git_modules_file "${PROJECT_SOURCE_DIR}/.gitmodules")
-    if (EXISTS ${git_modules_file})
-      file(STRINGS ${git_modules_file} file_lines)
-      foreach(line ${file_lines})
-        if (${line} MATCHES "url =")
-          string(REGEX REPLACE "\\s*url = .*/(.*).git" "\\1" submodule "${line}")
-          string(STRIP "${submodule}" submodule)
-          if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${submodule}")
-            message(FATAL_ERROR "Submodule directory \"${CMAKE_CURRENT_SOURCE_DIR}/${submodule}\" does not exist")
-          endif()
-          # Initialize submodule if it hasn't already been cloned
-          if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${submodule}/.git")
-            message(STATUS "Initialize ${submodule} submodule")
-            execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init --recursive "${CMAKE_CURRENT_SOURCE_DIR}/${submodule}"
-              WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-              RESULT_VARIABLE GIT_SUBMOD_RESULT)
-            if(NOT GIT_SUBMOD_RESULT EQUAL "0")
-              message(FATAL_ERROR "git submodule update --init --recursive ${CMAKE_CURRENT_SOURCE_DIR}/${submodule} failed with ${GIT_SUBMOD_RESULT}, please checkout submodules")
-            endif()
-          endif()
-        endif()
-      endforeach()
-    endif()
-  endif()
+# SPDX-FileCopyrightText: © 2025 Big Ladder Software <info@bigladdersoftware.com>
+# SPDX-License-Identifier: BSD-3-Clause
+
+macro(add_submodule submodule_name)
+    # Clone a submodule and add its subdirectory to the build (if the corresponding target hasn't already been added)
+    set(options) # None
+    set(one_value_args
+            TARGET_NAME           # Specify if target name is different from the submodule name
+            PARENT_SUBMODULE_PATH # Specify if you want to leverage a submodule outside of this project's vendor directory
+    )
+    set(multi_value_args
+            CACHE_ON # Set options from submodule as "ON" in the cache
+            CACHE_OFF # Set options from submodule as "OFF" in the cache
+            MARK_AS_ADVANCED # Mark certain options from the submodule project as advanced (to hide from higher level CMake GUI)
+    )
+    cmake_parse_arguments(add_${submodule_name}_args "${options}" "${one_value_args}" "${multi_value_args}" ${ARGN})
+
+    if (DEFINED add_${submodule_name}_args_TARGET_NAME)
+        set(target_name ${add_${submodule_name}_args_TARGET_NAME})
+    else ()
+        set(target_name "${submodule_name}")
+    endif ()
+
+    if (DEFINED add_${submodule_name}_args_PARENT_SUBMODULE_PATH)
+        set(submodule_path "${add_${submodule_name}_args_PARENT_SUBMODULE_PATH}/vendor/${submodule_name}")
+    else ()
+        set(submodule_path "${CMAKE_CURRENT_SOURCE_DIR}/${submodule_name}")
+    endif ()
+
+    # Clone repository
+    if (GIT_FOUND AND NOT EXISTS "${submodule_path}/.git")
+        message(STATUS "Cloning submodule \"${submodule_name}\"")
+        execute_process(COMMAND ${GIT_EXECUTABLE} submodule update --init ${submodule_path}
+                WORKING_DIRECTORY ${submodule_path}
+                RESULT_VARIABLE GIT_SUBMOD_RESULT)
+        if (NOT GIT_SUBMOD_RESULT EQUAL "0")
+            message(FATAL_ERROR "Unable to update submodule \"${submodule_name}\"")
+        endif ()
+    endif ()
+
+    # Add subdirectory
+    if (NOT TARGET ${target_name} AND (EXISTS "${submodule_path}"))
+        add_subdirectory(${submodule_path})
+    endif ()
+
+    # Cache on
+    if (DEFINED add_${submodule_name}_args_CACHE_ON)
+        foreach (variable ${add_${submodule_name}_args_CACHE_ON})
+            set(variable ON CACHE BOOL "" FORCE)
+        endforeach ()
+    endif ()
+
+    # Cache off
+    if (DEFINED add_${submodule_name}_args_CACHE_OFF)
+        foreach (variable ${add_${submodule_name}_args_CACHE_OFF})
+            set(variable OFF CACHE BOOL "" FORCE)
+        endforeach ()
+    endif ()
+
+    # Mark as advanced
+    if (DEFINED add_${submodule_name}_args_MARK_AS_ADVANCED)
+        foreach (variable ${add_${submodule_name}_args_MARK_AS_ADVANCED})
+            mark_as_advanced(variable)
+        endforeach ()
+    endif ()
+
 endmacro()

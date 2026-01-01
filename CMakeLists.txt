@@ -1,4 +1,7 @@
 cmake_minimum_required (VERSION 3.10)
+
+include(cmake/fetch-vcpkg.cmake)
+
 project (kiva)
 
 option(KIVA_COVERAGE "Add coverage reports" OFF)
@@ -7,7 +10,7 @@ option(KIVA_EXE_BUILD "Create Kiva program executable" ON)
 option(ENABLE_OPENMP "Use OpenMP" OFF)
 option( KIVA_GROUND_PLOT "Build ground plotting library" ON )
 mark_as_advanced(FORCE BUILD_GROUND_PLOT)
-option( KIVA_TESTING "Build tests" ON )
+option( KIVA_TESTING "Build tests" OFF )
 option( KIVA_WERROR "Turn on warnings into error" OFF )
 
 find_package(Git QUIET)
@@ -40,6 +43,7 @@ endif()
 
 # Testing
 if (KIVA_TESTING)
+  find_package(GTest CONFIG REQUIRED)
   add_subdirectory(test)
   if (KIVA_COVERAGE)
     coverage_evaluate()

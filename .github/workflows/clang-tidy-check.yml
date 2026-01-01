@@ -1,0 +1,17 @@
+name: Clang-tidy
+on:
+  - push
+  - pull_request
+jobs:
+  checkout-and-check-formatting:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Run clang-tidy
+        uses: HorstBaerbel/action-clang-tidy@1.2
+        with:
+          scandir: '.'
+          builddir: 'build'
+          excludedirs: 'vendor'
+          extensions: 'c,h,C,H,cpp,hpp,cc,hh,c++,h++,cxx,hxx'
+          cmakeoptions: ''

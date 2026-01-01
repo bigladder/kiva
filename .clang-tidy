@@ -1,0 +1,24 @@
+---
+Checks:
+  '-*,
+  readability-identifier-naming,
+  bugprone-*,
+  cppcoreguidelines-*,
+  clang-analyzer-*'
+
+HeaderFilterRegex: 'include/kiva/.*'
+WarningsAsErrors: true
+
+CheckOptions:
+  - key: readability-identifier-naming.VariableCase
+    value: 'lower_case'
+  - key: readability-identifier-naming.ClassCase
+    value: 'CamelCase'
+  - key: readability-identifier-naming.StructCase
+    value: 'CamelCase'
+  - key: readability-identifier-naming.MemberCase
+    value: 'lower_case'
+  - key: readability-identifier-naming.ParameterCase
+    value: 'lower_case'
+  - key: readability-identifier-naming.FunctionCase
+    value: 'lower_case'

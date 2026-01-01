@@ -1,0 +1,37 @@
+# SPDX_license_name = "BSD-3-Clause"
+# clang_format_version = 16
+# contact_email = "info@bigladdersoftware.com"
+# cpp_std = "20"
+# name_of_copyright_holder = "Big Ladder Software"
+project_name = "kiva"
+# project_short_description = ""
+project_type = "cpp"
+# start_year = 2025
+# use_app = false
+# use_cmake_version = false
+# use_taskfile = false
+# version_major = 0
+# version_minor = 1
+# version_patch = 0
+[[deps]]
+name = "fmt"
+git_url = "https://github.com/fmtlib/fmt.git"
+git_checkout = "master"
+add_to_cmake = false
+[[deps]]
+name = "googletest"
+git_url = "https://github.com/google/googletest.git"
+git_checkout = "main"
+add_to_cmake = false
+link_library_spec = "GTest::gtest_main"
+# [[deps]]
+# name = "" # <- name of the dependency; vendor/<name>
+# git_url = "" # <- add the url used to checkout this repository
+# git_checkout = "" # <- add the branch, sha, or tag to check out
+# add_to_cmake = true # <- if true, add to CMakeLists.txt files
+# link_library_spec = "" # <- how library should appear in target_link_library(.); if blank, use project name
+skip = [
+"vendor/CMakeLists.txt",
+"test/CMakeLists.txt",
+"CMakeLists.txt"
+]
