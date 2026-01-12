@@ -22,7 +22,7 @@ if (KIVA_EXE_BUILD)
     find_package(yaml-cpp CONFIG REQUIRED)
 
     if (NOT MSVC)
-        target_compile_options(yaml-cpp PRIVATE -Wno-shadow -Wno-effc++)
+        target_compile_options(yaml-cpp INTERFACE -Wno-shadow -Wno-effc++)
     endif ()
 endif ()
 

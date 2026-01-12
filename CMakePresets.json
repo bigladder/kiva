@@ -11,6 +11,17 @@
         "VCPKG_CHAINLOAD_TOOLCHAIN_FILE": "${sourceDir}/cmake/toolchain-windows.cmake",
         "VCPKG_TARGET_TRIPLET": "x64-windows-static-md"
       }
+    },
+    {
+      "name": "mac_static",
+      "displayName": "BigLadder 2025 Mac Toolchain Build",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build",
+      "cacheVariables": {
+        "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/build/_deps/vcpkg-src/scripts/buildsystems/vcpkg.cmake",
+        "VCPKG_LIBRARY_LINKAGE": "static"
+      }
     }
+
   ]
 }
