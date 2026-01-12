@@ -173,13 +173,14 @@ if (${KIVA_3D})
     target_compile_definitions(libkiva PRIVATE KIVA_3D)
 endif ()
 
+find_package(Eigen3 CONFIG REQUIRED)
+
 target_include_directories(libkiva PUBLIC
         "${libkiva_BINARY_DIR}"
         "${libkiva_SOURCE_DIR}"
-        "${BOOST_SOURCE_DIR}"
-        "${kiva_SOURCE_DIR}/vendor/eigen")
+        "${BOOST_SOURCE_DIR}")
 
-target_link_libraries(libkiva PRIVATE kiva_common_interface)
+target_link_libraries(libkiva PRIVATE kiva_common_interface Eigen3::Eigen)
 target_compile_features(libkiva PUBLIC cxx_std_17) # Should be PRIVATE once boost is cleaned out of public API
 
 include(GenerateExportHeader)

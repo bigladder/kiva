@@ -2,13 +2,14 @@
   "version": 4,
   "configurePresets": [
     {
-      "name": "vs_preset",
+      "name": "vs_static",
       "displayName": "BigLadder 2025 Toolchain Build",
       "generator": "Visual Studio 17 2022",
       "binaryDir": "${sourceDir}/build",
       "cacheVariables": {
         "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/build/_deps/vcpkg-src/scripts/buildsystems/vcpkg.cmake",
-        "VCPKG_CHAINLOAD_TOOLCHAIN_FILE": "${sourceDir}/cmake/toolchain-windows.cmake"
+        "VCPKG_CHAINLOAD_TOOLCHAIN_FILE": "${sourceDir}/cmake/toolchain-windows.cmake",
+        "VCPKG_TARGET_TRIPLET": "x64-windows-static-md"
       }
     }
   ]
