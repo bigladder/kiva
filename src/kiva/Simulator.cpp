@@ -40,6 +40,7 @@ Simulator::Simulator(WeatherData &weatherData, Input &input, std::string outputF
   }
 
   ground.buildDomain();
+  exporter.initialize(input.foundation, ground.domain);
 
   std::stringstream ss;
 
@@ -231,6 +232,8 @@ void Simulator::initializePlots() {
         static_cast<double>((startTime - input.simulationControl.startTime).total_seconds());
     plots[p].tEnd =
         static_cast<double>((endTime - input.simulationControl.startTime).total_seconds());
+
+    exporter.addSnapshot(plots[p], ground.domain, startTime);
   }
 }
 
@@ -262,6 +265,9 @@ void Simulator::simulate() {
     }
   }
 
+  exporter.exportCBOR(outputDir);
+  exporter.exportJSON(outputDir);
+
   showMessage(MSG_INFO,
               "  " + to_simple_string(simEnd - input.simulationControl.timestep) + " (100%)");
 }
@@ -273,6 +279,8 @@ void Simulator::plot(boost::posix_time::ptime t) {
       std::string timeStamp = to_simple_string(t);
 
       plots[p].createFrame(ground, timeStamp.substr(5, timeStamp.size() - 5));
+
+      exporter.addResults(p);
     }
   }
 }

@@ -16,6 +16,7 @@
 #endif
 
 #include "BoundaryConditions.hpp"
+#include "Exporter.hpp"
 #include "Geometry.hpp"
 #include "Ground.hpp"
 #include "GroundOutput.hpp"
@@ -43,6 +44,7 @@ public:
 private:
   Ground ground;
   BoundaryConditions bcs;
+  Exporter exporter;
 
   std::vector<GroundPlot> plots;
   std::ofstream outputFile;

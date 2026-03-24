@@ -1,4 +1,6 @@
 set(kiva_src Main.cpp
+             Exporter.cpp
+             Exporter.hpp
              Input.cpp
              Input.hpp
              InputParser.cpp
