@@ -146,6 +146,7 @@ public:
   Boundaries boundaries;
   Initialization initialization;
   Output output;
+  std::filesystem::path inputPath;
 };
 
 #endif /* INPUT_HPP_ */

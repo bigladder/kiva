@@ -23,6 +23,8 @@ void Exporter::initialize(const Foundation &foundation, const Domain &domain) {
     jExport["blocks"].push_back(jBlock);
   }
 
+  jExport["mesh"] = createMesh(domain);
+
   for (const std::shared_ptr<Cell> cellPtr : domain.cell) {
     if (cellPtr) {
       nlohmann::ordered_json jCell = createCell(*cellPtr, foundation);
@@ -31,19 +33,21 @@ void Exporter::initialize(const Foundation &foundation, const Domain &domain) {
   }
 }
 
-void Exporter::addSnapshot(const GroundPlot &groundPlot, const Domain &domain,
-                           const boost::posix_time::ptime &startTime) {
-  nlohmann::ordered_json jSnapshot = createSnapshot(groundPlot, domain, startTime);
+void Exporter::addSnapshot(const GroundPlot &groundPlot) {
+  nlohmann::ordered_json jSnapshot = createSnapshot(groundPlot);
   jExport["snapshots"].push_back(jSnapshot);
 }
 
-void Exporter::addResults(const std::size_t &snapshotIndex) {
-  nlohmann::ordered_json jTimeSeries = createTimeSeries(snapshotIndex);
-  jExport["snapshots"][snapshotIndex]["results"].push_back(jTimeSeries);
+void Exporter::addSnapshotResults(const std::size_t &snapshotIndex, const GroundPlot &groundPlot,
+                                  const boost::posix_time::ptime &timestamp) {
+  nlohmann::ordered_json jSnapshotResults = createSnapshotResults(groundPlot, timestamp);
+  jExport["snapshots"][snapshotIndex]["results"].push_back(jSnapshotResults);
 }
 
-void Exporter::exportCBOR(const std::filesystem::path &outputDir) {
-  std::ofstream file(outputDir / "export.cbor", std::ios::out | std::ios::binary);
+void Exporter::exportCBOR(const std::filesystem::path &outputDir,
+                          const std::filesystem::path &inputPath) {
+  std::ofstream file((outputDir / inputPath.filename()).replace_extension(".cbor"),
+                     std::ios::out | std::ios::binary);
 
   if (file.is_open()) {
     std::vector<uint8_t> cbor = nlohmann::ordered_json::to_cbor(jExport);
@@ -52,8 +56,9 @@ void Exporter::exportCBOR(const std::filesystem::path &outputDir) {
   }
 }
 
-void Exporter::exportJSON(const std::filesystem::path &outputDir) {
-  std::ofstream file(outputDir / "export.json", std::ios::out);
+void Exporter::exportJSON(const std::filesystem::path &outputDir,
+                          const std::filesystem::path &inputPath) {
+  std::ofstream file((outputDir / inputPath.filename()).replace_extension(".json"), std::ios::out);
 
   if (file.is_open()) {
     file << std::setw(4) << jExport << std::endl;
@@ -79,9 +84,11 @@ nlohmann::ordered_json Exporter::createSurface(const Surface &surface) {
   nlohmann::ordered_json jSurface;
 
   jSurface["surface_type"] = getSurfaceType(surface.type);
-
-  nlohmann::ordered_json jPolygon = createPolygon(surface.polygon);
-  jSurface.merge_patch(jPolygon);
+  jSurface["boundary_condition_type"] = getBoundaryConditionType(surface.boundaryConditionType);
+  jSurface["orientation"] = getOrientation(surface.orientation);
+  jSurface["z_min"] = surface.zMin;
+  jSurface["z_max"] = surface.zMax;
+  jSurface["polygon"] = createPolygon(surface.polygon);
 
   return jSurface;
 }
@@ -89,11 +96,10 @@ nlohmann::ordered_json Exporter::createSurface(const Surface &surface) {
 nlohmann::ordered_json Exporter::createBlock(const Block &block, const Foundation &foundation) {
   nlohmann::ordered_json jBlock;
 
-  jBlock["block_number"] = indexOf(foundation.blocks, block);
   jBlock["block_type"] = getBlockType(block.blockType);
-
-  nlohmann::ordered_json jPolygon = createPolygon(block.polygon);
-  jBlock.merge_patch(jPolygon);
+  jBlock["z_min"] = block.zMin;
+  jBlock["z_max"] = block.zMax;
+  jBlock["polygon"] = createPolygon(block.polygon);
 
   return jBlock;
 }
@@ -121,18 +127,30 @@ nlohmann::ordered_json Exporter::createRing(const Ring &ring) {
   return jRing;
 }
 
+nlohmann::ordered_json Exporter::createMesh(const Domain &domain) {
+  nlohmann::ordered_json jMesh;
+
+  std::vector<std::tuple<std::string, int>> axes = {{"x", 0}, {"y", 1}, {"z", 2}};
+  for (const auto &[axis, index] : axes) {
+    jMesh[axis] = domain.mesh[index].dividers;
+  }
+
+  return jMesh;
+}
+
 nlohmann::ordered_json Exporter::createCell(const Cell &cell, const Foundation &foundation) {
   nlohmann::ordered_json jCell;
 
   jCell["cell_type"] = getCellType(cell.cellType);
+  jCell["density"] = cell.density;
+  jCell["specific_heat"] = cell.specificHeat;
+  jCell["conductivity"] = cell.conductivity;
 
   if (cell.blockPtr) {
-    jCell["density"] = cell.density;
-    jCell["specific_heat"] = cell.specificHeat;
-    jCell["conductivity"] = cell.conductivity;
-    jCell["block_number"] = indexOf(foundation.blocks, *cell.blockPtr);
+    jCell["block_index"] = indexOf(foundation.blocks, *cell.blockPtr);
   }
   if (cell.surfacePtr) {
+    jCell["surface_index"] = indexOf(foundation.surfaces, *cell.surfacePtr);
     jCell["boundary_condition_type"] =
         getBoundaryConditionType(cell.surfacePtr->boundaryConditionType);
   }
@@ -140,61 +158,35 @@ nlohmann::ordered_json Exporter::createCell(const Cell &cell, const Foundation &
   return jCell;
 }
 
-nlohmann::ordered_json Exporter::createSnapshot(const GroundPlot &groundPlot, const Domain &domain,
-                                                const boost::posix_time::ptime &startTime) {
+nlohmann::ordered_json Exporter::createSnapshot(const GroundPlot &groundPlot) {
   nlohmann::ordered_json jSnapshot;
 
-  jSnapshot["mesh"] = createMesh(groundPlot, domain);
-  jSnapshot["time_interval"] = createTimeInterval(groundPlot.snapshotSettings, startTime);
+  jSnapshot["directory"] =
+      (std::filesystem::path(groundPlot.snapshotSettings.dir)).filename().string();
+  jSnapshot["plot_type"] = getPlotType(groundPlot.snapshotSettings.plotType);
+  jSnapshot["units"] =
+      getUnits(groundPlot.snapshotSettings.plotType, groundPlot.snapshotSettings.outputUnits);
+  groundPlot.snapshotSettings.xRange;
+
+  jSnapshot["x_min"] = groundPlot.iMin;
+  jSnapshot["x_max"] = groundPlot.iMax;
+  jSnapshot["y_min"] = groundPlot.jMin;
+  jSnapshot["y_max"] = groundPlot.jMax;
+  jSnapshot["z_min"] = groundPlot.kMin;
+  jSnapshot["z_max"] = groundPlot.kMax;
 
   return jSnapshot;
 }
 
-nlohmann::ordered_json Exporter::createMesh(const GroundPlot &groundPlot, const Domain &domain) {
-  nlohmann::ordered_json jMesh;
+nlohmann::ordered_json Exporter::createSnapshotResults(const GroundPlot &groundPlot,
+                                                       const boost::posix_time::ptime &timestamp) {
+  nlohmann::ordered_json jResults;
 
-  jMesh["x"] = createAxis(groundPlot.iMin, groundPlot.iMax, domain.mesh[0]);
-  jMesh["y"] = createAxis(groundPlot.jMin, groundPlot.jMax, domain.mesh[1]);
-  jMesh["z"] = createAxis(groundPlot.kMin, groundPlot.kMax, domain.mesh[2]);
+  jResults["timestamp"] = formatTime(timestamp);
+  jResults["values"] =
+      std::vector<double>(groundPlot.TDat.a, groundPlot.TDat.a + groundPlot.TDat.GetNN());
 
-  return jMesh;
-}
-
-nlohmann::ordered_json Exporter::createAxis(const std::size_t &min, const std::size_t &max,
-                                            const Mesher &mesh) {
-  nlohmann::ordered_json jAxis;
-
-  jAxis["min"] = min;
-  jAxis["max"] = max;
-  jAxis["centers"] = mesh.centers;
-  jAxis["deltas"] = mesh.deltas;
-  jAxis["dividers"] = mesh.dividers;
-
-  return jAxis;
-}
-
-nlohmann::ordered_json Exporter::createTimeInterval(const SnapshotSettings &snapshotSettings,
-                                                    const boost::posix_time::ptime &startTime) {
-  nlohmann::ordered_json jTimeInterval;
-
-  std::string snapshotName = (std::filesystem::path(snapshotSettings.dir)).filename().string();
-  jTimeInterval["id"] = snapshotName + " Interval";
-  jTimeInterval["starting_time"] = formatTime(startTime);
-  jTimeInterval["regular_interval"] = snapshotSettings.frequency;
-
-  return jTimeInterval;
-}
-
-nlohmann::ordered_json Exporter::createTimeSeries(const std::size_t &snapshotIndex) {
-  nlohmann::ordered_json jTimeSeries;
-
-  jTimeSeries["display_name"] = "Temperature";
-  jTimeSeries["units"] = "F";
-  jTimeSeries["value_type"] = "INSTANTANEOUS";
-  jTimeSeries["value_time_intervals"] = jExport["snapshots"][snapshotIndex]["time_interval"]["id"];
-  jTimeSeries["values"] = {0, 0, 0};
-
-  return jTimeSeries;
+  return jResults;
 }
 
 std::string Exporter::getSurfaceType(const Surface::SurfaceType &surfaceType) {
@@ -230,6 +222,45 @@ std::string Exporter::getSurfaceType(const Surface::SurfaceType &surfaceType) {
   }
 }
 
+std::string
+Exporter::getBoundaryConditionType(const Surface::BoundaryConditionType &boundaryConditionType) {
+  switch (boundaryConditionType) {
+  case Surface::BoundaryConditionType::ZERO_FLUX:
+    return "ZERO_FLUX";
+  case Surface::BoundaryConditionType::INTERIOR_FLUX:
+    return "INTERIOR_FLUX";
+  case Surface::BoundaryConditionType::EXTERIOR_FLUX:
+    return "EXTERIOR_FLUX";
+  case Surface::BoundaryConditionType::CONSTANT_TEMPERATURE:
+    return "CONSTANT_TEMPERATURE";
+  case Surface::BoundaryConditionType::INTERIOR_TEMPERATURE:
+    return "INTERIOR_TEMPERATURE";
+  case Surface::BoundaryConditionType::EXTERIOR_TEMPERATURE:
+    return "EXTERIOR_TEMPERATURE";
+  default:
+    return "UNKNOWN";
+  }
+}
+
+std::string Exporter::getOrientation(const Surface::Orientation &orientation) {
+  switch (orientation) {
+  case Surface::Orientation::X_POS:
+    return "X_POS";
+  case Surface::Orientation::X_NEG:
+    return "X_NEG";
+  case Surface::Orientation::Y_POS:
+    return "Y_POS";
+  case Surface::Orientation::Y_NEG:
+    return "Y_NEG";
+  case Surface::Orientation::Z_POS:
+    return "Z_POS";
+  case Surface::Orientation::Z_NEG:
+    return "Z_NEG";
+  default:
+    return "UNKNOWN";
+  }
+}
+
 std::string Exporter::getBlockType(const Block::BlockType &blockType) {
   switch (blockType) {
   case Block::BlockType::SOLID:
@@ -260,21 +291,24 @@ std::string Exporter::getCellType(const CellType &cellType) {
   }
 }
 
-std::string
-Exporter::getBoundaryConditionType(const Surface::BoundaryConditionType &boundaryConditionType) {
-  switch (boundaryConditionType) {
-  case Surface::BoundaryConditionType::ZERO_FLUX:
-    return "ZERO_FLUX";
-  case Surface::BoundaryConditionType::INTERIOR_FLUX:
-    return "INTERIOR_FLUX";
-  case Surface::BoundaryConditionType::EXTERIOR_FLUX:
-    return "EXTERIOR_FLUX";
-  case Surface::BoundaryConditionType::CONSTANT_TEMPERATURE:
-    return "CONSTANT_TEMPERATURE";
-  case Surface::BoundaryConditionType::INTERIOR_TEMPERATURE:
-    return "INTERIOR_TEMPERATURE";
-  case Surface::BoundaryConditionType::EXTERIOR_TEMPERATURE:
-    return "EXTERIOR_TEMPERATURE";
+std::string Exporter::getPlotType(const SnapshotSettings::PlotType &plotType) {
+  switch (plotType) {
+  case SnapshotSettings::PlotType::P_TEMP:
+    return "P_TEMP";
+  case SnapshotSettings::PlotType::P_FLUX:
+    return "P_FLUX";
+  default:
+    return "UNKNOWN";
+  }
+}
+
+std::string Exporter::getUnits(const SnapshotSettings::PlotType &plotType,
+                               const SnapshotSettings::OutputUnits &outputUnits) {
+  switch (plotType) {
+  case SnapshotSettings::PlotType::P_TEMP:
+    return (outputUnits == SnapshotSettings::OutputUnits::IP) ? "F" : "C";
+  case SnapshotSettings::PlotType::P_FLUX:
+    return (outputUnits == SnapshotSettings::OutputUnits::IP) ? "W/ft2" : "W/m2";
   default:
     return "UNKNOWN";
   }

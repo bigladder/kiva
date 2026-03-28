@@ -843,6 +843,7 @@ Input inputParser(std::string inputFile) {
   input.boundaries = boundaries;
   input.initialization = initialization;
   input.output = output;
+  input.inputPath = inputPath;
 
   return input;
 }

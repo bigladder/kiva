@@ -233,7 +233,7 @@ void Simulator::initializePlots() {
     plots[p].tEnd =
         static_cast<double>((endTime - input.simulationControl.startTime).total_seconds());
 
-    exporter.addSnapshot(plots[p], ground.domain, startTime);
+    exporter.addSnapshot(plots[p]);
   }
 }
 
@@ -265,8 +265,8 @@ void Simulator::simulate() {
     }
   }
 
-  exporter.exportCBOR(outputDir);
-  exporter.exportJSON(outputDir);
+  exporter.exportCBOR(outputDir, input.inputPath);
+  exporter.exportJSON(outputDir, input.inputPath);
 
   showMessage(MSG_INFO,
               "  " + to_simple_string(simEnd - input.simulationControl.timestep) + " (100%)");
@@ -280,7 +280,7 @@ void Simulator::plot(boost::posix_time::ptime t) {
 
       plots[p].createFrame(ground, timeStamp.substr(5, timeStamp.size() - 5));
 
-      exporter.addResults(p);
+      exporter.addSnapshotResults(p, plots[p], t);
     }
   }
 }
