@@ -212,7 +212,7 @@ void Foundation::createMeshData() {
   MultiPolygon intBoxes;
   MultiPolygon extBoxes;
 
-  double xyNearMin = xyWallInterior;
+  double xyNearMin = xySlabNear;
   double xyNearMax = xyWallExterior;
   double zNearMin = zGrade;
 
