@@ -138,6 +138,8 @@ set(libkiva_src Aggregator.cpp
         Domain.hpp
         Errors.cpp
         Errors.hpp
+        Exporter.cpp
+        Exporter.hpp
         Foundation.cpp
         Foundation.hpp
         Functions.cpp
@@ -151,6 +153,8 @@ set(libkiva_src Aggregator.cpp
         Instance.hpp
         Mesher.cpp
         Mesher.hpp
+        Subdomain.cpp
+        Subdomain.hpp
         "${PROJECT_BINARY_DIR}/Version.hpp")
 
 option(KIVA_STATIC_LIB "Make libkiva a static library" ON)
@@ -179,7 +183,7 @@ target_include_directories(libkiva PUBLIC
         "${BOOST_SOURCE_DIR}"
         "${kiva_SOURCE_DIR}/vendor/eigen")
 
-target_link_libraries(libkiva PRIVATE kiva_common_interface)
+target_link_libraries(libkiva PRIVATE kiva_common_interface nlohmann_json::nlohmann_json)
 target_compile_features(libkiva PUBLIC cxx_std_17) # Should be PRIVATE once boost is cleaned out of public API
 
 include(GenerateExportHeader)

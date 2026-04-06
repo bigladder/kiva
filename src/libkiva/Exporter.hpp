@@ -9,7 +9,7 @@
 
 #include "Cell.hpp"
 #include "Domain.hpp"
-#include "GroundPlot.hpp"
+#include "Subdomain.hpp"
 
 namespace Kiva {
 
@@ -17,10 +17,11 @@ class Exporter {
 public:
   Exporter();
 
-  void initialize(const Foundation &foundation, const Domain &domain);
+  void initialize(const Foundation &foundation, const Domain &domain,
+                  const std::filesystem::path &inputPath);
 
-  void addSnapshot(const GroundPlot &groundPlot);
-  void addSnapshotResults(const std::size_t &snapshotIndex, const GroundPlot &groundPlot,
+  void addSnapshot(const Subdomain &subdomain);
+  void addSnapshotResults(const std::size_t &snapshotIndex, const Subdomain &subdomain,
                           const boost::posix_time::ptime &timestamp);
 
   void exportCBOR(const std::filesystem::path &outputDir, const std::filesystem::path &inputPath);
@@ -29,15 +30,15 @@ public:
 private:
   nlohmann::ordered_json jExport;
 
-  nlohmann::ordered_json createMetadata();
+  nlohmann::ordered_json createMetadata(const std::filesystem::path &inputPath);
   nlohmann::ordered_json createSurface(const Surface &surface);
   nlohmann::ordered_json createBlock(const Block &block, const Foundation &foundation);
   nlohmann::ordered_json createPolygon(const Polygon &polygon);
   nlohmann::ordered_json createRing(const Ring &ring);
   nlohmann::ordered_json createMesh(const Domain &domain);
   nlohmann::ordered_json createCell(const Cell &cell, const Foundation &foundation);
-  nlohmann::ordered_json createSnapshot(const GroundPlot &groundPlot);
-  nlohmann::ordered_json createSnapshotResults(const GroundPlot &groundPlot,
+  nlohmann::ordered_json createSnapshot(const Subdomain &subdomain);
+  nlohmann::ordered_json createSnapshotResults(const Subdomain &subdomain,
                                                const boost::posix_time::ptime &timestamp);
 
   std::string getSurfaceType(const Surface::SurfaceType &surfaceType);
@@ -45,9 +46,7 @@ private:
   std::string getOrientation(const Surface::Orientation &orientation);
   std::string getBlockType(const Block::BlockType &blockType);
   std::string getCellType(const CellType &cellType);
-  std::string getPlotType(const SnapshotSettings::PlotType &plotType);
-  std::string getUnits(const SnapshotSettings::PlotType &plotType,
-                       const SnapshotSettings::OutputUnits &outputUnits);
+  std::string getResultsType(const SubdomainSettings::ResultsType &resultsType);
 
   std::string formatTime(const boost::posix_time::ptime &time);
 

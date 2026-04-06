@@ -10,8 +10,9 @@ namespace Kiva {
 
 Exporter::Exporter() {}
 
-void Exporter::initialize(const Foundation &foundation, const Domain &domain) {
-  jExport["metadata"] = createMetadata();
+void Exporter::initialize(const Foundation &foundation, const Domain &domain,
+                          const std::filesystem::path &inputPath) {
+  jExport["metadata"] = createMetadata(inputPath);
 
   for (const Surface &surface : foundation.surfaces) {
     nlohmann::ordered_json jSurface = createSurface(surface);
@@ -33,14 +34,14 @@ void Exporter::initialize(const Foundation &foundation, const Domain &domain) {
   }
 }
 
-void Exporter::addSnapshot(const GroundPlot &groundPlot) {
-  nlohmann::ordered_json jSnapshot = createSnapshot(groundPlot);
+void Exporter::addSnapshot(const Subdomain &subdomain) {
+  nlohmann::ordered_json jSnapshot = createSnapshot(subdomain);
   jExport["snapshots"].push_back(jSnapshot);
 }
 
-void Exporter::addSnapshotResults(const std::size_t &snapshotIndex, const GroundPlot &groundPlot,
+void Exporter::addSnapshotResults(const std::size_t &snapshotIndex, const Subdomain &subdomain,
                                   const boost::posix_time::ptime &timestamp) {
-  nlohmann::ordered_json jSnapshotResults = createSnapshotResults(groundPlot, timestamp);
+  nlohmann::ordered_json jSnapshotResults = createSnapshotResults(subdomain, timestamp);
   jExport["snapshots"][snapshotIndex]["results"].push_back(jSnapshotResults);
 }
 
@@ -66,16 +67,14 @@ void Exporter::exportJSON(const std::filesystem::path &outputDir,
   }
 }
 
-nlohmann::ordered_json Exporter::createMetadata() {
+nlohmann::ordered_json Exporter::createMetadata(const std::filesystem::path &inputPath) {
   nlohmann::ordered_json jMetadata;
 
   jMetadata["schema_author"] = "Big Ladder Software";
   jMetadata["schema_name"] = "KIVA_EXPORT";
   jMetadata["schema_version"] = "0.1.0";
-  jMetadata["author"] = "Big Ladder Software";
-  jMetadata["description"] = "Kiva model data and snapshot results";
+  jMetadata["description"] = "Kiva model data and snapshot results for " + inputPath.string();
   jMetadata["time_of_creation"] = formatTime(boost::posix_time::microsec_clock::universal_time());
-  jMetadata["version"] = "1.0.0";
 
   return jMetadata;
 }
@@ -158,35 +157,30 @@ nlohmann::ordered_json Exporter::createCell(const Cell &cell, const Foundation &
   return jCell;
 }
 
-nlohmann::ordered_json Exporter::createSnapshot(const GroundPlot &groundPlot) {
+nlohmann::ordered_json Exporter::createSnapshot(const Subdomain &subdomain) {
   nlohmann::ordered_json jSnapshot;
 
-  jSnapshot["directory"] =
-      (std::filesystem::path(groundPlot.snapshotSettings.dir)).filename().string();
-  jSnapshot["plot_type"] = getPlotType(groundPlot.snapshotSettings.plotType);
-  jSnapshot["units"] =
-      getUnits(groundPlot.snapshotSettings.plotType, groundPlot.snapshotSettings.outputUnits);
-  groundPlot.snapshotSettings.xRange;
+  jSnapshot["name"] = (std::filesystem::path(subdomain.settings.name)).filename().string();
+  jSnapshot["results_type"] = getResultsType(subdomain.settings.resultsType);
 
-  jSnapshot["x_min"] = groundPlot.iMin;
-  jSnapshot["x_max"] = groundPlot.iMax;
-  jSnapshot["y_min"] = groundPlot.jMin;
-  jSnapshot["y_max"] = groundPlot.jMax;
-  jSnapshot["z_min"] = groundPlot.kMin;
-  jSnapshot["z_max"] = groundPlot.kMax;
+  jSnapshot["x_index_min"] = subdomain.iMin;
+  jSnapshot["x_index_max"] = subdomain.iMax;
+  jSnapshot["y_index_min"] = subdomain.jMin;
+  jSnapshot["y_index_max"] = subdomain.jMax;
+  jSnapshot["z_index_min"] = subdomain.kMin;
+  jSnapshot["z_index_max"] = subdomain.kMax;
 
   return jSnapshot;
 }
 
-nlohmann::ordered_json Exporter::createSnapshotResults(const GroundPlot &groundPlot,
+nlohmann::ordered_json Exporter::createSnapshotResults(const Subdomain &subdomain,
                                                        const boost::posix_time::ptime &timestamp) {
-  nlohmann::ordered_json jResults;
+  nlohmann::ordered_json jSnapshotResults;
 
-  jResults["timestamp"] = formatTime(timestamp);
-  jResults["values"] =
-      std::vector<double>(groundPlot.TDat.a, groundPlot.TDat.a + groundPlot.TDat.GetNN());
+  jSnapshotResults["timestamp"] = formatTime(timestamp);
+  jSnapshotResults["values"] = subdomain.results;
 
-  return jResults;
+  return jSnapshotResults;
 }
 
 std::string Exporter::getSurfaceType(const Surface::SurfaceType &surfaceType) {
@@ -291,24 +285,12 @@ std::string Exporter::getCellType(const CellType &cellType) {
   }
 }
 
-std::string Exporter::getPlotType(const SnapshotSettings::PlotType &plotType) {
-  switch (plotType) {
-  case SnapshotSettings::PlotType::P_TEMP:
-    return "P_TEMP";
-  case SnapshotSettings::PlotType::P_FLUX:
-    return "P_FLUX";
-  default:
-    return "UNKNOWN";
-  }
-}
-
-std::string Exporter::getUnits(const SnapshotSettings::PlotType &plotType,
-                               const SnapshotSettings::OutputUnits &outputUnits) {
-  switch (plotType) {
-  case SnapshotSettings::PlotType::P_TEMP:
-    return (outputUnits == SnapshotSettings::OutputUnits::IP) ? "F" : "C";
-  case SnapshotSettings::PlotType::P_FLUX:
-    return (outputUnits == SnapshotSettings::OutputUnits::IP) ? "W/ft2" : "W/m2";
+std::string Exporter::getResultsType(const SubdomainSettings::ResultsType &resultsType) {
+  switch (resultsType) {
+  case SubdomainSettings::ResultsType::TEMPERATURE:
+    return "TEMPERATURE";
+  case SubdomainSettings::ResultsType::HEAT_FLUX:
+    return "HEAT_FLUX";
   default:
     return "UNKNOWN";
   }

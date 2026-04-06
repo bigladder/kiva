@@ -22,6 +22,7 @@
 #include "GroundOutput.hpp"
 #include "GroundPlot.hpp"
 #include "Input.hpp"
+#include "Subdomain.hpp"
 #include "WeatherData.hpp"
 
 using namespace Kiva;
@@ -47,9 +48,11 @@ private:
   Exporter exporter;
 
   std::vector<GroundPlot> plots;
+  std::vector<Subdomain> subdomains;
   std::ofstream outputFile;
   filesys::path outputDir;
   void initializePlots();
+  void initializeExport();
   void initializeConditions();
 
   void printStatus(boost::posix_time::ptime t);

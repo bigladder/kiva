@@ -837,13 +837,65 @@ Input inputParser(std::string inputFile) {
     output.outputSnapshots.push_back(temp);
   }
 
+  // Export
+  output.outputExport.inputPath = inputPath;
+  for (YAML::Node ySnapshot : yamlInput["Output"]["Output Snapshots"]) {
+    SubdomainSettings settings;
+    settings.name = ySnapshot["Directory"].as<std::string>();
+    settings.simulationStartDate = simulationControl.startDate;
+
+    if (ySnapshot["Plot Type"].IsDefined() &&
+        ySnapshot["Plot Type"].as<std::string>() == "HEAT-FLUX") {
+      settings.resultsType = SubdomainSettings::ResultsType::HEAT_FLUX;
+    } else
+      settings.resultsType = SubdomainSettings::ResultsType::TEMPERATURE;
+
+    if (ySnapshot["Start Date"].IsDefined()) {
+      settings.startDate = boost::gregorian::from_string(ySnapshot["Start Date"].as<std::string>());
+    } else
+      settings.startDate = simulationControl.startDate;
+
+    if (ySnapshot["End Date"].IsDefined()) {
+      settings.endDate = boost::gregorian::from_string(ySnapshot["End Date"].as<std::string>());
+    } else
+      settings.endDate = simulationControl.endDate;
+
+    if (ySnapshot["Frequency"].IsDefined()) {
+      settings.frequency = ySnapshot["Frequency"].as<double>() * 60.0 * 60.0;
+    } else {
+      settings.frequency = 36 * 60.0 * 60.0;
+    }
+
+    if (ySnapshot["X Range"].IsDefined()) {
+      settings.xRange.first = ySnapshot["X Range"][0].as<double>();
+      settings.xRange.second = ySnapshot["X Range"][1].as<double>();
+      settings.xRangeSet = true;
+    } else
+      settings.xRangeSet = false;
+
+    if (ySnapshot["Y Range"].IsDefined()) {
+      settings.yRange.first = ySnapshot["Y Range"][0].as<double>();
+      settings.yRange.second = ySnapshot["Y Range"][1].as<double>();
+      settings.yRangeSet = true;
+    } else
+      settings.yRangeSet = false;
+
+    if (ySnapshot["Z Range"].IsDefined()) {
+      settings.zRange.first = ySnapshot["Z Range"][0].as<double>();
+      settings.zRange.second = ySnapshot["Z Range"][1].as<double>();
+      settings.zRangeSet = true;
+    } else
+      settings.zRangeSet = false;
+
+    output.outputExport.push_back(settings);
+  }
+
   // Full Input
   input.simulationControl = simulationControl;
   input.foundation = foundation;
   input.boundaries = boundaries;
   input.initialization = initialization;
   input.output = output;
-  input.inputPath = inputPath;
 
   return input;
 }
