@@ -54,8 +54,6 @@ Simulator::Simulator(WeatherData &weatherData, Input &input, std::string outputF
   initializeConditions();
 
   initializePlots();
-
-  initializeExport();
 }
 
 Simulator::~Simulator() { outputFile.close(); }
@@ -236,15 +234,6 @@ void Simulator::initializePlots() {
   }
 }
 
-void Simulator::initializeExport() {
-  exporter.initialize(input.foundation, ground.domain, input.output.outputExport.inputPath);
-
-  for (SubdomainSettings settings : input.output.outputExport) {
-    Subdomain subdomain = subdomains.emplace_back(settings, ground);
-    exporter.addSnapshot(subdomain);
-  }
-}
-
 void Simulator::simulate() {
   showMessage(MSG_INFO, "Beginning Simulation...");
 
@@ -273,27 +262,16 @@ void Simulator::simulate() {
     }
   }
 
-  exporter.exportCBOR(outputDir, input.output.outputExport.inputPath);
-  exporter.exportJSON(outputDir, input.output.outputExport.inputPath);
-
   showMessage(MSG_INFO,
               "  " + to_simple_string(simEnd - input.simulationControl.timestep) + " (100%)");
 }
 
 void Simulator::plot(boost::posix_time::ptime t) {
-  double tCurrent = static_cast<double>((t - input.simulationControl.startTime).total_seconds());
-
   for (std::size_t p = 0; p < plots.size(); p++) {
-    if (plots[p].makeNewFrame(tCurrent)) {
+    if (plots[p].makeNewFrame(
+            static_cast<double>((t - input.simulationControl.startTime).total_seconds()))) {
       std::string timeStamp = to_simple_string(t);
       plots[p].createFrame(ground, timeStamp.substr(5, timeStamp.size() - 5));
-    }
-  }
-
-  for (std::size_t i = 0; i < subdomains.size(); i++) {
-    if (subdomains[i].isNextResultsInterval(tCurrent)) {
-      subdomains[i].updateResults(ground);
-      exporter.addSnapshotResults(i, subdomains[i], t);
     }
   }
 }

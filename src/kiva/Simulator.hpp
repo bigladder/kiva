@@ -16,13 +16,11 @@
 #endif
 
 #include "BoundaryConditions.hpp"
-#include "Exporter.hpp"
 #include "Geometry.hpp"
 #include "Ground.hpp"
 #include "GroundOutput.hpp"
 #include "GroundPlot.hpp"
 #include "Input.hpp"
-#include "Subdomain.hpp"
 #include "WeatherData.hpp"
 
 using namespace Kiva;
@@ -45,14 +43,11 @@ public:
 private:
   Ground ground;
   BoundaryConditions bcs;
-  Exporter exporter;
 
   std::vector<GroundPlot> plots;
-  std::vector<Subdomain> subdomains;
   std::ofstream outputFile;
   filesys::path outputDir;
   void initializePlots();
-  void initializeExport();
   void initializeConditions();
 
   void printStatus(boost::posix_time::ptime t);

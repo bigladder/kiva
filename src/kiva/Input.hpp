@@ -29,7 +29,6 @@ namespace filesys = std::experimental::filesystem;
 
 #include "Algorithms.hpp"
 #include "BoundaryConditions.hpp"
-#include "Exporter.hpp"
 #include "Foundation.hpp"
 #include "Geometry.hpp"
 #include "GroundOutput.hpp"
@@ -61,11 +60,6 @@ public:
   long implicitAccelPeriods;
 
   InitializationMethod initializationMethod;
-};
-
-class OutputExport : public std::vector<SubdomainSettings> {
-public:
-  std::filesystem::path inputPath;
 };
 
 class OutputSnapshots {
@@ -106,7 +100,6 @@ class Output {
 public:
   OutputReport outputReport;
   std::vector<OutputSnapshots> outputSnapshots;
-  OutputExport outputExport;
 };
 
 class DataFile {
