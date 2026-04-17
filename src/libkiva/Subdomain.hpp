@@ -8,10 +8,11 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 
 #include <Ground.hpp>
+#include "libkiva_export.h"
 
 namespace Kiva {
 
-class SubdomainSettings {
+class LIBKIVA_EXPORT SubdomainSettings {
 public:
   std::string name;
 
@@ -32,7 +33,7 @@ public:
   bool zRangeSet;
 };
 
-class Subdomain {
+class LIBKIVA_EXPORT Subdomain {
 public:
   SubdomainSettings settings;
 

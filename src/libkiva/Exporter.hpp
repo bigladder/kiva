@@ -10,10 +10,11 @@
 #include "Cell.hpp"
 #include "Domain.hpp"
 #include "Subdomain.hpp"
+#include "libkiva_export.h"
 
 namespace Kiva {
 
-class Exporter {
+class LIBKIVA_EXPORT Exporter {
 public:
   Exporter();
 
