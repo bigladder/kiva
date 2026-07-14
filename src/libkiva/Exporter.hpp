@@ -5,6 +5,7 @@
 #define Exporter_HPP
 
 #include <boost/date_time/posix_time/posix_time.hpp>
+#include <filesystem>
 #include <nlohmann/json.hpp>
 
 #include "Cell.hpp"
@@ -14,24 +15,31 @@
 
 namespace Kiva {
 
+struct ExportInstance {
+  uint64_t InstanceIndex;
+  std::vector<Subdomain> Subdomains;
+};
+
 class LIBKIVA_EXPORT Exporter {
 public:
   Exporter();
 
-  void initialize(const Foundation &foundation, const Domain &domain,
-                  const std::filesystem::path &inputPath);
+  void addInstance(Ground &ground, std::vector<SubdomainSettings> *settings = nullptr);
+  void addResults(Ground &ground, boost::posix_time::ptime &timestamp);
 
-  void addSnapshot(const Subdomain &subdomain);
-  void addSnapshotResults(const std::size_t &snapshotIndex, const Subdomain &subdomain,
-                          const boost::posix_time::ptime &timestamp);
-
-  void exportCBOR(const std::filesystem::path &outputDir, const std::filesystem::path &inputPath);
-  void exportJSON(const std::filesystem::path &outputDir, const std::filesystem::path &inputPath);
+  nlohmann::ordered_json getJson();
+  std::vector<uint8_t> getCbor();
+  void writeJson(const std::filesystem::path &outputPath);
+  void writeCbor(const std::filesystem::path &outputPath);
 
 private:
+  uint64_t nextInstanceIndex = 0;
+  std::unordered_map<const Ground *, std::unique_ptr<ExportInstance>> exportInstancesMap;
+
   nlohmann::ordered_json jExport;
 
-  nlohmann::ordered_json createMetadata(const std::filesystem::path &inputPath);
+  nlohmann::ordered_json createMetadata();
+  nlohmann::ordered_json createInstance(const Ground &ground);
   nlohmann::ordered_json createSurface(const Surface &surface);
   nlohmann::ordered_json createBlock(const Block &block, const Foundation &foundation);
   nlohmann::ordered_json createPolygon(const Polygon &polygon);

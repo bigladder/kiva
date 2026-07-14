@@ -8,8 +8,30 @@
 
 namespace Kiva {
 
-Subdomain::Subdomain(SubdomainSettings &settings, Ground &ground)
-    : settings(settings) {
+SubdomainSettings::SubdomainSettings(ResultsType resultsType, boost::posix_time::ptime startTime,
+                                     boost::posix_time::ptime endTime,
+                                     boost::posix_time::time_duration frequency)
+    : resultsType(resultsType), startTime(startTime), endTime(endTime), frequency(frequency) {}
+
+void SubdomainSettings::setRange(RangeType rangeType, double min, double max) {
+  std::pair range(min, max);
+  switch (rangeType) {
+  case X:
+    xRange = range;
+    xRangeSet = true;
+    break;
+  case Y:
+    yRange = range;
+    yRangeSet = true;
+    break;
+  case Z:
+    zRange = range;
+    zRangeSet = true;
+    break;
+  }
+}
+
+Subdomain::Subdomain(SubdomainSettings &settings, Ground &ground) : settings(settings) {
   if (ground.foundation.numberOfDimensions == 3) {
     if (!settings.xRangeSet) {
       settings.xRange.first = ground.domain.mesh[0].dividers[0];
@@ -108,18 +130,12 @@ Subdomain::Subdomain(SubdomainSettings &settings, Ground &ground)
   kN = kMax - kMin + 1;
   results = std::vector<double>(iN * jN * kN, 0);
 
-  boost::posix_time::ptime simulationStartTime(settings.simulationStartDate,
-                                               boost::posix_time::hours(0));
-  boost::posix_time::ptime startTime(settings.startDate, boost::posix_time::hours(0));
-  boost::posix_time::ptime endTime(settings.endDate + boost::gregorian::days(1));
-
-  tStart = static_cast<double>((startTime - simulationStartTime).total_seconds());
-  tEnd = static_cast<double>((endTime - simulationStartTime).total_seconds());
-  tNext = static_cast<double>((startTime - simulationStartTime).total_seconds());
+  nextResultsInterval = settings.startTime;
 }
 
-bool Subdomain::isNextResultsInterval(double tCurrent) {
-  return (tCurrent >= tNext) && (tCurrent >= tStart) && (tCurrent <= tEnd);
+bool Subdomain::isNextResultsInterval(boost::posix_time::ptime &timestamp) {
+  return (timestamp >= nextResultsInterval) && (timestamp >= settings.startTime) &&
+         (timestamp <= settings.endTime);
 }
 
 std::size_t Subdomain::getResultsIndex(std::size_t i, std::size_t j, std::size_t k) {
@@ -145,7 +161,7 @@ void Subdomain::updateResults(Ground &ground) {
     }
   }
 
-  tNext += settings.frequency;
+  nextResultsInterval += settings.frequency;
 }
 
 } // namespace Kiva

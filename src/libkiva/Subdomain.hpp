@@ -4,25 +4,21 @@
 #ifndef Subdomain_HPP
 #define Subdomain_HPP
 
-#include <boost/date_time/gregorian/gregorian.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
-#include <Ground.hpp>
+#include "Ground.hpp"
 #include "libkiva_export.h"
 
 namespace Kiva {
 
 class LIBKIVA_EXPORT SubdomainSettings {
 public:
-  std::string name;
-
   enum ResultsType { TEMPERATURE, HEAT_FLUX };
   ResultsType resultsType;
 
-  boost::gregorian::date simulationStartDate;
-  boost::gregorian::date startDate;
-  boost::gregorian::date endDate;
-  double frequency;
+  boost::posix_time::ptime startTime;
+  boost::posix_time::ptime endTime;
+  boost::posix_time::time_duration frequency;
 
   std::pair<double, double> xRange;
   std::pair<double, double> yRange;
@@ -31,6 +27,12 @@ public:
   bool xRangeSet;
   bool yRangeSet;
   bool zRangeSet;
+
+  enum RangeType { X, Y, Z };
+
+  SubdomainSettings(ResultsType resultsType, boost::posix_time::ptime startTime,
+                    boost::posix_time::ptime endTime, boost::posix_time::time_duration frequency);
+  void setRange(RangeType rangeType, double min, double max);
 };
 
 class LIBKIVA_EXPORT Subdomain {
@@ -42,10 +44,10 @@ public:
   std::size_t kMin, kMax, kN;
   std::vector<double> results;
 
-  double tStart, tEnd, tNext;
+  boost::posix_time::ptime nextResultsInterval;
 
   Subdomain(SubdomainSettings &settings, Ground &ground);
-  bool isNextResultsInterval(double tCurrent);
+  bool isNextResultsInterval(boost::posix_time::ptime &timestamp);
   std::size_t getResultsIndex(std::size_t i, std::size_t j, std::size_t k);
   void updateResults(Ground &ground);
 };

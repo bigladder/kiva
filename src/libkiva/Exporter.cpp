@@ -8,75 +8,107 @@
 
 namespace Kiva {
 
-Exporter::Exporter() {}
+Exporter::Exporter() { jExport["metadata"] = createMetadata(); }
 
-void Exporter::initialize(const Foundation &foundation, const Domain &domain,
-                          const std::filesystem::path &inputPath) {
-  jExport["metadata"] = createMetadata(inputPath);
+void Exporter::addInstance(Ground &ground, std::vector<SubdomainSettings> *settings) {
+  auto match = exportInstancesMap.find(&ground);
+  if (match == exportInstancesMap.end()) {
+    std::unique_ptr<ExportInstance> instance = std::make_unique<ExportInstance>();
+    instance->InstanceIndex = nextInstanceIndex++;
 
-  for (const Surface &surface : foundation.surfaces) {
-    nlohmann::ordered_json jSurface = createSurface(surface);
-    jExport["surfaces"].push_back(jSurface);
+    nlohmann::ordered_json jInstance = createInstance(ground);
+    jExport["instances"].push_back(jInstance);
+
+    if (settings != nullptr) {
+      for (SubdomainSettings subdomainSettings : *settings) {
+        Subdomain subdomain(subdomainSettings, ground);
+        instance->Subdomains.push_back(subdomain);
+
+        nlohmann::ordered_json jSnapshot = createSnapshot(subdomain);
+        jExport["instances"][instance->InstanceIndex]["snapshots"].push_back(jSnapshot);
+      }
+    }
+
+    exportInstancesMap[&ground] = std::move(instance);
   }
+}
 
-  for (const Block &block : foundation.blocks) {
-    nlohmann::ordered_json jBlock = createBlock(block, foundation);
-    jExport["blocks"].push_back(jBlock);
-  }
+void Exporter::addResults(Ground &ground, boost::posix_time::ptime &timestamp) {
+  auto match = exportInstancesMap.find(&ground);
+  if (match != exportInstancesMap.end()) {
+    ExportInstance *instance = match->second.get();
 
-  jExport["mesh"] = createMesh(domain);
+    for (std::size_t i = 0; i < instance->Subdomains.size(); i++) {
+      Subdomain &subdomain = instance->Subdomains[i];
+      if (subdomain.isNextResultsInterval(timestamp)) {
+        subdomain.updateResults(ground);
 
-  for (const std::shared_ptr<Cell> cellPtr : domain.cell) {
-    if (cellPtr) {
-      nlohmann::ordered_json jCell = createCell(*cellPtr, foundation);
-      jExport["cells"].push_back(jCell);
+        nlohmann::ordered_json jSnapshotResults = createSnapshotResults(subdomain, timestamp);
+        jExport["instances"][instance->InstanceIndex]["snapshots"][i]["results"].push_back(
+            jSnapshotResults);
+      }
     }
   }
 }
 
-void Exporter::addSnapshot(const Subdomain &subdomain) {
-  nlohmann::ordered_json jSnapshot = createSnapshot(subdomain);
-  jExport["snapshots"].push_back(jSnapshot);
-}
+nlohmann::ordered_json Exporter::getJson() { return jExport; }
 
-void Exporter::addSnapshotResults(const std::size_t &snapshotIndex, const Subdomain &subdomain,
-                                  const boost::posix_time::ptime &timestamp) {
-  nlohmann::ordered_json jSnapshotResults = createSnapshotResults(subdomain, timestamp);
-  jExport["snapshots"][snapshotIndex]["results"].push_back(jSnapshotResults);
-}
+std::vector<uint8_t> Exporter::getCbor() { return nlohmann::ordered_json::to_cbor(jExport); }
 
-void Exporter::exportCBOR(const std::filesystem::path &outputDir,
-                          const std::filesystem::path &inputPath) {
-  std::ofstream file((outputDir / inputPath.filename()).replace_extension(".cbor"),
-                     std::ios::out | std::ios::binary);
+void Exporter::writeJson(const std::filesystem::path &outputPath) {
+  std::ofstream file(outputPath, std::ios::out);
 
   if (file.is_open()) {
-    std::vector<uint8_t> cbor = nlohmann::ordered_json::to_cbor(jExport);
+    file << std::setw(4) << getJson() << std::endl;
+    file.close();
+  }
+}
+
+void Exporter::writeCbor(const std::filesystem::path &outputPath) {
+  std::ofstream file(outputPath, std::ios::out | std::ios::binary);
+
+  if (file.is_open()) {
+    std::vector<uint8_t> cbor = getCbor();
     file.write(reinterpret_cast<const char *>(cbor.data()), cbor.size());
     file.close();
   }
 }
 
-void Exporter::exportJSON(const std::filesystem::path &outputDir,
-                          const std::filesystem::path &inputPath) {
-  std::ofstream file((outputDir / inputPath.filename()).replace_extension(".json"), std::ios::out);
-
-  if (file.is_open()) {
-    file << std::setw(4) << jExport << std::endl;
-    file.close();
-  }
-}
-
-nlohmann::ordered_json Exporter::createMetadata(const std::filesystem::path &inputPath) {
+nlohmann::ordered_json Exporter::createMetadata() {
   nlohmann::ordered_json jMetadata;
 
   jMetadata["schema_author"] = "Big Ladder Software";
   jMetadata["schema_name"] = "KIVA_EXPORT";
   jMetadata["schema_version"] = "0.1.0";
-  jMetadata["description"] = "Kiva model data and snapshot results for " + inputPath.string();
+  jMetadata["description"] = "Kiva model data and snapshot results";
   jMetadata["time_of_creation"] = formatTime(boost::posix_time::microsec_clock::universal_time());
 
   return jMetadata;
+}
+
+nlohmann::ordered_json Exporter::createInstance(const Ground &ground) {
+  nlohmann::ordered_json jInstance;
+
+  for (const Surface &surface : ground.foundation.surfaces) {
+    nlohmann::ordered_json jSurface = createSurface(surface);
+    jInstance["surfaces"].push_back(jSurface);
+  }
+
+  for (const Block &block : ground.foundation.blocks) {
+    nlohmann::ordered_json jBlock = createBlock(block, ground.foundation);
+    jInstance["blocks"].push_back(jBlock);
+  }
+
+  jInstance["mesh"] = createMesh(ground.domain);
+
+  for (const std::shared_ptr<Cell> cellPtr : ground.domain.cell) {
+    if (cellPtr) {
+      nlohmann::ordered_json jCell = createCell(*cellPtr, ground.foundation);
+      jInstance["cells"].push_back(jCell);
+    }
+  }
+
+  return jInstance;
 }
 
 nlohmann::ordered_json Exporter::createSurface(const Surface &surface) {
@@ -160,9 +192,7 @@ nlohmann::ordered_json Exporter::createCell(const Cell &cell, const Foundation &
 nlohmann::ordered_json Exporter::createSnapshot(const Subdomain &subdomain) {
   nlohmann::ordered_json jSnapshot;
 
-  jSnapshot["name"] = (std::filesystem::path(subdomain.settings.name)).filename().string();
   jSnapshot["results_type"] = getResultsType(subdomain.settings.resultsType);
-
   jSnapshot["x_index_min"] = subdomain.iMin;
   jSnapshot["x_index_max"] = subdomain.iMax;
   jSnapshot["y_index_min"] = subdomain.jMin;
