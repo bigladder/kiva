@@ -12,7 +12,9 @@ Exporter::Exporter() { jExport["metadata"] = createMetadata(); }
 
 void Exporter::addInstance(Ground &ground, std::vector<SubdomainSettings> *settings) {
   auto match = exportInstancesMap.find(&ground);
-  if (match == exportInstancesMap.end()) {
+  if (match != exportInstancesMap.end()) {
+    showMessage(MSG_WARN, "Export instance has already been added.");
+  } else {
     std::unique_ptr<ExportInstance> instance = std::make_unique<ExportInstance>();
     instance->InstanceIndex = nextInstanceIndex++;
 
@@ -35,7 +37,9 @@ void Exporter::addInstance(Ground &ground, std::vector<SubdomainSettings> *setti
 
 void Exporter::addResults(Ground &ground, boost::posix_time::ptime &timestamp) {
   auto match = exportInstancesMap.find(&ground);
-  if (match != exportInstancesMap.end()) {
+  if (match == exportInstancesMap.end()) {
+    showMessage(MSG_WARN, "Export instance not found - results will not be added.");
+  } else {
     ExportInstance *instance = match->second.get();
 
     for (std::size_t i = 0; i < instance->Subdomains.size(); i++) {
