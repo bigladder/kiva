@@ -271,6 +271,7 @@ void Simulator::plot(boost::posix_time::ptime t) {
     if (plots[p].makeNewFrame(
             static_cast<double>((t - input.simulationControl.startTime).total_seconds()))) {
       std::string timeStamp = to_simple_string(t);
+
       plots[p].createFrame(ground, timeStamp.substr(5, timeStamp.size() - 5));
     }
   }
