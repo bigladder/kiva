@@ -16,3 +16,6 @@
 [submodule "vendor/zlib-ng"]
 	path = vendor/zlib-ng
 	url = https://github.com/zlib-ng/zlib-ng.git
+[submodule "vendor/json"]
+	path = vendor/json
+	url = https://github.com/nlohmann/json.git

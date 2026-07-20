@@ -14,17 +14,22 @@ Aggregator::Aggregator() : surface_type_set(false), validated(false) {}
 Aggregator::Aggregator(Surface::SurfaceType st)
     : surface_type(st), surface_type_set(true), validated(false) {}
 
-void Aggregator::add_instance(Surface::SurfaceType st, Ground *grnd, double weight) {
+void Aggregator::add_instance(Surface::SurfaceType st, Ground *grnd, double weight,
+                              std::vector<SubdomainSettings> *settings) {
   // Check if surface type is the same as already set. If not yet set, set it now.
   if (!surface_type_set) {
     surface_type = st;
   } else if (st != surface_type) {
     showMessage(MSG_ERR, "Inconsistent surface type added to aggregator.");
   }
-  add_instance(grnd, weight);
+  add_instance(grnd, weight, settings);
 }
 
-void Aggregator::add_instance(Ground *grnd, double weight) { instances.push_back({grnd, weight}); }
+void Aggregator::add_instance(Ground *grnd, double weight,
+                              std::vector<SubdomainSettings> *settings) {
+  instances.push_back({grnd, weight});
+  exporter.addInstance(*grnd, settings != nullptr ? *settings : std::vector<SubdomainSettings>());
+}
 
 std::size_t Aggregator::size() { return instances.size(); }
 
@@ -94,5 +99,21 @@ void Aggregator::calc_weighted_results() {
 }
 
 std::pair<Ground *, double> Aggregator::get_instance(std::size_t index) { return instances[index]; }
+
+void Aggregator::add_export_results(Ground *grnd, const boost::posix_time::ptime &timestamp) {
+  exporter.addResults(*grnd, timestamp);
+}
+
+nlohmann::ordered_json Aggregator::get_export_json() { return exporter.getJson(); }
+
+std::vector<uint8_t> Aggregator::get_export_cbor() { return exporter.getCbor(); }
+
+void Aggregator::write_export_json(const std::filesystem::path &outputPath) {
+  exporter.writeJson(outputPath);
+}
+
+void Aggregator::write_export_cbor(const std::filesystem::path &outputPath) {
+  exporter.writeCbor(outputPath);
+}
 
 } // namespace Kiva

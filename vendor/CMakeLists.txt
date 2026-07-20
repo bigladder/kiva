@@ -43,6 +43,9 @@ if (KIVA_EXE_BUILD OR KIVA_GROUND_PLOT)
     set(PNG_INCLUDE_DIRS ${PNG_INCLUDE_DIR})
     add_subdirectory(mathgl-8.0.1)
 
+    set(JSON_BuildTests OFF CACHE BOOL "" FORCE)
+    add_subdirectory(json)
+
     if (MSVC)
         target_compile_options(mgl PRIVATE /wd4477 /wd4334)
         target_compile_options(mgl-static PRIVATE /wd4477 /wd4334)
