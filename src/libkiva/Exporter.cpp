@@ -10,7 +10,7 @@ namespace Kiva {
 
 Exporter::Exporter() { jExport["metadata"] = createMetadata(); }
 
-void Exporter::addInstance(Ground &ground, std::vector<SubdomainSettings> *settings) {
+void Exporter::addInstance(Ground &ground, const std::vector<SubdomainSettings> &settings) {
   auto match = exportInstancesMap.find(&ground);
   if (match != exportInstancesMap.end()) {
     showMessage(MSG_WARN, "Export instance has already been added.");
@@ -21,14 +21,12 @@ void Exporter::addInstance(Ground &ground, std::vector<SubdomainSettings> *setti
     nlohmann::ordered_json jInstance = createInstance(ground);
     jExport["instances"].push_back(jInstance);
 
-    if (settings != nullptr) {
-      for (SubdomainSettings subdomainSettings : *settings) {
-        Subdomain subdomain(subdomainSettings, ground);
-        instance->Subdomains.push_back(subdomain);
+    for (SubdomainSettings subdomainSettings : settings) {
+      Subdomain subdomain(subdomainSettings, ground);
+      instance->Subdomains.push_back(subdomain);
 
-        nlohmann::ordered_json jSnapshot = createSnapshot(subdomain);
-        jExport["instances"][instance->InstanceIndex]["snapshots"].push_back(jSnapshot);
-      }
+      nlohmann::ordered_json jSnapshot = createSnapshot(subdomain);
+      jExport["instances"][instance->InstanceIndex]["snapshots"].push_back(jSnapshot);
     }
 
     exportInstancesMap[&ground] = std::move(instance);

@@ -24,7 +24,7 @@ class LIBKIVA_EXPORT Exporter {
 public:
   Exporter();
 
-  void addInstance(Ground &ground, std::vector<SubdomainSettings> *settings = nullptr);
+  void addInstance(Ground &ground, const std::vector<SubdomainSettings> &settings);
   void addResults(Ground &ground, const boost::posix_time::ptime &timestamp);
 
   nlohmann::ordered_json getJson();

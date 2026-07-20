@@ -28,7 +28,7 @@ void Aggregator::add_instance(Surface::SurfaceType st, Ground *grnd, double weig
 void Aggregator::add_instance(Ground *grnd, double weight,
                               std::vector<SubdomainSettings> *settings) {
   instances.push_back({grnd, weight});
-  exporter.addInstance(*grnd, settings);
+  exporter.addInstance(*grnd, settings != nullptr ? *settings : std::vector<SubdomainSettings>());
 }
 
 std::size_t Aggregator::size() { return instances.size(); }

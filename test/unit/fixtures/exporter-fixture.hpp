@@ -38,7 +38,7 @@ public:
     settings.push_back(fluxSettings);
   }
 
-  void TestCbor(std::vector<uint8_t> &cbor, int expectedInstances) {
+  void TestCbor(const std::vector<uint8_t> &cbor, int expectedInstances) {
     nlohmann::json json;
     EXPECT_NO_THROW(json = nlohmann::json::from_cbor(cbor, true, true));
 

@@ -9,7 +9,7 @@ using namespace Kiva;
 
 TEST_F(ExporterFixture, export_basic) {
   Exporter exporter;
-  exporter.addInstance(*ground, &settings);
+  exporter.addInstance(*ground, settings);
 
   for (boost::posix_time::ptime t = startTime; t < endTime; t += timestep) {
     bcs.outdoorTemp = 273 + dbt[timestepSeconds % 24];
