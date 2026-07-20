@@ -100,7 +100,7 @@ void Aggregator::calc_weighted_results() {
 
 std::pair<Ground *, double> Aggregator::get_instance(std::size_t index) { return instances[index]; }
 
-void Aggregator::add_export_results(Ground *grnd, boost::posix_time::ptime &timestamp) {
+void Aggregator::add_export_results(Ground *grnd, const boost::posix_time::ptime &timestamp) {
   exporter.addResults(*grnd, timestamp);
 }
 

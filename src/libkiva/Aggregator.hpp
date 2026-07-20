@@ -21,7 +21,7 @@ public:
   void calc_weighted_results();
   std::pair<Ground *, double> get_instance(std::size_t index);
 
-  void add_export_results(Ground *grnd, boost::posix_time::ptime &timestamp);
+  void add_export_results(Ground *grnd, const boost::posix_time::ptime &timestamp);
   nlohmann::ordered_json get_export_json();
   std::vector<uint8_t> get_export_cbor();
   void write_export_json(const std::filesystem::path &outputPath);

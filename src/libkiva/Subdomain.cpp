@@ -133,7 +133,7 @@ Subdomain::Subdomain(SubdomainSettings &settings, Ground &ground) : settings(set
   nextResultsInterval = settings.startTime;
 }
 
-bool Subdomain::isNextResultsInterval(boost::posix_time::ptime &timestamp) {
+bool Subdomain::isNextResultsInterval(const boost::posix_time::ptime &timestamp) {
   return (timestamp >= nextResultsInterval) && (timestamp >= settings.startTime) &&
          (timestamp <= settings.endTime);
 }

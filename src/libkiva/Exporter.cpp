@@ -35,7 +35,7 @@ void Exporter::addInstance(Ground &ground, std::vector<SubdomainSettings> *setti
   }
 }
 
-void Exporter::addResults(Ground &ground, boost::posix_time::ptime &timestamp) {
+void Exporter::addResults(Ground &ground, const boost::posix_time::ptime &timestamp) {
   auto match = exportInstancesMap.find(&ground);
   if (match == exportInstancesMap.end()) {
     showMessage(MSG_WARN, "Export instance not found - results will not be added.");
@@ -65,6 +65,8 @@ void Exporter::writeJson(const std::filesystem::path &outputPath) {
   if (file.is_open()) {
     file << std::setw(4) << getJson() << std::endl;
     file.close();
+  } else {
+    showMessage(MSG_ERR, "Could not open file for JSON export: " + outputPath.string());
   }
 }
 
@@ -75,6 +77,8 @@ void Exporter::writeCbor(const std::filesystem::path &outputPath) {
     std::vector<uint8_t> cbor = getCbor();
     file.write(reinterpret_cast<const char *>(cbor.data()), cbor.size());
     file.close();
+  } else {
+    showMessage(MSG_ERR, "Could not open file for CBOR export: " + outputPath.string());
   }
 }
 

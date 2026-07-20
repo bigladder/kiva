@@ -24,9 +24,9 @@ public:
   std::pair<double, double> yRange;
   std::pair<double, double> zRange;
 
-  bool xRangeSet;
-  bool yRangeSet;
-  bool zRangeSet;
+  bool xRangeSet = false;
+  bool yRangeSet = false;
+  bool zRangeSet = false;
 
   enum RangeType { X, Y, Z };
 
@@ -47,7 +47,7 @@ public:
   boost::posix_time::ptime nextResultsInterval;
 
   Subdomain(SubdomainSettings &settings, Ground &ground);
-  bool isNextResultsInterval(boost::posix_time::ptime &timestamp);
+  bool isNextResultsInterval(const boost::posix_time::ptime &timestamp);
   std::size_t getResultsIndex(std::size_t i, std::size_t j, std::size_t k);
   void updateResults(Ground &ground);
 };

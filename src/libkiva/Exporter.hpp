@@ -25,7 +25,7 @@ public:
   Exporter();
 
   void addInstance(Ground &ground, std::vector<SubdomainSettings> *settings = nullptr);
-  void addResults(Ground &ground, boost::posix_time::ptime &timestamp);
+  void addResults(Ground &ground, const boost::posix_time::ptime &timestamp);
 
   nlohmann::ordered_json getJson();
   std::vector<uint8_t> getCbor();
