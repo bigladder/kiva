@@ -16,6 +16,7 @@ add_test(NAME unit.GC10aFixture.GC10a_calculateSteadyState COMMAND $<TARGET_FILE
 add_test(NAME unit.GC10aFixture.calcCellADI COMMAND $<TARGET_FILE:kiva_tests> "--gtest_filter=GC10aFixture.calcCellADI")
 add_test(NAME unit.GC10aFixture.calcCellMatrix COMMAND $<TARGET_FILE:kiva_tests> "--gtest_filter=GC10aFixture.calcCellMatrix")
 add_test(NAME unit.GC10aFixture.calcCellMatrixSS COMMAND $<TARGET_FILE:kiva_tests> "--gtest_filter=GC10aFixture.calcCellMatrixSS")
+add_test(NAME unit.GC10aFixture.perimeterSurfaceWidthConservesSlabTotal COMMAND $<TARGET_FILE:kiva_tests> "--gtest_filter=GC10aFixture.perimeterSurfaceWidthConservesSlabTotal")
 
 add_test(NAME unit.BESTEST.GC10a COMMAND $<TARGET_FILE:kiva_tests> "--gtest_filter=BESTESTFixture.GC10a")
 add_test(NAME unit.BESTEST.GC30a COMMAND $<TARGET_FILE:kiva_tests> "--gtest_filter=BESTESTFixture.GC30a")

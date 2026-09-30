@@ -188,6 +188,48 @@ TEST_F( TypicalFixture, Slab)
   EXPECT_NEAR(1.0, 1.0, 1.0);
 }*/
 
+TEST_F(GC10aFixture, perimeterSurfaceWidthConservesSlabTotal) {
+  // Splitting the slab into core and perimeter reporting zones must not change the total slab
+  // heat transfer rate.
+  auto slabTotalRate = [&](Foundation::CoordinateSystem coordinateSystem,
+                           double perimeterSurfaceWidth) {
+    fnd = Foundation();
+    specifySystem();
+    specifyGC10a();
+    fnd.coordinateSystem = coordinateSystem;
+    // Uniform interior mesh, so the perimeter surface boundary does not change mesh density
+    fnd.mesh.maxInteriorGrowthCoeff = 1.0;
+    if (perimeterSurfaceWidth > 0.0) {
+      fnd.hasPerimeterSurface = true;
+      fnd.perimeterSurfaceWidth = perimeterSurfaceWidth;
+      outputMap = {Surface::ST_SLAB_CORE, Surface::ST_SLAB_PERIM};
+    }
+    init();
+    ground->calculateSurfaceAverages();
+    double rate = 0.0;
+    for (auto surfaceType : outputMap) {
+      rate += ground->getSurfaceAverageValue({surfaceType, GroundOutput::OT_RATE});
+    }
+    return rate;
+  };
+
+  for (auto coordinateSystem : {Foundation::CS_CARTESIAN, Foundation::CS_CYLINDRICAL}) {
+    double coreOnlyQ = slabTotalRate(coordinateSystem, 0.0);
+
+    for (double width : {0.5, 1.0, 2.0, 2.5}) {
+      double splitQ = slabTotalRate(coordinateSystem, width);
+      Kiva::showMessage(MSG_INFO, "Perimeter Surface Width " + dbl_to_string(width) +
+                                      " m: " + dbl_to_string(splitQ) + " W (core only: " +
+                                      dbl_to_string(coreOnlyQ) + " W)");
+      EXPECT_NEAR(splitQ, coreOnlyQ, coreOnlyQ * 1e-6);
+    }
+  }
+
+  // Both zones still report heat transfer
+  EXPECT_GT(ground->getSurfaceAverageValue({Surface::ST_SLAB_CORE, GroundOutput::OT_RATE}), 0.0);
+  EXPECT_GT(ground->getSurfaceAverageValue({Surface::ST_SLAB_PERIM, GroundOutput::OT_RATE}), 0.0);
+}
+
 TEST_F(GC10aFixture, calculateADI) {
   fnd.numericalScheme = Foundation::NS_ADI;
   bool fullyear = false;
