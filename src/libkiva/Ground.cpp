@@ -314,10 +314,32 @@ double Ground::getSurfaceArea(Surface::SurfaceType surfaceType) {
 }
 
 void Ground::calculateSurfaceAverages() {
+  // The slab core and perimeter surfaces are two reporting zones of one physical slab. Their
+  // heat transfer rates are scaled from the domain to the full slab area using a single, shared
+  // ratio so that core + perimeter always sums to the total slab heat transfer rate, independent
+  // of the perimeter surface width. (A two-dimensional domain does not split the slab in the same
+  // proportions as the three-dimensional core/perimeter areas.)
+  bool hasSlabPerimeter =
+      foundation.hasSurface[Surface::ST_SLAB_CORE] && foundation.hasSurface[Surface::ST_SLAB_PERIM];
+  double slabAreaRatio = 0.0;
+  if (hasSlabPerimeter) {
+    double slabDomainArea =
+        getSurfaceArea(Surface::ST_SLAB_CORE) + getSurfaceArea(Surface::ST_SLAB_PERIM);
+    if (slabDomainArea > 0.0) {
+      slabAreaRatio = (foundation.surfaceAreas[Surface::ST_SLAB_CORE] +
+                       foundation.surfaceAreas[Surface::ST_SLAB_PERIM]) /
+                      slabDomainArea;
+    } else {
+      hasSlabPerimeter = false;
+    }
+  }
+
   for (auto surfaceType : groundOutput.outputMap) {
 
     double constructionRValue = 0.0;
     double surfaceArea = foundation.surfaceAreas[surfaceType];
+    bool isSlabZone =
+        surfaceType == Surface::ST_SLAB_CORE || surfaceType == Surface::ST_SLAB_PERIM;
 
     if (surfaceType == Surface::ST_SLAB_CORE) {
       constructionRValue = foundation.slab.totalResistance();
@@ -400,7 +422,8 @@ void Ground::calculateSurfaceAverages() {
       groundOutput.outputValues[{surfaceType, GroundOutput::OT_AVG_TEMP}] = TA / totalArea;
       groundOutput.outputValues[{surfaceType, GroundOutput::OT_FLUX}] = totalQ / totalArea;
       groundOutput.outputValues[{surfaceType, GroundOutput::OT_RATE}] =
-          totalQ / totalArea * surfaceArea;
+          (hasSlabPerimeter && isSlabZone) ? totalQ * slabAreaRatio
+                                           : totalQ / totalArea * surfaceArea;
       groundOutput.outputValues[{surfaceType, GroundOutput::OT_CONV}] = hcAvg;
       groundOutput.outputValues[{surfaceType, GroundOutput::OT_RAD}] = hrAvg;
 
