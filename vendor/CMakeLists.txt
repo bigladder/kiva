@@ -7,6 +7,11 @@ endif ()
 
 add_subdirectory(boost-1.88.0) #set by update-boost.py
 
+if (NOT TARGET nlohmann_json)
+    set(JSON_BuildTests OFF CACHE BOOL "" FORCE)
+    add_subdirectory(json)
+endif ()
+
 if (KIVA_EXE_BUILD OR KIVA_GROUND_PLOT)
 
     set(SKIP_INSTALL_ALL ON)
@@ -42,9 +47,6 @@ if (KIVA_EXE_BUILD OR KIVA_GROUND_PLOT)
     set(PNG_LIBRARIES ${PNG_LIBRARY})
     set(PNG_INCLUDE_DIRS ${PNG_INCLUDE_DIR})
     add_subdirectory(mathgl-8.0.1)
-
-    set(JSON_BuildTests OFF CACHE BOOL "" FORCE)
-    add_subdirectory(json)
 
     if (MSVC)
         target_compile_options(mgl PRIVATE /wd4477 /wd4334)

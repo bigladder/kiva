@@ -183,7 +183,8 @@ target_include_directories(libkiva PUBLIC
         "${BOOST_SOURCE_DIR}"
         "${kiva_SOURCE_DIR}/vendor/eigen")
 
-target_link_libraries(libkiva PRIVATE kiva_common_interface nlohmann_json)
+target_link_libraries(libkiva PRIVATE kiva_common_interface)
+target_link_libraries(libkiva PUBLIC nlohmann_json) # Exporter.hpp is part of the public API
 target_compile_features(libkiva PUBLIC cxx_std_17) # Should be PRIVATE once boost is cleaned out of public API
 
 include(GenerateExportHeader)

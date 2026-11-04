@@ -7,6 +7,7 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <filesystem>
 #include <nlohmann/json.hpp>
+#include <unordered_map>
 
 #include "Cell.hpp"
 #include "Domain.hpp"
@@ -15,15 +16,22 @@
 
 namespace Kiva {
 
-struct ExportInstance {
-  uint64_t InstanceIndex;
-  std::vector<Subdomain> Subdomains;
+struct SnapshotRecord {
+  boost::posix_time::ptime timestamp;
+  std::vector<double> values;
 };
 
+struct ExportInstance {
+  const Ground *ground;
+  std::vector<Subdomain> Subdomains;
+  // One list of records per subdomain, kept as raw values until the export is built
+  std::vector<std::vector<SnapshotRecord>> SnapshotRecords;
+};
+
+// Instance geometry is serialized when the export is requested, so each Ground added must
+// outlive any call to getJson/getCbor/writeJson/writeCbor.
 class LIBKIVA_EXPORT Exporter {
 public:
-  Exporter();
-
   void addInstance(Ground &ground, const std::vector<SubdomainSettings> &settings);
   void addResults(Ground &ground, const boost::posix_time::ptime &timestamp);
 
@@ -33,22 +41,19 @@ public:
   void writeCbor(const std::filesystem::path &outputPath);
 
 private:
-  uint64_t nextInstanceIndex = 0;
-  std::unordered_map<const Ground *, std::unique_ptr<ExportInstance>> exportInstancesMap;
-
-  nlohmann::ordered_json jExport;
+  std::vector<ExportInstance> exportInstances;
+  std::unordered_map<const Ground *, std::size_t> exportInstanceIndices;
 
   nlohmann::ordered_json createMetadata();
-  nlohmann::ordered_json createInstance(const Ground &ground);
+  nlohmann::ordered_json createInstance(const ExportInstance &instance);
   nlohmann::ordered_json createSurface(const Surface &surface);
-  nlohmann::ordered_json createBlock(const Block &block, const Foundation &foundation);
+  nlohmann::ordered_json createBlock(const Block &block);
   nlohmann::ordered_json createPolygon(const Polygon &polygon);
   nlohmann::ordered_json createRing(const Ring &ring);
   nlohmann::ordered_json createMesh(const Domain &domain);
   nlohmann::ordered_json createCell(const Cell &cell, const Foundation &foundation);
   nlohmann::ordered_json createSnapshot(const Subdomain &subdomain);
-  nlohmann::ordered_json createSnapshotResults(const Subdomain &subdomain,
-                                               const boost::posix_time::ptime &timestamp);
+  nlohmann::ordered_json createSnapshotResults(const SnapshotRecord &record);
 
   std::string getSurfaceType(const Surface::SurfaceType &surfaceType);
   std::string getBoundaryConditionType(const Surface::BoundaryConditionType &boundaryConditionType);

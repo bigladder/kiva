@@ -46,10 +46,10 @@ public:
 
   boost::posix_time::ptime nextResultsInterval;
 
-  Subdomain(SubdomainSettings &settings, Ground &ground);
+  Subdomain(const SubdomainSettings &subdomainSettings, Ground &ground);
   bool isNextResultsInterval(const boost::posix_time::ptime &timestamp);
   std::size_t getResultsIndex(std::size_t i, std::size_t j, std::size_t k);
-  void updateResults(Ground &ground);
+  void updateResults(Ground &ground, const boost::posix_time::ptime &timestamp);
 };
 
 } // namespace Kiva

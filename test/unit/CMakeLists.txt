@@ -7,7 +7,7 @@ set(kiva_test_src
 
 add_executable(kiva_tests ${kiva_test_src})
 
-target_link_libraries(kiva_tests PRIVATE gtest libkiva kiva_common_interface nlohmann_json)
+target_link_libraries(kiva_tests PRIVATE gtest libkiva kiva_common_interface)
 
 add_test(NAME unit.GC10aFixture.calculateADI COMMAND $<TARGET_FILE:kiva_tests> "--gtest_filter=GC10aFixture.calculateADI")
 add_test(NAME unit.GC10aFixture.calculateImplicit COMMAND $<TARGET_FILE:kiva_tests> "--gtest_filter=GC10aFixture.calculateImplicit")
@@ -35,6 +35,10 @@ add_test(NAME unit.CellFixture.cell_basics COMMAND $<TARGET_FILE:kiva_tests> "--
 
 add_test(NAME unit.AggregatorFixture.validation COMMAND $<TARGET_FILE:kiva_tests> "--gtest_filter=AggregatorFixture.validation")
 
+add_test(NAME unit.ExporterFixture.export_basic COMMAND $<TARGET_FILE:kiva_tests> "--gtest_filter=ExporterFixture.export_basic")
+add_test(NAME unit.ExporterFixture.export_aggregator COMMAND $<TARGET_FILE:kiva_tests> "--gtest_filter=ExporterFixture.export_aggregator")
+add_test(NAME unit.ExporterFixture.subdomain_values COMMAND $<TARGET_FILE:kiva_tests> "--gtest_filter=ExporterFixture.subdomain_values")
+add_test(NAME unit.ExporterFixture.subdomain_schedule_catches_up COMMAND $<TARGET_FILE:kiva_tests> "--gtest_filter=ExporterFixture.subdomain_schedule_catches_up")
 add_test(NAME unit.TypicalFixture.convectionCallback COMMAND $<TARGET_FILE:kiva_tests> "--gtest_filter=TypicalFixture.convectionCallback")
 
 add_test(NAME unit.FoundationFixture.foundationSurfaces COMMAND $<TARGET_FILE:kiva_tests> "--gtest_filter=FoundationFixture.foundationSurfaces")

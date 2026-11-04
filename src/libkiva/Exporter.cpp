@@ -4,58 +4,64 @@
 #ifndef Exporter_CPP
 #define Exporter_CPP
 
+#include <algorithm>
+#include <fstream>
+#include <iomanip>
+#include <sstream>
+
 #include "Exporter.hpp"
 
 namespace Kiva {
 
-Exporter::Exporter() { jExport["metadata"] = createMetadata(); }
-
 void Exporter::addInstance(Ground &ground, const std::vector<SubdomainSettings> &settings) {
-  auto match = exportInstancesMap.find(&ground);
-  if (match != exportInstancesMap.end()) {
+  auto match = exportInstanceIndices.find(&ground);
+  if (match != exportInstanceIndices.end()) {
     showMessage(MSG_WARN, "Export instance has already been added.");
+  } else if (!settings.empty() && ground.domain.cell.empty()) {
+    showMessage(MSG_ERR, "Export instance domain has not been built.");
   } else {
-    std::unique_ptr<ExportInstance> instance = std::make_unique<ExportInstance>();
-    instance->InstanceIndex = nextInstanceIndex++;
+    ExportInstance instance;
+    instance.ground = &ground;
 
-    nlohmann::ordered_json jInstance = createInstance(ground);
-    jExport["instances"].push_back(jInstance);
-
-    for (SubdomainSettings subdomainSettings : settings) {
-      Subdomain subdomain(subdomainSettings, ground);
-      instance->Subdomains.push_back(subdomain);
-
-      nlohmann::ordered_json jSnapshot = createSnapshot(subdomain);
-      jExport["instances"][instance->InstanceIndex]["snapshots"].push_back(jSnapshot);
+    for (const SubdomainSettings &subdomainSettings : settings) {
+      instance.Subdomains.emplace_back(subdomainSettings, ground);
     }
+    instance.SnapshotRecords.resize(instance.Subdomains.size());
 
-    exportInstancesMap[&ground] = std::move(instance);
+    exportInstanceIndices.emplace(&ground, exportInstances.size());
+    exportInstances.push_back(std::move(instance));
   }
 }
 
 void Exporter::addResults(Ground &ground, const boost::posix_time::ptime &timestamp) {
-  auto match = exportInstancesMap.find(&ground);
-  if (match == exportInstancesMap.end()) {
+  auto match = exportInstanceIndices.find(&ground);
+  if (match == exportInstanceIndices.end()) {
     showMessage(MSG_WARN, "Export instance not found - results will not be added.");
   } else {
-    ExportInstance *instance = match->second.get();
+    ExportInstance &instance = exportInstances[match->second];
 
-    for (std::size_t i = 0; i < instance->Subdomains.size(); i++) {
-      Subdomain &subdomain = instance->Subdomains[i];
+    for (std::size_t i = 0; i < instance.Subdomains.size(); i++) {
+      Subdomain &subdomain = instance.Subdomains[i];
       if (subdomain.isNextResultsInterval(timestamp)) {
-        subdomain.updateResults(ground);
-
-        nlohmann::ordered_json jSnapshotResults = createSnapshotResults(subdomain, timestamp);
-        jExport["instances"][instance->InstanceIndex]["snapshots"][i]["results"].push_back(
-            jSnapshotResults);
+        subdomain.updateResults(ground, timestamp);
+        instance.SnapshotRecords[i].push_back({timestamp, subdomain.results});
       }
     }
   }
 }
 
-nlohmann::ordered_json Exporter::getJson() { return jExport; }
+nlohmann::ordered_json Exporter::getJson() {
+  nlohmann::ordered_json jExport;
 
-std::vector<uint8_t> Exporter::getCbor() { return nlohmann::ordered_json::to_cbor(jExport); }
+  jExport["metadata"] = createMetadata();
+  for (const ExportInstance &instance : exportInstances) {
+    jExport["instances"].push_back(createInstance(instance));
+  }
+
+  return jExport;
+}
+
+std::vector<uint8_t> Exporter::getCbor() { return nlohmann::ordered_json::to_cbor(getJson()); }
 
 void Exporter::writeJson(const std::filesystem::path &outputPath) {
   std::ofstream file(outputPath, std::ios::out);
@@ -92,8 +98,9 @@ nlohmann::ordered_json Exporter::createMetadata() {
   return jMetadata;
 }
 
-nlohmann::ordered_json Exporter::createInstance(const Ground &ground) {
+nlohmann::ordered_json Exporter::createInstance(const ExportInstance &instance) {
   nlohmann::ordered_json jInstance;
+  const Ground &ground = *instance.ground;
 
   for (const Surface &surface : ground.foundation.surfaces) {
     nlohmann::ordered_json jSurface = createSurface(surface);
@@ -101,17 +108,26 @@ nlohmann::ordered_json Exporter::createInstance(const Ground &ground) {
   }
 
   for (const Block &block : ground.foundation.blocks) {
-    nlohmann::ordered_json jBlock = createBlock(block, ground.foundation);
+    nlohmann::ordered_json jBlock = createBlock(block);
     jInstance["blocks"].push_back(jBlock);
   }
 
   jInstance["mesh"] = createMesh(ground.domain);
 
-  for (const std::shared_ptr<Cell> cellPtr : ground.domain.cell) {
+  for (const auto &cellPtr : ground.domain.cell) {
     if (cellPtr) {
       nlohmann::ordered_json jCell = createCell(*cellPtr, ground.foundation);
       jInstance["cells"].push_back(jCell);
     }
+  }
+
+  for (std::size_t i = 0; i < instance.Subdomains.size(); i++) {
+    nlohmann::ordered_json jSnapshot = createSnapshot(instance.Subdomains[i]);
+    // A snapshot has no "results" key until its first results are recorded
+    for (const SnapshotRecord &record : instance.SnapshotRecords[i]) {
+      jSnapshot["results"].push_back(createSnapshotResults(record));
+    }
+    jInstance["snapshots"].push_back(jSnapshot);
   }
 
   return jInstance;
@@ -130,7 +146,7 @@ nlohmann::ordered_json Exporter::createSurface(const Surface &surface) {
   return jSurface;
 }
 
-nlohmann::ordered_json Exporter::createBlock(const Block &block, const Foundation &foundation) {
+nlohmann::ordered_json Exporter::createBlock(const Block &block) {
   nlohmann::ordered_json jBlock;
 
   jBlock["block_type"] = getBlockType(block.blockType);
@@ -209,12 +225,11 @@ nlohmann::ordered_json Exporter::createSnapshot(const Subdomain &subdomain) {
   return jSnapshot;
 }
 
-nlohmann::ordered_json Exporter::createSnapshotResults(const Subdomain &subdomain,
-                                                       const boost::posix_time::ptime &timestamp) {
+nlohmann::ordered_json Exporter::createSnapshotResults(const SnapshotRecord &record) {
   nlohmann::ordered_json jSnapshotResults;
 
-  jSnapshotResults["timestamp"] = formatTime(timestamp);
-  jSnapshotResults["values"] = subdomain.results;
+  jSnapshotResults["timestamp"] = formatTime(record.timestamp);
+  jSnapshotResults["values"] = record.values;
 
   return jSnapshotResults;
 }
@@ -335,7 +350,8 @@ std::string Exporter::getResultsType(const SubdomainSettings::ResultsType &resul
 std::string Exporter::formatTime(const boost::posix_time::ptime &time) {
   std::ostringstream formattedTime;
 
-  formattedTime << std::put_time(&to_tm(time), "%Y-%m-%dT%H:%MZ");
+  std::tm tm = to_tm(time);
+  formattedTime << std::put_time(&tm, "%Y-%m-%dT%H:%MZ");
 
   return formattedTime.str();
 }
@@ -347,7 +363,7 @@ template <typename T> int Exporter::indexOf(const std::vector<T> &vector, const 
                                   [&target](const T &item) { return &item == &target; });
 
   if (match != vector.end()) {
-    index = std::distance(vector.begin(), match);
+    index = static_cast<int>(std::distance(vector.begin(), match));
   }
 
   return index;

@@ -4,6 +4,8 @@
 #ifndef Subdomain_CPP
 #define Subdomain_CPP
 
+#include <cmath>
+
 #include "Subdomain.hpp"
 
 namespace Kiva {
@@ -31,7 +33,8 @@ void SubdomainSettings::setRange(RangeType rangeType, double min, double max) {
   }
 }
 
-Subdomain::Subdomain(SubdomainSettings &settings, Ground &ground) : settings(settings) {
+Subdomain::Subdomain(const SubdomainSettings &subdomainSettings, Ground &ground)
+    : settings(subdomainSettings) {
   if (ground.foundation.numberOfDimensions == 3) {
     if (!settings.xRangeSet) {
       settings.xRange.first = ground.domain.mesh[0].dividers[0];
@@ -87,10 +90,11 @@ Subdomain::Subdomain(SubdomainSettings &settings, Ground &ground) : settings(set
     iMax = ground.domain.mesh[0].getNextIndex(settings.xRange.second);
 
     // Check for exact match
-    if (isEqual(ground.domain.mesh[0].centers[iMin + 1], settings.xRange.first)) {
+    if (iMin + 1 < ground.domain.mesh[0].centers.size() &&
+        isEqual(ground.domain.mesh[0].centers[iMin + 1], settings.xRange.first)) {
       iMin += 1;
     }
-    if (isEqual(ground.domain.mesh[0].centers[iMax - 1], settings.xRange.second)) {
+    if (iMax > 0 && isEqual(ground.domain.mesh[0].centers[iMax - 1], settings.xRange.second)) {
       iMax -= 1;
     }
   }
@@ -102,10 +106,11 @@ Subdomain::Subdomain(SubdomainSettings &settings, Ground &ground) : settings(set
     jMax = ground.domain.mesh[1].getNextIndex(settings.yRange.second);
 
     // Check for exact match
-    if (isEqual(ground.domain.mesh[1].centers[jMin + 1], settings.yRange.first)) {
+    if (jMin + 1 < ground.domain.mesh[1].centers.size() &&
+        isEqual(ground.domain.mesh[1].centers[jMin + 1], settings.yRange.first)) {
       jMin += 1;
     }
-    if (isEqual(ground.domain.mesh[1].centers[jMax - 1], settings.yRange.second)) {
+    if (jMax > 0 && isEqual(ground.domain.mesh[1].centers[jMax - 1], settings.yRange.second)) {
       jMax -= 1;
     }
   }
@@ -117,10 +122,11 @@ Subdomain::Subdomain(SubdomainSettings &settings, Ground &ground) : settings(set
     kMax = ground.domain.mesh[2].getNextIndex(settings.zRange.second);
 
     // Check for exact match
-    if (isEqual(ground.domain.mesh[2].centers[kMin + 1], settings.zRange.first)) {
+    if (kMin + 1 < ground.domain.mesh[2].centers.size() &&
+        isEqual(ground.domain.mesh[2].centers[kMin + 1], settings.zRange.first)) {
       kMin += 1;
     }
-    if (isEqual(ground.domain.mesh[2].centers[kMax - 1], settings.zRange.second)) {
+    if (kMax > 0 && isEqual(ground.domain.mesh[2].centers[kMax - 1], settings.zRange.second)) {
       kMax -= 1;
     }
   }
@@ -142,7 +148,7 @@ std::size_t Subdomain::getResultsIndex(std::size_t i, std::size_t j, std::size_t
   return (i - iMin) + iN * (j - jMin) + iN * jN * (k - kMin);
 }
 
-void Subdomain::updateResults(Ground &ground) {
+void Subdomain::updateResults(Ground &ground, const boost::posix_time::ptime &timestamp) {
   for (std::size_t k = kMin; k <= kMax; k++) {
     for (std::size_t j = jMin; j <= jMax; j++) {
       for (std::size_t i = iMin; i <= iMax; i++) {
@@ -161,7 +167,12 @@ void Subdomain::updateResults(Ground &ground) {
     }
   }
 
-  nextResultsInterval += settings.frequency;
+  // Advance past the current timestamp so the schedule stays anchored to startTime
+  // (the guard prevents an infinite loop for a zero/negative frequency)
+  do {
+    nextResultsInterval += settings.frequency;
+  } while (settings.frequency > boost::posix_time::time_duration(0, 0, 0) &&
+           nextResultsInterval <= timestamp);
 }
 
 } // namespace Kiva
