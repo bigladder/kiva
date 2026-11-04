@@ -15,7 +15,8 @@ Aggregator::Aggregator(Surface::SurfaceType st)
     : surface_type(st), surface_type_set(true), validated(false) {}
 
 void Aggregator::add_instance(Surface::SurfaceType st, Ground *grnd, double weight,
-                              std::vector<SubdomainSettings> *settings) {
+                              std::vector<SubdomainSettings> *settings,
+                              const nlohmann::ordered_json &metadata) {
   // Check if surface type is the same as already set. If not yet set, set it now.
   if (!surface_type_set) {
     surface_type = st;
@@ -23,13 +24,14 @@ void Aggregator::add_instance(Surface::SurfaceType st, Ground *grnd, double weig
   } else if (st != surface_type) {
     showMessage(MSG_ERR, "Inconsistent surface type added to aggregator.");
   }
-  add_instance(grnd, weight, settings);
+  add_instance(grnd, weight, settings, metadata);
 }
 
-void Aggregator::add_instance(Ground *grnd, double weight,
-                              std::vector<SubdomainSettings> *settings) {
+void Aggregator::add_instance(Ground *grnd, double weight, std::vector<SubdomainSettings> *settings,
+                              const nlohmann::ordered_json &metadata) {
   instances.push_back({grnd, weight});
-  exporter.addInstance(*grnd, settings != nullptr ? *settings : std::vector<SubdomainSettings>());
+  exporter.addInstance(*grnd, settings != nullptr ? *settings : std::vector<SubdomainSettings>(),
+                       metadata);
 }
 
 std::size_t Aggregator::size() { return instances.size(); }

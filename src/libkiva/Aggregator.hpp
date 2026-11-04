@@ -14,9 +14,10 @@ public:
   Aggregator();
   Aggregator(Surface::SurfaceType st);
   void add_instance(Surface::SurfaceType st, Ground *grnd, double weight,
-                    std::vector<SubdomainSettings> *settings = nullptr);
-  void add_instance(Ground *grnd, double weight,
-                    std::vector<SubdomainSettings> *settings = nullptr);
+                    std::vector<SubdomainSettings> *settings = nullptr,
+                    const nlohmann::ordered_json &metadata = nlohmann::ordered_json());
+  void add_instance(Ground *grnd, double weight, std::vector<SubdomainSettings> *settings = nullptr,
+                    const nlohmann::ordered_json &metadata = nlohmann::ordered_json());
   std::size_t size();
   void calc_weighted_results();
   std::pair<Ground *, double> get_instance(std::size_t index);

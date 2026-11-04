@@ -39,6 +39,8 @@ add_test(NAME unit.ExporterFixture.export_basic COMMAND $<TARGET_FILE:kiva_tests
 add_test(NAME unit.ExporterFixture.export_aggregator COMMAND $<TARGET_FILE:kiva_tests> "--gtest_filter=ExporterFixture.export_aggregator")
 add_test(NAME unit.ExporterFixture.subdomain_values COMMAND $<TARGET_FILE:kiva_tests> "--gtest_filter=ExporterFixture.subdomain_values")
 add_test(NAME unit.ExporterFixture.subdomain_schedule_catches_up COMMAND $<TARGET_FILE:kiva_tests> "--gtest_filter=ExporterFixture.subdomain_schedule_catches_up")
+add_test(NAME unit.ExporterFixture.streamed_export_matches_json COMMAND $<TARGET_FILE:kiva_tests> "--gtest_filter=ExporterFixture.streamed_export_matches_json")
+add_test(NAME unit.ExporterFixture.streamed_export_empty COMMAND $<TARGET_FILE:kiva_tests> "--gtest_filter=ExporterFixture.streamed_export_empty")
 add_test(NAME unit.TypicalFixture.convectionCallback COMMAND $<TARGET_FILE:kiva_tests> "--gtest_filter=TypicalFixture.convectionCallback")
 
 add_test(NAME unit.FoundationFixture.foundationSurfaces COMMAND $<TARGET_FILE:kiva_tests> "--gtest_filter=FoundationFixture.foundationSurfaces")

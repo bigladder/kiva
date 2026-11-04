@@ -13,7 +13,136 @@
 
 namespace Kiva {
 
-void Exporter::addInstance(Ground &ground, const std::vector<SubdomainSettings> &settings) {
+// Streams an export document one element at a time. Container sizes are given up front
+// because CBOR requires definite lengths to match nlohmann's own encoding.
+class ExportWriter {
+public:
+  virtual ~ExportWriter() = default;
+  virtual void beginObject(std::size_t size) = 0;
+  virtual void beginArray(std::size_t size) = 0;
+  virtual void end() = 0;
+  virtual void key(const std::string &key) = 0;
+  virtual void value(const nlohmann::ordered_json &value) = 0;
+};
+
+namespace {
+
+class CborExportWriter : public ExportWriter {
+public:
+  explicit CborExportWriter(std::ostream &stream) : stream(stream) {}
+  void beginObject(std::size_t size) override { writeHeader(5, size); }
+  void beginArray(std::size_t size) override { writeHeader(4, size); }
+  void end() override {}
+  void key(const std::string &key) override {
+    nlohmann::ordered_json::to_cbor(nlohmann::ordered_json(key), stream);
+  }
+  void value(const nlohmann::ordered_json &value) override {
+    nlohmann::ordered_json::to_cbor(value, stream);
+  }
+
+private:
+  std::ostream &stream;
+
+  // Shortest-form CBOR head, as nlohmann writes it
+  void writeHeader(uint8_t majorType, std::uint64_t size) {
+    uint8_t initialByte = static_cast<uint8_t>(majorType << 5);
+    int byteCount;
+    if (size < 24) {
+      stream.put(static_cast<char>(initialByte | size));
+      return;
+    } else if (size <= 0xFF) {
+      initialByte |= 24;
+      byteCount = 1;
+    } else if (size <= 0xFFFF) {
+      initialByte |= 25;
+      byteCount = 2;
+    } else if (size <= 0xFFFFFFFF) {
+      initialByte |= 26;
+      byteCount = 4;
+    } else {
+      initialByte |= 27;
+      byteCount = 8;
+    }
+    stream.put(static_cast<char>(initialByte));
+    for (int i = byteCount - 1; i >= 0; i--) {
+      stream.put(static_cast<char>((size >> (8 * i)) & 0xFF));
+    }
+  }
+};
+
+// Produces the same text as nlohmann's dump(4)
+class JsonExportWriter : public ExportWriter {
+public:
+  explicit JsonExportWriter(std::ostream &stream) : stream(stream) {}
+  void beginObject(std::size_t size) override { beginContainer(size, '{', '}'); }
+  void beginArray(std::size_t size) override { beginContainer(size, '[', ']'); }
+  void end() override {
+    Container container = containers.back();
+    containers.pop_back();
+    if (container.closer != '\0') {
+      stream << '\n' << indentation() << container.closer;
+    }
+  }
+  void key(const std::string &key) override {
+    startElement();
+    stream << nlohmann::ordered_json(key).dump() << ": ";
+  }
+  void value(const nlohmann::ordered_json &value) override {
+    startArrayElement();
+    std::string text = value.dump(indentStep);
+    std::string pad = indentation();
+    for (char c : text) {
+      stream << c;
+      if (c == '\n') {
+        stream << pad;
+      }
+    }
+  }
+
+private:
+  static constexpr int indentStep = 4;
+  struct Container {
+    bool isObject;
+    bool isFirst;
+    char closer; // '\0' for an empty container, which is closed when opened
+  };
+  std::ostream &stream;
+  std::vector<Container> containers;
+
+  std::string indentation() { return std::string(containers.size() * indentStep, ' '); }
+
+  void startElement() {
+    Container &container = containers.back();
+    if (!container.isFirst) {
+      stream << ',';
+    }
+    container.isFirst = false;
+    stream << '\n' << indentation();
+  }
+
+  // Object members are started by key()
+  void startArrayElement() {
+    if (!containers.empty() && !containers.back().isObject) {
+      startElement();
+    }
+  }
+
+  void beginContainer(std::size_t size, char opener, char closer) {
+    startArrayElement();
+    if (size == 0) {
+      stream << opener << closer;
+      containers.push_back({opener == '{', true, '\0'});
+    } else {
+      stream << opener;
+      containers.push_back({opener == '{', true, closer});
+    }
+  }
+};
+
+} // namespace
+
+void Exporter::addInstance(Ground &ground, const std::vector<SubdomainSettings> &settings,
+                           const nlohmann::ordered_json &metadata) {
   auto match = exportInstanceIndices.find(&ground);
   if (match != exportInstanceIndices.end()) {
     showMessage(MSG_WARN, "Export instance has already been added.");
@@ -22,6 +151,7 @@ void Exporter::addInstance(Ground &ground, const std::vector<SubdomainSettings> 
   } else {
     ExportInstance instance;
     instance.ground = &ground;
+    instance.metadata = metadata;
 
     for (const SubdomainSettings &subdomainSettings : settings) {
       instance.Subdomains.emplace_back(subdomainSettings, ground);
@@ -61,13 +191,21 @@ nlohmann::ordered_json Exporter::getJson() {
   return jExport;
 }
 
-std::vector<uint8_t> Exporter::getCbor() { return nlohmann::ordered_json::to_cbor(getJson()); }
+std::vector<uint8_t> Exporter::getCbor() {
+  std::ostringstream stream(std::ios::out | std::ios::binary);
+  CborExportWriter writer(stream);
+  writeExport(writer);
+  std::string bytes = stream.str();
+  return std::vector<uint8_t>(bytes.begin(), bytes.end());
+}
 
 void Exporter::writeJson(const std::filesystem::path &outputPath) {
   std::ofstream file(outputPath, std::ios::out);
 
   if (file.is_open()) {
-    file << std::setw(4) << getJson() << std::endl;
+    JsonExportWriter writer(file);
+    writeExport(writer);
+    file << std::endl;
     file.close();
   } else {
     showMessage(MSG_ERR, "Could not open file for JSON export: " + outputPath.string());
@@ -78,12 +216,65 @@ void Exporter::writeCbor(const std::filesystem::path &outputPath) {
   std::ofstream file(outputPath, std::ios::out | std::ios::binary);
 
   if (file.is_open()) {
-    std::vector<uint8_t> cbor = getCbor();
-    file.write(reinterpret_cast<const char *>(cbor.data()), cbor.size());
+    CborExportWriter writer(file);
+    writeExport(writer);
     file.close();
   } else {
     showMessage(MSG_ERR, "Could not open file for CBOR export: " + outputPath.string());
   }
+}
+
+// Must produce the same document as getJson
+void Exporter::writeExport(ExportWriter &writer) {
+  writer.beginObject(exportInstances.empty() ? 1 : 2);
+  writer.key("metadata");
+  writer.value(createMetadata());
+  if (!exportInstances.empty()) {
+    writer.key("instances");
+    writer.beginArray(exportInstances.size());
+    for (const ExportInstance &instance : exportInstances) {
+      writeInstance(writer, instance);
+    }
+    writer.end();
+  }
+  writer.end();
+}
+
+void Exporter::writeInstance(ExportWriter &writer, const ExportInstance &instance) {
+  nlohmann::ordered_json jInstance = createInstanceModel(instance);
+  bool hasSnapshots = !instance.Subdomains.empty();
+
+  writer.beginObject(jInstance.size() + (hasSnapshots ? 1 : 0));
+  for (auto it = jInstance.begin(); it != jInstance.end(); ++it) {
+    writer.key(it.key());
+    writer.value(it.value());
+  }
+
+  if (hasSnapshots) {
+    writer.key("snapshots");
+    writer.beginArray(instance.Subdomains.size());
+    for (std::size_t i = 0; i < instance.Subdomains.size(); i++) {
+      nlohmann::ordered_json jSnapshot = createSnapshot(instance.Subdomains[i]);
+      const std::vector<SnapshotRecord> &records = instance.SnapshotRecords[i];
+
+      writer.beginObject(jSnapshot.size() + (records.empty() ? 0 : 1));
+      for (auto it = jSnapshot.begin(); it != jSnapshot.end(); ++it) {
+        writer.key(it.key());
+        writer.value(it.value());
+      }
+      if (!records.empty()) {
+        writer.key("results");
+        writer.beginArray(records.size());
+        for (const SnapshotRecord &record : records) {
+          writer.value(createSnapshotResults(record));
+        }
+        writer.end();
+      }
+      writer.end();
+    }
+    writer.end();
+  }
+  writer.end();
 }
 
 nlohmann::ordered_json Exporter::createMetadata() {
@@ -99,8 +290,27 @@ nlohmann::ordered_json Exporter::createMetadata() {
 }
 
 nlohmann::ordered_json Exporter::createInstance(const ExportInstance &instance) {
+  nlohmann::ordered_json jInstance = createInstanceModel(instance);
+
+  for (std::size_t i = 0; i < instance.Subdomains.size(); i++) {
+    nlohmann::ordered_json jSnapshot = createSnapshot(instance.Subdomains[i]);
+    // A snapshot has no "results" key until its first results are recorded
+    for (const SnapshotRecord &record : instance.SnapshotRecords[i]) {
+      jSnapshot["results"].push_back(createSnapshotResults(record));
+    }
+    jInstance["snapshots"].push_back(jSnapshot);
+  }
+
+  return jInstance;
+}
+
+nlohmann::ordered_json Exporter::createInstanceModel(const ExportInstance &instance) {
   nlohmann::ordered_json jInstance;
   const Ground &ground = *instance.ground;
+
+  if (!instance.metadata.is_null()) {
+    jInstance["metadata"] = instance.metadata;
+  }
 
   for (const Surface &surface : ground.foundation.surfaces) {
     nlohmann::ordered_json jSurface = createSurface(surface);
@@ -119,15 +329,6 @@ nlohmann::ordered_json Exporter::createInstance(const ExportInstance &instance) 
       nlohmann::ordered_json jCell = createCell(*cellPtr, ground.foundation);
       jInstance["cells"].push_back(jCell);
     }
-  }
-
-  for (std::size_t i = 0; i < instance.Subdomains.size(); i++) {
-    nlohmann::ordered_json jSnapshot = createSnapshot(instance.Subdomains[i]);
-    // A snapshot has no "results" key until its first results are recorded
-    for (const SnapshotRecord &record : instance.SnapshotRecords[i]) {
-      jSnapshot["results"].push_back(createSnapshotResults(record));
-    }
-    jInstance["snapshots"].push_back(jSnapshot);
   }
 
   return jInstance;

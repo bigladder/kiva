@@ -23,16 +23,28 @@ struct SnapshotRecord {
 
 struct ExportInstance {
   const Ground *ground;
+  nlohmann::ordered_json metadata;
   std::vector<Subdomain> Subdomains;
   // One list of records per subdomain, kept as raw values until the export is built
   std::vector<std::vector<SnapshotRecord>> SnapshotRecords;
 };
 
+class ExportWriter;
+
 // Instance geometry is serialized when the export is requested, so each Ground added must
 // outlive any call to getJson/getCbor/writeJson/writeCbor.
+//
+// Memory: recorded results are held in memory until the export is written, at 8 bytes per cell
+// per record (e.g. a 50,000-cell subdomain recorded hourly for a year is ~3.5 GB). writeJson,
+// writeCbor and getCbor stream the output, so they add at most one instance's geometry and one
+// record on top of that (getCbor also holds the encoded bytes). getJson builds the whole
+// document as a JSON tree, which takes several times the raw results size.
 class LIBKIVA_EXPORT Exporter {
 public:
-  void addInstance(Ground &ground, const std::vector<SubdomainSettings> &settings);
+  // metadata, if given, is written unchanged as the instance's "metadata" (e.g. to identify
+  // instances created automatically by a calling program)
+  void addInstance(Ground &ground, const std::vector<SubdomainSettings> &settings,
+                   const nlohmann::ordered_json &metadata = nlohmann::ordered_json());
   void addResults(Ground &ground, const boost::posix_time::ptime &timestamp);
 
   nlohmann::ordered_json getJson();
@@ -44,8 +56,13 @@ private:
   std::vector<ExportInstance> exportInstances;
   std::unordered_map<const Ground *, std::size_t> exportInstanceIndices;
 
+  void writeExport(ExportWriter &writer);
+  void writeInstance(ExportWriter &writer, const ExportInstance &instance);
+
   nlohmann::ordered_json createMetadata();
   nlohmann::ordered_json createInstance(const ExportInstance &instance);
+  // Everything in an instance except its snapshots
+  nlohmann::ordered_json createInstanceModel(const ExportInstance &instance);
   nlohmann::ordered_json createSurface(const Surface &surface);
   nlohmann::ordered_json createBlock(const Block &block);
   nlohmann::ordered_json createPolygon(const Polygon &polygon);

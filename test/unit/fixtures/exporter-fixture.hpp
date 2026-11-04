@@ -76,6 +76,11 @@ public:
     }
   }
 
+  static nlohmann::ordered_json withoutCreationTime(nlohmann::ordered_json json) {
+    json["metadata"].erase("time_of_creation");
+    return json;
+  }
+
   unsigned short currentYear;
   boost::posix_time::ptime startTime;
   boost::posix_time::ptime endTime;
