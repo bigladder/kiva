@@ -27,28 +27,34 @@ public:
 
 namespace {
 
-class CborExportWriter : public ExportWriter {
+// CharType is char for streams and uint8_t for writing directly into a byte vector
+template <typename CharType> class CborExportWriter : public ExportWriter {
 public:
-  explicit CborExportWriter(std::ostream &stream) : stream(stream) {}
+  explicit CborExportWriter(nlohmann::detail::output_adapter<CharType> adapter)
+      : adapter(adapter), output(adapter) {}
   void beginObject(std::size_t size) override { writeHeader(5, size); }
   void beginArray(std::size_t size) override { writeHeader(4, size); }
   void end() override {}
   void key(const std::string &key) override {
-    nlohmann::ordered_json::to_cbor(nlohmann::ordered_json(key), stream);
+    nlohmann::ordered_json::to_cbor(nlohmann::ordered_json(key), adapter);
   }
   void value(const nlohmann::ordered_json &value) override {
-    nlohmann::ordered_json::to_cbor(value, stream);
+    nlohmann::ordered_json::to_cbor(value, adapter);
   }
 
 private:
-  std::ostream &stream;
+  // Copies of the adapter share one underlying output
+  nlohmann::detail::output_adapter<CharType> adapter;
+  nlohmann::detail::output_adapter_t<CharType> output;
+
+  void put(uint8_t byte) { output->write_character(static_cast<CharType>(byte)); }
 
   // Shortest-form CBOR head, as nlohmann writes it
   void writeHeader(uint8_t majorType, std::uint64_t size) {
     uint8_t initialByte = static_cast<uint8_t>(majorType << 5);
     int byteCount;
     if (size < 24) {
-      stream.put(static_cast<char>(initialByte | size));
+      put(static_cast<uint8_t>(initialByte | size));
       return;
     } else if (size <= 0xFF) {
       initialByte |= 24;
@@ -63,9 +69,9 @@ private:
       initialByte |= 27;
       byteCount = 8;
     }
-    stream.put(static_cast<char>(initialByte));
+    put(initialByte);
     for (int i = byteCount - 1; i >= 0; i--) {
-      stream.put(static_cast<char>((size >> (8 * i)) & 0xFF));
+      put(static_cast<uint8_t>((size >> (8 * i)) & 0xFF));
     }
   }
 };
@@ -192,11 +198,10 @@ nlohmann::ordered_json Exporter::getJson() {
 }
 
 std::vector<uint8_t> Exporter::getCbor() {
-  std::ostringstream stream(std::ios::out | std::ios::binary);
-  CborExportWriter writer(stream);
+  std::vector<uint8_t> bytes;
+  CborExportWriter<uint8_t> writer(bytes);
   writeExport(writer);
-  std::string bytes = stream.str();
-  return std::vector<uint8_t>(bytes.begin(), bytes.end());
+  return bytes;
 }
 
 void Exporter::writeJson(const std::filesystem::path &outputPath) {
@@ -216,7 +221,7 @@ void Exporter::writeCbor(const std::filesystem::path &outputPath) {
   std::ofstream file(outputPath, std::ios::out | std::ios::binary);
 
   if (file.is_open()) {
-    CborExportWriter writer(file);
+    CborExportWriter<char> writer(file);
     writeExport(writer);
     file.close();
   } else {

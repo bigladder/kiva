@@ -59,6 +59,11 @@ TEST_F(ExporterFixture, subdomain_schedule_catches_up) {
   EXPECT_FALSE(subdomain.isNextResultsInterval(t + timestep));
 }
 
+TEST_F(ExporterFixture, subdomain_inverted_range) {
+  EXPECT_DEATH(settings[0].setRange(SubdomainSettings::X, 5.0, 1.0),
+               "Subdomain range minimum is greater than its maximum.");
+}
+
 TEST_F(ExporterFixture, streamed_export_matches_json) {
   Exporter exporter;
   nlohmann::ordered_json metadata = {{"floor", "Floor1"}, {"depth", 0.5}};

@@ -16,6 +16,10 @@ SubdomainSettings::SubdomainSettings(ResultsType resultsType, boost::posix_time:
     : resultsType(resultsType), startTime(startTime), endTime(endTime), frequency(frequency) {}
 
 void SubdomainSettings::setRange(RangeType rangeType, double min, double max) {
+  if (min > max) {
+    showMessage(MSG_ERR, "Subdomain range minimum is greater than its maximum.");
+    return;
+  }
   std::pair range(min, max);
   switch (rangeType) {
   case X:
