@@ -18,7 +18,6 @@ void Aggregator::add_instance(Surface::SurfaceType st, Ground *grnd, double weig
   // Check if surface type is the same as already set. If not yet set, set it now.
   if (!surface_type_set) {
     surface_type = st;
-    surface_type_set = true;
   } else if (st != surface_type) {
     showMessage(MSG_ERR, "Inconsistent surface type added to aggregator.");
   }
