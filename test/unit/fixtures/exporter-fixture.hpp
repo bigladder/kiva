@@ -76,6 +76,15 @@ public:
     }
   }
 
+  void simulate(Instance &instance) {
+    for (boost::posix_time::ptime t = startTime; t < endTime; t += timestep) {
+      bcs.outdoorTemp = 273 + dbt[(t - startTime).hours() % 24];
+      instance.ground->calculate(bcs, timestepSeconds);
+      instance.ground->calculateSurfaceAverages();
+      instance.recordSnapshots(t);
+    }
+  }
+
   static nlohmann::ordered_json withoutCreationTime(nlohmann::ordered_json json) {
     json["metadata"].erase("time_of_creation");
     return json;

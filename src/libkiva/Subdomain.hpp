@@ -28,6 +28,9 @@ public:
   bool yRangeSet = false;
   bool zRangeSet = false;
 
+  // Opaque label for the caller (e.g. to group snapshots into output files)
+  std::string tag;
+
   enum RangeType { X, Y, Z };
 
   SubdomainSettings(ResultsType resultsType, boost::posix_time::ptime startTime,
@@ -50,6 +53,11 @@ public:
   bool isNextResultsInterval(const boost::posix_time::ptime &timestamp);
   std::size_t getResultsIndex(std::size_t i, std::size_t j, std::size_t k);
   void updateResults(Ground &ground, const boost::posix_time::ptime &timestamp);
+};
+
+struct SnapshotRecord {
+  boost::posix_time::ptime timestamp;
+  std::vector<double> values;
 };
 
 } // namespace Kiva

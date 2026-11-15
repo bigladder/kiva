@@ -8,22 +8,17 @@
 using namespace Kiva;
 
 TEST_F(ExporterFixture, export_basic) {
-  Exporter exporter;
-  exporter.addInstance(*ground, settings);
-
-  for (boost::posix_time::ptime t = startTime; t < endTime; t += timestep) {
-    bcs.outdoorTemp = 273 + dbt[(t - startTime).hours() % 24];
-
-    ground->calculate(bcs, timestepSeconds);
-    ground->calculateSurfaceAverages();
-
-    exporter.addResults(*ground, t);
+  Instance &instance = instances[0];
+  for (const SubdomainSettings &snapshotSettings : settings) {
+    instance.addSnapshot(snapshotSettings);
   }
+  simulate(instance);
 
-  std::vector<uint8_t> cbor = exporter.getCbor();
+  std::vector<ExportItem> items = {{&instance, {}}};
+  std::vector<uint8_t> cbor = getSnapshotsCbor(items);
   TestCbor(cbor, 1);
 
-  nlohmann::ordered_json json = exporter.getJson();
+  nlohmann::ordered_json json = getSnapshotsJson(items);
   std::string expectedTimestamp =
       boost::posix_time::to_iso_extended_string(startTime + boost::gregorian::days(2))
           .substr(0, 16) +
@@ -64,31 +59,34 @@ TEST_F(ExporterFixture, subdomain_inverted_range) {
                "Subdomain range minimum is greater than its maximum.");
 }
 
+TEST_F(ExporterFixture, add_snapshot_before_create) {
+  Instance instance;
+  EXPECT_DEATH(instance.addSnapshot(settings[0]), "Snapshot instance domain has not been built.");
+}
+
 TEST_F(ExporterFixture, streamed_export_matches_json) {
-  Exporter exporter;
-  nlohmann::ordered_json metadata = {{"floor", "Floor1"}, {"depth", 0.5}};
-  exporter.addInstance(*instances[0].ground, settings, metadata);
-  exporter.addInstance(*instances[1].ground, {}); // no metadata or snapshots
-
-  for (boost::posix_time::ptime t = startTime; t < endTime; t += timestep) {
-    bcs.outdoorTemp = 273 + dbt[(t - startTime).hours() % 24];
-    instances[0].ground->calculate(bcs, timestepSeconds);
-    instances[0].ground->calculateSurfaceAverages();
-    exporter.addResults(*instances[0].ground, t);
+  for (const SubdomainSettings &snapshotSettings : settings) {
+    instances[0].addSnapshot(snapshotSettings);
   }
+  simulate(instances[0]);
 
-  nlohmann::ordered_json expected = withoutCreationTime(exporter.getJson());
+  nlohmann::ordered_json metadata = {{"floor", "Floor1"}, {"depth", 0.5}};
+  std::vector<ExportItem> items = {{&instances[0], metadata},
+                                   {&instances[1], {}}}; // no metadata or snapshots
+
+  nlohmann::ordered_json expected = withoutCreationTime(getSnapshotsJson(items));
   EXPECT_EQ(expected["instances"][0]["metadata"], metadata);
   EXPECT_FALSE(expected["instances"][1].contains("metadata"));
   EXPECT_FALSE(expected["instances"][1].contains("snapshots"));
 
-  EXPECT_EQ(withoutCreationTime(nlohmann::ordered_json::from_cbor(exporter.getCbor())), expected);
+  EXPECT_EQ(withoutCreationTime(nlohmann::ordered_json::from_cbor(getSnapshotsCbor(items))),
+            expected);
 
   std::filesystem::path directory = std::filesystem::temp_directory_path();
   std::filesystem::path cborPath = directory / "kiva_streamed_export.cbor";
   std::filesystem::path jsonPath = directory / "kiva_streamed_export.json";
-  exporter.writeCbor(cborPath);
-  exporter.writeJson(jsonPath);
+  writeSnapshotsCbor(cborPath, items);
+  writeSnapshotsJson(jsonPath, items);
 
   std::ifstream cborFile(cborPath, std::ios::binary);
   EXPECT_EQ(withoutCreationTime(nlohmann::ordered_json::from_cbor(cborFile)), expected);
@@ -108,31 +106,62 @@ TEST_F(ExporterFixture, streamed_export_matches_json) {
 }
 
 TEST_F(ExporterFixture, streamed_export_empty) {
-  Exporter exporter;
-  nlohmann::ordered_json expected = withoutCreationTime(exporter.getJson());
-  EXPECT_EQ(withoutCreationTime(nlohmann::ordered_json::from_cbor(exporter.getCbor())), expected);
+  nlohmann::ordered_json expected = withoutCreationTime(getSnapshotsJson({}));
+  EXPECT_EQ(withoutCreationTime(nlohmann::ordered_json::from_cbor(getSnapshotsCbor({}))), expected);
 }
 
-TEST_F(ExporterFixture, export_aggregator) {
-  Aggregator aggregator;
+TEST_F(ExporterFixture, tag_filtering) {
+  settings[0].tag = "temperature.cbor";
+  settings[1].tag = "flux.json";
+  for (const SubdomainSettings &snapshotSettings : settings) {
+    instances[0].addSnapshot(snapshotSettings);
+  }
+  simulate(instances[0]);
+
+  std::vector<ExportItem> items = {{&instances[0], {}}};
+  std::filesystem::path directory = std::filesystem::temp_directory_path();
+  std::filesystem::path cborPath = directory / settings[0].tag;
+  std::filesystem::path jsonPath = directory / settings[1].tag;
+  writeSnapshotsCbor(cborPath, items, settings[0].tag);
+  writeSnapshotsJson(jsonPath, items, settings[1].tag);
+
+  std::ifstream cborFile(cborPath, std::ios::binary);
+  nlohmann::ordered_json temperature = nlohmann::ordered_json::from_cbor(cborFile);
+  ASSERT_EQ(temperature["instances"][0]["snapshots"].size(), 1u);
+  EXPECT_EQ(temperature["instances"][0]["snapshots"][0]["results_type"], "TEMPERATURE");
+  EXPECT_EQ(temperature["instances"][0]["snapshots"][0]["results"].size(), 3u);
+
+  std::ifstream jsonFile(jsonPath);
+  nlohmann::ordered_json flux = nlohmann::ordered_json::parse(jsonFile);
+  ASSERT_EQ(flux["instances"][0]["snapshots"].size(), 1u);
+  EXPECT_EQ(flux["instances"][0]["snapshots"][0]["results_type"], "HEAT_FLUX");
+  EXPECT_EQ(flux["instances"][0]["snapshots"][0]["results"].size(), 2u);
+
+  // An empty tag writes every snapshot; an unmatched tag writes geometry only
+  EXPECT_EQ(getSnapshotsJson(items)["instances"][0]["snapshots"].size(), 2u);
+  nlohmann::ordered_json unmatched = getSnapshotsJson(items, "other");
+  EXPECT_FALSE(unmatched["instances"][0].contains("snapshots"));
+  EXPECT_GT(unmatched["instances"][0]["cells"].size(), 0u);
+
+  cborFile.close();
+  jsonFile.close();
+  std::filesystem::remove(cborPath);
+  std::filesystem::remove(jsonPath);
+}
+
+TEST_F(ExporterFixture, multiple_instances) {
+  std::vector<ExportItem> items;
   for (std::size_t i = 0; i < instances.size(); i++) {
-    aggregator.add_instance(instances[i].ground.get(), 1, &settings, {{"index", i}});
-  }
-
-  for (Instance &instance : instances) {
-    for (boost::posix_time::ptime t = startTime; t < endTime; t += timestep) {
-      bcs.outdoorTemp = 273 + dbt[(t - startTime).hours() % 24];
-
-      instance.ground->calculate(bcs, timestepSeconds);
-      instance.ground->calculateSurfaceAverages();
-
-      aggregator.add_export_results(instance.ground.get(), t);
+    for (const SubdomainSettings &snapshotSettings : settings) {
+      instances[i].addSnapshot(snapshotSettings);
     }
+    simulate(instances[i]);
+    items.push_back({&instances[i], {{"index", i}}});
   }
 
-  std::vector<uint8_t> cbor = aggregator.get_export_cbor();
+  std::vector<uint8_t> cbor = getSnapshotsCbor(items);
   TestCbor(cbor, 2);
 
-  nlohmann::ordered_json json = aggregator.get_export_json();
+  nlohmann::ordered_json json = getSnapshotsJson(items);
   EXPECT_EQ(json["instances"][1]["metadata"]["index"], 1);
 }
