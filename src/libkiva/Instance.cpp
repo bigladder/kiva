@@ -44,4 +44,29 @@ void Instance::calculate(double ts) { ground->calculate(*bcs, ts); }
 
 void Instance::calculate_surface_averages() { ground->calculateSurfaceAverages(); }
 
+void Instance::addSnapshot(const SubdomainSettings &settings) {
+  if (!ground || ground->domain.cell.empty()) {
+    showMessage(MSG_ERR, "Snapshot instance domain has not been built.");
+    return;
+  }
+  snapshots.emplace_back(settings, *ground);
+  snapshotRecords.emplace_back();
+}
+
+void Instance::recordSnapshots(const boost::posix_time::ptime &timestamp) {
+  for (std::size_t i = 0; i < snapshots.size(); i++) {
+    Subdomain &snapshot = snapshots[i];
+    if (snapshot.isNextResultsInterval(timestamp)) {
+      snapshot.updateResults(*ground, timestamp);
+      snapshotRecords[i].push_back({timestamp, snapshot.results});
+    }
+  }
+}
+
+const std::vector<Subdomain> &Instance::getSnapshots() const { return snapshots; }
+
+const std::vector<std::vector<SnapshotRecord>> &Instance::getSnapshotRecords() const {
+  return snapshotRecords;
+}
+
 } // namespace Kiva

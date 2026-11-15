@@ -7,6 +7,11 @@ endif ()
 
 add_subdirectory(boost-1.88.0) #set by update-boost.py
 
+if (NOT TARGET nlohmann_json)
+    set(JSON_BuildTests OFF CACHE BOOL "" FORCE)
+    add_subdirectory(json)
+endif ()
+
 if (KIVA_EXE_BUILD OR KIVA_GROUND_PLOT)
 
     set(SKIP_INSTALL_ALL ON)
